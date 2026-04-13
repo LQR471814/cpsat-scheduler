@@ -30,13 +30,15 @@ $\forall t \in T [I_{t} \neq \emptyset]$
 Each task must have at least 1 cost configuration, otherwise
 decision variables and cost computation would be undefined.
 
-$\begin{aligned}
+$$
+\begin{aligned}
 C_{it} \subseteq & \{([a, b], c)| \\
 & a \in \theta_{t}(i) \\
 &\land b \in \theta_{t}(i) \cup \{\max[\theta_{t}(i)] + u_{t}\} \\
 &\land b > a \\
 &\land c \in \mathbb{Z}\}
-\end{aligned}$
+\end{aligned}
+$$
 
 Gives the cost $c$ which applies if the [[#Real task completion time]]
 of task $t$ under cost configuration $i$ falls inside closed
@@ -129,10 +131,12 @@ time is the end of the time slot it is scheduled at.
 
 $\epsilon : T \to \mathbb{N}$
 
-$\epsilon(t) = \begin{cases}
+$$
+\epsilon(t) = \begin{cases}
 \max_{c \in Ch_{t}} \epsilon(c), & Ch_{t} \neq \emptyset \\
 u_{t}D_{t}[s] + \delta_{tD_{t}[i]}, & Ch_t = \emptyset
-\end{cases}$
+\end{cases}
+$$
 
 The real task completion time is only used for [[#Prerequisites]]
 and computing [[#Cost]], it is not used to constrain valid task
@@ -142,6 +146,7 @@ starting times. (as that would be circular)
 
 $P_{t}$ is the set of prerequisite tasks of $t \in T$. (this
 should not contain cycles)
+
 $$
 \forall t \in T \forall D_{t}[s] \in \theta(t) \forall p \in
 P(t) [\epsilon(p) \leq u_{t}D_{t}[s]]
