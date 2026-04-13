@@ -34,9 +34,9 @@ $$
 \begin{aligned}
 C_{it} \subseteq & \{([a, b], c)| \\
 & a \in \theta_{t}(i) \\
-&\land b \in \theta_{t}(i) \cup \{\max[\theta_{t}(i)] + u_{t}\} \\
-&\land b > a \\
-&\land c \in \mathbb{Z}\}
+& \land b \in \theta_{t}(i) \cup \{\max[\theta_{t}(i)] + u_{t}\} \\
+& \land b > a \\
+& \land c \in \mathbb{Z}\}
 \end{aligned}
 $$
 
@@ -105,7 +105,7 @@ $Pa_{t}$ gives the parent or null of the given task $t \in T$.
 
 $\theta_{t} : I_{t} \to \text{Set}~\mathbb{N}$ for a $t \in T$
 
-$
+$$
 \begin{aligned}
 & \theta_{t}(i) = \{s \in \Theta(u_{t})|[ \\
 &     (Pa_{t} \neq \emptyset \to s \geq \frac{u_{Pa_{t}}}{u_{t}}D_{Pa_{t}}[s]) \\
@@ -115,7 +115,7 @@ $
 &     \land (d_{t} \neq \emptyset \to s < d_{t}) \\
 & ]\}
 \end{aligned}
-$
+$$
 
 $\theta_{t}(i)$ represents the set of all valid task starting
 times as determined by the given cost configuration and task and
