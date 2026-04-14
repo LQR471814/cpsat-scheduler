@@ -1,4 +1,8 @@
 from config import ConfigBuilder, CostInterval, Task, Model
+from ortools.sat.python import cp_model
+
+
+# --- FRONT MATTER
 
 
 # the atomic timescale unit is 15 minutes
@@ -17,6 +21,22 @@ year_32 = 2 * year_16
 year_64 = 2 * year_32
 year_128 = 2 * year_64
 
+timescale_names: list[str] = [
+    "minute_15",
+    "hour_4",
+    "day",
+    "week",
+    "month",
+    "quarter",
+    "year",
+    "year_2",
+    "year_4",
+    "year_8",
+    "year_16",
+    "year_32",
+    "year_64",
+    "year_128",
+]
 timescales: list[int] = [
     minute_15,
     hour_4,
@@ -36,65 +56,130 @@ timescales: list[int] = [
 
 builder = ConfigBuilder()
 
-# 1. each cost configuration represents a different probability???
-# 2. this doesn't make any sense, as the cost should only depend on the end time
-# 3.
-
 END_TIME = year_128
 
-midterm_study_1 = Task(builder, day)
-midterm_study_1.add_cost_config_duration(
-    [CostInterval((0, END_TIME), 0)],
-    minute_15 * 4,
-)
 
-midterm_study_2 = Task(builder, day)
-midterm_study_2.add_cost_config_duration(
-    [CostInterval((0, END_TIME), 0)],
-    minute_15 * 4,
-)
-midterm_study_2.add_prereq(midterm_study_1)
+def constant_cost_intervals(cost: int):
+    return [CostInterval((0, END_TIME), cost)]
 
-# midterm occurring on wednesday
-midterm = Task(
-    builder,
-    week,
-    start=0 * week,
-    end=1 * week,
-)
-# there is a 30% chance of failure upon studying twice
-midterm.add_cost_config_children(
-    [CostInterval((0, 3 * day), 0), CostInterval((3 * day, END_TIME), 30)],
-    [
-        midterm_study_1,
-        midterm_study_2,
-    ],
-)
-# there is an 70% chance of failure upon studying once
-midterm.add_cost_config_children(
-    [
-        CostInterval((0, day * 3), 0),
-        CostInterval((day * 3, END_TIME), 70),
-    ],
-    [midterm_study_1],
-)
 
-# homework 1, due tuesday
-hw1 = Task(
-    builder,
-    day,
-    end=2 * day,  # must start before wednesday
-)
+NO_COST_INTERVALS = constant_cost_intervals(0)
 
-# homework 2, due thursday
-hw2 = Task(
-    builder,
-    day,
-    end=4 * day,  # must start before friday
-)
+
+def deadline_intervals(deadline: int, exp_cost: int, start=0, end=END_TIME):
+    return [
+        CostInterval((start, deadline), 0),
+        CostInterval((deadline, end), exp_cost),
+    ]
+
+
+# --- TASK DESCRIPTION
+
+
+# EE 98 HW 6, due friday (15 pt)
+# unit = we decide which week to put this multi-day task in, so unit is week
+# start/end = cannot possibly schedule this after this week and cannot be negative start
+ee98_hw6 = Task(builder, week, end=1)
+ee98_hw6_hrs = [Task(builder, day) for _ in range(6)]
+for hr in ee98_hw6_hrs:
+    hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
+for duration_hrs, cost in [
+    (5, 0),
+    (4, 2),
+    (3, 3),
+    (2, 5),
+    (1, 7),
+]:
+    ee98_hw6.add_cost_config_children(
+        deadline_intervals(0, 5 * day, cost),
+        ee98_hw6_hrs[0:duration_hrs],
+    )
+ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 0)
+
+# COMM 20 survey, due thursday (25 pt)
+comm20_survey = Task(builder, week, end=1)
+comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 0), 6 * minute_15)
+comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 5), 3 * minute_15)
+comm20_survey.add_cost_config_duration(constant_cost_intervals(25), 0)
+
+# COMM 20 quiz, due Friday (5 pt)
+comm20_survey = Task(builder, week, end=1)
+comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 0), 1 * minute_15)
+comm20_survey.add_cost_config_duration(constant_cost_intervals(5), 0)
+
+# CMPE 50 Midterm 2 (100 pt)
+cmpe50_midterm2_hrs = [Task(builder, day) for _ in range(3)]
+for hr in cmpe50_midterm2_hrs:
+    hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
+cmpe50_midterm2 = Task(builder, week, end=1)
+for duration_hrs, cost in [
+    (3, 0),
+    (2, 8),
+    (1, 20),
+]:
+    cmpe50_midterm2.add_cost_config_children(
+        deadline_intervals(0, 4 * day, cost), cmpe50_midterm2_hrs[0:duration_hrs]
+    )
+cmpe50_midterm2.add_cost_config_duration(constant_cost_intervals(100), 0)
+
+# CMPE 50 HW 6 (30 pt)
+cmpe50_hw6 = Task(builder, week)
+cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 0), 4 * minute_15)
+cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 15), 2 * minute_15)
+cmpe50_hw6.add_cost_config_duration(constant_cost_intervals(30), 0)
+
+# ENGR 10 Robot Lab Prep. (est. 5 pt)
+engr10_robot_lab = Task(builder, week)
+engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 0), 6 * minute_15)
+engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 1), 4 * minute_15)
+engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 4), 2 * minute_15)
+engr10_robot_lab.add_cost_config_duration(constant_cost_intervals(10), 0)
+
+# ENGR 10 HW 3 (30 pt)
+engr10_hw3 = Task(builder, week)
+engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 0), 5 * minute_15)
+engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 2), 4 * minute_15)
+engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 3), 3 * minute_15)
+engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 7), 2 * minute_15)
+engr10_hw3.add_cost_config_duration(constant_cost_intervals(30), 0)
+
+# ENGL 1A Rough Draft (35 pt)
+engl1a_rd = Task(builder, week)
+engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 0), 6 * minute_15)
+engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 1), 4 * minute_15)
+engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 3), 2 * minute_15)
+engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 5), 1 * minute_15)
+engl1a_rd.add_cost_config_duration(constant_cost_intervals(35), 0)
+
+# # EE 97 Lab Prep (40 pt)
+# ee97_lab_prep = Task(builder, week)
+
+# weekday fixed time (16.5 hrs a day, 8 hrs sleep, 8 hrs in transit/class)
+for i in range(0, 5):
+    event = Task(builder, day, start=i, end=i + 1)
+    event.add_cost_config_duration(NO_COST_INTERVALS, int(16.5 * 4 * minute_15))
 
 
 cfg = builder.build()
-print(cfg)
 model = Model(cfg)
-model.solve()
+status, solution_tasks = model.solve()
+if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+    for unit, name in zip(timescales, timescale_names):
+        print("UNIT --- ", name)
+        for scheduled in solution_tasks:
+            task = builder.tasks[scheduled.task_id]
+            if task.unit != unit:
+                continue
+            print(scheduled.config, task._configs, cfg.task_cost_configs[task.id])
+            print(
+                "id:",
+                task.id,
+                "start:",
+                scheduled.start,
+                "end:",
+                scheduled.real_end,
+                "config:",
+                task._configs[scheduled.config],
+            )
+else:
+    print("No solution:", status)

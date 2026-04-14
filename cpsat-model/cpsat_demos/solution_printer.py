@@ -1,14 +1,5 @@
 from ortools.sat.python import cp_model
 
-model = cp_model.CpModel()
-
-x = model.new_int_var(0, 10, "x")
-y = model.new_int_var(5, 25, "y")
-model.add(y == x * 2 + 5)
-
-solver = cp_model.CpSolver()
-status = solver.solve(model)
-
 
 class VarArraySolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions."""
@@ -29,5 +20,8 @@ class VarArraySolutionPrinter(cp_model.CpSolverSolutionCallback):
         return self.__solution_count
 
 
-solver.parameters.enumerate_all_solutions = True
-solver.solve(model, VarArraySolutionPrinter([x, y]))
+def print_vars(
+    model: cp_model.CpModel, solver: cp_model.CpSolver, variables: list[cp_model.IntVar]
+):
+    solver.parameters.enumerate_all_solutions = True
+    solver.solve(model, VarArraySolutionPrinter(variables))

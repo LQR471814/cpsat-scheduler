@@ -73,6 +73,17 @@ def and_bool(
     return bool_var
 
 
+@dataclass
+class ScheduledTask:
+    task_id: int
+    # this is in terms of the task_unit
+    start: int
+    # this is in terms of the atomic unit, it may not be a multiple of task_unit
+    real_end: int
+    # this is the index of the cost config chosen
+    config: int
+
+
 class Model:
     config: Config
 
@@ -131,12 +142,10 @@ class Model:
                 0, max_start_time // unit, f"t{t}_st"
             )
             self.var_cost_config_select[t] = model.new_int_var(
-                0, len(self.config.task_cost_configs) - 1, f"t{t}_cfg"
+                0, len(self.config.task_cost_configs[t]) - 1, f"t{t}_cfg"
             )
             self.var_real_duration[t] = model.new_int_var(0, max_end_time, f"t{t}_dur")
-            self.var_real_end_times[t] = model.new_int_var(
-                0, max_end_time // unit, f"t{t}_end"
-            )
+            self.var_real_end_times[t] = model.new_int_var(0, max_end_time, f"t{t}_end")
             self.var_real_cost[t] = model.new_int_var(min_cost, max_cost, f"t{t}_cost")
             self.var_parent_start[t] = model.new_int_var(
                 0, max_start_time, f"t{t}_parent_start"
@@ -327,20 +336,21 @@ class Model:
 
         return model
 
-    def solve(self):
+    def solve(self) -> tuple[cp_model.CpSolverStatus, list[ScheduledTask]]:
         model = self._model()
         solver = cp_model.CpSolver()
         status = solver.solve(model)
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-            print(status)
-            for t in self.config.tasks:
-                print(f"Task {t}:")
-                print(f"\tstart = {solver.value(self.var_starting_times[t])}")
-                print(f"\tend = {solver.value(self.var_real_end_times[t])}")
-                print(f"\tcost = {solver.value(self.var_real_cost[t])}")
-                print(f"\tcost_cfg = {solver.value(self.var_cost_config_select[t])}")
-        else:
-            print("No solution found.", status)
+            return status, [
+                ScheduledTask(
+                    task_id=t,
+                    start=solver.value(self.var_starting_times[t]),
+                    real_end=solver.value(self.var_real_end_times[t]),
+                    config=solver.value(self.var_cost_config_select[t]),
+                )
+                for t in self.config.tasks
+            ]
+        return status, []
 
 
 class Task:
