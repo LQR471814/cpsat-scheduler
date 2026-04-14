@@ -25,7 +25,7 @@ $u_{t} \in U$ is the timescale unit of task $t \in T$.
 
 $I_{t}$ is the set of cost configurations for task $t \in T$.
 
-$\forall t \in T [I_{t} \neq \emptyset]$
+$\forall t \in T (I_{t} \neq \emptyset)$
 
 Each task must have at least 1 cost configuration, otherwise
 decision variables and cost computation would be undefined.
@@ -44,26 +44,32 @@ Gives the cost $c$ which applies if the [[#Real task completion time]]
 of task $t$ under cost configuration $i$ falls inside closed
 interval $[a,b]$.
 
+<!--
 $R_{it} \in \text{Set}~\mathbb{N}$ gives the set of task durations
-which this cost applies to.
+which this cost configuration applies to.
 
 $$
 \forall t \in T \forall i \in I_{t} \forall A \in R_{it} \forall B
 \in R_{it} (A \neq B \to A \cap B = \emptyset)
 $$
+-->
 
 In other words, no cost configurations should overlap with each
 other.
 
 > [!NOTE]
-> We split a task's duration vs finish probability distribution
-> into multiple segments. For each segment, we take the
-> "worst-case" cost, so the cost of taking the longest time in the
-> segment.
+> We are given a continuous probability distribution of a task's
+> duration vs. finish time though! To discretize such a
+> distribution, we will split it into a fixed number of buckets.
+> For each bucket, the $\delta_{ti}$ of the cost configuration
+> associated with it will be the maximum duration in that bucket
+> and the cost will be $C[1-F(\delta_{ti})]$ where $C$ is the
+> absolute cost of not finishing.
 >
-> For a task with a cost of non-finish of $C$, the cost of not
-> finishing at a duration of $\delta$ $C[1-F(\delta)]$ where $F$
-> is the CDF of duration vs finish probability.
+> This is because if we consider the semantic meaning of the
+> decision variable, the solver is essentially choosing the total
+> duration to allocate to the task, and as such, is also choosing
+> the amount of risk it wants to take given the cost.
 
 $Ch_{it} \in T$ is the set of children for a task $t \in T$ and
 cost configuration $i \in I_{t}$. (should not contain cycles)
@@ -97,11 +103,12 @@ $d_{t} \in \Theta(u_{t}) \cup \{\emptyset\}$ is the deadline (or
 null) of task $t\in{T}$.
 
 $Pa_{t} = \begin{cases}
-\iota p(t \in Ch_{p}), & \exists p \in T (t \in Ch_{p}) \\
-\emptyset, & \neg\exists p \in T (t \in Ch_{p}) \\
+\iota p(t \in Ch_{D_{p}[i]p}), & \exists p \in T (t \in Ch_{D_{p}[i]p}) \\
+\emptyset, & \neg\exists p \in T (t \in Ch_{D_{p}[i]p}) \\
 \end{cases}$
 
-$Pa_{t}$ gives the parent or null of the given task $t \in T$.
+$Pa_{t}$ gives the current parent or null of the given task
+$t\in{T}$.
 
 $\theta_{t} : I_{t} \to \text{Set}~\mathbb{N}$ for a $t \in T$
 
@@ -111,7 +118,7 @@ $$
 &     (Pa_{t} \neq \emptyset \to s \geq \frac{u_{Pa_{t}}}{u_{t}}D_{Pa_{t}}[s]) \\
 &     \land (s_{t} \neq \emptyset \to s \geq s_{t}) \\
 & ] \land [ \\
-&     (Pa_{t}\neq \emptyset \to s < \frac{u_{Pa_{t}}}{u_{t}}(D_{Pa_{t}}+1)) \\
+&     (Pa_{t}\neq \emptyset \to s < \frac{u_{Pa_{t}}}{u_{t}}(D_{Pa_{t}}[s]+1)) \\
 &     \land (d_{t} \neq \emptyset \to s < d_{t}) \\
 & ]\}
 \end{aligned}
