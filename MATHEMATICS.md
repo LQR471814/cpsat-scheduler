@@ -71,8 +71,35 @@ other.
 > duration to allocate to the task, and as such, is also choosing
 > the amount of risk it wants to take given the cost.
 
+## Children
+
+Each task can have multiple sets of children according to cost
+configuration.
+
 $Ch_{it} \in T$ is the set of children for a task $t \in T$ and
 cost configuration $i \in I_{t}$. (should not contain cycles)
+
+However, we also want to be able to decide task cost
+configurations independently of each other.
+
+Thus there should never occur a situation where two child
+configurations are selected and the same child appears in both.
+
+Therefore, each child must have only one possible parent outside
+of null.
+
+$Hc : T \times T \to \text{Predicate}$
+
+$Hc(p, c) = \exists i \in I_{p} (c \in Ch_{ip})$
+
+$Hc(p,c)$ checks if $p \in T$ has $c \in T$ as a possible child.
+
+$$
+\forall c \in T \neg (\exists a \in T \exists b \in T [a \neq b
+\land Hc(a, c) \land Hc(b, c)])
+$$
+
+There are no children which have two different possible parents.
 
 ## Real task duration
 
@@ -109,6 +136,13 @@ $Pa_{t} = \begin{cases}
 
 $Pa_{t}$ gives the current parent or null of the given task
 $t\in{T}$.
+
+$$
+\forall p \in T (\exists i \in I_{p} [Ch_{ip} \neq \emptyset] \to \forall D_{p}[i] \in I_{p} [])
+$$
+
+For each child, it must not have more than one possible parent
+outside of having no parent.
 
 $\theta_{t} : I_{t} \to \text{Set}~\mathbb{N}$ for a $t \in T$
 

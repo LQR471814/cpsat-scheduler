@@ -162,15 +162,15 @@ for i in range(0, 5):
 
 cfg = builder.build()
 model = Model(cfg)
-status, solution_tasks = model.solve()
+status, solution_tasks = model._solve_debug()
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+    print(status)
     for unit, name in zip(timescales, timescale_names):
-        print("UNIT --- ", name)
+        print("\n\nUNIT --- ", name, unit, "\n")
         for scheduled in solution_tasks:
             task = builder.tasks[scheduled.task_id]
             if task.unit != unit:
                 continue
-            print(scheduled.config, task._configs, cfg.task_cost_configs[task.id])
             print(
                 "id:",
                 task.id,
