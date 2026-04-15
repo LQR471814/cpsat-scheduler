@@ -62,15 +62,15 @@ def guard_bool(
     return guard_var
 
 
-def and_bool(
-    model: cp_model.CpModel, name: str, *cond: cp_model.IntVar
-) -> cp_model.IntVar:
-    bool_var = model.new_bool_var(name)
-    for c in cond:
-        model.add_implication(bool_var, c)
-    model.add_bool_and(*cond, bool_var).only_enforce_if(bool_var)
-    model.add_bool_or(*[b.Not() for b in cond]).only_enforce_if(bool_var.Not())
-    return bool_var
+# def and_bool(
+#     model: cp_model.CpModel, name: str, *cond: cp_model.IntVar
+# ) -> cp_model.IntVar:
+#     bool_var = model.new_bool_var(name)
+#     for c in cond:
+#         model.add_implication(bool_var, c)
+#     model.add_bool_and(*cond, bool_var).only_enforce_if(bool_var)
+#     model.add_bool_or(*[b.Not() for b in cond]).only_enforce_if(bool_var.Not())
+#     return bool_var
 
 
 @dataclass
@@ -151,9 +151,17 @@ class Model:
 
         for t in self.config.tasks:
             unit = self.config.task_timescale_units[t]
+
+            start_lb = 0
+            start_ub = max_start_time // unit
+            if t in self.config.task_start:
+                start_lb = self.config.task_start[t]
+            if t in self.config.task_end:
+                start_ub = self.config.task_end[t] - 1
             self.var_starting_times[t] = model.new_int_var(
-                0, max_start_time // unit, f"t{t}_st"
+                start_lb, start_ub, f"t{t}_st"
             )
+
             self.var_cost_config_select[t] = model.new_int_var(
                 0, len(self.config.task_cost_configs[t]) - 1, f"t{t}_cfg"
             )
@@ -280,11 +288,13 @@ class Model:
                 task_starting_var < parent_start_converted + scaling_factor
             ).only_enforce_if(parent_not_null)
 
-            # define intrinsic start/end constraints (tautalogy if not specified)
-            if t in self.config.task_start:
-                model.add(task_starting_var >= self.config.task_start[t])
-            if t in self.config.task_end:
-                model.add(task_starting_var < self.config.task_end[t])
+            # # define intrinsic start/end constraints (tautalogy if not specified)
+            # if t in self.config.task_start:
+            #     print(task_starting_var >= self.config.task_start[t])
+            #     model.add(task_starting_var >= self.config.task_start[t])
+            # if t in self.config.task_end:
+            #     print(task_starting_var < self.config.task_end[t])
+            #     model.add(task_starting_var < self.config.task_end[t])
 
         # add prereq constraints O(prereqs * task)
         for t in self.config.tasks:
@@ -305,6 +315,9 @@ class Model:
         #
         # we can improve perf. in the expected case by filtering by tasks in the
         # same timescale
+
+        self.var_task_pair_aligned_forward: dict[frozenset[int], cp_model.IntVar] = {}
+
         for t in self.config.tasks:
             defined = self.var_real_duration[t]
             unit = self.config.task_timescale_units[t]  # this is also the max duration
@@ -315,8 +328,29 @@ class Model:
                     continue
                 if self.config.task_timescale_units[other] != unit:
                     continue
-                other_duration = self.var_real_duration[other]
-                sum += other_duration
+                key = frozenset((t, other))
+
+                if key not in self.var_task_pair_aligned_forward:
+                    self.var_task_pair_aligned_forward[frozenset((t, other))] = (
+                        guard_bool(
+                            model,
+                            f"t{t}_t{other}_same_start",
+                            self.var_starting_times[other]
+                            == self.var_starting_times[t],
+                            self.var_starting_times[other]
+                            != self.var_starting_times[t],
+                        )
+                    )
+
+                is_aligned = self.var_task_pair_aligned_forward[key]
+                other_term = model.new_int_var(
+                    0, max_end_time, f"t{t}_other{other}_term"
+                )
+                model.add(other_term == self.var_real_duration[other]).only_enforce_if(
+                    is_aligned
+                )
+                model.add(other_term == 0).only_enforce_if(is_aligned.Not())
+                sum += other_term
 
             model.add(sum <= unit)
 
@@ -361,13 +395,13 @@ class Model:
         status = solver.solve(model)
 
         proto = model.Proto()
-        view_vars = [241, 240, 120]
+        view_vars = []
         print("\nVARIABLES\n")
         for v in view_vars:
             print(v, proto.variables[v])
             print()
         print("\nCONSTRAINTS\n")
-        view_constraints = [353]
+        view_constraints = []
         for v in view_constraints:
             print(v, proto.constraints[v])
             print()
@@ -527,3 +561,53 @@ class ConfigBuilder:
             task_end=task_end,
             task_parent_conditions=task_parent_conditions,
         )
+
+
+def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]):
+    for s in scheduled:
+        if s.task_id in config.task_start:
+            assert s.start >= config.task_start[s.task_id]
+        if s.task_id in config.task_end:
+            assert s.start < config.task_end[s.task_id]
+
+
+def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
+    unit_bucket_durations: dict[int, dict[int, int]] = {}
+
+    duration_dict: dict[int, int] = {}
+    scheduled_dict: dict[int, ScheduledTask] = {}
+    for s in scheduled:
+        scheduled_dict[s.task_id] = s
+
+    def ensure_duration(id: int) -> int:
+        if id in duration_dict:
+            return duration_dict[id]
+
+        s = scheduled_dict[id]
+
+        unit = config.task_timescale_units[id]
+        if unit not in unit_bucket_durations:
+            unit_bucket_durations[unit] = {}
+        unit_buckets = unit_bucket_durations[unit]
+        if s.start not in unit_buckets:
+            unit_buckets[s.start] = 0
+
+        chosen_config = config.task_cost_configs[s.task_id][s.config]
+        if chosen_config.duration is not None:
+            duration_dict[id] = chosen_config.duration
+            return chosen_config.duration
+
+        sum = 0
+        for child in chosen_config.children:
+            sum += ensure_duration(child)
+        duration_dict[id] = sum
+        return sum
+
+    for s in scheduled:
+        ensure_duration(s.task_id)
+    for s in scheduled:
+        unit = config.task_timescale_units[s.task_id]
+        unit_bucket_durations[unit][s.start] += duration_dict[s.task_id]
+    for unit in unit_bucket_durations:
+        for bucket_duration in unit_bucket_durations[unit]:
+            assert bucket_duration <= unit

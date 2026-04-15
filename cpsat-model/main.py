@@ -1,4 +1,11 @@
-from config import ConfigBuilder, CostInterval, Task, Model
+from config import (
+    ConfigBuilder,
+    CostInterval,
+    Task,
+    Model,
+    assert_non_overflow,
+    assert_intrinsic_start_end,
+)
 from ortools.sat.python import cp_model
 
 
@@ -162,24 +169,27 @@ for i in range(0, 5):
 
 cfg = builder.build()
 model = Model(cfg)
-status, solution_tasks = model._solve_debug()
+status, solution_tasks = model.solve()
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status)
+    assert_intrinsic_start_end(cfg, solution_tasks)
+    assert_non_overflow(cfg, solution_tasks)
     for unit, name in zip(timescales, timescale_names):
+        in_unit = [s for s in solution_tasks if builder.tasks[s.task_id].unit == unit]
+        if len(in_unit) == 0:
+            continue
         print("\n\nUNIT --- ", name, unit, "\n")
-        for scheduled in solution_tasks:
-            task = builder.tasks[scheduled.task_id]
-            if task.unit != unit:
-                continue
+        for s in in_unit:
+            task = builder.tasks[s.task_id]
             print(
                 "id:",
                 task.id,
                 "start:",
-                scheduled.start,
+                s.start,
                 "end:",
-                scheduled.real_end,
+                s.real_end,
                 "config:",
-                task._configs[scheduled.config],
+                task._configs[s.config],
             )
 else:
     print("No solution:", status)
