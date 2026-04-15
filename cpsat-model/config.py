@@ -416,19 +416,23 @@ class Model:
             for t in self.config.tasks
         ]
 
-    def solve(self) -> tuple[cp_model.CpSolverStatus, list[ScheduledTask]]:
+    def solve(self) -> tuple[cp_model.CpSolverStatus, float, list[ScheduledTask]]:
         model = self._model()
         solver = cp_model.CpSolver()
         status = solver.solve(model)
-        return status, [
-            ScheduledTask(
-                task_id=t,
-                start=solver.value(self.var_starting_times[t]),
-                real_end=solver.value(self.var_real_end_times[t]),
-                config=solver.value(self.var_cost_config_select[t]),
-            )
-            for t in self.config.tasks
-        ]
+        return (
+            status,
+            solver.ObjectiveValue(),
+            [
+                ScheduledTask(
+                    task_id=t,
+                    start=solver.value(self.var_starting_times[t]),
+                    real_end=solver.value(self.var_real_end_times[t]),
+                    config=solver.value(self.var_cost_config_select[t]),
+                )
+                for t in self.config.tasks
+            ],
+        )
 
 
 class Task:

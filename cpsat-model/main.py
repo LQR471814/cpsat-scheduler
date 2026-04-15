@@ -1,6 +1,7 @@
 from config import (
     ConfigBuilder,
     CostInterval,
+    ScheduledTask,
     Task,
     Model,
     assert_non_overflow,
@@ -169,27 +170,34 @@ for i in range(0, 5):
 
 cfg = builder.build()
 model = Model(cfg)
-status, solution_tasks = model.solve()
+status, total_cost, solution_tasks = model.solve()
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-    print(status)
+    print(status, "cost:", total_cost)
     assert_intrinsic_start_end(cfg, solution_tasks)
     assert_non_overflow(cfg, solution_tasks)
     for unit, name in zip(timescales, timescale_names):
         in_unit = [s for s in solution_tasks if builder.tasks[s.task_id].unit == unit]
         if len(in_unit) == 0:
             continue
-        print("\n\nUNIT --- ", name, unit, "\n")
+        groups: dict[int, list[ScheduledTask]] = {}
         for s in in_unit:
-            task = builder.tasks[s.task_id]
-            print(
-                "id:",
-                task.id,
-                "start:",
-                s.start,
-                "end:",
-                s.real_end,
-                "config:",
-                task._configs[s.config],
-            )
+            if s.start not in groups:
+                groups[s.start] = []
+            groups[s.start].append(s)
+        print("\n\nUNIT --- ", name, unit, "\n")
+        for starting_time in sorted(groups.keys()):
+            print(f"\nUnit {starting_time}:")
+            for s in groups[starting_time]:
+                task = builder.tasks[s.task_id]
+                print(
+                    "id:",
+                    task.id,
+                    "start:",
+                    s.start,
+                    "end:",
+                    s.real_end,
+                    "config:",
+                    task._configs[s.config],
+                )
 else:
     print("No solution:", status)
