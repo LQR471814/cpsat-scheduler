@@ -88,93 +88,100 @@ def deadline_intervals(deadline: int, exp_cost: int, start=0, end=END_TIME):
 # unit = we decide which week to put this multi-day task in, so unit is week
 # start/end = cannot possibly schedule this after this week and cannot be negative start
 ee98_hw6 = Task(builder, week, end=1)
-ee98_hw6_hrs = [Task(builder, day) for _ in range(6)]
+
+ee98_hw6_hrs = [Task(builder, day) for _ in range(2)]
 for hr in ee98_hw6_hrs:
     hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
-for duration_hrs, cost in [
-    (5, 0),
-    (4, 2),
-    (3, 3),
-    (2, 5),
-    (1, 7),
-]:
-    ee98_hw6.add_cost_config_children(
-        deadline_intervals(0, 5 * day, cost),
-        ee98_hw6_hrs[0:duration_hrs],
-    )
-ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 0)
 
-# COMM 20 survey, due thursday (25 pt)
-comm20_survey = Task(builder, week, end=1)
-comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 0), 6 * minute_15)
-comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 5), 3 * minute_15)
-comm20_survey.add_cost_config_duration(constant_cost_intervals(25), 0)
+ee98_hw6.add_cost_config_children(deadline_intervals(5 * day, 10), ee98_hw6_hrs)
 
-# COMM 20 quiz, due Friday (5 pt)
-comm20_survey = Task(builder, week, end=1)
-comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 0), 1 * minute_15)
-comm20_survey.add_cost_config_duration(constant_cost_intervals(5), 0)
+# for duration_hrs, cost in [
+#     (5, 0),
+#     (4, 2),
+#     (3, 3),
+#     (2, 5),
+#     (1, 7),
+# ]:
+#     ee98_hw6.add_cost_config_children(
+#         deadline_intervals(5 * day, cost),
+#         ee98_hw6_hrs[0:duration_hrs],
+#     )
 
-# CMPE 50 Midterm 2 (100 pt)
-cmpe50_midterm2_hrs = [Task(builder, day) for _ in range(3)]
-for hr in cmpe50_midterm2_hrs:
-    hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
-cmpe50_midterm2 = Task(builder, week, end=1)
-for duration_hrs, cost in [
-    (3, 0),
-    (2, 8),
-    (1, 20),
-]:
-    cmpe50_midterm2.add_cost_config_children(
-        deadline_intervals(0, 4 * day, cost), cmpe50_midterm2_hrs[0:duration_hrs]
-    )
-cmpe50_midterm2.add_cost_config_duration(constant_cost_intervals(100), 0)
+# ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 0)
 
-# CMPE 50 HW 6 (30 pt)
-cmpe50_hw6 = Task(builder, week)
-cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 0), 4 * minute_15)
-cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 15), 2 * minute_15)
-cmpe50_hw6.add_cost_config_duration(constant_cost_intervals(30), 0)
-
-# ENGR 10 Robot Lab Prep. (est. 5 pt)
-engr10_robot_lab = Task(builder, week)
-engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 0), 6 * minute_15)
-engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 1), 4 * minute_15)
-engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 4), 2 * minute_15)
-engr10_robot_lab.add_cost_config_duration(constant_cost_intervals(10), 0)
-
-# ENGR 10 HW 3 (30 pt)
-engr10_hw3 = Task(builder, week)
-engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 0), 5 * minute_15)
-engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 2), 4 * minute_15)
-engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 3), 3 * minute_15)
-engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 7), 2 * minute_15)
-engr10_hw3.add_cost_config_duration(constant_cost_intervals(30), 0)
-
-# ENGL 1A Rough Draft (35 pt)
-engl1a_rd = Task(builder, week)
-engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 0), 6 * minute_15)
-engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 1), 4 * minute_15)
-engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 3), 2 * minute_15)
-engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 5), 1 * minute_15)
-engl1a_rd.add_cost_config_duration(constant_cost_intervals(35), 0)
-
-# # EE 97 Lab Prep (40 pt)
-# ee97_lab_prep = Task(builder, week)
+# # COMM 20 survey, due thursday (25 pt)
+# comm20_survey = Task(builder, week, end=1)
+# comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 0), 6 * minute_15)
+# comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 5), 3 * minute_15)
+# comm20_survey.add_cost_config_duration(constant_cost_intervals(25), 0)
+#
+# # COMM 20 quiz, due Friday (5 pt)
+# comm20_survey = Task(builder, week, end=1)
+# comm20_survey.add_cost_config_duration(deadline_intervals(4 * day, 0), 1 * minute_15)
+# comm20_survey.add_cost_config_duration(constant_cost_intervals(5), 0)
+#
+# # CMPE 50 Midterm 2 (100 pt)
+# cmpe50_midterm2_hrs = [Task(builder, day) for _ in range(3)]
+# for hr in cmpe50_midterm2_hrs:
+#     hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
+# cmpe50_midterm2 = Task(builder, week, end=1)
+# for duration_hrs, cost in [
+#     (3, 0),
+#     (2, 8),
+#     (1, 20),
+# ]:
+#     cmpe50_midterm2.add_cost_config_children(
+#         deadline_intervals(0, 4 * day, cost), cmpe50_midterm2_hrs[0:duration_hrs]
+#     )
+# cmpe50_midterm2.add_cost_config_duration(constant_cost_intervals(100), 0)
+#
+# # CMPE 50 HW 6 (30 pt)
+# cmpe50_hw6 = Task(builder, week)
+# cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 0), 4 * minute_15)
+# cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 15), 2 * minute_15)
+# cmpe50_hw6.add_cost_config_duration(constant_cost_intervals(30), 0)
+#
+# # ENGR 10 Robot Lab Prep. (est. 5 pt)
+# engr10_robot_lab = Task(builder, week)
+# engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 0), 6 * minute_15)
+# engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 1), 4 * minute_15)
+# engr10_robot_lab.add_cost_config_duration(deadline_intervals(5 * day, 4), 2 * minute_15)
+# engr10_robot_lab.add_cost_config_duration(constant_cost_intervals(10), 0)
+#
+# # ENGR 10 HW 3 (30 pt)
+# engr10_hw3 = Task(builder, week)
+# engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 0), 5 * minute_15)
+# engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 2), 4 * minute_15)
+# engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 3), 3 * minute_15)
+# engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 7), 2 * minute_15)
+# engr10_hw3.add_cost_config_duration(constant_cost_intervals(30), 0)
+#
+# # ENGL 1A Rough Draft (35 pt)
+# engl1a_rd = Task(builder, week)
+# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 0), 6 * minute_15)
+# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 1), 4 * minute_15)
+# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 3), 2 * minute_15)
+# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 5), 1 * minute_15)
+# engl1a_rd.add_cost_config_duration(constant_cost_intervals(35), 0)
+#
+# # # EE 97 Lab Prep (40 pt)
+# # ee97_lab_prep = Task(builder, week)
 
 # weekday fixed time (16.5 hrs a day, 8 hrs sleep, 8 hrs in transit/class)
-for i in range(0, 5):
-    event = Task(builder, day, start=i, end=i + 1)
-    event.add_cost_config_duration(NO_COST_INTERVALS, int(16.5 * 4 * minute_15))
+# for i in range(0, 5):
+#     event = Task(builder, day, start=i, end=i + 1)
+#     event.add_cost_config_duration(NO_COST_INTERVALS, int(16.5 * 4 * minute_15))
 
 
 cfg = builder.build()
 model = Model(cfg)
-status, total_cost, solution_tasks = model.solve()
+status, total_cost, solution_tasks = model._solve_debug()
+
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status, "cost:", total_cost)
     assert_intrinsic_start_end(cfg, solution_tasks)
     assert_non_overflow(cfg, solution_tasks)
+
     for unit, name in zip(timescales, timescale_names):
         in_unit = [s for s in solution_tasks if builder.tasks[s.task_id].unit == unit]
         if len(in_unit) == 0:

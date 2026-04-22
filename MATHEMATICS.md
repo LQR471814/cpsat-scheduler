@@ -101,6 +101,16 @@ $$
 
 There are no children which have two different possible parents.
 
+### Deactivating orphans
+
+If a child can possibly have a parent, but its current parent is
+null, the child's real duration will automatically become $0$,
+indicating that the child has been dropped.
+
+$$
+\forall c \in T [Pa_{c} = \emptyset \to \delta_{D_{c}[i]}c = 0]
+$$
+
 ## Real task duration
 
 $\delta_{ti} \in \mathbb{N}$ gives the real duration of a task
