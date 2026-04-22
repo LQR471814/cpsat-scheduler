@@ -96,8 +96,10 @@ class DecisionState:
             start_lb = t.start
         if t.end is not None:
             start_ub = t.end - 1
-        self.start = model.new_int_var(start_lb, start_ub, f"t{id}_st")
-        self.config_select = model.new_int_var(0, len(t.cost_configs) - 1, f"t{id}_cfg")
+        self.start = model.new_int_var(start_lb, start_ub, f"t{t.id}_st")
+        self.config_select = model.new_int_var(
+            0, len(t.cost_configs) - 1, f"t{t.id}_cfg"
+        )
 
 
 class ComputedState:
@@ -116,21 +118,21 @@ class ComputedState:
         props: ModelProps,
         t: TaskConfig,
     ) -> None:
-        self.real_duration = model.new_int_var(0, props.max_end_time, f"t{id}_dur")
-        self.real_end = model.new_int_var(0, props.max_end_time, f"t{id}_end")
+        self.real_duration = model.new_int_var(0, props.max_end_time, f"t{t.id}_dur")
+        self.real_end = model.new_int_var(0, props.max_end_time, f"t{t.id}_end")
         self.real_cost = model.new_int_var(
-            props.min_cost, props.max_cost, f"t{id}_cost"
+            props.min_cost, props.max_cost, f"t{t.id}_cost"
         )
         self.parent_start = model.new_int_var(
-            0, props.max_start_time, f"t{id}_parent_start"
+            0, props.max_start_time, f"t{t.id}_parent_start"
         )
         self.parent_unit = model.new_int_var_from_domain(
-            props.timescales_or_null_domain, f"t{id}_parent_unit"
+            props.timescales_or_null_domain, f"t{t.id}_parent_unit"
         )
         self.configs_active = [
             guard_bool(
                 model,
-                f"t{id}_cfg{i}_active",
+                f"t{t.id}_cfg{i}_active",
                 state.config_select == i,
                 state.config_select != i,
             )
@@ -207,10 +209,7 @@ class Model:
             timescales_or_null_domain,
         )
 
-    def __setup_computed_duration_and_end(
-        self,
-        t: TaskConfig,
-    ):
+    def __setup_computed_duration_and_end(self, t: TaskConfig):
         unit = t.timescale_unit
         decision = self.decision_vars[t.id]
         computed = self.computed_vars[t.id]
@@ -249,10 +248,7 @@ class Model:
                     end_time == unit * start_time + real_duration
                 ).only_enforce_if(config_active)
 
-    def __setup_computed_parents(
-        self,
-        t: TaskConfig,
-    ):
+    def __setup_computed_parents(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
         task_parent_unit = computed.parent_unit
         task_parent_start = computed.parent_start
@@ -289,14 +285,14 @@ class Model:
         # 1. check parent not null
         parent_not_null = guard_bool(
             self.model,
-            f"task_parent_not_null_{id}",
+            f"task_parent_not_null_{t.id}",
             parent_unit != 0,
             parent_unit == 0,
         )
 
         # 2. compute scaling factor (if par not null)
         scaling_factor = self.model.new_int_var(
-            1, self.props.max_scaling_factor, f"scaling_factor_{id}"
+            1, self.props.max_scaling_factor, f"scaling_factor_{t.id}"
         )
         self.model.add(parent_unit >= task_unit).only_enforce_if(parent_not_null)
         self.model.add_division_equality(
@@ -305,7 +301,7 @@ class Model:
 
         # 3. compute parent start in the task's unit (if par not null)
         parent_start_converted = self.model.new_int_var(
-            0, self.props.max_start_time, f"parent_start_converted_{id}"
+            0, self.props.max_start_time, f"parent_start_converted_{t.id}"
         )
         self.model.add_multiplication_equality(
             parent_start_converted, scaling_factor, parent_start_var
@@ -349,7 +345,7 @@ class Model:
                 self.computed_pair_aligned_forward[frozenset((t.id, other))] = (
                     guard_bool(
                         self.model,
-                        f"t{id}_t{other}_same_start",
+                        f"t{t.id}_t{other}_same_start",
                         self.decision_vars[other].start
                         == self.decision_vars[t.id].start,
                         self.decision_vars[other].start
@@ -359,7 +355,7 @@ class Model:
 
             is_aligned = self.computed_pair_aligned_forward[key]
             other_term = self.model.new_int_var(
-                0, self.props.max_end_time, f"t{id}_other{other}_term"
+                0, self.props.max_end_time, f"t{t.id}_other{other}_term"
             )
             self.model.add(
                 other_term == self.computed_vars[other].real_duration
@@ -380,13 +376,13 @@ class Model:
                 start, end = intv.interval
                 cost_intv_after_start = guard_bool(
                     self.model,
-                    f"t{id}_cfg{i}_intv{j}_before_start",
+                    f"t{t.id}_cfg{i}_intv{j}_before_start",
                     real_end_time >= start,
                     real_end_time < start,
                 )
                 cost_intv_before_end = guard_bool(
                     self.model,
-                    f"t{id}_cfg{i}_intv{j}_after_end",
+                    f"t{t.id}_cfg{i}_intv{j}_after_end",
                     real_end_time <= end,
                     real_end_time > end,
                 )
@@ -464,6 +460,19 @@ class Model:
 
         return self.model
 
+    def _print_proto(self):
+        proto = self.model.Proto()
+
+        vars: dict[int, str] = {}
+        for i, v in enumerate(proto.variables):
+            vars[i + 1] = v.name
+
+        print(vars)
+
+        print("\nCONSTRAINTS\n")
+        # for i, c in enumerate(proto.constraints):
+        #     print(i + 1, c)
+
     def _solve_debug(self):
         model = self._model()
         solver = cp_model.CpSolver()
@@ -471,16 +480,7 @@ class Model:
         solver.parameters.cp_model_presolve = True
         status = solver.solve(model)
 
-        proto = model.Proto()
-
-        print("\nVARIABLES\n")
-
-        for i, v in enumerate(proto.variables):
-            print(i + 1, v)
-
-        print("\nCONSTRAINTS\n")
-        for i, c in enumerate(proto.constraints):
-            print(i + 1, c)
+        self._print_proto()
 
         return (
             status,
