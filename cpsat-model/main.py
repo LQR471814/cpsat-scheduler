@@ -1,12 +1,11 @@
 from config import (
-    ConfigBuilder,
     CostInterval,
     ScheduledTask,
-    Task,
     Model,
     assert_non_overflow,
     assert_intrinsic_start_end,
 )
+from config_builder import ConfigBuilder, Task
 from ortools.sat.python import cp_model
 
 
@@ -154,29 +153,11 @@ ee98_hw6.add_cost_config_children(deadline_intervals(5 * day, 10), ee98_hw6_hrs)
 # engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 2), 4 * minute_15)
 # engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 3), 3 * minute_15)
 # engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 7), 2 * minute_15)
-# engr10_hw3.add_cost_config_duration(constant_cost_intervals(30), 0)
-#
-# # ENGL 1A Rough Draft (35 pt)
-# engl1a_rd = Task(builder, week)
-# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 0), 6 * minute_15)
-# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 1), 4 * minute_15)
-# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 3), 2 * minute_15)
-# engl1a_rd.add_cost_config_duration(deadline_intervals(7 * day, 5), 1 * minute_15)
-# engl1a_rd.add_cost_config_duration(constant_cost_intervals(35), 0)
-#
-# # # EE 97 Lab Prep (40 pt)
-# # ee97_lab_prep = Task(builder, week)
-
-# weekday fixed time (16.5 hrs a day, 8 hrs sleep, 8 hrs in transit/class)
-# for i in range(0, 5):
-#     event = Task(builder, day, start=i, end=i + 1)
-#     event.add_cost_config_duration(NO_COST_INTERVALS, int(16.5 * 4 * minute_15))
-
+# engr10_hwal_cost, solution_tasks = model._solve_debug()
 
 cfg = builder.build()
 model = Model(cfg)
-status, total_cost, solution_tasks = model._solve_debug()
-
+status, total_cost, solution_tasks = model.solve()
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status, "cost:", total_cost)
     assert_intrinsic_start_end(cfg, solution_tasks)

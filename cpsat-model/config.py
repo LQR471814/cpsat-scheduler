@@ -15,15 +15,15 @@ def guard_bool(
     return guard_var
 
 
-# def and_bool(
-#     model: cp_model.CpModel, name: str, *cond: cp_model.IntVar
-# ) -> cp_model.IntVar:
-#     bool_var = model.new_bool_var(name)
-#     for c in cond:
-#         model.add_implication(bool_var, c)
-#     model.add_bool_and(*cond, bool_var).only_enforce_if(bool_var)
-#     model.add_bool_or(*[b.Not() for b in cond]).only_enforce_if(bool_var.Not())
-#     return bool_var
+def and_bool(
+    model: cp_model.CpModel, name: str, *cond: cp_model.IntVar
+) -> cp_model.IntVar:
+    bool_var = model.new_bool_var(name)
+    for c in cond:
+        model.add_implication(bool_var, c)
+    model.add_bool_and(*cond, bool_var).only_enforce_if(bool_var)
+    model.add_bool_or(*[b.Not() for b in cond]).only_enforce_if(bool_var.Not())
+    return bool_var
 
 
 @dataclass
@@ -117,7 +117,7 @@ class ComputedState:
         t: TaskConfig,
     ) -> None:
         self.real_duration = model.new_int_var(0, props.max_end_time, f"t{id}_dur")
-        self.real_end_times = model.new_int_var(0, props.max_end_time, f"t{id}_end")
+        self.real_end = model.new_int_var(0, props.max_end_time, f"t{id}_end")
         self.real_cost = model.new_int_var(
             props.min_cost, props.max_cost, f"t{id}_cost"
         )
@@ -215,7 +215,7 @@ class Model:
         decision = self.decision_vars[t.id]
         computed = self.computed_vars[t.id]
         start_time = decision.start
-        end_time = computed.real_end_times
+        end_time = computed.real_end
         real_duration = computed.real_duration
         cost_config_active_bools = computed.configs_active
 
@@ -235,9 +235,7 @@ class Model:
                 )
 
                 # define real end time as max of children end times
-                children_exprs = [
-                    self.computed_vars[c].real_end_times for c in children
-                ]
+                children_exprs = [self.computed_vars[c].real_end for c in children]
                 self.model.add_max_equality(end_time, children_exprs).only_enforce_if(
                     config_active
                 )
@@ -455,9 +453,7 @@ class Model:
         self.computed_pair_aligned_forward: dict[frozenset[int], cp_model.IntVar] = {}
 
         for t in self.config.tasks.values():
-            self.__timescale_overflow_constraints(
-                t,
-            )
+            self.__timescale_overflow_constraints(t)
 
         # add computed costs O(cost config * cost interval * task)
         for t in self.config.tasks.values():
@@ -467,9 +463,6 @@ class Model:
         self.__objective_function()
 
         return self.model
-
-    def _print(self):
-        pass
 
     def _solve_debug(self):
         model = self._model()
@@ -495,9 +488,9 @@ class Model:
             [
                 ScheduledTask(
                     task_id=t,
-                    start=solver.value(self.var_starting_times[t]),
-                    real_end=solver.value(self.var_real_end_times[t]),
-                    config=solver.value(self.var_cost_config_select[t]),
+                    start=solver.value(self.decision_vars[t].start),
+                    real_end=solver.value(self.computed_vars[t].real_end),
+                    config=solver.value(self.decision_vars[t].config_select),
                 )
                 for t in self.config.tasks
             ],
@@ -509,7 +502,9 @@ class Model:
         solver = cp_model.CpSolver()
         status = solver.solve(model)
         print_vars(
-            model, solver, [self.var_cost_config_select[t] for t in self.config.tasks]
+            model,
+            solver,
+            [self.decision_vars[t].config_select for t in self.config.tasks],
         )
         return (
             status,
@@ -517,9 +512,9 @@ class Model:
             [
                 ScheduledTask(
                     task_id=t,
-                    start=solver.value(self.var_starting_times[t]),
-                    real_end=solver.value(self.var_real_end_times[t]),
-                    config=solver.value(self.var_cost_config_select[t]),
+                    start=solver.value(self.decision_vars[t].start),
+                    real_end=solver.value(self.computed_vars[t].real_end),
+                    config=solver.value(self.decision_vars[t].config_select),
                 )
                 for t in self.config.tasks
             ],
@@ -528,10 +523,11 @@ class Model:
 
 def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]):
     for s in scheduled:
-        if s.task_id in config.task_start:
-            assert s.start >= config.task_start[s.task_id]
-        if s.task_id in config.task_end:
-            assert s.start < config.task_end[s.task_id]
+        task_cfg = config.tasks[s.task_id]
+        if task_cfg.start is not None:
+            assert s.start >= task_cfg.start
+        if task_cfg.end is not None:
+            assert s.start < task_cfg.end
 
 
 def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
@@ -548,14 +544,15 @@ def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
 
         s = scheduled_dict[id]
 
-        unit = config.task_timescale_units[id]
+        task_cfg = config.tasks[id]
+        unit = task_cfg.timescale_unit
         if unit not in unit_bucket_durations:
             unit_bucket_durations[unit] = {}
         unit_buckets = unit_bucket_durations[unit]
         if s.start not in unit_buckets:
             unit_buckets[s.start] = 0
 
-        chosen_config = config.task_cost_configs[s.task_id][s.config]
+        chosen_config = task_cfg.cost_configs[s.config]
         if chosen_config.duration is not None:
             duration_dict[id] = chosen_config.duration
             return chosen_config.duration
@@ -569,7 +566,7 @@ def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
     for s in scheduled:
         ensure_duration(s.task_id)
     for s in scheduled:
-        unit = config.task_timescale_units[s.task_id]
+        unit = config.tasks[s.task_id].timescale_unit
         unit_bucket_durations[unit][s.start] += duration_dict[s.task_id]
     for unit in unit_bucket_durations:
         for bucket_duration in unit_bucket_durations[unit]:

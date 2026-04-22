@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Self
-from config import CostInterval, ParentCond, CostConfig, Config
+from config import CostInterval, ParentCond, CostConfig, Config, TaskConfig
 
 
 class Task:
@@ -103,33 +103,16 @@ class ConfigBuilder:
 
     def build(self) -> Config:
         timescales: list[int] = list(self.timescales)
-        tasks: list[int] = list(self.tasks.keys())
-
-        task_timescale_units: dict[int, int] = {}
-        task_cost_configs: dict[int, list[CostConfig]] = {}
-        task_prerequisites: dict[int, list[int]] = {}
-        task_start: dict[int, int] = {}
-        task_end: dict[int, int] = {}
-        task_parent_conditions: dict[int, list[ParentCond]] = {}
-
+        task_configs: dict[int, TaskConfig] = {}
         for id in self.tasks:
-            task = self.tasks[id]
-            task_timescale_units[id] = task.unit
-            task_cost_configs[id] = task._configs
-            task_prerequisites[id] = task._prerequisites
-            if task.start is not None:
-                task_start[id] = task.start
-            if task.end is not None:
-                task_end[id] = task.end
-            task_parent_conditions[id] = task._parent_conds
-
-        return Config(
-            timescales=timescales,
-            tasks=tasks,
-            task_timescale_units=task_timescale_units,
-            task_cost_configs=task_cost_configs,
-            task_prerequisites=task_prerequisites,
-            task_start=task_start,
-            task_end=task_end,
-            task_parent_conditions=task_parent_conditions,
-        )
+            t = self.tasks[id]
+            task_configs[id] = TaskConfig(
+                id=id,
+                timescale_unit=t.unit,
+                start=t.start,
+                end=t.end,
+                prerequisites=t._prerequisites,
+                cost_configs=t._configs,
+                parent_conditions=t._parent_conds,
+            )
+        return Config(timescales=timescales, tasks=task_configs)
