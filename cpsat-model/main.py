@@ -86,6 +86,7 @@ def deadline_intervals(deadline: int, exp_cost: int, start=0, end=END_TIME):
 # EE 98 HW 6, due friday (15 pt)
 # unit = we decide which week to put this multi-day task in, so unit is week
 # start/end = cannot possibly schedule this after this week and cannot be negative start
+
 ee98_hw6 = Task(builder, week, end=1)
 
 ee98_hw6_hrs = [Task(builder, day) for _ in range(2)]
@@ -158,6 +159,7 @@ ee98_hw6.add_cost_config_children(deadline_intervals(5 * day, 10), ee98_hw6_hrs)
 cfg = builder.build()
 model = Model(cfg)
 status, total_cost, solution_tasks = model.solve()
+model._print_proto()
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status, "cost:", total_cost)
     assert_intrinsic_start_end(cfg, solution_tasks)

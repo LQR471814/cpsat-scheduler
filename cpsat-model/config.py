@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsat_demos.solution_printer import print_vars
+import sys
 
 
 def guard_bool(
@@ -149,6 +150,15 @@ class ScheduledTask:
     real_end: int
     # this is the index of the cost config chosen
     config: int
+
+
+def _cap_size(i: int):
+    if i == sys.maxsize:
+        return "∞"
+    elif i == -sys.maxsize - 1:
+        return "-∞"
+    else:
+        return str(i)
 
 
 class Model:
@@ -461,17 +471,124 @@ class Model:
         return self.model
 
     def _print_proto(self):
+        print("Proto:")
+
         proto = self.model.Proto()
 
-        vars: dict[int, str] = {}
+        varnames: dict[int, str] = {}
         for i, v in enumerate(proto.variables):
-            vars[i + 1] = v.name
+            varnames[i] = v.name
 
-        print(vars)
+        def print_lin_expr(expr) -> str:
+            terms = [
+                f"{varnames[expr.vars[i]]}"
+                if expr.coeffs[i] == 1
+                else f"-{varnames[expr.vars[i]]}"
+                if expr.coeffs[i] == -1
+                else f"{expr.coeffs[i]} * {varnames[expr.vars[i]]}"
+                for i in range(len(expr.vars))
+            ]
+            if hasattr(expr, "offset") and expr.offset != 0:
+                terms.append(str(expr.offset))
+            return " + ".join(terms)
 
-        print("\nCONSTRAINTS\n")
-        # for i, c in enumerate(proto.constraints):
-        #     print(i + 1, c)
+        enforced: dict[int, str] = {}
+        for i, cobj in enumerate(proto.constraints):
+            output = ""
+            if cobj.has_all_diff():
+                c = cobj.all_diff
+                raise Exception("all_diff not supported")
+            elif cobj.has_at_most_one():
+                c = cobj.at_most_one
+                raise Exception("at_most_one not supported")
+            elif cobj.has_automaton():
+                c = cobj.automaton
+                raise Exception("automaton not supported")
+            elif cobj.has_bool_and():
+                c = cobj.bool_and
+                raise Exception("bool_and not supported")
+            elif cobj.has_bool_or():
+                c = cobj.bool_or
+                raise Exception("bool_or not supported")
+            elif cobj.has_bool_xor():
+                c = cobj.bool_xor
+                raise Exception("bool_xor not supported")
+            elif cobj.has_circuit():
+                c = cobj.circuit
+                raise Exception("bool_circuit not supported")
+            elif cobj.has_cumulative():
+                c = cobj.cumulative
+                raise Exception("cumulative not supported")
+            elif cobj.has_dummy_constraint():
+                c = cobj.dummy_constraint
+                raise Exception("dummy_constraint not supported")
+            elif cobj.has_element():
+                c = cobj.element
+                raise Exception("element not supported")
+            elif cobj.has_exactly_one():
+                c = cobj.exactly_one
+                raise Exception("exactly_one not supported")
+            elif cobj.has_int_div():
+                c = cobj.int_div
+                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])} / {print_lin_expr(c.exprs[1])}"
+            elif cobj.has_int_mod():
+                c = cobj.int_mod
+                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])} % {print_lin_expr(c.exprs[1])}"
+            elif cobj.has_int_prod():
+                c = cobj.int_prod
+                target = print_lin_expr(c.target)
+                terms = " * ".join([print_lin_expr(e) for e in c.exprs])
+                output = f"{target} = {terms}"
+            elif cobj.has_interval():
+                c = cobj.interval
+                start = print_lin_expr(c.start)
+                size = print_lin_expr(c.size)
+                end = print_lin_expr(c.end)
+                output = f"{start} + {size} == {end}"
+            elif cobj.has_inverse():
+                c = cobj.inverse
+                raise Exception("unsupported inverse!")
+            elif cobj.has_lin_max():
+                c = cobj.lin_max
+                target = f"{print_lin_expr(c.target)}"
+                terms = ", ".join([print_lin_expr(e) for e in c.exprs])
+                output = f"{target} = max({terms})"
+            elif cobj.has_linear():
+                c = cobj.linear
+                expr = print_lin_expr(c)
+
+                domains = " U ".join(
+                    [
+                        f"[{_cap_size(c.domain[i])}, {_cap_size(c.domain[i + 1])}]"
+                        for i in range(len(c.domain) // 2)
+                    ]
+                )
+                output = f"{expr} ∈ {domains}"
+            elif cobj.has_no_overlap():
+                c = cobj.no_overlap
+                raise Exception("unsupported no overlap!")
+            elif cobj.has_no_overlap_2d():
+                c = cobj.no_overlap_2d
+                raise Exception("unsupported no overlap 2d!")
+            elif cobj.has_table():
+                c = cobj.table
+                raise Exception("unsupported no overlap table!")
+            else:
+                raise Exception("this should never happen!")
+
+            enforced[i] = output
+
+        for idx, rep in enforced.items():
+            enforcement = " ^ ".join(
+                [
+                    enforced[id] if id > 0 else f"~({enforced[-(id + 1)]})"
+                    for id in proto.constraints[idx].enforcement_literal
+                ]
+            )
+            if enforcement == "":
+                print(rep)
+                continue
+            print(f"{enforcement} -> {rep}")
 
     def _solve_debug(self):
         model = self._model()
