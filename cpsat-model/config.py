@@ -591,7 +591,7 @@ class Model:
         for idx, rep in constraints.items():
             enforcement = " ∧ ".join(
                 [
-                    constraints[id] if id > 0 else f"~({constraints[-id - 1]})"
+                    constraints[id] if id > 0 else f"¬({constraints[-id - 1]})"
                     for id in proto.constraints[idx].enforcement_literal
                 ]
             )
