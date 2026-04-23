@@ -479,20 +479,29 @@ class Model:
         for i, v in enumerate(proto.variables):
             varnames[i] = v.name
 
+        def color_grey(s: str) -> str:
+            return f"\033[90m{s}\033[0m"
+
+        def color_red(s: str) -> str:
+            return f"\033[31m{s}\033[0m"
+
+        def color_blue(s: str) -> str:
+            return f"\033[34m{s}\033[0m"
+
         def print_lin_expr(expr) -> str:
             terms = [
-                f"{varnames[expr.vars[i]]}"
+                f"{color_grey(varnames[expr.vars[i]])}"
                 if expr.coeffs[i] == 1
-                else f"-{varnames[expr.vars[i]]}"
+                else f"-{color_grey(varnames[expr.vars[i]])}"
                 if expr.coeffs[i] == -1
-                else f"{expr.coeffs[i]} * {varnames[expr.vars[i]]}"
+                else f"{color_blue(expr.coeffs[i])} * {color_grey(varnames[expr.vars[i]])}"
                 for i in range(len(expr.vars))
             ]
             if hasattr(expr, "offset") and expr.offset != 0:
-                terms.append(str(expr.offset))
+                terms.append(color_blue(str(expr.offset)))
             return " + ".join(terms)
 
-        enforced: dict[int, str] = {}
+        constraints: dict[int, str] = {}
         for i, cobj in enumerate(proto.constraints):
             output = ""
             if cobj.has_all_diff():
@@ -552,14 +561,14 @@ class Model:
                 c = cobj.lin_max
                 target = f"{print_lin_expr(c.target)}"
                 terms = ", ".join([print_lin_expr(e) for e in c.exprs])
-                output = f"{target} = max({terms})"
+                output = f"{target} = max{{{terms}}}"
             elif cobj.has_linear():
                 c = cobj.linear
                 expr = print_lin_expr(c)
 
                 domains = " U ".join(
                     [
-                        f"[{_cap_size(c.domain[i])}, {_cap_size(c.domain[i + 1])}]"
+                        f"[{color_blue(_cap_size(c.domain[i]))}, {color_blue(_cap_size(c.domain[i + 1]))}]"
                         for i in range(len(c.domain) // 2)
                     ]
                 )
@@ -576,19 +585,19 @@ class Model:
             else:
                 raise Exception("this should never happen!")
 
-            enforced[i] = output
+            constraints[i] = output
 
-        for idx, rep in enforced.items():
+        for idx, rep in constraints.items():
             enforcement = " ^ ".join(
                 [
-                    enforced[id] if id > 0 else f"~({enforced[-(id + 1)]})"
+                    constraints[id] if id > 0 else f"~({constraints[-id - 1]})"
                     for id in proto.constraints[idx].enforcement_literal
                 ]
             )
             if enforcement == "":
                 print(rep)
                 continue
-            print(f"{enforcement} -> {rep}")
+            print(f"{enforcement} {color_red('->')} {rep}")
 
     def _solve_debug(self):
         model = self._model()
