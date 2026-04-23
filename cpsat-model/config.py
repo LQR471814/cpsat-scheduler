@@ -494,7 +494,7 @@ class Model:
                 if expr.coeffs[i] == 1
                 else f"-{color_grey(varnames[expr.vars[i]])}"
                 if expr.coeffs[i] == -1
-                else f"{color_blue(expr.coeffs[i])} * {color_grey(varnames[expr.vars[i]])}"
+                else f"{color_blue(expr.coeffs[i])}·{color_grey(varnames[expr.vars[i]])}"
                 for i in range(len(expr.vars))
             ]
             if hasattr(expr, "offset") and expr.offset != 0:
@@ -539,14 +539,14 @@ class Model:
                 raise Exception("exactly_one not supported")
             elif cobj.has_int_div():
                 c = cobj.int_div
-                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])} / {print_lin_expr(c.exprs[1])}"
+                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])}÷{print_lin_expr(c.exprs[1])}"
             elif cobj.has_int_mod():
                 c = cobj.int_mod
-                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])} % {print_lin_expr(c.exprs[1])}"
+                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])}%{print_lin_expr(c.exprs[1])}"
             elif cobj.has_int_prod():
                 c = cobj.int_prod
                 target = print_lin_expr(c.target)
-                terms = " * ".join([print_lin_expr(e) for e in c.exprs])
+                terms = "·".join([print_lin_expr(e) for e in c.exprs])
                 output = f"{target} = {terms}"
             elif cobj.has_interval():
                 c = cobj.interval
@@ -566,7 +566,7 @@ class Model:
                 c = cobj.linear
                 expr = print_lin_expr(c)
 
-                domains = " U ".join(
+                domains = " ∪ ".join(
                     [
                         f"[{color_blue(_cap_size(c.domain[i]))}, {color_blue(_cap_size(c.domain[i + 1]))}]"
                         for i in range(len(c.domain) // 2)
@@ -587,17 +587,24 @@ class Model:
 
             constraints[i] = output
 
+        entries: list[str] = []
         for idx, rep in constraints.items():
-            enforcement = " ^ ".join(
+            enforcement = " ∧ ".join(
                 [
                     constraints[id] if id > 0 else f"~({constraints[-id - 1]})"
                     for id in proto.constraints[idx].enforcement_literal
                 ]
             )
             if enforcement == "":
+                entries.append(rep)
                 print(rep)
                 continue
-            print(f"{enforcement} {color_red('->')} {rep}")
+            entries.append(
+                f"{color_red('enforce')} {enforcement} {color_red('iff')} {rep}"
+            )
+
+        for e in sorted(entries):
+            print(e)
 
     def _solve_debug(self):
         model = self._model()
