@@ -1,5 +1,6 @@
 from config import (
     CostInterval,
+    ProtoPrinter,
     ScheduledTask,
     Model,
     assert_non_overflow,
@@ -89,7 +90,7 @@ def deadline_intervals(deadline: int, exp_cost: int, start=0, end=END_TIME):
 
 ee98_hw6 = Task(builder, week, end=1)
 
-ee98_hw6_hrs = [Task(builder, day) for _ in range(2)]
+ee98_hw6_hrs = [Task(builder, day) for _ in range(1)]
 for hr in ee98_hw6_hrs:
     hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
 
@@ -154,12 +155,12 @@ ee98_hw6.add_cost_config_children(deadline_intervals(5 * day, 10), ee98_hw6_hrs)
 # engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 2), 4 * minute_15)
 # engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 3), 3 * minute_15)
 # engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 7), 2 * minute_15)
-# engr10_hwal_cost, solution_tasks = model._solve_debug()
 
 cfg = builder.build()
 model = Model(cfg)
 status, total_cost, solution_tasks = model.solve()
-model._print_proto()
+printer = ProtoPrinter(model.model.Proto())
+printer.print_mermaid()
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status, "cost:", total_cost)
     assert_intrinsic_start_end(cfg, solution_tasks)

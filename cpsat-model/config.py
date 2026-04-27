@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsat_demos.solution_printer import print_vars
 import sys
+import color
 
 
 def guard_bool(
@@ -11,8 +12,8 @@ def guard_bool(
     cond_false: cp_model.BoundedLinearExpression | bool,
 ) -> cp_model.IntVar:
     guard_var = model.new_bool_var(name)
-    model.add(cond_true).only_enforce_if(guard_var)
-    model.add(cond_false).only_enforce_if(guard_var.Not())
+    model.add(cond_true).only_enforce_if(guard_var).with_name(f"{name}_true")
+    model.add(cond_false).only_enforce_if(guard_var.Not()).with_name(f"{name}_false")
     return guard_var
 
 
@@ -119,10 +120,12 @@ class ComputedState:
         props: ModelProps,
         t: TaskConfig,
     ) -> None:
-        self.real_duration = model.new_int_var(0, props.max_end_time, f"t{t.id}_dur")
-        self.real_end = model.new_int_var(0, props.max_end_time, f"t{t.id}_end")
+        self.real_duration = model.new_int_var(
+            0, props.max_end_time, f"t{t.id}_real_dur"
+        )
+        self.real_end = model.new_int_var(0, props.max_end_time, f"t{t.id}_real_end")
         self.real_cost = model.new_int_var(
-            props.min_cost, props.max_cost, f"t{t.id}_cost"
+            props.min_cost, props.max_cost, f"t{t.id}_real_cost"
         )
         self.parent_start = model.new_int_var(
             0, props.max_start_time, f"t{t.id}_parent_start"
@@ -241,22 +244,26 @@ class Model:
 
                 self.model.add(real_duration == real_duration_expr).only_enforce_if(
                     config_active
-                )
+                ).with_name(f"t{t.id}_real_duration_cfg{i}_child")
 
                 # define real end time as max of children end times
                 children_exprs = [self.computed_vars[c].real_end for c in children]
                 self.model.add_max_equality(end_time, children_exprs).only_enforce_if(
                     config_active
-                )
+                ).with_name(f"t{t.id}_real_end_cfg{i}_child")
             else:  # O(cost config * task)
                 # define real duration as function of selected cost config
                 assert cfg.duration is not None
                 defined = cfg.duration
-                self.model.add(real_duration == defined).only_enforce_if(config_active)
+                self.model.add(real_duration == defined).only_enforce_if(
+                    config_active
+                ).with_name(f"t{t.id}_real_duration_cfg{i}_duration")
                 # define real end time as real start time + real duration
                 self.model.add(
                     end_time == unit * start_time + real_duration
-                ).only_enforce_if(config_active)
+                ).only_enforce_if(config_active).with_name(
+                    f"t{t.id}_real_end_cfg{i}_duration"
+                )
 
     def __setup_computed_parents(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
@@ -265,11 +272,11 @@ class Model:
 
         if len(t.parent_conditions) == 0:
             # indicates that task does not have parent
-            self.model.add(task_parent_unit == 0)
-            self.model.add(task_parent_start == 0)
+            self.model.add(task_parent_unit == 0).with_name(f"t{t.id}_parcond_none")
+            self.model.add(task_parent_start == 0).with_name(f"t{t.id}_parcond_none")
             return
 
-        for par_cond in t.parent_conditions:
+        for i, par_cond in enumerate(t.parent_conditions):
             parent_unit = self.config.tasks[par_cond.id].timescale_unit
             parent_start = self.decision_vars[par_cond.id].start
             parent_cost_config_active = self.computed_vars[par_cond.id].configs_active[
@@ -277,10 +284,10 @@ class Model:
             ]
             self.model.add(task_parent_unit == parent_unit).only_enforce_if(
                 parent_cost_config_active
-            )
+            ).with_name(f"t{t.id}_parcond_{i}_unit")
             self.model.add(task_parent_start == parent_start).only_enforce_if(
                 parent_cost_config_active
-            )
+            ).with_name(f"t{t.id}_parcond_{i}_start")
 
     def __start_end_constraints(self, t: TaskConfig):
         task_unit = t.timescale_unit
@@ -295,7 +302,7 @@ class Model:
         # 1. check parent not null
         parent_not_null = guard_bool(
             self.model,
-            f"task_parent_not_null_{t.id}",
+            f"t{t.id}_parent_not_null",
             parent_unit != 0,
             parent_unit == 0,
         )
@@ -304,10 +311,12 @@ class Model:
         scaling_factor = self.model.new_int_var(
             1, self.props.max_scaling_factor, f"scaling_factor_{t.id}"
         )
-        self.model.add(parent_unit >= task_unit).only_enforce_if(parent_not_null)
+        self.model.add(parent_unit >= task_unit).only_enforce_if(
+            parent_not_null
+        ).with_name(f"t{t.id}_parent_unit_assert")
         self.model.add_division_equality(
             scaling_factor, parent_unit, task_unit
-        ).only_enforce_if(parent_not_null)
+        ).only_enforce_if(parent_not_null).with_name(f"t{t.id}_scaling_factor_compute")
 
         # 3. compute parent start in the task's unit (if par not null)
         parent_start_converted = self.model.new_int_var(
@@ -315,15 +324,17 @@ class Model:
         )
         self.model.add_multiplication_equality(
             parent_start_converted, scaling_factor, parent_start_var
-        ).only_enforce_if(parent_not_null)
+        ).only_enforce_if(parent_not_null).with_name(
+            f"t{t.id}_conv_parent_start_compute"
+        )
 
         # bound parent start and end
         self.model.add(task_starting_var >= parent_start_converted).only_enforce_if(
             parent_not_null
-        )
+        ).with_name(f"t{t.id}_bound_parent_start")
         self.model.add(
             task_starting_var < parent_start_converted + scaling_factor
-        ).only_enforce_if(parent_not_null)
+        ).only_enforce_if(parent_not_null).with_name(f"t{t.id}_bound_parent_end")
 
         # # define intrinsic start/end constraints (tautalogy if not specified)
         # if t in self.config.task_start:
@@ -386,17 +397,19 @@ class Model:
                 start, end = intv.interval
                 cost_intv_after_start = guard_bool(
                     self.model,
-                    f"t{t.id}_cfg{i}_intv{j}_before_start",
+                    f"t{t.id}_cfg{i}_intv{j}_after_start",
                     real_end_time >= start,
                     real_end_time < start,
                 )
                 cost_intv_before_end = guard_bool(
                     self.model,
-                    f"t{t.id}_cfg{i}_intv{j}_after_end",
+                    f"t{t.id}_cfg{i}_intv{j}_before_end",
                     real_end_time <= end,
                     real_end_time > end,
                 )
-                self.model.add(real_cost == intv.cost).only_enforce_if(
+                self.model.add(real_cost == intv.cost).with_name(
+                    f"t{t.id}_cfg{i}_intv{j}_real_cost_set"
+                ).only_enforce_if(
                     config_active, cost_intv_after_start, cost_intv_before_end
                 )
 
@@ -441,8 +454,8 @@ class Model:
             self.__start_end_constraints(t)
 
         # add prereq constraints O(prereqs * task)
-        for t in self.config.tasks.values():
-            self.__prereq_constraints(t)
+        # for t in self.config.tasks.values():
+        #     self.__prereq_constraints(t)
 
         # this constrains timescale instance overflow O(task)
         #
@@ -458,8 +471,8 @@ class Model:
 
         self.computed_pair_aligned_forward: dict[frozenset[int], cp_model.IntVar] = {}
 
-        for t in self.config.tasks.values():
-            self.__timescale_overflow_constraints(t)
+        # for t in self.config.tasks.values():
+        #     self.__timescale_overflow_constraints(t)
 
         # add computed costs O(cost config * cost interval * task)
         for t in self.config.tasks.values():
@@ -470,150 +483,12 @@ class Model:
 
         return self.model
 
-    def _print_proto(self):
-        print("Proto:")
-
-        proto = self.model.Proto()
-
-        varnames: dict[int, str] = {}
-        for i, v in enumerate(proto.variables):
-            varnames[i] = v.name
-
-        def color_grey(s: str) -> str:
-            return f"\033[90m{s}\033[0m"
-
-        def color_red(s: str) -> str:
-            return f"\033[31m{s}\033[0m"
-
-        def color_blue(s: str) -> str:
-            return f"\033[34m{s}\033[0m"
-
-        def print_lin_expr(expr) -> str:
-            terms = [
-                f"{color_grey(varnames[expr.vars[i]])}"
-                if expr.coeffs[i] == 1
-                else f"-{color_grey(varnames[expr.vars[i]])}"
-                if expr.coeffs[i] == -1
-                else f"{color_blue(expr.coeffs[i])}·{color_grey(varnames[expr.vars[i]])}"
-                for i in range(len(expr.vars))
-            ]
-            if hasattr(expr, "offset") and expr.offset != 0:
-                terms.append(color_blue(str(expr.offset)))
-            return " + ".join(terms)
-
-        constraints: dict[int, str] = {}
-        for i, cobj in enumerate(proto.constraints):
-            output = ""
-            if cobj.has_all_diff():
-                c = cobj.all_diff
-                raise Exception("all_diff not supported")
-            elif cobj.has_at_most_one():
-                c = cobj.at_most_one
-                raise Exception("at_most_one not supported")
-            elif cobj.has_automaton():
-                c = cobj.automaton
-                raise Exception("automaton not supported")
-            elif cobj.has_bool_and():
-                c = cobj.bool_and
-                raise Exception("bool_and not supported")
-            elif cobj.has_bool_or():
-                c = cobj.bool_or
-                raise Exception("bool_or not supported")
-            elif cobj.has_bool_xor():
-                c = cobj.bool_xor
-                raise Exception("bool_xor not supported")
-            elif cobj.has_circuit():
-                c = cobj.circuit
-                raise Exception("bool_circuit not supported")
-            elif cobj.has_cumulative():
-                c = cobj.cumulative
-                raise Exception("cumulative not supported")
-            elif cobj.has_dummy_constraint():
-                c = cobj.dummy_constraint
-                raise Exception("dummy_constraint not supported")
-            elif cobj.has_element():
-                c = cobj.element
-                raise Exception("element not supported")
-            elif cobj.has_exactly_one():
-                c = cobj.exactly_one
-                raise Exception("exactly_one not supported")
-            elif cobj.has_int_div():
-                c = cobj.int_div
-                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])}÷{print_lin_expr(c.exprs[1])}"
-            elif cobj.has_int_mod():
-                c = cobj.int_mod
-                output = f"{print_lin_expr(c.target)} = {print_lin_expr(c.exprs[0])}%{print_lin_expr(c.exprs[1])}"
-            elif cobj.has_int_prod():
-                c = cobj.int_prod
-                target = print_lin_expr(c.target)
-                terms = "·".join([print_lin_expr(e) for e in c.exprs])
-                output = f"{target} = {terms}"
-            elif cobj.has_interval():
-                c = cobj.interval
-                start = print_lin_expr(c.start)
-                size = print_lin_expr(c.size)
-                end = print_lin_expr(c.end)
-                output = f"{start} + {size} == {end}"
-            elif cobj.has_inverse():
-                c = cobj.inverse
-                raise Exception("unsupported inverse!")
-            elif cobj.has_lin_max():
-                c = cobj.lin_max
-                target = f"{print_lin_expr(c.target)}"
-                terms = ", ".join([print_lin_expr(e) for e in c.exprs])
-                output = f"{target} = max{{{terms}}}"
-            elif cobj.has_linear():
-                c = cobj.linear
-                expr = print_lin_expr(c)
-
-                domains = " ∪ ".join(
-                    [
-                        f"[{color_blue(_cap_size(c.domain[i]))}, {color_blue(_cap_size(c.domain[i + 1]))}]"
-                        for i in range(len(c.domain) // 2)
-                    ]
-                )
-                output = f"{expr} ∈ {domains}"
-            elif cobj.has_no_overlap():
-                c = cobj.no_overlap
-                raise Exception("unsupported no overlap!")
-            elif cobj.has_no_overlap_2d():
-                c = cobj.no_overlap_2d
-                raise Exception("unsupported no overlap 2d!")
-            elif cobj.has_table():
-                c = cobj.table
-                raise Exception("unsupported no overlap table!")
-            else:
-                raise Exception("this should never happen!")
-
-            constraints[i] = output
-
-        entries: list[str] = []
-        for idx, rep in constraints.items():
-            enforcement = " ∧ ".join(
-                [
-                    constraints[id] if id > 0 else f"¬({constraints[-id - 1]})"
-                    for id in proto.constraints[idx].enforcement_literal
-                ]
-            )
-            if enforcement == "":
-                entries.append(rep)
-                print(rep)
-                continue
-            entries.append(
-                f"{color_red('enforce')} {enforcement} {color_red('iff')} {rep}"
-            )
-
-        for e in sorted(entries):
-            print(e)
-
     def _solve_debug(self):
         model = self._model()
         solver = cp_model.CpSolver()
         solver.parameters.log_search_progress = True
         solver.parameters.cp_model_presolve = True
         status = solver.solve(model)
-
-        self._print_proto()
 
         return (
             status,
@@ -652,6 +527,156 @@ class Model:
                 for t in self.config.tasks
             ],
         )
+
+
+class ProtoPrinter:
+    def __init__(self, proto) -> None:
+        self.proto = proto
+        self.varnames: dict[int, str] = {}
+        for i, v in enumerate(proto.variables):
+            self.varnames[i] = v.name
+
+    def __print_lin_expr(self, expr) -> str:
+        terms = [
+            f"{color.grey(self.varnames[expr.vars[i]])}"
+            if expr.coeffs[i] == 1
+            else f"-{color.grey(self.varnames[expr.vars[i]])}"
+            if expr.coeffs[i] == -1
+            else f"{color.blue(expr.coeffs[i])}·{color.grey(self.varnames[expr.vars[i]])}"
+            for i in range(len(expr.vars))
+        ]
+        if hasattr(expr, "offset") and expr.offset != 0:
+            terms.append(color.blue(str(expr.offset)))
+        return " + ".join(terms)
+
+    def __constraints(self):
+        constraints: dict[int, str] = {}
+        for i, cobj in enumerate(self.proto.constraints):
+            output = ""
+            if cobj.has_all_diff():
+                c = cobj.all_diff
+                raise Exception("all_diff not supported")
+            elif cobj.has_at_most_one():
+                c = cobj.at_most_one
+                raise Exception("at_most_one not supported")
+            elif cobj.has_automaton():
+                c = cobj.automaton
+                raise Exception("automaton not supported")
+            elif cobj.has_bool_and():
+                c = cobj.bool_and
+                raise Exception("bool_and not supported")
+            elif cobj.has_bool_or():
+                c = cobj.bool_or
+                raise Exception("bool_or not supported")
+            elif cobj.has_bool_xor():
+                c = cobj.bool_xor
+                raise Exception("bool_xor not supported")
+            elif cobj.has_circuit():
+                c = cobj.circuit
+                raise Exception("bool_circuit not supported")
+            elif cobj.has_cumulative():
+                c = cobj.cumulative
+                raise Exception("cumulative not supported")
+            elif cobj.has_dummy_constraint():
+                c = cobj.dummy_constraint
+                raise Exception("dummy_constraint not supported")
+            elif cobj.has_element():
+                c = cobj.element
+                raise Exception("element not supported")
+            elif cobj.has_exactly_one():
+                c = cobj.exactly_one
+                raise Exception("exactly_one not supported")
+            elif cobj.has_int_div():
+                c = cobj.int_div
+                output = f"{self.__print_lin_expr(c.target)} = {self.__print_lin_expr(c.exprs[0])}÷{self.__print_lin_expr(c.exprs[1])}"
+            elif cobj.has_int_mod():
+                c = cobj.int_mod
+                output = f"{self.__print_lin_expr(c.target)} = {self.__print_lin_expr(c.exprs[0])}%{self.__print_lin_expr(c.exprs[1])}"
+            elif cobj.has_int_prod():
+                c = cobj.int_prod
+                target = self.__print_lin_expr(c.target)
+                terms = "·".join([self.__print_lin_expr(e) for e in c.exprs])
+                output = f"{target} = {terms}"
+            elif cobj.has_interval():
+                c = cobj.interval
+                start = self.__print_lin_expr(c.start)
+                size = self.__print_lin_expr(c.size)
+                end = self.__print_lin_expr(c.end)
+                output = f"{start} + {size} == {end}"
+            elif cobj.has_inverse():
+                c = cobj.inverse
+                raise Exception("unsupported inverse!")
+            elif cobj.has_lin_max():
+                c = cobj.lin_max
+                target = f"{self.__print_lin_expr(c.target)}"
+                terms = ", ".join([self.__print_lin_expr(e) for e in c.exprs])
+                output = f"{target} = max{{{terms}}}"
+            elif cobj.has_linear():
+                c = cobj.linear
+                expr = self.__print_lin_expr(c)
+
+                domains = " ∪ ".join(
+                    [
+                        f"[{color.blue(_cap_size(c.domain[i]))}, {color.blue(_cap_size(c.domain[i + 1]))}]"
+                        for i in range(len(c.domain) // 2)
+                    ]
+                )
+                output = f"{expr} ∈ {domains}"
+            elif cobj.has_no_overlap():
+                c = cobj.no_overlap
+                raise Exception("unsupported no overlap!")
+            elif cobj.has_no_overlap_2d():
+                c = cobj.no_overlap_2d
+                raise Exception("unsupported no overlap 2d!")
+            elif cobj.has_table():
+                c = cobj.table
+                raise Exception("unsupported no overlap table!")
+            else:
+                continue
+                raise Exception("this should never happen!")
+            constraints[i] = output
+        return constraints
+
+    def print_text(self):
+        color.enabled = True
+        for idx, rep in self.__constraints().items():
+            enforcement = " ∧ ".join(
+                [
+                    color.grey(self.proto.constraints[id].name)
+                    if id > 0
+                    else f"¬({color.grey(self.proto.constraints[-id - 1].name)})"
+                    for id in self.proto.constraints[idx].enforcement_literal
+                ]
+            )
+            if enforcement == "":
+                print(f"{self.proto.constraints[idx].name} {rep}")
+                continue
+            print(
+                f"{self.proto.constraints[idx].name} {enforcement} {color.red('→')} {rep}"
+            )
+
+    def print_mermaid(self):
+        color.enabled = False
+        print("flowchart LR")
+        for idx, rep in self.__constraints().items():
+            cnstr = self.proto.constraints[idx]
+            for i, enforce_id in enumerate(cnstr.enforcement_literal):
+                neg = enforce_id < 0
+                if neg:
+                    enforce_id = -enforce_id - 1
+                print(f"\t{enforce_id} -->", end="")
+                if neg:
+                    print("|no|", end="")
+                else:
+                    print("|yes|", end="")
+                print(f" {idx}", end="")
+                if i == 0:
+                    if len(cnstr.enforcement_literal) > 1:
+                        print(f'(("{cnstr.name}: {rep}"))')
+                    else:
+                        print(f'["{cnstr.name}: {rep}"]')
+                else:
+                    print("")
 
 
 def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]):
