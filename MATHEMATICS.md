@@ -57,19 +57,32 @@ $$
 In other words, no cost configurations should overlap with each
 other.
 
-> [!NOTE]
-> We are given a continuous probability distribution of a task's
-> duration vs. finish time though! To discretize such a
-> distribution, we will split it into a fixed number of buckets.
-> For each bucket, the $\delta_{ti}$ of the cost configuration
-> associated with it will be the maximum duration in that bucket
-> and the cost will be $C[1-F(\delta_{ti})]$ where $C$ is the
-> absolute cost of not finishing.
->
-> This is because if we consider the semantic meaning of the
-> decision variable, the solver is essentially choosing the total
-> duration to allocate to the task, and as such, is also choosing
-> the amount of risk it wants to take given the cost.
+### Continuous discretization
+
+Suppose we are given a PDF of variable $f(x)$, which represents the
+risk of non-completion for a given duration allocated to the task.
+
+Let's suppose the absolute cost of non-completion is $C$.
+
+Let:
+
+$F(x) = \int_{0}^{x} f(x) dx$
+
+The expected cost for a given duration allocation $\delta$ is:
+
+$$
+E(\delta) = C[1-F(\delta)]
+$$
+
+We can then choose a finite set of number of values for $\delta$,
+and call it $\Delta$.
+
+For any $\delta \in \Delta$ and deadline $d$, our cost intervals
+will be:
+
+$$
+\{([0, d), E(\delta)), ([d, \infty), C)\}
+$$
 
 ## Children
 
