@@ -149,6 +149,7 @@ class ScheduledTask:
     task_id: int
     # this is in terms of the task_unit
     start: int
+    real_cost: int
     # this is in terms of the atomic unit, it may not be a multiple of task_unit
     real_end: int
     # this is the index of the cost config chosen
@@ -250,12 +251,11 @@ class Model:
                 self.model.add(real_duration == defined).only_enforce_if(
                     config_active
                 ).with_name(f"t{t.id}_real_duration_cfg{i}_duration")
-                # define real end time as real start time + real duration
-                self.model.add(
-                    end_time == unit * start_time + real_duration
-                ).only_enforce_if(config_active).with_name(
-                    f"t{t.id}_real_end_cfg{i}_duration"
-                )
+                # define real end time end of scheduled time slot for leaf
+                # tasks (assume worst case)
+                self.model.add(end_time == unit * (start_time + 1)).only_enforce_if(
+                    config_active
+                ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
 
     def __setup_computed_parents(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
@@ -474,7 +474,6 @@ class Model:
         solver.parameters.log_search_progress = True
         solver.parameters.cp_model_presolve = True
         status = solver.solve(model)
-
         return (
             status,
             solver.ObjectiveValue(),
@@ -482,6 +481,7 @@ class Model:
                 ScheduledTask(
                     task_id=t,
                     start=solver.value(self.decision_vars[t].start),
+                    real_cost=solver.value(self.computed_vars[t].real_cost),
                     real_end=solver.value(self.computed_vars[t].real_end),
                     config=solver.value(self.decision_vars[t].config_select),
                 )
@@ -506,6 +506,7 @@ class Model:
                 ScheduledTask(
                     task_id=t,
                     start=solver.value(self.decision_vars[t].start),
+                    real_cost=solver.value(self.computed_vars[t].real_cost),
                     real_end=solver.value(self.computed_vars[t].real_end),
                     config=solver.value(self.decision_vars[t].config_select),
                 )

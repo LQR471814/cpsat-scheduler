@@ -71,7 +71,7 @@ def constant_cost_intervals(cost: int):
     return [CostInterval((0, END_TIME), cost)]
 
 
-NO_COST_INTERVALS = constant_cost_intervals(0)
+ZERO_COST_INTERVALS = constant_cost_intervals(0)
 
 
 def deadline_intervals(deadline: int, exp_cost: int, start=0, end=END_TIME):
@@ -98,7 +98,7 @@ def __ee98():
     ee98_hw6_hrs = [Task(builder, day) for _ in range(3)]
     for i, hr in enumerate(ee98_hw6_hrs):
         task_names[hr.id] = f"ee98_hw6_hr{i}"
-        hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
+        hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
 
     ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 15)
 
@@ -139,7 +139,7 @@ def __cmpe50():
     cmpe50_midterm2_hrs = [Task(builder, day) for _ in range(3)]
     for i, hr in enumerate(cmpe50_midterm2_hrs):
         task_names[hr.id] = f"cmpe50_midterm2_hr{i}"
-        hr.add_cost_config_duration(NO_COST_INTERVALS, 4 * minute_15)
+        hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
     cmpe50_midterm2 = Task(builder, week, end=1)
     task_names[cmpe50_midterm2.id] = "cmpe50_midterm2"
     for duration_hrs, cost in [
@@ -155,7 +155,7 @@ def __cmpe50():
     # CMPE 50 HW 6 (30 pt)
     cmpe50_hw6 = Task(builder, week)
     task_names[cmpe50_hw6.id] = "cmpe50_hw6"
-    cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 0), 4 * minute_15)
+    cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 15), 4 * minute_15)
     cmpe50_hw6.add_cost_config_duration(deadline_intervals(2 * day, 15), 2 * minute_15)
     cmpe50_hw6.add_cost_config_duration(constant_cost_intervals(30), 0)
 
@@ -184,16 +184,37 @@ def __engr10():
     engr10_hw3.add_cost_config_duration(deadline_intervals(7 * day, 7), 2 * minute_15)
 
 
+def __fixed_time_usage():
+    for i in range(5):
+        t = Task(builder, day, start=i, end=i + 1)
+        t.add_cost_config_duration(ZERO_COST_INTERVALS, 19 * 4 * minute_15)
+        task_names[t.id] = f"fixed_time_{i}"
+    t = Task(builder, day, start=5, end=6)
+    t.add_cost_config_duration(
+        ZERO_COST_INTERVALS,
+        8 * 4 * minute_15,
+    )
+    task_names[t.id] = "fixed_time_5"
+    t = Task(builder, day, start=6, end=7)
+    t.add_cost_config_duration(
+        ZERO_COST_INTERVALS,
+        10 * 4 * minute_15,
+    )
+    task_names[t.id] = "fixed_time_6"
+
+
 __ee98()
 __comm20()
 __cmpe50()
 __engr10()
+__fixed_time_usage()
 
 
 cfg = builder.build()
 model = Model(cfg)
 status, total_cost, solution_tasks = model.solve()
 printer = ProtoPrinter(model.model.Proto())
+printer.print_text()
 
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status, "cost:", total_cost)
@@ -215,7 +236,7 @@ if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
             for s in groups[starting_time]:
                 task = builder.tasks[s.task_id]
                 print(
-                    f"{task_names[task.id]} ({task.id}) cfg:{s.config}",
+                    f"{task_names[task.id]}\tid: {s.task_id}\tstart: {s.start}\tcost: {s.real_cost}\treal_end: {s.real_end}\tcfg: {s.config}",
                 )
 else:
     print("No solution:", status)
