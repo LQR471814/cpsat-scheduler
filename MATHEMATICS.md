@@ -177,21 +177,32 @@ parent starting time/deadlines.
 For a given task we can find its actual completion time by
 considering the end time of its latest scheduled child.
 
-If it is a leaf task, the best estimate we have of a completion
-time is the end of the time slot it is scheduled at.
+If it is a leaf task, the worst-case scenario is the end of the
+time slot it is scheduled at.
 
 $\epsilon : T \to \mathbb{N}$
 
 $$
 \epsilon(t) = \begin{cases}
 \max_{c \in Ch_{t}} \epsilon(c), & Ch_{t} \neq \emptyset \\
-u_{t}D_{t}[s] + \delta_{tD_{t}[i]}, & Ch_t = \emptyset
+u_{t}(D_{t}[s] + 1), & Ch_t = \emptyset
 \end{cases}
 $$
 
-The real task completion time is only used for [[#Prerequisites]]
-and computing [[#Cost]], it is not used to constrain valid task
-starting times. (as that would be circular)
+The real task completion time is used for [[#Prerequisites]] and
+computing [[#Cost]]. This is useful because oftentimes, large
+projects can be projected to complete before the end of the time
+slot it is scheduled in, simply by looking at when the last child
+task is finished (ex. you have a project scheduled for this month,
+but you will reasonably finish by the middle of the month).
+
+This will not be used to constrain valid task starting times for
+the task itself. (as that would be circular).
+
+This can sometimes have unintuitive results (such as multiple
+tasks having the exact same "real" completion time), thus, it may
+be helpful to rename this into something like "most specific
+ending time" in the future. (ex. narrowest completion time)
 
 ## Prerequisites
 
