@@ -155,15 +155,6 @@ class ScheduledTask:
     config: int
 
 
-def _cap_size(i: int):
-    if i == sys.maxsize:
-        return "∞"
-    elif i == -sys.maxsize - 1:
-        return "-∞"
-    else:
-        return str(i)
-
-
 class Model:
     config: Config
 
@@ -199,8 +190,9 @@ class Model:
 
     def __get_max_scaling_factor(self):
         max_scaling_factor = 1
-        prev = self.config.timescales[0]
-        for u in self.config.timescales[1:]:
+        sorted_timescales = sorted(self.config.timescales)
+        prev = sorted_timescales[0]
+        for u in sorted_timescales[1:]:
             scale = u // prev
             if scale > max_scaling_factor:
                 max_scaling_factor = scale
@@ -314,6 +306,7 @@ class Model:
         self.model.add(parent_unit >= task_unit).only_enforce_if(
             parent_not_null
         ).with_name(f"t{t.id}_parent_unit_assert")
+
         self.model.add_division_equality(
             scaling_factor, parent_unit, task_unit
         ).only_enforce_if(parent_not_null).with_name(f"t{t.id}_scaling_factor_compute")
@@ -335,14 +328,6 @@ class Model:
         self.model.add(
             task_starting_var < parent_start_converted + scaling_factor
         ).only_enforce_if(parent_not_null).with_name(f"t{t.id}_bound_parent_end")
-
-        # # define intrinsic start/end constraints (tautalogy if not specified)
-        # if t in self.config.task_start:
-        #     print(task_starting_var >= self.config.task_start[t])
-        #     model.add(task_starting_var >= self.config.task_start[t])
-        # if t in self.config.task_end:
-        #     print(task_starting_var < self.config.task_end[t])
-        #     model.add(task_starting_var < self.config.task_end[t])
 
     def __prereq_constraints(self, t: TaskConfig):
         start_var = self.decision_vars[t.id].start
@@ -454,8 +439,8 @@ class Model:
             self.__start_end_constraints(t)
 
         # add prereq constraints O(prereqs * task)
-        # for t in self.config.tasks.values():
-        #     self.__prereq_constraints(t)
+        for t in self.config.tasks.values():
+            self.__prereq_constraints(t)
 
         # this constrains timescale instance overflow O(task)
         #
@@ -471,8 +456,8 @@ class Model:
 
         self.computed_pair_aligned_forward: dict[frozenset[int], cp_model.IntVar] = {}
 
-        # for t in self.config.tasks.values():
-        #     self.__timescale_overflow_constraints(t)
+        for t in self.config.tasks.values():
+            self.__timescale_overflow_constraints(t)
 
         # add computed costs O(cost config * cost interval * task)
         for t in self.config.tasks.values():
@@ -535,6 +520,14 @@ class ProtoPrinter:
         self.varnames: dict[int, str] = {}
         for i, v in enumerate(proto.variables):
             self.varnames[i] = v.name
+
+    def __cap_size(self, i: int):
+        if i == sys.maxsize:
+            return "∞"
+        elif i == -sys.maxsize - 1:
+            return "-∞"
+        else:
+            return str(i)
 
     def __print_lin_expr(self, expr) -> str:
         terms = [
@@ -617,7 +610,7 @@ class ProtoPrinter:
 
                 domains = " ∪ ".join(
                     [
-                        f"[{color.blue(_cap_size(c.domain[i]))}, {color.blue(_cap_size(c.domain[i + 1]))}]"
+                        f"[{color.blue(self.__cap_size(c.domain[i]))}, {color.blue(self.__cap_size(c.domain[i + 1]))}]"
                         for i in range(len(c.domain) // 2)
                     ]
                 )
