@@ -75,7 +75,7 @@ def task(
     return t
 
 
-pert_fidelity: int = 3
+pert_fidelity: list[float] = [0, 0.4, 0.8, 0.9, 0.95, 0.99, 1]
 
 
 # optimistic/expected/pessimistic durations must be in terms of the atomic unit
@@ -87,13 +87,11 @@ def pert_cost_cfg(
     pert: tuple[int, int, int],
 ):
     optimistic, expected, pessimistic = pert
-    incr = 1 / pert_fidelity
-    for i in range(pert_fidelity):
-        p = incr * i
-        exp_cost = round(p * full_cost)
+    for p in pert_fidelity:
+        exp_earn = round(p * full_cost)
         exp_duration = round(pert_ppf(p, optimistic, expected, pessimistic))
         t.add_cost_config_duration(
-            deadline_intervals(deadline, exp_cost, full_cost),
+            deadline_intervals(deadline, full_cost - exp_earn, full_cost),
             exp_duration,
         )
 

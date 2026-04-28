@@ -13,6 +13,7 @@ package = true
 
 [project.scripts]
 demo-flat-week = "_demos.flat_week:main"
+demo-pert = "_demos.pert:main"
 
 [tool.pyright]
 venvPath = "."

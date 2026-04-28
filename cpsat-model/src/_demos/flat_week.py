@@ -23,7 +23,7 @@ def __ee98():
     for hr in ee98_hw6_hrs:
         hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
 
-    ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 15)
+    ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 0)
 
     for duration_hrs, exp_cost in [
         (6, 0),
