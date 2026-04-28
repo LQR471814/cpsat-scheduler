@@ -1,3 +1,5 @@
+from numpy import exp
+from _demos.pert import pert_ppf
 from cpsatmodel import (
     CostInterval,
     ScheduledTask,
@@ -74,6 +76,29 @@ def task(
     return t
 
 
+pert_fidelity: int = 3
+
+
+# optimistic/expected/pessimistic durations must be in terms of the atomic unit
+def pert_cost_cfg(
+    t: Task,
+    full_cost: int,
+    deadline: int,
+    # opt, exp, pes
+    pert: tuple[int, int, int],
+):
+    optimistic, expected, pessimistic = pert
+    incr = 1 / pert_fidelity
+    for i in range(pert_fidelity):
+        p = incr * i
+        exp_cost = round(p * full_cost)
+        exp_duration = round(pert_ppf(p, optimistic, expected, pessimistic))
+        t.add_cost_config_duration(
+            deadline_intervals(deadline, exp_cost, full_cost),
+            exp_duration,
+        )
+
+
 def solve():
     cfg = builder.build()
     model = Model(cfg)
@@ -98,8 +123,16 @@ def solve():
                 print(f"\nUnit {starting_time}:")
                 for s in groups[starting_time]:
                     task = builder.tasks[s.task_id]
+
+                    name = ""
+                    if task.id in task_names:
+                        name = task_names[task.id]
+                    else:
+                        assert task.id in builder.temp_tasks
+                        name = f"__temp_{task.id}__"
+
                     print(
-                        f"{task_names[task.id]}\tid: {s.task_id}\tstart: {s.start}\tcost: {s.real_cost}\treal_end: {s.real_end}\tcfg: {s.config}",
+                        f"{name}\tid: {s.task_id}\tstart: {s.start}\tcost: {s.real_cost}\tdur: {s.real_duration}\tend: {s.real_end}\tcfg: {s.config}",
                     )
     else:
         print("No solution:", status)

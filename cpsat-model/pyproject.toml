@@ -17,3 +17,9 @@ demo-flat-week = "_demos.flat_week:main"
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+
+[dependency-groups]
+dev = [
+    "numpy>=2.4.4",
+    "scipy>=1.17.1"
+]

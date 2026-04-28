@@ -1,6 +1,7 @@
-from demos.demo import (
+from _demos.demo import (
     minute_15,
     day,
+    week,
     task,
     ZERO_COST_INTERVALS,
     constant_cost_intervals,
@@ -17,7 +18,7 @@ def __ee98():
     # unit = we decide which week to put this multi-day task in, so unit is week
     # start/end = cannot possibly schedule this after this week and cannot be negative start
 
-    ee98_hw6 = task("ee98_hw6", day)
+    ee98_hw6 = task("ee98_hw6", week)
     ee98_hw6_hrs = [task(f"ee98_hw6_hr{i}", day) for i in range(6)]
     for hr in ee98_hw6_hrs:
         hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
@@ -60,7 +61,7 @@ def __cmpe50():
     cmpe50_midterm2_hrs = [task(f"cmpe50_midterm2_hr{i}", day) for i in range(3)]
     for hr in cmpe50_midterm2_hrs:
         hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
-    cmpe50_midterm2 = task("cmpe50_midterm2", day)
+    cmpe50_midterm2 = task("cmpe50_midterm2", week)
     for duration_hrs, exp_cost in [
         (3, 0),
         (2, 8),
