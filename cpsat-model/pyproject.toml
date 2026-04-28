@@ -1,7 +1,7 @@
 [project]
 name = "cpsatmodel"
 version = "0.1.0"
-description = "Add your description here"
+description = "Construct a valid CP-SAT model for optimization of a given task configuration."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
