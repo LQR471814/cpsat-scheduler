@@ -102,6 +102,14 @@ Therefore, each child must have only one possible parent.
 
 ### Parents
 
+$Pa_{t} = \begin{cases}
+\iota p(t \in Ch_{D_{p}[i]p}), & \exists ! p \in T (t \in Ch_{D_{p}[i]p}) \\
+\emptyset, & \neg\exists p \in T (t \in Ch_{D_{p}[i]p}) \\
+\end{cases}$
+
+$Pa_{t}$ gives the current parent or null of the given task
+$t\in{T}$.
+
 $Hc : T \times T \to \text{Predicate}$
 
 $Hc(p, c) = \exists i \in I_{p} (c \in Ch_{ip})$
@@ -115,27 +123,52 @@ $$
 
 There are no children which have two different possible parents.
 
-Likewise, there should be no tasks whose timescales are not the
-max timescale with no parents.
+$$
+\forall t \in T (u_{t} \neq \max U \to Pa_{t} = \emptyset)
+$$
 
-If it is unclear what the parent of a task should be, a "temporary
-parent" should be created to house it, this way the durations of
-the children are properly factored into the higher timescales.
+There are no tasks whose timescales are not the max timescale with
+no parents.
+
+> [!NOTE]
+> If it is unclear what the parent of a task should be (and it is
+> not of the max timescale), a "temporary parent" should be
+> created to house it, this way the durations of the children are
+> properly factored into the higher timescales.
 
 ### Deactivating orphans
 
-If a child can possibly have a parent, but its current parent is
-null, the child's real duration will automatically become $0$,
-indicating that the child has been dropped.
+A cost configuration $i \in I_{t}$ is active for a $t\in T$ if:
 
 $$
-\forall c \in T [Pa_{c} = \emptyset \to \delta_{D_{c}[i]}c = 0]
+D_{t}[i] = i
+$$
+
+A task $t\in T$ is orphaned (deactivated) if:
+
+1) It is not a root task.
+
+$$
+P_{NR}(t) := Pa_{t} \neq \emptyset
+$$
+
+2) No parent cost configuration containing $t$ is active.
+
+$$
+P_{NA}(t) := p = Pa_{t} \to \neg \exists i_{p} \in I_{p} \left[t \in Ch_{i_{p}p} \land D_p[i] = i_p\right]
+$$
+
+If a task is orphaned (deactivated), its real duration must be
+zero (indicating that the task has been dropped/ignored).
+
+$$
+P_{NR}(t) \land P_{NA}(t) \to \delta_{it} = 0
 $$
 
 ## Real task duration
 
-$\delta_{ti} \in \mathbb{N}$ gives the real duration of a task
-$t\in{T}$ and cost configuration $i \in I_{t}$.
+$\delta_{it} \in \mathbb{N} \cup \{0\}$ gives the real duration of
+a task $t\in{T}$ and cost configuration $i \in I_{t}$.
 
 > [!NOTE]
 > For leaf tasks, this real duration shall be directly defined as
@@ -144,7 +177,11 @@ $t\in{T}$ and cost configuration $i \in I_{t}$.
 For non-leaf tasks, this real duration will be defined as:
 
 $$
-\delta_{ti} = \sum_{c \in Ch_{t}} \delta_{cD_{c}[i]}
+\delta_{it} = \begin{cases}
+\sum_{c \in Ch_{t}} \delta_{cD_{c}[i]}, & \neg P_{NR}(t) \lor \neg
+P_{NA}(t) \\
+0, & P_{NR}(t) \land P_{NA}(t) \\
+\end{cases}
 $$
 
 > [!QUOTE]
@@ -159,14 +196,6 @@ null) of task $t\in{T}$.
 
 $d_{t} \in \Theta(u_{t}) \cup \{\emptyset\}$ is the deadline (or
 null) of task $t\in{T}$.
-
-$Pa_{t} = \begin{cases}
-\iota p(t \in Ch_{D_{p}[i]p}), & \exists p \in T (t \in Ch_{D_{p}[i]p}) \\
-\emptyset, & \neg\exists p \in T (t \in Ch_{D_{p}[i]p}) \\
-\end{cases}$
-
-$Pa_{t}$ gives the current parent or null of the given task
-$t\in{T}$.
 
 $$
 \forall p \in T (\exists i \in I_{p} [Ch_{ip} \neq \emptyset] \to \forall D_{p}[i] \in I_{p} [])
