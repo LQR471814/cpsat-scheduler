@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Self
-from cpsattask.config import CostInterval, ParentCond, CostConfig, Config, TaskConfig
+from cpsatmodel.config import CostInterval, ParentCond, CostConfig, Config, TaskConfig
 from sys import maxsize
 
 

@@ -1,5 +1,5 @@
 import sys
-import cpsattask.color as color
+import cpsatmodel.color as color
 from ortools.sat.python import cp_model
 
 

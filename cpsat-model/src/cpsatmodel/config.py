@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from ortools.sat.python import cp_model, cp_model_helper as cmh
-from cpsattask.print import print_vars
+from cpsatmodel.print import print_vars
 
 
 def guard_bool(

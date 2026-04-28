@@ -130,10 +130,10 @@ def __fixed_time_usage():
     )
 
 
-__ee98()
-__comm20()
-__cmpe50()
-__engr10()
-__fixed_time_usage()
-
-solve()
+def main():
+    __ee98()
+    __comm20()
+    __cmpe50()
+    __engr10()
+    __fixed_time_usage()
+    solve()

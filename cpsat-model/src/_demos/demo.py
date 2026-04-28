@@ -1,4 +1,4 @@
-from cpsattask import (
+from cpsatmodel import (
     CostInterval,
     ScheduledTask,
     Model,
