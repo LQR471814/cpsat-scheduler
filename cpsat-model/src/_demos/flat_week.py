@@ -22,10 +22,11 @@ def __ee98():
     ee98_hw6_hrs = [task(f"ee98_hw6_hr{i}", day) for i in range(6)]
     for hr in ee98_hw6_hrs:
         hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
+
     ee98_hw6.add_cost_config_duration(constant_cost_intervals(15), 15)
 
     for duration_hrs, exp_cost in [
-        (5, 0),
+        (6, 0),
         (4, 2),
         (3, 3),
         (2, 5),

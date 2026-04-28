@@ -84,7 +84,7 @@ class ModelProps:
         self.min_cost, self.max_cost = self.__get_cost_range(cfg)
         self.max_scaling_factor = self.__get_max_scaling_factor(cfg)
         self.timescales_or_null_domain = cp_model.Domain.from_values(
-            [*cfg.timescales, 0]
+            [*cfg.timescales, 0, -1]
         )
 
     def __get_max_range(self, config: Config):
@@ -219,6 +219,7 @@ class Model:
         for i, cfg in enumerate(t.cost_configs):
             children = cfg.children
             config_active = cost_config_active_bools[i]
+            task_parent_unit = computed.parent_unit
 
             if len(children) > 0:  # O(task)
                 # define real duration as sum of children
@@ -240,14 +241,22 @@ class Model:
                 # define real duration as function of selected cost config
                 assert cfg.duration is not None
                 defined = cfg.duration
-                self.model.add(real_duration == defined).only_enforce_if(
-                    config_active
-                ).with_name(f"t{t.id}_real_duration_cfg{i}_duration")
                 # define real end time end of scheduled time slot for leaf
                 # tasks (assume worst case)
                 self.model.add(end_time == unit * (start_time + 1)).only_enforce_if(
                     config_active
                 ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
+                # set real duration to 0 if orphaned task
+                task_orphaned = guard_bool(
+                    self.model,
+                    f"t{t.id}_orphaned_guard",
+                    task_parent_unit == -1,
+                    task_parent_unit != -1,
+                )
+                self.model.add(real_duration == defined).with_name(
+                    f"t{t.id}_real_duration_cfg{i}_duration"
+                ).only_enforce_if(config_active, task_orphaned.Not())
+                self.model.add(real_duration == 0).only_enforce_if(task_orphaned)
 
     def __computed_parents(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
@@ -260,18 +269,28 @@ class Model:
             self.model.add(task_parent_start == 0).with_name(f"t{t.id}_parcond_none")
             return
 
+        no_parent_cost_cond_active: list[cmh.Literal] = []
         for i, par_cond in enumerate(t.parent_conditions):
             parent_unit = self.config.tasks[par_cond.id].timescale_unit
             parent_start = self.decision_vars[par_cond.id].start
             parent_cost_config_active = self.computed_vars[par_cond.id].configs_active[
                 par_cond.config
             ]
+
             self.model.add(task_parent_unit == parent_unit).only_enforce_if(
                 parent_cost_config_active
             ).with_name(f"t{t.id}_parcond_{i}_unit")
             self.model.add(task_parent_start == parent_start).only_enforce_if(
                 parent_cost_config_active
             ).with_name(f"t{t.id}_parcond_{i}_start")
+
+            no_parent_cost_cond_active.append(parent_cost_config_active.Not())
+
+        # we set it to -1 to indicate that the task can possibly have a parent,
+        # but has been orphaned
+        self.model.add(task_parent_unit == -1).with_name(
+            f"t{t.id}_orphaned"
+        ).only_enforce_if(*no_parent_cost_cond_active)
 
     def __start_end_constraints(self, t: TaskConfig):
         task_unit = t.timescale_unit
@@ -283,10 +302,18 @@ class Model:
         parent_unit = computed.parent_unit
         parent_start_var = computed.parent_start
 
-        # 1. check parent not null
-        parent_not_null = guard_bool(
+        # 0. do not enforce start/end if inactive
+        task_not_inactive = guard_bool(
             self.model,
-            f"t{t.id}_parent_not_null",
+            f"t{t.id}_not_inactive",
+            parent_unit != -1,
+            parent_unit == -1,
+        )
+
+        # 1. do not enforce if task is root task
+        parent_not_root = guard_bool(
+            self.model,
+            f"t{t.id}_not_root",
             parent_unit != 0,
             parent_unit == 0,
         )
@@ -295,13 +322,14 @@ class Model:
         scaling_factor = self.model.new_int_var(
             1, self.props.max_scaling_factor, f"scaling_factor_{t.id}"
         )
-        self.model.add(parent_unit >= task_unit).only_enforce_if(
-            parent_not_null
-        ).with_name(f"t{t.id}_parent_unit_assert")
-
+        self.model.add(parent_unit >= task_unit).with_name(
+            f"t{t.id}_parent_unit_assert"
+        ).only_enforce_if(task_not_inactive, parent_not_root)
         self.model.add_division_equality(
             scaling_factor, parent_unit, task_unit
-        ).only_enforce_if(parent_not_null).with_name(f"t{t.id}_scaling_factor_compute")
+        ).with_name(f"t{t.id}_scaling_factor_compute").only_enforce_if(
+            task_not_inactive, parent_not_root
+        )
 
         # 3. compute parent start in the task's unit (if par not null)
         parent_start_converted = self.model.new_int_var(
@@ -309,17 +337,19 @@ class Model:
         )
         self.model.add_multiplication_equality(
             parent_start_converted, scaling_factor, parent_start_var
-        ).only_enforce_if(parent_not_null).with_name(
-            f"t{t.id}_conv_parent_start_compute"
+        ).with_name(f"t{t.id}_conv_parent_start_compute").only_enforce_if(
+            task_not_inactive, parent_not_root
         )
 
         # bound parent start and end
-        self.model.add(task_starting_var >= parent_start_converted).only_enforce_if(
-            parent_not_null
-        ).with_name(f"t{t.id}_bound_parent_start")
+        self.model.add(task_starting_var >= parent_start_converted).with_name(
+            f"t{t.id}_bound_parent_start"
+        ).only_enforce_if(task_not_inactive, parent_not_root)
         self.model.add(
             task_starting_var < parent_start_converted + scaling_factor
-        ).only_enforce_if(parent_not_null).with_name(f"t{t.id}_bound_parent_end")
+        ).with_name(f"t{t.id}_bound_parent_end").only_enforce_if(
+            task_not_inactive, parent_not_root
+        )
 
     def __prereq_constraints(self, t: TaskConfig):
         start_var = self.decision_vars[t.id].start
