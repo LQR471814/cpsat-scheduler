@@ -79,6 +79,49 @@ class ModelProps:
     max_scaling_factor: int
     timescales_or_null_domain: cp_model.Domain
 
+    def __init__(self, cfg: Config) -> None:
+        self.max_start_time, self.max_end_time = self.__get_max_range(cfg)
+        self.min_cost, self.max_cost = self.__get_cost_range(cfg)
+        self.max_scaling_factor = self.__get_max_scaling_factor(cfg)
+        self.timescales_or_null_domain = cp_model.Domain.from_values(
+            [*cfg.timescales, 0]
+        )
+
+    def __get_max_range(self, config: Config):
+        max_timescale = 0
+        for t in config.tasks.values():
+            if t.timescale_unit > max_timescale:
+                max_timescale = t.timescale_unit
+        max_timescale_count = 0
+        for t in config.tasks.values():
+            if t.timescale_unit == max_timescale:
+                max_timescale_count += 1
+        max_start_time = max_timescale * (max_timescale_count - 1)
+        max_end_time = max_timescale * max_timescale_count
+        return max_start_time, max_end_time
+
+    def __get_cost_range(self, config: Config):
+        min_cost = 0
+        max_cost = 0
+        for t in config.tasks.values():
+            for cfg in t.cost_configs:
+                for intv in cfg.costs:
+                    if intv.cost > max_cost:
+                        max_cost = intv.cost
+                    if intv.cost < min_cost:
+                        min_cost = intv.cost
+        return min_cost, max_cost
+
+    def __get_max_scaling_factor(self, config: Config):
+        max_scaling_factor = 1
+        sorted_timescales = sorted(config.timescales)
+        prev = sorted_timescales[0]
+        for u in sorted_timescales[1:]:
+            scale = u // prev
+            if scale > max_scaling_factor:
+                max_scaling_factor = scale
+        return max_scaling_factor
+
 
 class DecisionState:
     start: cmh.IntVar
@@ -148,6 +191,8 @@ class ScheduledTask:
     # this is in terms of the task_unit
     start: int
     real_cost: int
+    # this is in terms of the atomic unit
+    real_duration: int
     # this is in terms of the atomic unit, it may not be a multiple of task_unit
     real_end: int
     # this is the index of the cost config chosen
@@ -162,58 +207,7 @@ class Model:
 
     # setup
 
-    def __get_max_range(self):
-        max_timescale = 0
-        for t in self.config.tasks.values():
-            if t.timescale_unit > max_timescale:
-                max_timescale = t.timescale_unit
-        max_timescale_count = 0
-        for t in self.config.tasks.values():
-            if t.timescale_unit == max_timescale:
-                max_timescale_count += 1
-        max_start_time = max_timescale * (max_timescale_count - 1)
-        max_end_time = max_timescale * max_timescale_count
-        return max_start_time, max_end_time
-
-    def __get_cost_range(self):
-        min_cost = 0
-        max_cost = 0
-        for t in self.config.tasks.values():
-            for cfg in t.cost_configs:
-                for intv in cfg.costs:
-                    if intv.cost > max_cost:
-                        max_cost = intv.cost
-                    if intv.cost < min_cost:
-                        min_cost = intv.cost
-        return min_cost, max_cost
-
-    def __get_max_scaling_factor(self):
-        max_scaling_factor = 1
-        sorted_timescales = sorted(self.config.timescales)
-        prev = sorted_timescales[0]
-        for u in sorted_timescales[1:]:
-            scale = u // prev
-            if scale > max_scaling_factor:
-                max_scaling_factor = scale
-        return max_scaling_factor
-
-    def __init_model_props(self) -> ModelProps:
-        max_start_time, max_end_time = self.__get_max_range()
-        min_cost, max_cost = self.__get_cost_range()
-        max_scaling_factor = self.__get_max_scaling_factor()
-        timescales_or_null_domain = cp_model.Domain.from_values(
-            [*self.config.timescales, 0]
-        )
-        return ModelProps(
-            max_start_time,
-            max_end_time,
-            min_cost,
-            max_cost,
-            max_scaling_factor,
-            timescales_or_null_domain,
-        )
-
-    def __setup_computed_duration_and_end(self, t: TaskConfig):
+    def __computed_duration_end(self, t: TaskConfig):
         unit = t.timescale_unit
         decision = self.decision_vars[t.id]
         computed = self.computed_vars[t.id]
@@ -255,7 +249,7 @@ class Model:
                     config_active
                 ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
 
-    def __setup_computed_parents(self, t: TaskConfig):
+    def __computed_parents(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
         task_parent_unit = computed.parent_unit
         task_parent_start = computed.parent_start
@@ -405,7 +399,7 @@ class Model:
     # in general, worst case: O(task * cost config * cost interval)
     def _model(self):
         self.model = cp_model.CpModel()
-        self.props = self.__init_model_props()
+        self.props = ModelProps(self.config)
 
         # find worst-case max starting/ending time (for default upper-bound without knowing anything else)
 
@@ -426,11 +420,11 @@ class Model:
 
         # init computed duration & end time variables defs
         for t in self.config.tasks.values():
-            self.__setup_computed_duration_and_end(t)
+            self.__computed_duration_end(t)
 
         # init computed parent vars O(task)
         for t in self.config.tasks.values():
-            self.__setup_computed_parents(t)
+            self.__computed_parents(t)
 
         # add start/end constraints O(task)
         for t in self.config.tasks.values():
@@ -466,7 +460,7 @@ class Model:
 
         return self.model
 
-    def _solve_debug(self):
+    def _debug(self):
         model = self._model()
         solver = cp_model.CpSolver()
         solver.parameters.log_search_progress = True
@@ -485,6 +479,7 @@ class Model:
                     task_id=t,
                     start=solver.value(self.decision_vars[t].start),
                     real_cost=solver.value(self.computed_vars[t].real_cost),
+                    real_duration=solver.value(self.computed_vars[t].real_duration),
                     real_end=solver.value(self.computed_vars[t].real_end),
                     config=solver.value(self.decision_vars[t].config_select),
                 )
@@ -501,6 +496,7 @@ class Model:
                 task_id=t,
                 start=solver.value(self.decision_vars[t].start),
                 real_cost=solver.value(self.computed_vars[t].real_cost),
+                real_duration=solver.value(self.computed_vars[t].real_duration),
                 real_end=solver.value(self.computed_vars[t].real_end),
                 config=solver.value(self.decision_vars[t].config_select),
             )
