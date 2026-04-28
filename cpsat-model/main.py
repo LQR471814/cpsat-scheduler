@@ -231,8 +231,6 @@ __fixed_time_usage()
 cfg = builder.build()
 model = Model(cfg)
 status, total_cost, solution_tasks = model.solve()
-printer = ProtoPrinter(model.model.Proto())
-printer.print_text()
 
 if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
     print(status, "cost:", total_cost)

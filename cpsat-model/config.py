@@ -474,6 +474,11 @@ class Model:
         solver.parameters.log_search_progress = True
         solver.parameters.cp_model_presolve = True
         status = solver.solve(model)
+        print_vars(
+            model,
+            solver,
+            [self.decision_vars[t].config_select for t in self.config.tasks],
+        )
         return (
             status,
             solver.ObjectiveValue(),
@@ -491,14 +496,8 @@ class Model:
 
     def solve(self) -> tuple[cp_model.CpSolverStatus, float, list[ScheduledTask]]:
         model = self._model()
-        # model.add(self.var_cost_config_select[1] == 4)
         solver = cp_model.CpSolver()
         status = solver.solve(model)
-        print_vars(
-            model,
-            solver,
-            [self.decision_vars[t].config_select for t in self.config.tasks],
-        )
         return (
             status,
             solver.ObjectiveValue(),
