@@ -1,4 +1,4 @@
-from _demos.demo import (
+from _demos.lib.demo import (
     minute_15,
     day,
     week,

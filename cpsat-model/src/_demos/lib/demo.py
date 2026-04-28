@@ -1,5 +1,4 @@
-from numpy import exp
-from _demos.pert import pert_ppf
+from _demos.lib.pert import pert_ppf
 from cpsatmodel import (
     CostInterval,
     ScheduledTask,
