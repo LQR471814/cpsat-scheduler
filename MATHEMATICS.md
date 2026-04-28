@@ -62,7 +62,7 @@ other.
 Suppose we are given a PDF of variable $f(x)$, which represents the
 risk of non-completion for a given duration allocated to the task.
 
-Let's suppose the absolute cost of non-completion is $C$.
+Let's suppose the absolute cost of non-completion is $Q$.
 
 Let:
 
@@ -71,7 +71,7 @@ $F(x) = \int_{0}^{x} f(x) dx$
 The expected cost for a given duration allocation $\delta$ is:
 
 $$
-E(\delta) = C[1-F(\delta)]
+E[\delta] = Q[1-F(\delta)]
 $$
 
 We can then choose a finite set of number of values for $\delta$,
@@ -81,7 +81,7 @@ For any $\delta \in \Delta$ and deadline $d$, our cost intervals
 will be:
 
 $$
-\{([0, d), E(\delta)), ([d, \infty), C)\}
+C_{it} = \{([0, d), E[\delta]), ([d, \infty), Q)\}
 $$
 
 ## Children
@@ -98,8 +98,9 @@ configurations independently of each other.
 Thus there should never occur a situation where two child
 configurations are selected and the same child appears in both.
 
-Therefore, each child must have only one possible parent outside
-of null.
+Therefore, each child must have only one possible parent.
+
+### Parents
 
 $Hc : T \times T \to \text{Predicate}$
 
@@ -113,6 +114,13 @@ $$
 $$
 
 There are no children which have two different possible parents.
+
+Likewise, there should be no tasks whose timescales are not the
+max timescale with no parents.
+
+If it is unclear what the parent of a task should be, a "temporary
+parent" should be created to house it, this way the durations of
+the children are properly factored into the higher timescales.
 
 ### Deactivating orphans
 

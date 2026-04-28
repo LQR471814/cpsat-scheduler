@@ -20,7 +20,7 @@ wheels = [
 ]
 
 [[package]]
-name = "cpsat-model"
+name = "cpsattask"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

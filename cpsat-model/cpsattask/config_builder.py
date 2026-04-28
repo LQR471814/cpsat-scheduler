@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Self
-from config import CostInterval, ParentCond, CostConfig, Config, TaskConfig
+from cpsattask.config import CostInterval, ParentCond, CostConfig, Config, TaskConfig
+from sys import maxsize
 
 
 class Task:
@@ -101,7 +102,32 @@ class ConfigBuilder:
                 continue
             self._detect_cycles(t, visited, [], 0)
 
+    def __ensure_parents(self):
+        scales = sorted(self.timescales, reverse=True)
+        max_timescale = scales[0]
+        temporary: dict[int, Task] = {}
+        children: dict[int, list[Task]] = {}
+
+        for task in self.tasks.values():
+            if len(task._parent_conds) > 0:
+                continue
+            if task.unit == max_timescale:
+                continue
+            # task index must be > 0 since max_timescale = scales[0]
+            parent_unit = scales[scales.index(task.unit) - 1]
+            if parent_unit not in temporary:
+                temporary[parent_unit] = Task(self, parent_unit)
+                children[parent_unit] = []
+            children[parent_unit].append(task)
+
+        for task_id, temp_task in temporary.items():
+            temp_task.add_cost_config_children(
+                [CostInterval((0, maxsize), 0)], children[task_id]
+            )
+
     def build(self) -> Config:
+        self.__ensure_parents()
+
         timescales: list[int] = list(self.timescales)
         task_configs: dict[int, TaskConfig] = {}
         for id in self.tasks:
