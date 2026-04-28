@@ -94,10 +94,10 @@ def __ee98():
     # unit = we decide which week to put this multi-day task in, so unit is week
     # start/end = cannot possibly schedule this after this week and cannot be negative start
 
-    ee98_hw6 = Task(builder, week, end=1)
+    ee98_hw6 = Task(builder, day)
     task_names[ee98_hw6.id] = "ee98_hw6"
 
-    ee98_hw6_hrs = [Task(builder, day) for _ in range(3)]
+    ee98_hw6_hrs = [Task(builder, day) for _ in range(6)]
     for i, hr in enumerate(ee98_hw6_hrs):
         task_names[hr.id] = f"ee98_hw6_hr{i}"
         hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
@@ -119,7 +119,7 @@ def __ee98():
 
 def __comm20():
     # COMM 20 survey, due thursday (25 pt)
-    comm20_survey = Task(builder, week, end=1)
+    comm20_survey = Task(builder, day)
     task_names[comm20_survey.id] = "comm20_survey"
     comm20_survey.add_cost_config_duration(
         deadline_intervals(4 * day, 0, 25), 6 * minute_15
@@ -130,7 +130,7 @@ def __comm20():
     comm20_survey.add_cost_config_duration(constant_cost_intervals(25), 0)
 
     # COMM 20 quiz, due Friday (5 pt)
-    comm20_quiz = Task(builder, week, end=1)
+    comm20_quiz = Task(builder, day)
     task_names[comm20_quiz.id] = "comm20_quiz"
     comm20_quiz.add_cost_config_duration(
         deadline_intervals(4 * day, 0, 5), 1 * minute_15
@@ -144,7 +144,7 @@ def __cmpe50():
     for i, hr in enumerate(cmpe50_midterm2_hrs):
         task_names[hr.id] = f"cmpe50_midterm2_hr{i}"
         hr.add_cost_config_duration(ZERO_COST_INTERVALS, 4 * minute_15)
-    cmpe50_midterm2 = Task(builder, week, end=1)
+    cmpe50_midterm2 = Task(builder, day)
     task_names[cmpe50_midterm2.id] = "cmpe50_midterm2"
     for duration_hrs, exp_cost in [
         (3, 0),
@@ -172,7 +172,7 @@ def __cmpe50():
 
 def __engr10():
     # ENGR 10 Robot Lab Prep. (est. 5 pt)
-    engr10_robot_lab = Task(builder, week)
+    engr10_robot_lab = Task(builder, day)
     task_names[engr10_robot_lab.id] = "engr10_robot_lab"
     engr10_robot_lab.add_cost_config_duration(
         deadline_intervals(5 * day, 0, 5), 6 * minute_15
@@ -186,7 +186,7 @@ def __engr10():
     engr10_robot_lab.add_cost_config_duration(constant_cost_intervals(10), 0)
 
     # ENGR 10 HW 3 (30 pt)
-    engr10_hw3 = Task(builder, week)
+    engr10_hw3 = Task(builder, day)
     task_names[engr10_hw3.id] = "engr10_hw3"
     engr10_hw3.add_cost_config_duration(
         deadline_intervals(7 * day, 0, 30), 5 * minute_15
