@@ -5,7 +5,7 @@ description = "Construct a valid CP-SAT model for optimization of a given task c
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "ortools>=9.15.6755",
+    "ortools>=9.15.6755"
 ]
 
 [tool.uv]
@@ -13,7 +13,6 @@ package = true
 
 [project.scripts]
 demo-flat-week = "_demos.flat_week:main"
-demo-pert = "_demos.pert:main"
 
 [tool.pyright]
 venvPath = "."
@@ -21,6 +20,5 @@ venv = ".venv"
 
 [dependency-groups]
 dev = [
-    "numpy>=2.4.4",
-    "scipy>=1.17.1"
+    "Nuitka[app]>=4.0.8"
 ]

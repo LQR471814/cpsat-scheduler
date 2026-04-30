@@ -1,4 +1,3 @@
-from _demos.lib.pert import pert_ppf
 from cpsatmodel import (
     CostInterval,
     ScheduledTask,
@@ -78,22 +77,33 @@ def task(
 pert_fidelity: list[float] = [0, 0.4, 0.8, 0.9, 0.95, 0.99, 1]
 
 
-# optimistic/expected/pessimistic durations must be in terms of the atomic unit
-def pert_cost_cfg(
-    t: Task,
-    full_cost: int,
-    deadline: int,
-    # opt, exp, pes
-    pert: tuple[int, int, int],
-):
-    optimistic, expected, pessimistic = pert
-    for p in pert_fidelity:
-        exp_earn = round(p * full_cost)
-        exp_duration = round(pert_ppf(p, optimistic, expected, pessimistic))
-        t.add_cost_config_duration(
-            deadline_intervals(deadline, full_cost - exp_earn, full_cost),
-            exp_duration,
-        )
+# from scipy.stats import beta
+#
+#
+# # PPF is the inverse of CDF, here it gives the duration to achieve a given
+# # probability
+# def pert_ppf(p: float, optimistic: float, expected: float, pessimistic: float):
+#     alpha = 1 + 4 * (expected - optimistic) / (pessimistic - optimistic)
+#     beta_param = 1 + 4 * (pessimistic - expected) / (pessimistic - optimistic)
+#     t: float = beta.ppf([p], alpha, beta_param).item()
+#     return optimistic + t * (pessimistic - optimistic)
+#
+# # optimistic/expected/pessimistic durations must be in terms of the atomic unit
+# def pert_cost_cfg(
+#     t: Task,
+#     full_cost: int,
+#     deadline: int,
+#     # opt, exp, pes
+#     pert: tuple[int, int, int],
+# ):
+#     optimistic, expected, pessimistic = pert
+#     for p in pert_fidelity:
+#         exp_earn = round(p * full_cost)
+#         exp_duration = round(pert_ppf(p, optimistic, expected, pessimistic))
+#         t.add_cost_config_duration(
+#             deadline_intervals(deadline, full_cost - exp_earn, full_cost),
+#             exp_duration,
+#         )
 
 
 def solve():
