@@ -1,6 +1,5 @@
 build-eval:
-	uv sync --no-dev
 	uv run nuitka \
 		--clang \
-		--mode=standalone \
+		--mode=onefile \
 		./src/cpsatmodel/eval_bin.py
