@@ -3,15 +3,11 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: cpsat-scheduler/internal/pb
+      value: internal
 plugins:
   - local: protoc-gen-go
-    out: internal/pb
+    out: .
   - local: protoc-gen-go-grpc
-    out: internal/pb
-  - protoc_builtin: python
-    out: cpsat-model/pb
-  - local: python-grpc-tools-protoc
-    out: cpsat-model/pb
+    out: .
 inputs:
   - directory: proto
