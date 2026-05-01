@@ -5,6 +5,7 @@ import (
 	"log"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type model struct {
@@ -57,20 +58,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+var titleStyle = lipgloss.NewStyle().
+	Italic(true).
+	Foreground(lipgloss.Color("#7D56F4")).
+	PaddingBottom(1).
+	Width(22)
+
+var checkStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Red)
+
 func (m model) View() tea.View {
-	s := "What to buy?\n\n"
+	s := fmt.Sprintf("%s\n", titleStyle.Render("What to buy?"))
 	for i, choice := range m.choices {
 		cursor := " "
 		if m.cursor == i {
-			cursor = ">"
+			cursor = checkStyle.Render(">")
 		}
 		checked := " "
 		if _, ok := m.selected[i]; ok {
-			checked = "x"
+			checked = checkStyle.Render("x")
 		}
 		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
 	}
-	s += "\nQ to quit.\n"
+	s += fmt.Sprintf("\n%s\n", titleStyle.Render("Q to quit."))
 	return tea.NewView(s)
 }
 
