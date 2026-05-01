@@ -20,7 +20,6 @@
             with pkgs;
             [
               pkg-config
-              gcc
               sqlc
 
               protobuf
@@ -33,6 +32,7 @@
           LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath libs}:$LD_LIBRARY_PATH";
 
           shellHook = ''
+            export CGO_ENABLED=0
             echo "Devshell activated."
           '';
         };
