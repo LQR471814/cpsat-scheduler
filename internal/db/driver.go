@@ -3,8 +3,8 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
+	"net/url"
 
 	_ "embed"
 
@@ -14,22 +14,21 @@ import (
 //go:embed schema.sql
 var schema string
 
-const sqlite_options = `
-pragma journal_mode = WAL;
-pragma synchronous = normal;
-pragma temp_store = memory;
-pragma mmap_size = 30000000000;
-pragma journal_size_limit = 6144000;
-pragma busy_timeout = 10000;
-`
+var sqlite_options = url.Values{
+	"_pragma": {
+		"journal_mode(WAL)",
+		"synchronous(normal)",
+		"temp_store(memory)",
+		"mmap_size(30000000000)",
+		"journal_size_limit(6144000)",
+		"busy_timeout(10000)",
+	},
+}
 
 func configureSQLite(ctx context.Context, driver *sql.DB) (err error) {
-	_, err = driver.ExecContext(ctx, sqlite_options)
-
 	driver.SetMaxOpenConns(1)
 	driver.SetMaxIdleConns(1)
 	driver.SetConnMaxLifetime(0)
-
 	return
 }
 
@@ -61,7 +60,12 @@ WHERE type='table' AND name='profile'`)
 }
 
 func OpenDB(ctx context.Context, logger *slog.Logger, db string) (driver *sql.DB, err error) {
-	driver, err = sql.Open("sqlite", fmt.Sprintf("file:%s", db))
+	link := &url.URL{
+		Scheme:   "file",
+		Path:     db,
+		RawQuery: sqlite_options.Encode(),
+	}
+	driver, err = sql.Open("sqlite", link.String())
 	if err != nil {
 		return
 	}
