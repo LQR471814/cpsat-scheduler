@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from daemon.daemonpb import service_pb2 as daemon_dot_daemonpb_dot_service__pb2
+from model.daemonpb import service_pb2 as model_dot_daemonpb_dot_service__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in daemon/daemonpb/service_pb2_grpc.py depends on'
+        + ' but the generated code in model/daemonpb/service_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,8 +36,8 @@ class TestStub(object):
         """
         self.Echo = channel.unary_unary(
                 '/Test/Echo',
-                request_serializer=daemon_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
-                response_deserializer=daemon_dot_daemonpb_dot_service__pb2.Text.FromString,
+                request_serializer=model_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
+                response_deserializer=model_dot_daemonpb_dot_service__pb2.Text.FromString,
                 _registered_method=True)
 
 
@@ -55,8 +55,8 @@ def add_TestServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Echo': grpc.unary_unary_rpc_method_handler(
                     servicer.Echo,
-                    request_deserializer=daemon_dot_daemonpb_dot_service__pb2.Text.FromString,
-                    response_serializer=daemon_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
+                    request_deserializer=model_dot_daemonpb_dot_service__pb2.Text.FromString,
+                    response_serializer=model_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -84,8 +84,8 @@ class Test(object):
             request,
             target,
             '/Test/Echo',
-            daemon_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
-            daemon_dot_daemonpb_dot_service__pb2.Text.FromString,
+            model_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
+            model_dot_daemonpb_dot_service__pb2.Text.FromString,
             options,
             channel_credentials,
             insecure,

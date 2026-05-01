@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: daemon/daemonpb/service.proto
+// source: model/daemonpb/service.proto
 
 package daemonpb
 
@@ -30,7 +30,7 @@ type Text struct {
 
 func (x *Text) Reset() {
 	*x = Text{}
-	mi := &file_daemon_daemonpb_service_proto_msgTypes[0]
+	mi := &file_model_daemonpb_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *Text) String() string {
 func (*Text) ProtoMessage() {}
 
 func (x *Text) ProtoReflect() protoreflect.Message {
-	mi := &file_daemon_daemonpb_service_proto_msgTypes[0]
+	mi := &file_model_daemonpb_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *Text) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Text.ProtoReflect.Descriptor instead.
 func (*Text) Descriptor() ([]byte, []int) {
-	return file_daemon_daemonpb_service_proto_rawDescGZIP(), []int{0}
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Text) GetText() string {
@@ -65,33 +65,33 @@ func (x *Text) GetText() string {
 	return ""
 }
 
-var File_daemon_daemonpb_service_proto protoreflect.FileDescriptor
+var File_model_daemonpb_service_proto protoreflect.FileDescriptor
 
-const file_daemon_daemonpb_service_proto_rawDesc = "" +
+const file_model_daemonpb_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1ddaemon/daemonpb/service.proto\"\x1a\n" +
+	"\x1cmodel/daemonpb/service.proto\"\x1a\n" +
 	"\x04Text\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text2\x1c\n" +
 	"\x04Test\x12\x14\n" +
-	"\x04Echo\x12\x05.Text\x1a\x05.TextB*B\fServiceProtoP\x01Z\x18internal/daemon/daemonpbb\x06proto3"
+	"\x04Echo\x12\x05.Text\x1a\x05.TextB)B\fServiceProtoP\x01Z\x17internal/model/daemonpbb\x06proto3"
 
 var (
-	file_daemon_daemonpb_service_proto_rawDescOnce sync.Once
-	file_daemon_daemonpb_service_proto_rawDescData []byte
+	file_model_daemonpb_service_proto_rawDescOnce sync.Once
+	file_model_daemonpb_service_proto_rawDescData []byte
 )
 
-func file_daemon_daemonpb_service_proto_rawDescGZIP() []byte {
-	file_daemon_daemonpb_service_proto_rawDescOnce.Do(func() {
-		file_daemon_daemonpb_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_daemon_daemonpb_service_proto_rawDesc), len(file_daemon_daemonpb_service_proto_rawDesc)))
+func file_model_daemonpb_service_proto_rawDescGZIP() []byte {
+	file_model_daemonpb_service_proto_rawDescOnce.Do(func() {
+		file_model_daemonpb_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_model_daemonpb_service_proto_rawDesc), len(file_model_daemonpb_service_proto_rawDesc)))
 	})
-	return file_daemon_daemonpb_service_proto_rawDescData
+	return file_model_daemonpb_service_proto_rawDescData
 }
 
-var file_daemon_daemonpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_daemon_daemonpb_service_proto_goTypes = []any{
+var file_model_daemonpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_model_daemonpb_service_proto_goTypes = []any{
 	(*Text)(nil), // 0: Text
 }
-var file_daemon_daemonpb_service_proto_depIdxs = []int32{
+var file_model_daemonpb_service_proto_depIdxs = []int32{
 	0, // 0: Test.Echo:input_type -> Text
 	0, // 1: Test.Echo:output_type -> Text
 	1, // [1:2] is the sub-list for method output_type
@@ -101,26 +101,26 @@ var file_daemon_daemonpb_service_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_daemon_daemonpb_service_proto_init() }
-func file_daemon_daemonpb_service_proto_init() {
-	if File_daemon_daemonpb_service_proto != nil {
+func init() { file_model_daemonpb_service_proto_init() }
+func file_model_daemonpb_service_proto_init() {
+	if File_model_daemonpb_service_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_daemon_daemonpb_service_proto_rawDesc), len(file_daemon_daemonpb_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_model_daemonpb_service_proto_rawDesc), len(file_model_daemonpb_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_daemon_daemonpb_service_proto_goTypes,
-		DependencyIndexes: file_daemon_daemonpb_service_proto_depIdxs,
-		MessageInfos:      file_daemon_daemonpb_service_proto_msgTypes,
+		GoTypes:           file_model_daemonpb_service_proto_goTypes,
+		DependencyIndexes: file_model_daemonpb_service_proto_depIdxs,
+		MessageInfos:      file_model_daemonpb_service_proto_msgTypes,
 	}.Build()
-	File_daemon_daemonpb_service_proto = out.File
-	file_daemon_daemonpb_service_proto_goTypes = nil
-	file_daemon_daemonpb_service_proto_depIdxs = nil
+	File_model_daemonpb_service_proto = out.File
+	file_model_daemonpb_service_proto_goTypes = nil
+	file_model_daemonpb_service_proto_depIdxs = nil
 }
