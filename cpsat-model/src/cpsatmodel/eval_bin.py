@@ -9,4 +9,15 @@ from cpsatmodel.config import (
 from cpsatmodel.config_builder import Task, ConfigBuilder
 from cpsatmodel.print import ProtoPrinter
 
-eval(input(""))
+from sys import stdin
+
+buf = bytearray()
+
+while True:
+    # read one character at a time until null
+    b = stdin.buffer.read(1)
+    if not b:
+        break
+    if b != b"\x00":
+        continue
+    eval(buf.decode("utf8"), globals(), {})
