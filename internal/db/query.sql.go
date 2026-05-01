@@ -7,7 +7,117 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
+
+const addChildToConfig = `-- name: AddChildToConfig :exec
+insert into children_config_child (cfg, child)
+values (?, ?) on conflict do nothing
+`
+
+type AddChildToConfigParams struct {
+	Cfg   int64
+	Child int64
+}
+
+func (q *Queries) AddChildToConfig(ctx context.Context, arg AddChildToConfigParams) error {
+	_, err := q.db.ExecContext(ctx, addChildToConfig, arg.Cfg, arg.Child)
+	return err
+}
+
+const createAlloc = `-- name: CreateAlloc :exec
+insert into allocation (task, desc, start, end)
+values (?, ?, ?, ?) on conflict do nothing
+`
+
+type CreateAllocParams struct {
+	Task  int64
+	Desc  string
+	Start time.Time
+	End   time.Time
+}
+
+func (q *Queries) CreateAlloc(ctx context.Context, arg CreateAllocParams) error {
+	_, err := q.db.ExecContext(ctx, createAlloc,
+		arg.Task,
+		arg.Desc,
+		arg.Start,
+		arg.End,
+	)
+	return err
+}
+
+const createChildrenConfig = `-- name: CreateChildrenConfig :exec
+insert into children_config (task, desc, deadline, exp_cost)
+values (?, ?, ?, ?)
+`
+
+type CreateChildrenConfigParams struct {
+	Task     int64
+	Desc     string
+	Deadline sql.NullInt64
+	ExpCost  sql.NullInt64
+}
+
+func (q *Queries) CreateChildrenConfig(ctx context.Context, arg CreateChildrenConfigParams) error {
+	_, err := q.db.ExecContext(ctx, createChildrenConfig,
+		arg.Task,
+		arg.Desc,
+		arg.Deadline,
+		arg.ExpCost,
+	)
+	return err
+}
+
+const createDurConfig = `-- name: CreateDurConfig :exec
+insert into dur_config (task, desc, pes, exp, opt, deadline, total_cost)
+values (?, ?, ?, ?, ?, ?, ?)
+`
+
+type CreateDurConfigParams struct {
+	Task      int64
+	Desc      string
+	Pes       int64
+	Exp       int64
+	Opt       int64
+	Deadline  sql.NullInt64
+	TotalCost sql.NullInt64
+}
+
+func (q *Queries) CreateDurConfig(ctx context.Context, arg CreateDurConfigParams) error {
+	_, err := q.db.ExecContext(ctx, createDurConfig,
+		arg.Task,
+		arg.Desc,
+		arg.Pes,
+		arg.Exp,
+		arg.Opt,
+		arg.Deadline,
+		arg.TotalCost,
+	)
+	return err
+}
+
+const createTask = `-- name: CreateTask :exec
+insert into task (profile, unit, name, desc) values (?, ?, ?, ?)
+`
+
+type CreateTaskParams struct {
+	Profile int64
+	Unit    int64
+	Name    string
+	Desc    string
+}
+
+func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
+	_, err := q.db.ExecContext(ctx, createTask,
+		arg.Profile,
+		arg.Unit,
+		arg.Name,
+		arg.Desc,
+	)
+	return err
+}
 
 const listProfiles = `-- name: ListProfiles :many
 select id, name, universe_start from profile
@@ -67,4 +177,34 @@ func (q *Queries) ListTimescales(ctx context.Context, profile int64) ([]ListTime
 		return nil, err
 	}
 	return items, nil
+}
+
+const setChild = `-- name: SetChild :exec
+insert into child (parent, child)
+values (?, ?) on conflict do nothing
+`
+
+type SetChildParams struct {
+	Parent int64
+	Child  int64
+}
+
+func (q *Queries) SetChild(ctx context.Context, arg SetChildParams) error {
+	_, err := q.db.ExecContext(ctx, setChild, arg.Parent, arg.Child)
+	return err
+}
+
+const setPrereq = `-- name: SetPrereq :exec
+insert into prereq (prereq, postreq)
+values (?, ?) on conflict do nothing
+`
+
+type SetPrereqParams struct {
+	Prereq  int64
+	Postreq int64
+}
+
+func (q *Queries) SetPrereq(ctx context.Context, arg SetPrereqParams) error {
+	_, err := q.db.ExecContext(ctx, setPrereq, arg.Prereq, arg.Postreq)
+	return err
 }
