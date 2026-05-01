@@ -21,6 +21,11 @@
             [
               pkg-config
               gcc
+
+              protobuf
+              protoc-gen-go
+              protoc-gen-go-grpc
+              python313Packages.grpcio-tools
             ]
           );
 
