@@ -56,7 +56,7 @@ values (?, ?, ?, ?)
 type CreateChildrenConfigParams struct {
 	Task     int64
 	Desc     string
-	Deadline sql.NullInt64
+	Deadline sql.NullTime
 	ExpCost  sql.NullInt64
 }
 
@@ -80,7 +80,7 @@ type CreateDurConfigParams struct {
 	Pes       int64
 	Exp       int64
 	Opt       int64
-	Deadline  sql.NullInt64
+	Deadline  sql.NullTime
 	TotalCost sql.NullInt64
 }
 
@@ -115,6 +115,182 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
 		arg.Desc,
 	)
 	return err
+}
+
+const getDurConfig = `-- name: GetDurConfig :one
+select id, task, pes, pes_unit, exp, exp_unit, opt, opt_unit, deadline, total_cost from dur_config where task = ?
+`
+
+func (q *Queries) GetDurConfig(ctx context.Context, task int64) (DurConfig, error) {
+	row := q.db.QueryRowContext(ctx, getDurConfig, task)
+	var i DurConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Task,
+		&i.Pes,
+		&i.PesUnit,
+		&i.Exp,
+		&i.ExpUnit,
+		&i.Opt,
+		&i.OptUnit,
+		&i.Deadline,
+		&i.TotalCost,
+	)
+	return i, err
+}
+
+const getParent = `-- name: GetParent :one
+select t.id, t.profile, t.unit, t.name, t.desc from task as t
+inner join children_config as c on
+	t.id = c.task
+inner join children_config_child cc on
+	c.id = cc.cfg
+where cc.child = ?
+group by t.id
+`
+
+func (q *Queries) GetParent(ctx context.Context, child int64) (Task, error) {
+	row := q.db.QueryRowContext(ctx, getParent, child)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Profile,
+		&i.Unit,
+		&i.Name,
+		&i.Desc,
+	)
+	return i, err
+}
+
+const getTask = `-- name: GetTask :one
+select id, profile, unit, name, "desc" from task where id = ?
+`
+
+func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
+	row := q.db.QueryRowContext(ctx, getTask, id)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Profile,
+		&i.Unit,
+		&i.Name,
+		&i.Desc,
+	)
+	return i, err
+}
+
+const listChildrenConfigChildren = `-- name: ListChildrenConfigChildren :many
+select child from children_config_child where cfg = ?
+`
+
+func (q *Queries) ListChildrenConfigChildren(ctx context.Context, cfg int64) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listChildrenConfigChildren, cfg)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var child int64
+		if err := rows.Scan(&child); err != nil {
+			return nil, err
+		}
+		items = append(items, child)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listChildrenConfigs = `-- name: ListChildrenConfigs :many
+select id, task, "desc", deadline, exp_cost from children_config where task = ?
+`
+
+func (q *Queries) ListChildrenConfigs(ctx context.Context, task int64) ([]ChildrenConfig, error) {
+	rows, err := q.db.QueryContext(ctx, listChildrenConfigs, task)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ChildrenConfig
+	for rows.Next() {
+		var i ChildrenConfig
+		if err := rows.Scan(
+			&i.ID,
+			&i.Task,
+			&i.Desc,
+			&i.Deadline,
+			&i.ExpCost,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPostreq = `-- name: ListPostreq :many
+select postreq from prereq where prereq = ?
+`
+
+func (q *Queries) ListPostreq(ctx context.Context, prereq int64) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listPostreq, prereq)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var postreq int64
+		if err := rows.Scan(&postreq); err != nil {
+			return nil, err
+		}
+		items = append(items, postreq)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPrereq = `-- name: ListPrereq :many
+select prereq from prereq where postreq = ?
+`
+
+func (q *Queries) ListPrereq(ctx context.Context, postreq int64) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listPrereq, postreq)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var prereq int64
+		if err := rows.Scan(&prereq); err != nil {
+			return nil, err
+		}
+		items = append(items, prereq)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listProfiles = `-- name: ListProfiles :many

@@ -26,7 +26,7 @@ type ChildrenConfig struct {
 	ID       int64
 	Task     int64
 	Desc     string
-	Deadline sql.NullInt64
+	Deadline sql.NullTime
 	ExpCost  sql.NullInt64
 }
 
@@ -39,9 +39,12 @@ type DurConfig struct {
 	ID        int64
 	Task      int64
 	Pes       int64
+	PesUnit   int64
 	Exp       int64
+	ExpUnit   int64
 	Opt       int64
-	Deadline  sql.NullInt64
+	OptUnit   int64
+	Deadline  sql.NullTime
 	TotalCost sql.NullInt64
 }
 
