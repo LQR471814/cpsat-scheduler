@@ -38,7 +38,6 @@ type ChildrenConfigChild struct {
 type DurConfig struct {
 	ID        int64
 	Task      int64
-	Desc      string
 	Pes       int64
 	Exp       int64
 	Opt       int64

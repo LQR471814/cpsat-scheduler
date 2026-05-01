@@ -28,7 +28,6 @@ create table task (
 create table dur_config (
 	id integer primary key autoincrement,
 	task integer not null references task (id) on update cascade on delete cascade,
-	desc text not null,
 
 	pes integer not null,
 	exp integer not null,

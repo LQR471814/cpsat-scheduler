@@ -71,13 +71,12 @@ func (q *Queries) CreateChildrenConfig(ctx context.Context, arg CreateChildrenCo
 }
 
 const createDurConfig = `-- name: CreateDurConfig :exec
-insert into dur_config (task, desc, pes, exp, opt, deadline, total_cost)
-values (?, ?, ?, ?, ?, ?, ?)
+insert into dur_config (task, pes, exp, opt, deadline, total_cost)
+values (?, ?, ?, ?, ?, ?)
 `
 
 type CreateDurConfigParams struct {
 	Task      int64
-	Desc      string
 	Pes       int64
 	Exp       int64
 	Opt       int64
@@ -88,7 +87,6 @@ type CreateDurConfigParams struct {
 func (q *Queries) CreateDurConfig(ctx context.Context, arg CreateDurConfigParams) error {
 	_, err := q.db.ExecContext(ctx, createDurConfig,
 		arg.Task,
-		arg.Desc,
 		arg.Pes,
 		arg.Exp,
 		arg.Opt,

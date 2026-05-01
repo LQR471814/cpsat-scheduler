@@ -9,8 +9,8 @@ order by size asc;
 insert into task (profile, unit, name, desc) values (?, ?, ?, ?);
 
 -- name: CreateDurConfig :exec
-insert into dur_config (task, desc, pes, exp, opt, deadline, total_cost)
-values (?, ?, ?, ?, ?, ?, ?);
+insert into dur_config (task, pes, exp, opt, deadline, total_cost)
+values (?, ?, ?, ?, ?, ?);
 
 -- name: CreateChildrenConfig :exec
 insert into children_config (task, desc, deadline, exp_cost)
