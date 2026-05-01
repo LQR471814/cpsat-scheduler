@@ -21,6 +21,7 @@
             [
               pkg-config
               gcc
+              sqlc
 
               protobuf
               protoc-gen-go
