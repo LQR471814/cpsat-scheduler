@@ -70,8 +70,9 @@ Parameters:
 1. Ask: Which gap in time to fill in. (if any), can skip
     1. For a given gap $g$.
     2. Select a region of $g$ to allocate to a particular task
-       $t$ or to create a new task which will redirect to [[#Create / edit task]].
-    3. Repeat until -> "done" or "cancel".
+       $t$ or to create a new task which will redirect to
+       [[#Create / edit task]].
+    4. Repeat until -> "done" or "cancel".
 
 # Today
 
