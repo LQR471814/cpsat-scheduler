@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from model.daemonpb import service_pb2 as model_dot_daemonpb_dot_service__pb2
+from solver.solverpb import service_pb2 as solver_dot_solverpb_dot_service__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in model/daemonpb/service_pb2_grpc.py depends on'
+        + ' but the generated code in solver/solverpb/service_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,8 +36,8 @@ class SolverStub(object):
         """
         self.Solve = channel.unary_unary(
                 '/Solver/Solve',
-                request_serializer=model_dot_daemonpb_dot_service__pb2.SolveRequest.SerializeToString,
-                response_deserializer=model_dot_daemonpb_dot_service__pb2.SolveResponse.FromString,
+                request_serializer=solver_dot_solverpb_dot_service__pb2.SolveRequest.SerializeToString,
+                response_deserializer=solver_dot_solverpb_dot_service__pb2.SolveResponse.FromString,
                 _registered_method=True)
 
 
@@ -55,8 +55,8 @@ def add_SolverServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Solve': grpc.unary_unary_rpc_method_handler(
                     servicer.Solve,
-                    request_deserializer=model_dot_daemonpb_dot_service__pb2.SolveRequest.FromString,
-                    response_serializer=model_dot_daemonpb_dot_service__pb2.SolveResponse.SerializeToString,
+                    request_deserializer=solver_dot_solverpb_dot_service__pb2.SolveRequest.FromString,
+                    response_serializer=solver_dot_solverpb_dot_service__pb2.SolveResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -84,8 +84,8 @@ class Solver(object):
             request,
             target,
             '/Solver/Solve',
-            model_dot_daemonpb_dot_service__pb2.SolveRequest.SerializeToString,
-            model_dot_daemonpb_dot_service__pb2.SolveResponse.FromString,
+            solver_dot_solverpb_dot_service__pb2.SolveRequest.SerializeToString,
+            solver_dot_solverpb_dot_service__pb2.SolveResponse.FromString,
             options,
             channel_credentials,
             insecure,

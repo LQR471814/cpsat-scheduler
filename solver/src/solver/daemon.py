@@ -10,8 +10,8 @@ from cpsatmodel.config import (
     Model,
 )
 from cpsatmodel.config_builder import ConfigBuilder, Task
-import model.daemonpb.service_pb2 as pb
-import model.daemonpb.service_pb2_grpc as grpcpb
+import solver.solverpb.service_pb2 as pb
+import solver.solverpb.service_pb2_grpc as grpcpb
 from ortools.sat.python import cp_model
 
 
@@ -22,6 +22,8 @@ status_map: dict[cp_model.CpSolverStatus, pb.SolveStatus] = {
     cp_model.OPTIMAL: pb.SolveStatus.OPTIMAL,
     cp_model.UNKNOWN: pb.SolveStatus.UNKNOWN,
 }
+
+SOCKET_PATH = "/tmp/cpsat-solver.sock"
 
 
 class SolverServicer(grpcpb.SolverServicer):

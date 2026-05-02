@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: model/daemonpb/service.proto
+// source: solver/solverpb/service.proto
 
-package daemonpb
+package solverpb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -60,11 +60,11 @@ func (x SolveStatus) String() string {
 }
 
 func (SolveStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_model_daemonpb_service_proto_enumTypes[0].Descriptor()
+	return file_solver_solverpb_service_proto_enumTypes[0].Descriptor()
 }
 
 func (SolveStatus) Type() protoreflect.EnumType {
-	return &file_model_daemonpb_service_proto_enumTypes[0]
+	return &file_solver_solverpb_service_proto_enumTypes[0]
 }
 
 func (x SolveStatus) Number() protoreflect.EnumNumber {
@@ -73,7 +73,7 @@ func (x SolveStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SolveStatus.Descriptor instead.
 func (SolveStatus) EnumDescriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{0}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{0}
 }
 
 type CostInterval struct {
@@ -89,7 +89,7 @@ type CostInterval struct {
 
 func (x *CostInterval) Reset() {
 	*x = CostInterval{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[0]
+	mi := &file_solver_solverpb_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +101,7 @@ func (x *CostInterval) String() string {
 func (*CostInterval) ProtoMessage() {}
 
 func (x *CostInterval) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[0]
+	mi := &file_solver_solverpb_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +114,7 @@ func (x *CostInterval) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CostInterval.ProtoReflect.Descriptor instead.
 func (*CostInterval) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{0}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CostInterval) GetStart() int64 {
@@ -150,7 +150,7 @@ type DurConfig struct {
 
 func (x *DurConfig) Reset() {
 	*x = DurConfig{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[1]
+	mi := &file_solver_solverpb_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -162,7 +162,7 @@ func (x *DurConfig) String() string {
 func (*DurConfig) ProtoMessage() {}
 
 func (x *DurConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[1]
+	mi := &file_solver_solverpb_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -175,7 +175,7 @@ func (x *DurConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DurConfig.ProtoReflect.Descriptor instead.
 func (*DurConfig) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{1}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DurConfig) GetId() int64 {
@@ -210,7 +210,7 @@ type ChildrenConfig struct {
 
 func (x *ChildrenConfig) Reset() {
 	*x = ChildrenConfig{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[2]
+	mi := &file_solver_solverpb_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -222,7 +222,7 @@ func (x *ChildrenConfig) String() string {
 func (*ChildrenConfig) ProtoMessage() {}
 
 func (x *ChildrenConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[2]
+	mi := &file_solver_solverpb_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -235,7 +235,7 @@ func (x *ChildrenConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChildrenConfig.ProtoReflect.Descriptor instead.
 func (*ChildrenConfig) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{2}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ChildrenConfig) GetId() int64 {
@@ -277,7 +277,7 @@ type Task struct {
 
 func (x *Task) Reset() {
 	*x = Task{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[3]
+	mi := &file_solver_solverpb_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -289,7 +289,7 @@ func (x *Task) String() string {
 func (*Task) ProtoMessage() {}
 
 func (x *Task) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[3]
+	mi := &file_solver_solverpb_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -302,7 +302,7 @@ func (x *Task) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Task.ProtoReflect.Descriptor instead.
 func (*Task) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{3}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Task) GetId() int64 {
@@ -379,7 +379,7 @@ type SolvedTask struct {
 
 func (x *SolvedTask) Reset() {
 	*x = SolvedTask{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[4]
+	mi := &file_solver_solverpb_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -391,7 +391,7 @@ func (x *SolvedTask) String() string {
 func (*SolvedTask) ProtoMessage() {}
 
 func (x *SolvedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[4]
+	mi := &file_solver_solverpb_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -404,7 +404,7 @@ func (x *SolvedTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolvedTask.ProtoReflect.Descriptor instead.
 func (*SolvedTask) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{4}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SolvedTask) GetId() int64 {
@@ -495,7 +495,7 @@ type SolveRequest struct {
 
 func (x *SolveRequest) Reset() {
 	*x = SolveRequest{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[5]
+	mi := &file_solver_solverpb_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -507,7 +507,7 @@ func (x *SolveRequest) String() string {
 func (*SolveRequest) ProtoMessage() {}
 
 func (x *SolveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[5]
+	mi := &file_solver_solverpb_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -520,7 +520,7 @@ func (x *SolveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveRequest.ProtoReflect.Descriptor instead.
 func (*SolveRequest) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{5}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SolveRequest) GetTasks() []*Task {
@@ -541,7 +541,7 @@ type SolveResponse struct {
 
 func (x *SolveResponse) Reset() {
 	*x = SolveResponse{}
-	mi := &file_model_daemonpb_service_proto_msgTypes[6]
+	mi := &file_solver_solverpb_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +553,7 @@ func (x *SolveResponse) String() string {
 func (*SolveResponse) ProtoMessage() {}
 
 func (x *SolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_model_daemonpb_service_proto_msgTypes[6]
+	mi := &file_solver_solverpb_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +566,7 @@ func (x *SolveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveResponse.ProtoReflect.Descriptor instead.
 func (*SolveResponse) Descriptor() ([]byte, []int) {
-	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{6}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SolveResponse) GetStatus() SolveStatus {
@@ -590,11 +590,11 @@ func (x *SolveResponse) GetSolution() []*SolvedTask {
 	return nil
 }
 
-var File_model_daemonpb_service_proto protoreflect.FileDescriptor
+var File_solver_solverpb_service_proto protoreflect.FileDescriptor
 
-const file_model_daemonpb_service_proto_rawDesc = "" +
+const file_solver_solverpb_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmodel/daemonpb/service.proto\"J\n" +
+	"\x1dsolver/solverpb/service.proto\"J\n" +
 	"\fCostInterval\x12\x14\n" +
 	"\x05start\x18\x01 \x01(\x03R\x05start\x12\x10\n" +
 	"\x03end\x18\x02 \x01(\x03R\x03end\x12\x12\n" +
@@ -643,23 +643,23 @@ const file_model_daemonpb_service_proto_rawDesc = "" +
 	"\aOPTIMAL\x10\x03\x12\v\n" +
 	"\aUNKNOWN\x10\x0420\n" +
 	"\x06Solver\x12&\n" +
-	"\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseB)B\fServiceProtoP\x01Z\x17internal/model/daemonpbb\x06proto3"
+	"\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseB*B\fServiceProtoP\x01Z\x18internal/solver/solverpbb\x06proto3"
 
 var (
-	file_model_daemonpb_service_proto_rawDescOnce sync.Once
-	file_model_daemonpb_service_proto_rawDescData []byte
+	file_solver_solverpb_service_proto_rawDescOnce sync.Once
+	file_solver_solverpb_service_proto_rawDescData []byte
 )
 
-func file_model_daemonpb_service_proto_rawDescGZIP() []byte {
-	file_model_daemonpb_service_proto_rawDescOnce.Do(func() {
-		file_model_daemonpb_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_model_daemonpb_service_proto_rawDesc), len(file_model_daemonpb_service_proto_rawDesc)))
+func file_solver_solverpb_service_proto_rawDescGZIP() []byte {
+	file_solver_solverpb_service_proto_rawDescOnce.Do(func() {
+		file_solver_solverpb_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_solver_solverpb_service_proto_rawDesc), len(file_solver_solverpb_service_proto_rawDesc)))
 	})
-	return file_model_daemonpb_service_proto_rawDescData
+	return file_solver_solverpb_service_proto_rawDescData
 }
 
-var file_model_daemonpb_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_model_daemonpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_model_daemonpb_service_proto_goTypes = []any{
+var file_solver_solverpb_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_solver_solverpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_solver_solverpb_service_proto_goTypes = []any{
 	(SolveStatus)(0),       // 0: SolveStatus
 	(*CostInterval)(nil),   // 1: CostInterval
 	(*DurConfig)(nil),      // 2: DurConfig
@@ -669,7 +669,7 @@ var file_model_daemonpb_service_proto_goTypes = []any{
 	(*SolveRequest)(nil),   // 6: SolveRequest
 	(*SolveResponse)(nil),  // 7: SolveResponse
 }
-var file_model_daemonpb_service_proto_depIdxs = []int32{
+var file_solver_solverpb_service_proto_depIdxs = []int32{
 	1, // 0: DurConfig.intervals:type_name -> CostInterval
 	1, // 1: ChildrenConfig.intervals:type_name -> CostInterval
 	2, // 2: Task.dur_cfgs:type_name -> DurConfig
@@ -686,13 +686,13 @@ var file_model_daemonpb_service_proto_depIdxs = []int32{
 	0, // [0:7] is the sub-list for field type_name
 }
 
-func init() { file_model_daemonpb_service_proto_init() }
-func file_model_daemonpb_service_proto_init() {
-	if File_model_daemonpb_service_proto != nil {
+func init() { file_solver_solverpb_service_proto_init() }
+func file_solver_solverpb_service_proto_init() {
+	if File_solver_solverpb_service_proto != nil {
 		return
 	}
-	file_model_daemonpb_service_proto_msgTypes[3].OneofWrappers = []any{}
-	file_model_daemonpb_service_proto_msgTypes[4].OneofWrappers = []any{
+	file_solver_solverpb_service_proto_msgTypes[3].OneofWrappers = []any{}
+	file_solver_solverpb_service_proto_msgTypes[4].OneofWrappers = []any{
 		(*SolvedTask_DurId)(nil),
 		(*SolvedTask_ChildrenId)(nil),
 	}
@@ -700,18 +700,18 @@ func file_model_daemonpb_service_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_model_daemonpb_service_proto_rawDesc), len(file_model_daemonpb_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solver_solverpb_service_proto_rawDesc), len(file_solver_solverpb_service_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_model_daemonpb_service_proto_goTypes,
-		DependencyIndexes: file_model_daemonpb_service_proto_depIdxs,
-		EnumInfos:         file_model_daemonpb_service_proto_enumTypes,
-		MessageInfos:      file_model_daemonpb_service_proto_msgTypes,
+		GoTypes:           file_solver_solverpb_service_proto_goTypes,
+		DependencyIndexes: file_solver_solverpb_service_proto_depIdxs,
+		EnumInfos:         file_solver_solverpb_service_proto_enumTypes,
+		MessageInfos:      file_solver_solverpb_service_proto_msgTypes,
 	}.Build()
-	File_model_daemonpb_service_proto = out.File
-	file_model_daemonpb_service_proto_goTypes = nil
-	file_model_daemonpb_service_proto_depIdxs = nil
+	File_solver_solverpb_service_proto = out.File
+	file_solver_solverpb_service_proto_goTypes = nil
+	file_solver_solverpb_service_proto_depIdxs = nil
 }

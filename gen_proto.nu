@@ -1,4 +1,4 @@
-let python_out = (pwd)/cpsat-model/src
+let python_out = (pwd)/solver/src
 let proto: string = (pwd)/proto
 let proto_files: list<string> = ls (($proto)/**/*.proto | into glob)
 	| get name

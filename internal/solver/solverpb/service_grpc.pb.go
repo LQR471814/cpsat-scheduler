@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: model/daemonpb/service.proto
+// source: solver/solverpb/service.proto
 
-package daemonpb
+package solverpb
 
 import (
 	context "context"
@@ -117,5 +117,5 @@ var Solver_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "model/daemonpb/service.proto",
+	Metadata: "solver/solverpb/service.proto",
 }
