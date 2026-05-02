@@ -10,8 +10,9 @@ order by size asc;
 -- name: GetTask :one
 select * from task where id = ?;
 
--- name: CreateTask :exec
-insert into task (profile, unit, name, desc) values (?, ?, ?, ?);
+-- name: CreateTask :one
+insert into task (profile, unit, name, desc) values (?, ?, ?, ?)
+returning id;
 
 -- name: UpdateTask :exec
 update task set

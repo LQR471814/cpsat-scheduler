@@ -96,8 +96,9 @@ func (q *Queries) CreateDurConfig(ctx context.Context, arg CreateDurConfigParams
 	return err
 }
 
-const createTask = `-- name: CreateTask :exec
+const createTask = `-- name: CreateTask :one
 insert into task (profile, unit, name, desc) values (?, ?, ?, ?)
+returning id
 `
 
 type CreateTaskParams struct {
@@ -107,14 +108,16 @@ type CreateTaskParams struct {
 	Desc    string
 }
 
-func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
-	_, err := q.db.ExecContext(ctx, createTask,
+func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createTask,
 		arg.Profile,
 		arg.Unit,
 		arg.Name,
 		arg.Desc,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteChildrenConfigs = `-- name: DeleteChildrenConfigs :exec

@@ -135,18 +135,17 @@ func (s *TaskState) Load(ctx context.Context, txqry *db.Queries, task, profileId
 func (s *TaskState) saveTask(
 	ctx context.Context,
 	txqry *db.Queries,
-	task,
+	task *int64,
 	profileId int64,
-) (err error) {
+) (id int64, err error) {
 	if s.Timescale == nil {
 		panic("assert: timescale != nil")
 	}
 	if s.Name == "" {
 		panic("assert: name not empty")
 	}
-	_, err = txqry.GetTask(ctx, task)
-	if errors.Is(err, sql.ErrNoRows) {
-		err = txqry.CreateTask(ctx, db.CreateTaskParams{
+	if task == nil {
+		id, err = txqry.CreateTask(ctx, db.CreateTaskParams{
 			Profile: profileId,
 			Unit:    *s.Timescale,
 			Name:    s.Name,
@@ -154,11 +153,9 @@ func (s *TaskState) saveTask(
 		})
 		return
 	}
-	if err != nil {
-		return
-	}
+	id = *task
 	err = txqry.UpdateTask(ctx, db.UpdateTaskParams{
-		ID:   task,
+		ID:   *task,
 		Unit: *s.Timescale,
 		Name: s.Name,
 		Desc: s.Desc,
@@ -230,21 +227,25 @@ func (s *TaskState) deletePreviousConfigs(ctx context.Context, txqry *db.Queries
 	return
 }
 
-func (s *TaskState) Save(ctx context.Context, txqry *db.Queries, task, profileId int64) (err error) {
-	if err = s.saveTask(ctx, txqry, task, profileId); err != nil {
+func (s *TaskState) Save(ctx context.Context, txqry *db.Queries, task *int64, profileId int64) (id int64, err error) {
+	if id, err = s.saveTask(ctx, txqry, task, profileId); err != nil {
 		return
 	}
-	if err = s.deletePreviousConfigs(ctx, txqry, task); err != nil {
+	if task != nil {
+		if err = s.deletePreviousConfigs(ctx, txqry, *task); err != nil {
+			return
+		}
+	}
+	if err = s.saveConfigs(ctx, txqry, *task); err != nil {
 		return
 	}
-	if err = s.saveConfigs(ctx, txqry, task); err != nil {
-		return
-	}
-	return s.saveConstraints(ctx, txqry, task)
+	err = s.saveConstraints(ctx, txqry, *task)
+	return
 }
 
 type TaskBuilder struct {
 	ctx   *Context
+	task  *int64
 	State TaskState
 }
 
@@ -261,10 +262,24 @@ func (b TaskBuilder) LoadExisting(task int64) (out TaskBuilder, err error) {
 		return
 	}
 	defer tx.Rollback()
-
 	txqry := b.ctx.db.WithTx(tx)
+
 	state := &b.State
 	err = state.Load(b.ctx.ctx, txqry, task, b.ctx.profile.ID)
+	b.task = &task
 	out = b
+	return
+}
+
+func (b TaskBuilder) Build() (id int64, err error) {
+	tx, err := b.ctx.driver.BeginTx(b.ctx.ctx, nil)
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
+	txqry := b.ctx.db.WithTx(tx)
+
+	state := &b.State
+	id, err = state.Save(b.ctx.ctx, txqry, b.task, b.ctx.profile.ID)
 	return
 }
