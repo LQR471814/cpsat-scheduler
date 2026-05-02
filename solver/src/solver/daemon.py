@@ -1,6 +1,7 @@
 import logging
 import time
 from concurrent import futures
+import os
 
 import grpc
 from google.protobuf.internal import containers as _containers
@@ -22,8 +23,6 @@ status_map: dict[cp_model.CpSolverStatus, pb.SolveStatus] = {
     cp_model.OPTIMAL: pb.SolveStatus.OPTIMAL,
     cp_model.UNKNOWN: pb.SolveStatus.UNKNOWN,
 }
-
-SOCKET_PATH = "/tmp/cpsat-solver.sock"
 
 
 class SolverServicer(grpcpb.SolverServicer):
@@ -92,9 +91,9 @@ class SolverServicer(grpcpb.SolverServicer):
                 duration=solved.real_duration,
             )
             if solved.config >= len(task.dur_cfgs):
-                obj.children_id = solved.config - len(task.dur_cfgs)
+                obj.children_idx = solved.config - len(task.dur_cfgs)
             else:
-                obj.dur_id = solved.config
+                obj.dur_idx = solved.config
 
             solution_conv.append(obj)
 
@@ -105,11 +104,17 @@ class SolverServicer(grpcpb.SolverServicer):
         )
 
 
-def serve():
+def serve(sock_path: str):
+    try:
+        os.remove(sock_path)  # stale file → bind fail
+    except FileNotFoundError:
+        pass
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     grpcpb.add_SolverServicer_to_server(SolverServicer(), server)
-    server.add_insecure_port("[::]:50051")
+    server.add_insecure_port(f"unix:{sock_path}")
     server.start()
+
     try:
         _ONE_DAY_IN_SECONDS = 60 * 60 * 24
         while True:
@@ -120,4 +125,4 @@ def serve():
 
 if __name__ == "__main__":
     logging.basicConfig()
-    serve()
+    serve("/tmp/cpsat-scheduler.solver.sock")

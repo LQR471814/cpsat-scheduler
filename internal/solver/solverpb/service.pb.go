@@ -140,10 +140,9 @@ func (x *CostInterval) GetCost() int64 {
 
 type DurConfig struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
-	Id        int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Intervals []*CostInterval        `protobuf:"bytes,2,rep,name=intervals,proto3" json:"intervals,omitempty"`
+	Intervals []*CostInterval        `protobuf:"bytes,1,rep,name=intervals,proto3" json:"intervals,omitempty"`
 	// in terms of the atomic unit
-	Duration      int64 `protobuf:"varint,3,opt,name=duration,proto3" json:"duration,omitempty"`
+	Duration      int64 `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -178,13 +177,6 @@ func (*DurConfig) Descriptor() ([]byte, []int) {
 	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *DurConfig) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
 func (x *DurConfig) GetIntervals() []*CostInterval {
 	if x != nil {
 		return x.Intervals
@@ -201,9 +193,8 @@ func (x *DurConfig) GetDuration() int64 {
 
 type ChildrenConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Intervals     []*CostInterval        `protobuf:"bytes,2,rep,name=intervals,proto3" json:"intervals,omitempty"`
-	Children      []int64                `protobuf:"varint,3,rep,packed,name=children,proto3" json:"children,omitempty"`
+	Intervals     []*CostInterval        `protobuf:"bytes,1,rep,name=intervals,proto3" json:"intervals,omitempty"`
+	Children      []int64                `protobuf:"varint,2,rep,packed,name=children,proto3" json:"children,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,13 +227,6 @@ func (x *ChildrenConfig) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ChildrenConfig.ProtoReflect.Descriptor instead.
 func (*ChildrenConfig) Descriptor() ([]byte, []int) {
 	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ChildrenConfig) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
 }
 
 func (x *ChildrenConfig) GetIntervals() []*CostInterval {
@@ -364,8 +348,8 @@ type SolvedTask struct {
 	//
 	// Types that are valid to be assigned to Config:
 	//
-	//	*SolvedTask_DurId
-	//	*SolvedTask_ChildrenId
+	//	*SolvedTask_DurIdx
+	//	*SolvedTask_ChildrenIdx
 	Config isSolvedTask_Config `protobuf_oneof:"config"`
 	// the cost used
 	Cost int64 `protobuf:"varint,5,opt,name=cost,proto3" json:"cost,omitempty"`
@@ -428,19 +412,19 @@ func (x *SolvedTask) GetConfig() isSolvedTask_Config {
 	return nil
 }
 
-func (x *SolvedTask) GetDurId() int64 {
+func (x *SolvedTask) GetDurIdx() int64 {
 	if x != nil {
-		if x, ok := x.Config.(*SolvedTask_DurId); ok {
-			return x.DurId
+		if x, ok := x.Config.(*SolvedTask_DurIdx); ok {
+			return x.DurIdx
 		}
 	}
 	return 0
 }
 
-func (x *SolvedTask) GetChildrenId() int64 {
+func (x *SolvedTask) GetChildrenIdx() int64 {
 	if x != nil {
-		if x, ok := x.Config.(*SolvedTask_ChildrenId); ok {
-			return x.ChildrenId
+		if x, ok := x.Config.(*SolvedTask_ChildrenIdx); ok {
+			return x.ChildrenIdx
 		}
 	}
 	return 0
@@ -471,19 +455,19 @@ type isSolvedTask_Config interface {
 	isSolvedTask_Config()
 }
 
-type SolvedTask_DurId struct {
+type SolvedTask_DurIdx struct {
 	// the id of the duration config
-	DurId int64 `protobuf:"varint,3,opt,name=dur_id,json=durId,proto3,oneof"`
+	DurIdx int64 `protobuf:"varint,3,opt,name=dur_idx,json=durIdx,proto3,oneof"`
 }
 
-type SolvedTask_ChildrenId struct {
+type SolvedTask_ChildrenIdx struct {
 	// the id of the children config
-	ChildrenId int64 `protobuf:"varint,4,opt,name=children_id,json=childrenId,proto3,oneof"`
+	ChildrenIdx int64 `protobuf:"varint,4,opt,name=children_idx,json=childrenIdx,proto3,oneof"`
 }
 
-func (*SolvedTask_DurId) isSolvedTask_Config() {}
+func (*SolvedTask_DurIdx) isSolvedTask_Config() {}
 
-func (*SolvedTask_ChildrenId) isSolvedTask_Config() {}
+func (*SolvedTask_ChildrenIdx) isSolvedTask_Config() {}
 
 // Solve
 type SolveRequest struct {
@@ -598,15 +582,13 @@ const file_solver_solverpb_service_proto_rawDesc = "" +
 	"\fCostInterval\x12\x14\n" +
 	"\x05start\x18\x01 \x01(\x03R\x05start\x12\x10\n" +
 	"\x03end\x18\x02 \x01(\x03R\x03end\x12\x12\n" +
-	"\x04cost\x18\x03 \x01(\x03R\x04cost\"d\n" +
-	"\tDurConfig\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
-	"\tintervals\x18\x02 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
-	"\bduration\x18\x03 \x01(\x03R\bduration\"i\n" +
-	"\x0eChildrenConfig\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
-	"\tintervals\x18\x02 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
-	"\bchildren\x18\x03 \x03(\x03R\bchildren\"\xe5\x01\n" +
+	"\x04cost\x18\x03 \x01(\x03R\x04cost\"T\n" +
+	"\tDurConfig\x12+\n" +
+	"\tintervals\x18\x01 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
+	"\bduration\x18\x02 \x01(\x03R\bduration\"Y\n" +
+	"\x0eChildrenConfig\x12+\n" +
+	"\tintervals\x18\x01 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
+	"\bchildren\x18\x02 \x03(\x03R\bchildren\"\xe5\x01\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04unit\x18\x02 \x01(\x03R\x04unit\x12\x19\n" +
@@ -617,14 +599,13 @@ const file_solver_solverpb_service_proto_rawDesc = "" +
 	".DurConfigR\adurCfgs\x124\n" +
 	"\rchildren_cfgs\x18\a \x03(\v2\x0f.ChildrenConfigR\fchildrenCfgsB\b\n" +
 	"\x06_startB\x06\n" +
-	"\x04_end\"\xba\x01\n" +
+	"\x04_end\"\xbe\x01\n" +
 	"\n" +
 	"SolvedTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
-	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x17\n" +
-	"\x06dur_id\x18\x03 \x01(\x03H\x00R\x05durId\x12!\n" +
-	"\vchildren_id\x18\x04 \x01(\x03H\x00R\n" +
-	"childrenId\x12\x12\n" +
+	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x19\n" +
+	"\adur_idx\x18\x03 \x01(\x03H\x00R\x06durIdx\x12#\n" +
+	"\fchildren_idx\x18\x04 \x01(\x03H\x00R\vchildrenIdx\x12\x12\n" +
 	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12\x1a\n" +
 	"\bduration\x18\x06 \x01(\x03R\bduration\x12\x10\n" +
 	"\x03end\x18\a \x01(\x03R\x03endB\b\n" +
@@ -693,8 +674,8 @@ func file_solver_solverpb_service_proto_init() {
 	}
 	file_solver_solverpb_service_proto_msgTypes[3].OneofWrappers = []any{}
 	file_solver_solverpb_service_proto_msgTypes[4].OneofWrappers = []any{
-		(*SolvedTask_DurId)(nil),
-		(*SolvedTask_ChildrenId)(nil),
+		(*SolvedTask_DurIdx)(nil),
+		(*SolvedTask_ChildrenIdx)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

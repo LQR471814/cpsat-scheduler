@@ -23,11 +23,12 @@ type Child struct {
 }
 
 type ChildrenConfig struct {
-	ID       int64
-	Task     int64
-	Desc     string
-	Deadline sql.NullTime
-	ExpCost  sql.NullInt64
+	ID        int64
+	Task      int64
+	Desc      string
+	Deadline  sql.NullTime
+	ExpCost   sql.NullInt64
+	TotalCost sql.NullInt64
 }
 
 type ChildrenConfigChild struct {
@@ -54,9 +55,11 @@ type Prereq struct {
 }
 
 type Profile struct {
-	ID            int64
-	Name          string
-	UniverseStart time.Time
+	ID                      int64
+	Name                    string
+	AtomicTimescaleDuration int64
+	UniverseStart           time.Time
+	PertGenChoices          sql.NullInt64
 }
 
 type Task struct {
@@ -65,6 +68,8 @@ type Task struct {
 	Unit    int64
 	Name    string
 	Desc    string
+	Start   sql.NullInt64
+	End     sql.NullInt64
 }
 
 type TimescaleUnit struct {

@@ -9,16 +9,14 @@ message CostInterval {
 }
 
 message DurConfig {
-  int64 id = 1;
-  repeated CostInterval intervals = 2;
+  repeated CostInterval intervals = 1;
   // in terms of the atomic unit
-  int64 duration = 3;
+  int64 duration = 2;
 }
 
 message ChildrenConfig {
-  int64 id = 1;
-  repeated CostInterval intervals = 2;
-  repeated int64 children = 3;
+  repeated CostInterval intervals = 1;
+  repeated int64 children = 2;
 }
 
 message Task {
@@ -43,9 +41,9 @@ message SolvedTask {
   // the config selected
   oneof config {
     // the id of the duration config
-    int64 dur_id = 3;
+    int64 dur_idx = 3;
     // the id of the children config
-    int64 children_id = 4;
+    int64 children_idx = 4;
   };
   // the cost used
   int64 cost = 5;

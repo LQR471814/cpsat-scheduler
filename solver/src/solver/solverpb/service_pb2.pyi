@@ -31,24 +31,20 @@ class CostInterval(_message.Message):
     def __init__(self, start: _Optional[int] = ..., end: _Optional[int] = ..., cost: _Optional[int] = ...) -> None: ...
 
 class DurConfig(_message.Message):
-    __slots__ = ("id", "intervals", "duration")
-    ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("intervals", "duration")
     INTERVALS_FIELD_NUMBER: _ClassVar[int]
     DURATION_FIELD_NUMBER: _ClassVar[int]
-    id: int
     intervals: _containers.RepeatedCompositeFieldContainer[CostInterval]
     duration: int
-    def __init__(self, id: _Optional[int] = ..., intervals: _Optional[_Iterable[_Union[CostInterval, _Mapping]]] = ..., duration: _Optional[int] = ...) -> None: ...
+    def __init__(self, intervals: _Optional[_Iterable[_Union[CostInterval, _Mapping]]] = ..., duration: _Optional[int] = ...) -> None: ...
 
 class ChildrenConfig(_message.Message):
-    __slots__ = ("id", "intervals", "children")
-    ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("intervals", "children")
     INTERVALS_FIELD_NUMBER: _ClassVar[int]
     CHILDREN_FIELD_NUMBER: _ClassVar[int]
-    id: int
     intervals: _containers.RepeatedCompositeFieldContainer[CostInterval]
     children: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, id: _Optional[int] = ..., intervals: _Optional[_Iterable[_Union[CostInterval, _Mapping]]] = ..., children: _Optional[_Iterable[int]] = ...) -> None: ...
+    def __init__(self, intervals: _Optional[_Iterable[_Union[CostInterval, _Mapping]]] = ..., children: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class Task(_message.Message):
     __slots__ = ("id", "unit", "start", "end", "prereqs", "dur_cfgs", "children_cfgs")
@@ -69,22 +65,22 @@ class Task(_message.Message):
     def __init__(self, id: _Optional[int] = ..., unit: _Optional[int] = ..., start: _Optional[int] = ..., end: _Optional[int] = ..., prereqs: _Optional[_Iterable[int]] = ..., dur_cfgs: _Optional[_Iterable[_Union[DurConfig, _Mapping]]] = ..., children_cfgs: _Optional[_Iterable[_Union[ChildrenConfig, _Mapping]]] = ...) -> None: ...
 
 class SolvedTask(_message.Message):
-    __slots__ = ("id", "start", "dur_id", "children_id", "cost", "duration", "end")
+    __slots__ = ("id", "start", "dur_idx", "children_idx", "cost", "duration", "end")
     ID_FIELD_NUMBER: _ClassVar[int]
     START_FIELD_NUMBER: _ClassVar[int]
-    DUR_ID_FIELD_NUMBER: _ClassVar[int]
-    CHILDREN_ID_FIELD_NUMBER: _ClassVar[int]
+    DUR_IDX_FIELD_NUMBER: _ClassVar[int]
+    CHILDREN_IDX_FIELD_NUMBER: _ClassVar[int]
     COST_FIELD_NUMBER: _ClassVar[int]
     DURATION_FIELD_NUMBER: _ClassVar[int]
     END_FIELD_NUMBER: _ClassVar[int]
     id: int
     start: int
-    dur_id: int
-    children_id: int
+    dur_idx: int
+    children_idx: int
     cost: int
     duration: int
     end: int
-    def __init__(self, id: _Optional[int] = ..., start: _Optional[int] = ..., dur_id: _Optional[int] = ..., children_id: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., start: _Optional[int] = ..., dur_idx: _Optional[int] = ..., children_idx: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
 
 class SolveRequest(_message.Message):
     __slots__ = ("tasks",)

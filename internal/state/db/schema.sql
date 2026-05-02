@@ -3,7 +3,9 @@ create table profile (
 	id integer primary key autoincrement,
 	name text not null,
 
-	universe_start timestamp not null
+	atomic_timescale_duration int not null,
+	universe_start timestamp not null,
+	pert_gen_choices int
 );
 
 -- Timescale unit
@@ -21,7 +23,9 @@ create table task (
 	unit integer not null references timescale_unit (size) on update cascade on delete cascade,
 
 	name text not null,
-	desc text not null
+	desc text not null,
+	start int,
+	end int
 );
 
 -- Duration type cost config (exactly 1 per task, not mut. excl with children_config)
@@ -47,7 +51,8 @@ create table children_config (
 	desc text not null,
 
 	deadline timestamp,
-	exp_cost integer
+	exp_cost integer,
+	total_cost integer
 );
 
 -- Child part of a cost config

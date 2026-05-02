@@ -49,15 +49,16 @@ func (q *Queries) CreateAlloc(ctx context.Context, arg CreateAllocParams) error 
 }
 
 const createChildrenConfig = `-- name: CreateChildrenConfig :exec
-insert into children_config (task, desc, deadline, exp_cost)
-values (?, ?, ?, ?)
+insert into children_config (task, desc, deadline, exp_cost, total_cost)
+values (?, ?, ?, ?, ?)
 `
 
 type CreateChildrenConfigParams struct {
-	Task     int64
-	Desc     string
-	Deadline sql.NullTime
-	ExpCost  sql.NullInt64
+	Task      int64
+	Desc      string
+	Deadline  sql.NullTime
+	ExpCost   sql.NullInt64
+	TotalCost sql.NullInt64
 }
 
 func (q *Queries) CreateChildrenConfig(ctx context.Context, arg CreateChildrenConfigParams) error {
@@ -66,6 +67,7 @@ func (q *Queries) CreateChildrenConfig(ctx context.Context, arg CreateChildrenCo
 		arg.Desc,
 		arg.Deadline,
 		arg.ExpCost,
+		arg.TotalCost,
 	)
 	return err
 }
@@ -97,7 +99,7 @@ func (q *Queries) CreateDurConfig(ctx context.Context, arg CreateDurConfigParams
 }
 
 const createTask = `-- name: CreateTask :one
-insert into task (profile, unit, name, desc) values (?, ?, ?, ?)
+insert into task (profile, unit, name, desc, start, end) values (?, ?, ?, ?, ?, ?)
 returning id
 `
 
@@ -106,6 +108,8 @@ type CreateTaskParams struct {
 	Unit    int64
 	Name    string
 	Desc    string
+	Start   sql.NullInt64
+	End     sql.NullInt64
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, error) {
@@ -114,6 +118,8 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, 
 		arg.Unit,
 		arg.Name,
 		arg.Desc,
+		arg.Start,
+		arg.End,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -161,7 +167,7 @@ func (q *Queries) GetDurConfig(ctx context.Context, task int64) (DurConfig, erro
 }
 
 const getParent = `-- name: GetParent :one
-select t.id, t.profile, t.unit, t.name, t.desc from task as t
+select t.id, t.profile, t.unit, t.name, t."desc", t.start, t."end" from task as t
 inner join children_config as c on
 	t.id = c.task
 inner join children_config_child cc on
@@ -179,12 +185,14 @@ func (q *Queries) GetParent(ctx context.Context, child int64) (Task, error) {
 		&i.Unit,
 		&i.Name,
 		&i.Desc,
+		&i.Start,
+		&i.End,
 	)
 	return i, err
 }
 
 const getTask = `-- name: GetTask :one
-select id, profile, unit, name, "desc" from task where id = ?
+select id, profile, unit, name, "desc", start, "end" from task where id = ?
 `
 
 func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
@@ -196,6 +204,8 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 		&i.Unit,
 		&i.Name,
 		&i.Desc,
+		&i.Start,
+		&i.End,
 	)
 	return i, err
 }
@@ -228,7 +238,7 @@ func (q *Queries) ListChildrenConfigChildren(ctx context.Context, cfg int64) ([]
 }
 
 const listChildrenConfigs = `-- name: ListChildrenConfigs :many
-select id, task, "desc", deadline, exp_cost from children_config where task = ?
+select id, task, "desc", deadline, exp_cost, total_cost from children_config where task = ?
 `
 
 func (q *Queries) ListChildrenConfigs(ctx context.Context, task int64) ([]ChildrenConfig, error) {
@@ -246,6 +256,7 @@ func (q *Queries) ListChildrenConfigs(ctx context.Context, task int64) ([]Childr
 			&i.Desc,
 			&i.Deadline,
 			&i.ExpCost,
+			&i.TotalCost,
 		); err != nil {
 			return nil, err
 		}
@@ -315,7 +326,7 @@ func (q *Queries) ListPrereq(ctx context.Context, postreq int64) ([]int64, error
 }
 
 const listProfiles = `-- name: ListProfiles :many
-select id, name, universe_start from profile
+select id, name, atomic_timescale_duration, universe_start, pert_gen_choices from profile
 `
 
 func (q *Queries) ListProfiles(ctx context.Context) ([]Profile, error) {
@@ -327,7 +338,48 @@ func (q *Queries) ListProfiles(ctx context.Context) ([]Profile, error) {
 	var items []Profile
 	for rows.Next() {
 		var i Profile
-		if err := rows.Scan(&i.ID, &i.Name, &i.UniverseStart); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.AtomicTimescaleDuration,
+			&i.UniverseStart,
+			&i.PertGenChoices,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTasks = `-- name: ListTasks :many
+select id, profile, unit, name, "desc", start, "end" from task where profile = ?
+`
+
+func (q *Queries) ListTasks(ctx context.Context, profile int64) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, listTasks, profile)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.Profile,
+			&i.Unit,
+			&i.Name,
+			&i.Desc,
+			&i.Start,
+			&i.End,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -408,15 +460,19 @@ const updateTask = `-- name: UpdateTask :exec
 update task set
 	unit = ?,
 	name = ?,
-	desc = ?
+	desc = ?,
+	start = ?,
+	end = ?
 where id = ?
 `
 
 type UpdateTaskParams struct {
-	Unit int64
-	Name string
-	Desc string
-	ID   int64
+	Unit  int64
+	Name  string
+	Desc  string
+	Start sql.NullInt64
+	End   sql.NullInt64
+	ID    int64
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
@@ -424,6 +480,8 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
 		arg.Unit,
 		arg.Name,
 		arg.Desc,
+		arg.Start,
+		arg.End,
 		arg.ID,
 	)
 	return err

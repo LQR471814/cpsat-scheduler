@@ -2,7 +2,7 @@ package state
 
 import (
 	"context"
-	"cpsat-scheduler/internal/db"
+	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"log/slog"
 )

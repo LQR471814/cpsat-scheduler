@@ -7,18 +7,23 @@ select name, size from timescale_unit where profile = ?
 order by size asc;
 
 
+-- name: ListTasks :many
+select * from task where profile = ?;
+
 -- name: GetTask :one
 select * from task where id = ?;
 
 -- name: CreateTask :one
-insert into task (profile, unit, name, desc) values (?, ?, ?, ?)
+insert into task (profile, unit, name, desc, start, end) values (?, ?, ?, ?, ?, ?)
 returning id;
 
 -- name: UpdateTask :exec
 update task set
 	unit = ?,
 	name = ?,
-	desc = ?
+	desc = ?,
+	start = ?,
+	end = ?
 where id = ?;
 
 
@@ -49,8 +54,8 @@ values (?, ?) on conflict do nothing;
 select * from children_config where task = ?;
 
 -- name: CreateChildrenConfig :exec
-insert into children_config (task, desc, deadline, exp_cost)
-values (?, ?, ?, ?);
+insert into children_config (task, desc, deadline, exp_cost, total_cost)
+values (?, ?, ?, ?, ?);
 
 -- name: DeleteChildrenConfigs :exec
 delete from children_config where task = ?;
@@ -63,7 +68,7 @@ insert into children_config_child (cfg, child)
 values (?, ?) on conflict do nothing;
 
 -- name: GetParent :one
-select t.id, t.profile, t.unit, t.name, t.desc from task as t
+select t.* from task as t
 inner join children_config as c on
 	t.id = c.task
 inner join children_config_child cc on
