@@ -117,6 +117,24 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
 	return err
 }
 
+const deleteChildrenConfigs = `-- name: DeleteChildrenConfigs :exec
+delete from children_config where task = ?
+`
+
+func (q *Queries) DeleteChildrenConfigs(ctx context.Context, task int64) error {
+	_, err := q.db.ExecContext(ctx, deleteChildrenConfigs, task)
+	return err
+}
+
+const deleteDurConfig = `-- name: DeleteDurConfig :exec
+delete from dur_config where task = ?
+`
+
+func (q *Queries) DeleteDurConfig(ctx context.Context, task int64) error {
+	_, err := q.db.ExecContext(ctx, deleteDurConfig, task)
+	return err
+}
+
 const getDurConfig = `-- name: GetDurConfig :one
 select id, task, pes, pes_unit, exp, exp_unit, opt, opt_unit, deadline, total_cost from dur_config where task = ?
 `
@@ -380,5 +398,30 @@ type SetPrereqParams struct {
 
 func (q *Queries) SetPrereq(ctx context.Context, arg SetPrereqParams) error {
 	_, err := q.db.ExecContext(ctx, setPrereq, arg.Prereq, arg.Postreq)
+	return err
+}
+
+const updateTask = `-- name: UpdateTask :exec
+update task set
+	unit = ?,
+	name = ?,
+	desc = ?
+where id = ?
+`
+
+type UpdateTaskParams struct {
+	Unit int64
+	Name string
+	Desc string
+	ID   int64
+}
+
+func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
+	_, err := q.db.ExecContext(ctx, updateTask,
+		arg.Unit,
+		arg.Name,
+		arg.Desc,
+		arg.ID,
+	)
 	return err
 }

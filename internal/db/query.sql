@@ -13,6 +13,13 @@ select * from task where id = ?;
 -- name: CreateTask :exec
 insert into task (profile, unit, name, desc) values (?, ?, ?, ?);
 
+-- name: UpdateTask :exec
+update task set
+	unit = ?,
+	name = ?,
+	desc = ?
+where id = ?;
+
 
 -- name: GetDurConfig :one
 select * from dur_config where task = ?;
@@ -20,6 +27,9 @@ select * from dur_config where task = ?;
 -- name: CreateDurConfig :exec
 insert into dur_config (task, pes, exp, opt, deadline, total_cost)
 values (?, ?, ?, ?, ?, ?);
+
+-- name: DeleteDurConfig :exec
+delete from dur_config where task = ?;
 
 
 
@@ -40,6 +50,9 @@ select * from children_config where task = ?;
 -- name: CreateChildrenConfig :exec
 insert into children_config (task, desc, deadline, exp_cost)
 values (?, ?, ?, ?);
+
+-- name: DeleteChildrenConfigs :exec
+delete from children_config where task = ?;
 
 -- name: ListChildrenConfigChildren :many
 select child from children_config_child where cfg = ?;
