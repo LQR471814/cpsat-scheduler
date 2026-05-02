@@ -13,11 +13,11 @@ import (
 const socketPath = "/tmp/cpsat-scheduler.solver.sock"
 
 type Solver struct {
-	conn   *grpc.ClientConn
-	client solverpb.SolverClient
+	conn *grpc.ClientConn
+	solverpb.SolverClient
 }
 
-func NewSolver() (rpc Solver, err error) {
+func NewSolver() (solver Solver, err error) {
 	u := &url.URL{
 		Scheme: "unix",
 		Path:   socketPath,
@@ -32,14 +32,11 @@ func NewSolver() (rpc Solver, err error) {
 	if err != nil {
 		return
 	}
-	rpc = Solver{
-		conn:   conn,
-		client: solverpb.NewSolverClient(conn),
+	solver = Solver{
+		conn:         conn,
+		SolverClient: solverpb.NewSolverClient(conn),
 	}
 	return
-}
-
-func (c Solver) Solve(ctx context.Context, profileID int64) {
 }
 
 func (c Solver) Close() {
