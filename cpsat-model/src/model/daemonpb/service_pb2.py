@@ -24,15 +24,27 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1cmodel/daemonpb/service.proto\"\x14\n\x04Text\x12\x0c\n\x04text\x18\x01 \x01(\t2\x1c\n\x04Test\x12\x14\n\x04\x45\x63ho\x12\x05.Text\x1a\x05.Textb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1cmodel/daemonpb/service.proto\"8\n\x0c\x43ostInterval\x12\r\n\x05start\x18\x01 \x01(\x03\x12\x0b\n\x03\x65nd\x18\x02 \x01(\x03\x12\x0c\n\x04\x63ost\x18\x03 \x01(\x03\"K\n\tDurConfig\x12\n\n\x02id\x18\x01 \x01(\x03\x12 \n\tintervals\x18\x02 \x03(\x0b\x32\r.CostInterval\x12\x10\n\x08\x64uration\x18\x03 \x01(\x03\"P\n\x0e\x43hildrenConfig\x12\n\n\x02id\x18\x01 \x01(\x03\x12 \n\tintervals\x18\x02 \x03(\x0b\x32\r.CostInterval\x12\x10\n\x08\x63hildren\x18\x03 \x03(\x03\"\x93\x01\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04unit\x18\x02 \x01(\x03\x12\r\n\x05start\x18\x03 \x01(\x03\x12\x0b\n\x03\x65nd\x18\x04 \x01(\x03\x12\x0f\n\x07prereqs\x18\x05 \x03(\x03\x12\x1c\n\x08\x64ur_cfgs\x18\x06 \x03(\x0b\x32\n.DurConfig\x12&\n\rchildren_cfgs\x18\x07 \x03(\x0b\x32\x0f.ChildrenConfig\"\x8a\x01\n\rScheduledTask\x12\n\n\x02id\x18\x01 \x01(\x03\x12\r\n\x05start\x18\x02 \x01(\x03\x12\x10\n\x06\x64ur_id\x18\x03 \x01(\x03H\x00\x12\x15\n\x0b\x63hildren_id\x18\x04 \x01(\x03H\x00\x12\x0c\n\x04\x63ost\x18\x05 \x01(\x03\x12\x10\n\x08\x64uration\x18\x06 \x01(\x03\x12\x0b\n\x03\x65nd\x18\x07 \x01(\x03\x42\x08\n\x06\x63onfig\"\'\n\x0fScheduleRequest\x12\x14\n\x05tasks\x18\x01 \x03(\x0b\x32\x05.Task\"4\n\x10ScheduleResponse\x12 \n\x08schedule\x18\x01 \x03(\x0b\x32\x0e.ScheduledTask2:\n\x07Service\x12/\n\x08Schedule\x12\x10.ScheduleRequest\x1a\x11.ScheduleResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'model.daemonpb.service_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TEXT']._serialized_start=32
-  _globals['_TEXT']._serialized_end=52
-  _globals['_TEST']._serialized_start=54
-  _globals['_TEST']._serialized_end=82
+  _globals['_COSTINTERVAL']._serialized_start=32
+  _globals['_COSTINTERVAL']._serialized_end=88
+  _globals['_DURCONFIG']._serialized_start=90
+  _globals['_DURCONFIG']._serialized_end=165
+  _globals['_CHILDRENCONFIG']._serialized_start=167
+  _globals['_CHILDRENCONFIG']._serialized_end=247
+  _globals['_TASK']._serialized_start=250
+  _globals['_TASK']._serialized_end=397
+  _globals['_SCHEDULEDTASK']._serialized_start=400
+  _globals['_SCHEDULEDTASK']._serialized_end=538
+  _globals['_SCHEDULEREQUEST']._serialized_start=540
+  _globals['_SCHEDULEREQUEST']._serialized_end=579
+  _globals['_SCHEDULERESPONSE']._serialized_start=581
+  _globals['_SCHEDULERESPONSE']._serialized_end=633
+  _globals['_SERVICE']._serialized_start=635
+  _globals['_SERVICE']._serialized_end=693
 # @@protoc_insertion_point(module_scope)

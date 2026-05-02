@@ -19,101 +19,101 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Test_Echo_FullMethodName = "/Test/Echo"
+	Service_Schedule_FullMethodName = "/Service/Schedule"
 )
 
-// TestClient is the client API for Test service.
+// ServiceClient is the client API for Service service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type TestClient interface {
-	Echo(ctx context.Context, in *Text, opts ...grpc.CallOption) (*Text, error)
+type ServiceClient interface {
+	Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error)
 }
 
-type testClient struct {
+type serviceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTestClient(cc grpc.ClientConnInterface) TestClient {
-	return &testClient{cc}
+func NewServiceClient(cc grpc.ClientConnInterface) ServiceClient {
+	return &serviceClient{cc}
 }
 
-func (c *testClient) Echo(ctx context.Context, in *Text, opts ...grpc.CallOption) (*Text, error) {
+func (c *serviceClient) Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Text)
-	err := c.cc.Invoke(ctx, Test_Echo_FullMethodName, in, out, cOpts...)
+	out := new(ScheduleResponse)
+	err := c.cc.Invoke(ctx, Service_Schedule_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TestServer is the server API for Test service.
-// All implementations must embed UnimplementedTestServer
+// ServiceServer is the server API for Service service.
+// All implementations must embed UnimplementedServiceServer
 // for forward compatibility.
-type TestServer interface {
-	Echo(context.Context, *Text) (*Text, error)
-	mustEmbedUnimplementedTestServer()
+type ServiceServer interface {
+	Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error)
+	mustEmbedUnimplementedServiceServer()
 }
 
-// UnimplementedTestServer must be embedded to have
+// UnimplementedServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedTestServer struct{}
+type UnimplementedServiceServer struct{}
 
-func (UnimplementedTestServer) Echo(context.Context, *Text) (*Text, error) {
-	return nil, status.Error(codes.Unimplemented, "method Echo not implemented")
+func (UnimplementedServiceServer) Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Schedule not implemented")
 }
-func (UnimplementedTestServer) mustEmbedUnimplementedTestServer() {}
-func (UnimplementedTestServer) testEmbeddedByValue()              {}
+func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
+func (UnimplementedServiceServer) testEmbeddedByValue()                 {}
 
-// UnsafeTestServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to TestServer will
+// UnsafeServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ServiceServer will
 // result in compilation errors.
-type UnsafeTestServer interface {
-	mustEmbedUnimplementedTestServer()
+type UnsafeServiceServer interface {
+	mustEmbedUnimplementedServiceServer()
 }
 
-func RegisterTestServer(s grpc.ServiceRegistrar, srv TestServer) {
-	// If the following call panics, it indicates UnimplementedTestServer was
+func RegisterServiceServer(s grpc.ServiceRegistrar, srv ServiceServer) {
+	// If the following call panics, it indicates UnimplementedServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Test_ServiceDesc, srv)
+	s.RegisterService(&Service_ServiceDesc, srv)
 }
 
-func _Test_Echo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Text)
+func _Service_Schedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScheduleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TestServer).Echo(ctx, in)
+		return srv.(ServiceServer).Schedule(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Test_Echo_FullMethodName,
+		FullMethod: Service_Schedule_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestServer).Echo(ctx, req.(*Text))
+		return srv.(ServiceServer).Schedule(ctx, req.(*ScheduleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Test_ServiceDesc is the grpc.ServiceDesc for Test service.
+// Service_ServiceDesc is the grpc.ServiceDesc for Service service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Test_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Test",
-	HandlerType: (*TestServer)(nil),
+var Service_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "Service",
+	HandlerType: (*ServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Echo",
-			Handler:    _Test_Echo_Handler,
+			MethodName: "Schedule",
+			Handler:    _Service_Schedule_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

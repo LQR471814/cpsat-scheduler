@@ -21,27 +21,31 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Text struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+type CostInterval struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// in terms of the atomic unit
+	Start int64 `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
+	// in terms of the atomic unit
+	End           int64 `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
+	Cost          int64 `protobuf:"varint,3,opt,name=cost,proto3" json:"cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Text) Reset() {
-	*x = Text{}
+func (x *CostInterval) Reset() {
+	*x = CostInterval{}
 	mi := &file_model_daemonpb_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Text) String() string {
+func (x *CostInterval) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Text) ProtoMessage() {}
+func (*CostInterval) ProtoMessage() {}
 
-func (x *Text) ProtoReflect() protoreflect.Message {
+func (x *CostInterval) ProtoReflect() protoreflect.Message {
 	mi := &file_model_daemonpb_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -53,27 +57,510 @@ func (x *Text) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Text.ProtoReflect.Descriptor instead.
-func (*Text) Descriptor() ([]byte, []int) {
+// Deprecated: Use CostInterval.ProtoReflect.Descriptor instead.
+func (*CostInterval) Descriptor() ([]byte, []int) {
 	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Text) GetText() string {
+func (x *CostInterval) GetStart() int64 {
 	if x != nil {
-		return x.Text
+		return x.Start
 	}
-	return ""
+	return 0
+}
+
+func (x *CostInterval) GetEnd() int64 {
+	if x != nil {
+		return x.End
+	}
+	return 0
+}
+
+func (x *CostInterval) GetCost() int64 {
+	if x != nil {
+		return x.Cost
+	}
+	return 0
+}
+
+type DurConfig struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Id        int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Intervals []*CostInterval        `protobuf:"bytes,2,rep,name=intervals,proto3" json:"intervals,omitempty"`
+	// in terms of the atomic unit
+	Duration      int64 `protobuf:"varint,3,opt,name=duration,proto3" json:"duration,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DurConfig) Reset() {
+	*x = DurConfig{}
+	mi := &file_model_daemonpb_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DurConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DurConfig) ProtoMessage() {}
+
+func (x *DurConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_model_daemonpb_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DurConfig.ProtoReflect.Descriptor instead.
+func (*DurConfig) Descriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DurConfig) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *DurConfig) GetIntervals() []*CostInterval {
+	if x != nil {
+		return x.Intervals
+	}
+	return nil
+}
+
+func (x *DurConfig) GetDuration() int64 {
+	if x != nil {
+		return x.Duration
+	}
+	return 0
+}
+
+type ChildrenConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Intervals     []*CostInterval        `protobuf:"bytes,2,rep,name=intervals,proto3" json:"intervals,omitempty"`
+	Children      []int64                `protobuf:"varint,3,rep,packed,name=children,proto3" json:"children,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChildrenConfig) Reset() {
+	*x = ChildrenConfig{}
+	mi := &file_model_daemonpb_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChildrenConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChildrenConfig) ProtoMessage() {}
+
+func (x *ChildrenConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_model_daemonpb_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChildrenConfig.ProtoReflect.Descriptor instead.
+func (*ChildrenConfig) Descriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ChildrenConfig) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ChildrenConfig) GetIntervals() []*CostInterval {
+	if x != nil {
+		return x.Intervals
+	}
+	return nil
+}
+
+func (x *ChildrenConfig) GetChildren() []int64 {
+	if x != nil {
+		return x.Children
+	}
+	return nil
+}
+
+type Task struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// in terms of the atomic unit
+	Unit int64 `protobuf:"varint,2,opt,name=unit,proto3" json:"unit,omitempty"`
+	// in terms of the atomic unit
+	Start int64 `protobuf:"varint,3,opt,name=start,proto3" json:"start,omitempty"`
+	// in terms of the atomic unit
+	End           int64             `protobuf:"varint,4,opt,name=end,proto3" json:"end,omitempty"`
+	Prereqs       []int64           `protobuf:"varint,5,rep,packed,name=prereqs,proto3" json:"prereqs,omitempty"`
+	DurCfgs       []*DurConfig      `protobuf:"bytes,6,rep,name=dur_cfgs,json=durCfgs,proto3" json:"dur_cfgs,omitempty"`
+	ChildrenCfgs  []*ChildrenConfig `protobuf:"bytes,7,rep,name=children_cfgs,json=childrenCfgs,proto3" json:"children_cfgs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Task) Reset() {
+	*x = Task{}
+	mi := &file_model_daemonpb_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Task) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Task) ProtoMessage() {}
+
+func (x *Task) ProtoReflect() protoreflect.Message {
+	mi := &file_model_daemonpb_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Task.ProtoReflect.Descriptor instead.
+func (*Task) Descriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Task) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Task) GetUnit() int64 {
+	if x != nil {
+		return x.Unit
+	}
+	return 0
+}
+
+func (x *Task) GetStart() int64 {
+	if x != nil {
+		return x.Start
+	}
+	return 0
+}
+
+func (x *Task) GetEnd() int64 {
+	if x != nil {
+		return x.End
+	}
+	return 0
+}
+
+func (x *Task) GetPrereqs() []int64 {
+	if x != nil {
+		return x.Prereqs
+	}
+	return nil
+}
+
+func (x *Task) GetDurCfgs() []*DurConfig {
+	if x != nil {
+		return x.DurCfgs
+	}
+	return nil
+}
+
+func (x *Task) GetChildrenCfgs() []*ChildrenConfig {
+	if x != nil {
+		return x.ChildrenCfgs
+	}
+	return nil
+}
+
+type ScheduledTask struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// the id passed in the request
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// in terms of the task's unit
+	Start int64 `protobuf:"varint,2,opt,name=start,proto3" json:"start,omitempty"`
+	// the config selected
+	//
+	// Types that are valid to be assigned to Config:
+	//
+	//	*ScheduledTask_DurId
+	//	*ScheduledTask_ChildrenId
+	Config isScheduledTask_Config `protobuf_oneof:"config"`
+	// the cost used
+	Cost int64 `protobuf:"varint,5,opt,name=cost,proto3" json:"cost,omitempty"`
+	// the duration used
+	Duration int64 `protobuf:"varint,6,opt,name=duration,proto3" json:"duration,omitempty"`
+	// the "narrowest end" used
+	End           int64 `protobuf:"varint,7,opt,name=end,proto3" json:"end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduledTask) Reset() {
+	*x = ScheduledTask{}
+	mi := &file_model_daemonpb_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduledTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduledTask) ProtoMessage() {}
+
+func (x *ScheduledTask) ProtoReflect() protoreflect.Message {
+	mi := &file_model_daemonpb_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduledTask.ProtoReflect.Descriptor instead.
+func (*ScheduledTask) Descriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ScheduledTask) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ScheduledTask) GetStart() int64 {
+	if x != nil {
+		return x.Start
+	}
+	return 0
+}
+
+func (x *ScheduledTask) GetConfig() isScheduledTask_Config {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *ScheduledTask) GetDurId() int64 {
+	if x != nil {
+		if x, ok := x.Config.(*ScheduledTask_DurId); ok {
+			return x.DurId
+		}
+	}
+	return 0
+}
+
+func (x *ScheduledTask) GetChildrenId() int64 {
+	if x != nil {
+		if x, ok := x.Config.(*ScheduledTask_ChildrenId); ok {
+			return x.ChildrenId
+		}
+	}
+	return 0
+}
+
+func (x *ScheduledTask) GetCost() int64 {
+	if x != nil {
+		return x.Cost
+	}
+	return 0
+}
+
+func (x *ScheduledTask) GetDuration() int64 {
+	if x != nil {
+		return x.Duration
+	}
+	return 0
+}
+
+func (x *ScheduledTask) GetEnd() int64 {
+	if x != nil {
+		return x.End
+	}
+	return 0
+}
+
+type isScheduledTask_Config interface {
+	isScheduledTask_Config()
+}
+
+type ScheduledTask_DurId struct {
+	// the id of the duration config
+	DurId int64 `protobuf:"varint,3,opt,name=dur_id,json=durId,proto3,oneof"`
+}
+
+type ScheduledTask_ChildrenId struct {
+	// the id of the children config
+	ChildrenId int64 `protobuf:"varint,4,opt,name=children_id,json=childrenId,proto3,oneof"`
+}
+
+func (*ScheduledTask_DurId) isScheduledTask_Config() {}
+
+func (*ScheduledTask_ChildrenId) isScheduledTask_Config() {}
+
+// Schedule
+type ScheduleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tasks         []*Task                `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleRequest) Reset() {
+	*x = ScheduleRequest{}
+	mi := &file_model_daemonpb_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleRequest) ProtoMessage() {}
+
+func (x *ScheduleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_model_daemonpb_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleRequest.ProtoReflect.Descriptor instead.
+func (*ScheduleRequest) Descriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ScheduleRequest) GetTasks() []*Task {
+	if x != nil {
+		return x.Tasks
+	}
+	return nil
+}
+
+type ScheduleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Schedule      []*ScheduledTask       `protobuf:"bytes,1,rep,name=schedule,proto3" json:"schedule,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScheduleResponse) Reset() {
+	*x = ScheduleResponse{}
+	mi := &file_model_daemonpb_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScheduleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScheduleResponse) ProtoMessage() {}
+
+func (x *ScheduleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_model_daemonpb_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScheduleResponse.ProtoReflect.Descriptor instead.
+func (*ScheduleResponse) Descriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ScheduleResponse) GetSchedule() []*ScheduledTask {
+	if x != nil {
+		return x.Schedule
+	}
+	return nil
 }
 
 var File_model_daemonpb_service_proto protoreflect.FileDescriptor
 
 const file_model_daemonpb_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmodel/daemonpb/service.proto\"\x1a\n" +
-	"\x04Text\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text2\x1c\n" +
-	"\x04Test\x12\x14\n" +
-	"\x04Echo\x12\x05.Text\x1a\x05.TextB)B\fServiceProtoP\x01Z\x17internal/model/daemonpbb\x06proto3"
+	"\x1cmodel/daemonpb/service.proto\"J\n" +
+	"\fCostInterval\x12\x14\n" +
+	"\x05start\x18\x01 \x01(\x03R\x05start\x12\x10\n" +
+	"\x03end\x18\x02 \x01(\x03R\x03end\x12\x12\n" +
+	"\x04cost\x18\x03 \x01(\x03R\x04cost\"d\n" +
+	"\tDurConfig\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
+	"\tintervals\x18\x02 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
+	"\bduration\x18\x03 \x01(\x03R\bduration\"i\n" +
+	"\x0eChildrenConfig\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
+	"\tintervals\x18\x02 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
+	"\bchildren\x18\x03 \x03(\x03R\bchildren\"\xc9\x01\n" +
+	"\x04Task\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04unit\x18\x02 \x01(\x03R\x04unit\x12\x14\n" +
+	"\x05start\x18\x03 \x01(\x03R\x05start\x12\x10\n" +
+	"\x03end\x18\x04 \x01(\x03R\x03end\x12\x18\n" +
+	"\aprereqs\x18\x05 \x03(\x03R\aprereqs\x12%\n" +
+	"\bdur_cfgs\x18\x06 \x03(\v2\n" +
+	".DurConfigR\adurCfgs\x124\n" +
+	"\rchildren_cfgs\x18\a \x03(\v2\x0f.ChildrenConfigR\fchildrenCfgs\"\xbd\x01\n" +
+	"\rScheduledTask\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
+	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x17\n" +
+	"\x06dur_id\x18\x03 \x01(\x03H\x00R\x05durId\x12!\n" +
+	"\vchildren_id\x18\x04 \x01(\x03H\x00R\n" +
+	"childrenId\x12\x12\n" +
+	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12\x1a\n" +
+	"\bduration\x18\x06 \x01(\x03R\bduration\x12\x10\n" +
+	"\x03end\x18\a \x01(\x03R\x03endB\b\n" +
+	"\x06config\".\n" +
+	"\x0fScheduleRequest\x12\x1b\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x05.TaskR\x05tasks\">\n" +
+	"\x10ScheduleResponse\x12*\n" +
+	"\bschedule\x18\x01 \x03(\v2\x0e.ScheduledTaskR\bschedule2:\n" +
+	"\aService\x12/\n" +
+	"\bSchedule\x12\x10.ScheduleRequest\x1a\x11.ScheduleResponseB)B\fServiceProtoP\x01Z\x17internal/model/daemonpbb\x06proto3"
 
 var (
 	file_model_daemonpb_service_proto_rawDescOnce sync.Once
@@ -87,18 +574,30 @@ func file_model_daemonpb_service_proto_rawDescGZIP() []byte {
 	return file_model_daemonpb_service_proto_rawDescData
 }
 
-var file_model_daemonpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_model_daemonpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_model_daemonpb_service_proto_goTypes = []any{
-	(*Text)(nil), // 0: Text
+	(*CostInterval)(nil),     // 0: CostInterval
+	(*DurConfig)(nil),        // 1: DurConfig
+	(*ChildrenConfig)(nil),   // 2: ChildrenConfig
+	(*Task)(nil),             // 3: Task
+	(*ScheduledTask)(nil),    // 4: ScheduledTask
+	(*ScheduleRequest)(nil),  // 5: ScheduleRequest
+	(*ScheduleResponse)(nil), // 6: ScheduleResponse
 }
 var file_model_daemonpb_service_proto_depIdxs = []int32{
-	0, // 0: Test.Echo:input_type -> Text
-	0, // 1: Test.Echo:output_type -> Text
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: DurConfig.intervals:type_name -> CostInterval
+	0, // 1: ChildrenConfig.intervals:type_name -> CostInterval
+	1, // 2: Task.dur_cfgs:type_name -> DurConfig
+	2, // 3: Task.children_cfgs:type_name -> ChildrenConfig
+	3, // 4: ScheduleRequest.tasks:type_name -> Task
+	4, // 5: ScheduleResponse.schedule:type_name -> ScheduledTask
+	5, // 6: Service.Schedule:input_type -> ScheduleRequest
+	6, // 7: Service.Schedule:output_type -> ScheduleResponse
+	7, // [7:8] is the sub-list for method output_type
+	6, // [6:7] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_model_daemonpb_service_proto_init() }
@@ -106,13 +605,17 @@ func file_model_daemonpb_service_proto_init() {
 	if File_model_daemonpb_service_proto != nil {
 		return
 	}
+	file_model_daemonpb_service_proto_msgTypes[4].OneofWrappers = []any{
+		(*ScheduledTask_DurId)(nil),
+		(*ScheduledTask_ChildrenId)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_model_daemonpb_service_proto_rawDesc), len(file_model_daemonpb_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

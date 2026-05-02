@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class TestStub(object):
+class ServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -34,43 +34,43 @@ class TestStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Echo = channel.unary_unary(
-                '/Test/Echo',
-                request_serializer=model_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
-                response_deserializer=model_dot_daemonpb_dot_service__pb2.Text.FromString,
+        self.Schedule = channel.unary_unary(
+                '/Service/Schedule',
+                request_serializer=model_dot_daemonpb_dot_service__pb2.ScheduleRequest.SerializeToString,
+                response_deserializer=model_dot_daemonpb_dot_service__pb2.ScheduleResponse.FromString,
                 _registered_method=True)
 
 
-class TestServicer(object):
+class ServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Echo(self, request, context):
+    def Schedule(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_TestServicer_to_server(servicer, server):
+def add_ServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Echo': grpc.unary_unary_rpc_method_handler(
-                    servicer.Echo,
-                    request_deserializer=model_dot_daemonpb_dot_service__pb2.Text.FromString,
-                    response_serializer=model_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
+            'Schedule': grpc.unary_unary_rpc_method_handler(
+                    servicer.Schedule,
+                    request_deserializer=model_dot_daemonpb_dot_service__pb2.ScheduleRequest.FromString,
+                    response_serializer=model_dot_daemonpb_dot_service__pb2.ScheduleResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'Test', rpc_method_handlers)
+            'Service', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('Test', rpc_method_handlers)
+    server.add_registered_method_handlers('Service', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class Test(object):
+class Service(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Echo(request,
+    def Schedule(request,
             target,
             options=(),
             channel_credentials=None,
@@ -83,9 +83,9 @@ class Test(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Test/Echo',
-            model_dot_daemonpb_dot_service__pb2.Text.SerializeToString,
-            model_dot_daemonpb_dot_service__pb2.Text.FromString,
+            '/Service/Schedule',
+            model_dot_daemonpb_dot_service__pb2.ScheduleRequest.SerializeToString,
+            model_dot_daemonpb_dot_service__pb2.ScheduleResponse.FromString,
             options,
             channel_credentials,
             insecure,

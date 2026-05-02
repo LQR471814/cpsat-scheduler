@@ -1,9 +1,68 @@
 syntax = "proto3";
 
-message Text {
-  string text = 1;
+message CostInterval {
+  // in terms of the atomic unit
+  int64 start = 1;
+  // in terms of the atomic unit
+  int64 end = 2;
+  int64 cost = 3;
 }
 
-service Test {
-  rpc Echo (Text) returns (Text);
+message DurConfig {
+  int64 id = 1;
+  repeated CostInterval intervals = 2;
+  // in terms of the atomic unit
+  int64 duration = 3;
+}
+
+message ChildrenConfig {
+  int64 id = 1;
+  repeated CostInterval intervals = 2;
+  repeated int64 children = 3;
+}
+
+message Task {
+  int64 id = 1;
+  // in terms of the atomic unit
+  int64 unit = 2;
+  // in terms of the atomic unit
+  int64 start = 3;
+  // in terms of the atomic unit
+  int64 end = 4;
+
+  repeated int64 prereqs = 5;
+  repeated DurConfig dur_cfgs = 6;
+  repeated ChildrenConfig children_cfgs = 7;
+}
+
+message ScheduledTask {
+  // the id passed in the request
+  int64 id = 1;
+  // in terms of the task's unit
+  int64 start = 2;
+  // the config selected
+  oneof config {
+    // the id of the duration config
+    int64 dur_id = 3;
+    // the id of the children config
+    int64 children_id = 4;
+  };
+  // the cost used
+  int64 cost = 5;
+  // the duration used
+  int64 duration = 6;
+  // the "narrowest end" used
+  int64 end = 7;
+}
+
+// Schedule
+message ScheduleRequest {
+  repeated Task tasks = 1;
+}
+message ScheduleResponse {
+  repeated ScheduledTask schedule = 1;
+}
+
+service Service {
+  rpc Schedule(ScheduleRequest) returns (ScheduleResponse);
 }
