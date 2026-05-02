@@ -21,6 +21,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SolveStatus int32
+
+const (
+	SolveStatus_FEASIBLE      SolveStatus = 0
+	SolveStatus_INFEASIBLE    SolveStatus = 1
+	SolveStatus_MODEL_INVALID SolveStatus = 2
+	SolveStatus_OPTIMAL       SolveStatus = 3
+	SolveStatus_UNKNOWN       SolveStatus = 4
+)
+
+// Enum value maps for SolveStatus.
+var (
+	SolveStatus_name = map[int32]string{
+		0: "FEASIBLE",
+		1: "INFEASIBLE",
+		2: "MODEL_INVALID",
+		3: "OPTIMAL",
+		4: "UNKNOWN",
+	}
+	SolveStatus_value = map[string]int32{
+		"FEASIBLE":      0,
+		"INFEASIBLE":    1,
+		"MODEL_INVALID": 2,
+		"OPTIMAL":       3,
+		"UNKNOWN":       4,
+	}
+)
+
+func (x SolveStatus) Enum() *SolveStatus {
+	p := new(SolveStatus)
+	*p = x
+	return p
+}
+
+func (x SolveStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SolveStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_model_daemonpb_service_proto_enumTypes[0].Descriptor()
+}
+
+func (SolveStatus) Type() protoreflect.EnumType {
+	return &file_model_daemonpb_service_proto_enumTypes[0]
+}
+
+func (x SolveStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SolveStatus.Descriptor instead.
+func (SolveStatus) EnumDescriptor() ([]byte, []int) {
+	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{0}
+}
+
 type CostInterval struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// in terms of the atomic unit
@@ -210,9 +265,9 @@ type Task struct {
 	// in terms of the atomic unit
 	Unit int64 `protobuf:"varint,2,opt,name=unit,proto3" json:"unit,omitempty"`
 	// in terms of the atomic unit
-	Start int64 `protobuf:"varint,3,opt,name=start,proto3" json:"start,omitempty"`
+	Start *int64 `protobuf:"varint,3,opt,name=start,proto3,oneof" json:"start,omitempty"`
 	// in terms of the atomic unit
-	End           int64             `protobuf:"varint,4,opt,name=end,proto3" json:"end,omitempty"`
+	End           *int64            `protobuf:"varint,4,opt,name=end,proto3,oneof" json:"end,omitempty"`
 	Prereqs       []int64           `protobuf:"varint,5,rep,packed,name=prereqs,proto3" json:"prereqs,omitempty"`
 	DurCfgs       []*DurConfig      `protobuf:"bytes,6,rep,name=dur_cfgs,json=durCfgs,proto3" json:"dur_cfgs,omitempty"`
 	ChildrenCfgs  []*ChildrenConfig `protobuf:"bytes,7,rep,name=children_cfgs,json=childrenCfgs,proto3" json:"children_cfgs,omitempty"`
@@ -265,15 +320,15 @@ func (x *Task) GetUnit() int64 {
 }
 
 func (x *Task) GetStart() int64 {
-	if x != nil {
-		return x.Start
+	if x != nil && x.Start != nil {
+		return *x.Start
 	}
 	return 0
 }
 
 func (x *Task) GetEnd() int64 {
-	if x != nil {
-		return x.End
+	if x != nil && x.End != nil {
+		return *x.End
 	}
 	return 0
 }
@@ -299,7 +354,7 @@ func (x *Task) GetChildrenCfgs() []*ChildrenConfig {
 	return nil
 }
 
-type ScheduledTask struct {
+type SolvedTask struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// the id passed in the request
 	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -309,9 +364,9 @@ type ScheduledTask struct {
 	//
 	// Types that are valid to be assigned to Config:
 	//
-	//	*ScheduledTask_DurId
-	//	*ScheduledTask_ChildrenId
-	Config isScheduledTask_Config `protobuf_oneof:"config"`
+	//	*SolvedTask_DurId
+	//	*SolvedTask_ChildrenId
+	Config isSolvedTask_Config `protobuf_oneof:"config"`
 	// the cost used
 	Cost int64 `protobuf:"varint,5,opt,name=cost,proto3" json:"cost,omitempty"`
 	// the duration used
@@ -322,20 +377,20 @@ type ScheduledTask struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ScheduledTask) Reset() {
-	*x = ScheduledTask{}
+func (x *SolvedTask) Reset() {
+	*x = SolvedTask{}
 	mi := &file_model_daemonpb_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ScheduledTask) String() string {
+func (x *SolvedTask) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ScheduledTask) ProtoMessage() {}
+func (*SolvedTask) ProtoMessage() {}
 
-func (x *ScheduledTask) ProtoReflect() protoreflect.Message {
+func (x *SolvedTask) ProtoReflect() protoreflect.Message {
 	mi := &file_model_daemonpb_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -347,111 +402,111 @@ func (x *ScheduledTask) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ScheduledTask.ProtoReflect.Descriptor instead.
-func (*ScheduledTask) Descriptor() ([]byte, []int) {
+// Deprecated: Use SolvedTask.ProtoReflect.Descriptor instead.
+func (*SolvedTask) Descriptor() ([]byte, []int) {
 	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ScheduledTask) GetId() int64 {
+func (x *SolvedTask) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *ScheduledTask) GetStart() int64 {
+func (x *SolvedTask) GetStart() int64 {
 	if x != nil {
 		return x.Start
 	}
 	return 0
 }
 
-func (x *ScheduledTask) GetConfig() isScheduledTask_Config {
+func (x *SolvedTask) GetConfig() isSolvedTask_Config {
 	if x != nil {
 		return x.Config
 	}
 	return nil
 }
 
-func (x *ScheduledTask) GetDurId() int64 {
+func (x *SolvedTask) GetDurId() int64 {
 	if x != nil {
-		if x, ok := x.Config.(*ScheduledTask_DurId); ok {
+		if x, ok := x.Config.(*SolvedTask_DurId); ok {
 			return x.DurId
 		}
 	}
 	return 0
 }
 
-func (x *ScheduledTask) GetChildrenId() int64 {
+func (x *SolvedTask) GetChildrenId() int64 {
 	if x != nil {
-		if x, ok := x.Config.(*ScheduledTask_ChildrenId); ok {
+		if x, ok := x.Config.(*SolvedTask_ChildrenId); ok {
 			return x.ChildrenId
 		}
 	}
 	return 0
 }
 
-func (x *ScheduledTask) GetCost() int64 {
+func (x *SolvedTask) GetCost() int64 {
 	if x != nil {
 		return x.Cost
 	}
 	return 0
 }
 
-func (x *ScheduledTask) GetDuration() int64 {
+func (x *SolvedTask) GetDuration() int64 {
 	if x != nil {
 		return x.Duration
 	}
 	return 0
 }
 
-func (x *ScheduledTask) GetEnd() int64 {
+func (x *SolvedTask) GetEnd() int64 {
 	if x != nil {
 		return x.End
 	}
 	return 0
 }
 
-type isScheduledTask_Config interface {
-	isScheduledTask_Config()
+type isSolvedTask_Config interface {
+	isSolvedTask_Config()
 }
 
-type ScheduledTask_DurId struct {
+type SolvedTask_DurId struct {
 	// the id of the duration config
 	DurId int64 `protobuf:"varint,3,opt,name=dur_id,json=durId,proto3,oneof"`
 }
 
-type ScheduledTask_ChildrenId struct {
+type SolvedTask_ChildrenId struct {
 	// the id of the children config
 	ChildrenId int64 `protobuf:"varint,4,opt,name=children_id,json=childrenId,proto3,oneof"`
 }
 
-func (*ScheduledTask_DurId) isScheduledTask_Config() {}
+func (*SolvedTask_DurId) isSolvedTask_Config() {}
 
-func (*ScheduledTask_ChildrenId) isScheduledTask_Config() {}
+func (*SolvedTask_ChildrenId) isSolvedTask_Config() {}
 
-// Schedule
-type ScheduleRequest struct {
+// Solve
+type SolveRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Tasks         []*Task                `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ScheduleRequest) Reset() {
-	*x = ScheduleRequest{}
+func (x *SolveRequest) Reset() {
+	*x = SolveRequest{}
 	mi := &file_model_daemonpb_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ScheduleRequest) String() string {
+func (x *SolveRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ScheduleRequest) ProtoMessage() {}
+func (*SolveRequest) ProtoMessage() {}
 
-func (x *ScheduleRequest) ProtoReflect() protoreflect.Message {
+func (x *SolveRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_model_daemonpb_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -463,39 +518,41 @@ func (x *ScheduleRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ScheduleRequest.ProtoReflect.Descriptor instead.
-func (*ScheduleRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SolveRequest.ProtoReflect.Descriptor instead.
+func (*SolveRequest) Descriptor() ([]byte, []int) {
 	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ScheduleRequest) GetTasks() []*Task {
+func (x *SolveRequest) GetTasks() []*Task {
 	if x != nil {
 		return x.Tasks
 	}
 	return nil
 }
 
-type ScheduleResponse struct {
+type SolveResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Schedule      []*ScheduledTask       `protobuf:"bytes,1,rep,name=schedule,proto3" json:"schedule,omitempty"`
+	Status        SolveStatus            `protobuf:"varint,1,opt,name=status,proto3,enum=SolveStatus" json:"status,omitempty"`
+	Score         int64                  `protobuf:"varint,2,opt,name=score,proto3" json:"score,omitempty"`
+	Solution      []*SolvedTask          `protobuf:"bytes,3,rep,name=solution,proto3" json:"solution,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ScheduleResponse) Reset() {
-	*x = ScheduleResponse{}
+func (x *SolveResponse) Reset() {
+	*x = SolveResponse{}
 	mi := &file_model_daemonpb_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ScheduleResponse) String() string {
+func (x *SolveResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ScheduleResponse) ProtoMessage() {}
+func (*SolveResponse) ProtoMessage() {}
 
-func (x *ScheduleResponse) ProtoReflect() protoreflect.Message {
+func (x *SolveResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_model_daemonpb_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -507,14 +564,28 @@ func (x *ScheduleResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ScheduleResponse.ProtoReflect.Descriptor instead.
-func (*ScheduleResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SolveResponse.ProtoReflect.Descriptor instead.
+func (*SolveResponse) Descriptor() ([]byte, []int) {
 	return file_model_daemonpb_service_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ScheduleResponse) GetSchedule() []*ScheduledTask {
+func (x *SolveResponse) GetStatus() SolveStatus {
 	if x != nil {
-		return x.Schedule
+		return x.Status
+	}
+	return SolveStatus_FEASIBLE
+}
+
+func (x *SolveResponse) GetScore() int64 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
+}
+
+func (x *SolveResponse) GetSolution() []*SolvedTask {
+	if x != nil {
+		return x.Solution
 	}
 	return nil
 }
@@ -535,17 +606,20 @@ const file_model_daemonpb_service_proto_rawDesc = "" +
 	"\x0eChildrenConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12+\n" +
 	"\tintervals\x18\x02 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
-	"\bchildren\x18\x03 \x03(\x03R\bchildren\"\xc9\x01\n" +
+	"\bchildren\x18\x03 \x03(\x03R\bchildren\"\xe5\x01\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04unit\x18\x02 \x01(\x03R\x04unit\x12\x14\n" +
-	"\x05start\x18\x03 \x01(\x03R\x05start\x12\x10\n" +
-	"\x03end\x18\x04 \x01(\x03R\x03end\x12\x18\n" +
+	"\x04unit\x18\x02 \x01(\x03R\x04unit\x12\x19\n" +
+	"\x05start\x18\x03 \x01(\x03H\x00R\x05start\x88\x01\x01\x12\x15\n" +
+	"\x03end\x18\x04 \x01(\x03H\x01R\x03end\x88\x01\x01\x12\x18\n" +
 	"\aprereqs\x18\x05 \x03(\x03R\aprereqs\x12%\n" +
 	"\bdur_cfgs\x18\x06 \x03(\v2\n" +
 	".DurConfigR\adurCfgs\x124\n" +
-	"\rchildren_cfgs\x18\a \x03(\v2\x0f.ChildrenConfigR\fchildrenCfgs\"\xbd\x01\n" +
-	"\rScheduledTask\x12\x0e\n" +
+	"\rchildren_cfgs\x18\a \x03(\v2\x0f.ChildrenConfigR\fchildrenCfgsB\b\n" +
+	"\x06_startB\x06\n" +
+	"\x04_end\"\xba\x01\n" +
+	"\n" +
+	"SolvedTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x17\n" +
 	"\x06dur_id\x18\x03 \x01(\x03H\x00R\x05durId\x12!\n" +
@@ -554,13 +628,22 @@ const file_model_daemonpb_service_proto_rawDesc = "" +
 	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12\x1a\n" +
 	"\bduration\x18\x06 \x01(\x03R\bduration\x12\x10\n" +
 	"\x03end\x18\a \x01(\x03R\x03endB\b\n" +
-	"\x06config\".\n" +
-	"\x0fScheduleRequest\x12\x1b\n" +
-	"\x05tasks\x18\x01 \x03(\v2\x05.TaskR\x05tasks\">\n" +
-	"\x10ScheduleResponse\x12*\n" +
-	"\bschedule\x18\x01 \x03(\v2\x0e.ScheduledTaskR\bschedule2:\n" +
-	"\aService\x12/\n" +
-	"\bSchedule\x12\x10.ScheduleRequest\x1a\x11.ScheduleResponseB)B\fServiceProtoP\x01Z\x17internal/model/daemonpbb\x06proto3"
+	"\x06config\"+\n" +
+	"\fSolveRequest\x12\x1b\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x05.TaskR\x05tasks\"t\n" +
+	"\rSolveResponse\x12$\n" +
+	"\x06status\x18\x01 \x01(\x0e2\f.SolveStatusR\x06status\x12\x14\n" +
+	"\x05score\x18\x02 \x01(\x03R\x05score\x12'\n" +
+	"\bsolution\x18\x03 \x03(\v2\v.SolvedTaskR\bsolution*X\n" +
+	"\vSolveStatus\x12\f\n" +
+	"\bFEASIBLE\x10\x00\x12\x0e\n" +
+	"\n" +
+	"INFEASIBLE\x10\x01\x12\x11\n" +
+	"\rMODEL_INVALID\x10\x02\x12\v\n" +
+	"\aOPTIMAL\x10\x03\x12\v\n" +
+	"\aUNKNOWN\x10\x0420\n" +
+	"\x06Solver\x12&\n" +
+	"\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseB)B\fServiceProtoP\x01Z\x17internal/model/daemonpbb\x06proto3"
 
 var (
 	file_model_daemonpb_service_proto_rawDescOnce sync.Once
@@ -574,30 +657,33 @@ func file_model_daemonpb_service_proto_rawDescGZIP() []byte {
 	return file_model_daemonpb_service_proto_rawDescData
 }
 
+var file_model_daemonpb_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_model_daemonpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_model_daemonpb_service_proto_goTypes = []any{
-	(*CostInterval)(nil),     // 0: CostInterval
-	(*DurConfig)(nil),        // 1: DurConfig
-	(*ChildrenConfig)(nil),   // 2: ChildrenConfig
-	(*Task)(nil),             // 3: Task
-	(*ScheduledTask)(nil),    // 4: ScheduledTask
-	(*ScheduleRequest)(nil),  // 5: ScheduleRequest
-	(*ScheduleResponse)(nil), // 6: ScheduleResponse
+	(SolveStatus)(0),       // 0: SolveStatus
+	(*CostInterval)(nil),   // 1: CostInterval
+	(*DurConfig)(nil),      // 2: DurConfig
+	(*ChildrenConfig)(nil), // 3: ChildrenConfig
+	(*Task)(nil),           // 4: Task
+	(*SolvedTask)(nil),     // 5: SolvedTask
+	(*SolveRequest)(nil),   // 6: SolveRequest
+	(*SolveResponse)(nil),  // 7: SolveResponse
 }
 var file_model_daemonpb_service_proto_depIdxs = []int32{
-	0, // 0: DurConfig.intervals:type_name -> CostInterval
-	0, // 1: ChildrenConfig.intervals:type_name -> CostInterval
-	1, // 2: Task.dur_cfgs:type_name -> DurConfig
-	2, // 3: Task.children_cfgs:type_name -> ChildrenConfig
-	3, // 4: ScheduleRequest.tasks:type_name -> Task
-	4, // 5: ScheduleResponse.schedule:type_name -> ScheduledTask
-	5, // 6: Service.Schedule:input_type -> ScheduleRequest
-	6, // 7: Service.Schedule:output_type -> ScheduleResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	1, // 0: DurConfig.intervals:type_name -> CostInterval
+	1, // 1: ChildrenConfig.intervals:type_name -> CostInterval
+	2, // 2: Task.dur_cfgs:type_name -> DurConfig
+	3, // 3: Task.children_cfgs:type_name -> ChildrenConfig
+	4, // 4: SolveRequest.tasks:type_name -> Task
+	0, // 5: SolveResponse.status:type_name -> SolveStatus
+	5, // 6: SolveResponse.solution:type_name -> SolvedTask
+	6, // 7: Solver.Solve:input_type -> SolveRequest
+	7, // 8: Solver.Solve:output_type -> SolveResponse
+	8, // [8:9] is the sub-list for method output_type
+	7, // [7:8] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_model_daemonpb_service_proto_init() }
@@ -605,22 +691,24 @@ func file_model_daemonpb_service_proto_init() {
 	if File_model_daemonpb_service_proto != nil {
 		return
 	}
+	file_model_daemonpb_service_proto_msgTypes[3].OneofWrappers = []any{}
 	file_model_daemonpb_service_proto_msgTypes[4].OneofWrappers = []any{
-		(*ScheduledTask_DurId)(nil),
-		(*ScheduledTask_ChildrenId)(nil),
+		(*SolvedTask_DurId)(nil),
+		(*SolvedTask_ChildrenId)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_model_daemonpb_service_proto_rawDesc), len(file_model_daemonpb_service_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_model_daemonpb_service_proto_goTypes,
 		DependencyIndexes: file_model_daemonpb_service_proto_depIdxs,
+		EnumInfos:         file_model_daemonpb_service_proto_enumTypes,
 		MessageInfos:      file_model_daemonpb_service_proto_msgTypes,
 	}.Build()
 	File_model_daemonpb_service_proto = out.File

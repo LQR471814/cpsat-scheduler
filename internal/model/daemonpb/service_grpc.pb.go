@@ -19,101 +19,101 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Service_Schedule_FullMethodName = "/Service/Schedule"
+	Solver_Solve_FullMethodName = "/Solver/Solve"
 )
 
-// ServiceClient is the client API for Service service.
+// SolverClient is the client API for Solver service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ServiceClient interface {
-	Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error)
+type SolverClient interface {
+	Solve(ctx context.Context, in *SolveRequest, opts ...grpc.CallOption) (*SolveResponse, error)
 }
 
-type serviceClient struct {
+type solverClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewServiceClient(cc grpc.ClientConnInterface) ServiceClient {
-	return &serviceClient{cc}
+func NewSolverClient(cc grpc.ClientConnInterface) SolverClient {
+	return &solverClient{cc}
 }
 
-func (c *serviceClient) Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error) {
+func (c *solverClient) Solve(ctx context.Context, in *SolveRequest, opts ...grpc.CallOption) (*SolveResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ScheduleResponse)
-	err := c.cc.Invoke(ctx, Service_Schedule_FullMethodName, in, out, cOpts...)
+	out := new(SolveResponse)
+	err := c.cc.Invoke(ctx, Solver_Solve_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ServiceServer is the server API for Service service.
-// All implementations must embed UnimplementedServiceServer
+// SolverServer is the server API for Solver service.
+// All implementations must embed UnimplementedSolverServer
 // for forward compatibility.
-type ServiceServer interface {
-	Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error)
-	mustEmbedUnimplementedServiceServer()
+type SolverServer interface {
+	Solve(context.Context, *SolveRequest) (*SolveResponse, error)
+	mustEmbedUnimplementedSolverServer()
 }
 
-// UnimplementedServiceServer must be embedded to have
+// UnimplementedSolverServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedServiceServer struct{}
+type UnimplementedSolverServer struct{}
 
-func (UnimplementedServiceServer) Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Schedule not implemented")
+func (UnimplementedSolverServer) Solve(context.Context, *SolveRequest) (*SolveResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Solve not implemented")
 }
-func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
-func (UnimplementedServiceServer) testEmbeddedByValue()                 {}
+func (UnimplementedSolverServer) mustEmbedUnimplementedSolverServer() {}
+func (UnimplementedSolverServer) testEmbeddedByValue()                {}
 
-// UnsafeServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ServiceServer will
+// UnsafeSolverServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SolverServer will
 // result in compilation errors.
-type UnsafeServiceServer interface {
-	mustEmbedUnimplementedServiceServer()
+type UnsafeSolverServer interface {
+	mustEmbedUnimplementedSolverServer()
 }
 
-func RegisterServiceServer(s grpc.ServiceRegistrar, srv ServiceServer) {
-	// If the following call panics, it indicates UnimplementedServiceServer was
+func RegisterSolverServer(s grpc.ServiceRegistrar, srv SolverServer) {
+	// If the following call panics, it indicates UnimplementedSolverServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Service_ServiceDesc, srv)
+	s.RegisterService(&Solver_ServiceDesc, srv)
 }
 
-func _Service_Schedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ScheduleRequest)
+func _Solver_Solve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SolveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).Schedule(ctx, in)
+		return srv.(SolverServer).Solve(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service_Schedule_FullMethodName,
+		FullMethod: Solver_Solve_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).Schedule(ctx, req.(*ScheduleRequest))
+		return srv.(SolverServer).Solve(ctx, req.(*SolveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Service_ServiceDesc is the grpc.ServiceDesc for Service service.
+// Solver_ServiceDesc is the grpc.ServiceDesc for Solver service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Service_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Service",
-	HandlerType: (*ServiceServer)(nil),
+var Solver_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "Solver",
+	HandlerType: (*SolverServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Schedule",
-			Handler:    _Service_Schedule_Handler,
+			MethodName: "Solve",
+			Handler:    _Solver_Solve_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -51,8 +51,9 @@ class Task:
 
     def add_cost_config_children(self, costs: list[CostInterval], children: list[Task]):
         for c in children:
+            # child must exist
             assert c.id in self._builder.tasks
-            # each child must not already be a child of another task
+            # child must not already be a child of another task
             for cond in c._parent_conds:
                 assert cond.id == self.id
             c._parent_conds.append(ParentCond(id=self.id, config=len(self._configs)))
@@ -65,6 +66,7 @@ class Task:
         )
 
     def add_prereq(self, prereq: Self):
+        # prereq must exist
         assert prereq.id in self._builder.tasks
         self._prerequisites.append(prereq.id)
 

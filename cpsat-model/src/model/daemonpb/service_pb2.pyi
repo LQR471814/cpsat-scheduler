@@ -1,10 +1,24 @@
 from google.protobuf.internal import containers as _containers
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from collections.abc import Iterable as _Iterable, Mapping as _Mapping
 from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
+
+class SolveStatus(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    FEASIBLE: _ClassVar[SolveStatus]
+    INFEASIBLE: _ClassVar[SolveStatus]
+    MODEL_INVALID: _ClassVar[SolveStatus]
+    OPTIMAL: _ClassVar[SolveStatus]
+    UNKNOWN: _ClassVar[SolveStatus]
+FEASIBLE: SolveStatus
+INFEASIBLE: SolveStatus
+MODEL_INVALID: SolveStatus
+OPTIMAL: SolveStatus
+UNKNOWN: SolveStatus
 
 class CostInterval(_message.Message):
     __slots__ = ("start", "end", "cost")
@@ -54,7 +68,7 @@ class Task(_message.Message):
     children_cfgs: _containers.RepeatedCompositeFieldContainer[ChildrenConfig]
     def __init__(self, id: _Optional[int] = ..., unit: _Optional[int] = ..., start: _Optional[int] = ..., end: _Optional[int] = ..., prereqs: _Optional[_Iterable[int]] = ..., dur_cfgs: _Optional[_Iterable[_Union[DurConfig, _Mapping]]] = ..., children_cfgs: _Optional[_Iterable[_Union[ChildrenConfig, _Mapping]]] = ...) -> None: ...
 
-class ScheduledTask(_message.Message):
+class SolvedTask(_message.Message):
     __slots__ = ("id", "start", "dur_id", "children_id", "cost", "duration", "end")
     ID_FIELD_NUMBER: _ClassVar[int]
     START_FIELD_NUMBER: _ClassVar[int]
@@ -72,14 +86,18 @@ class ScheduledTask(_message.Message):
     end: int
     def __init__(self, id: _Optional[int] = ..., start: _Optional[int] = ..., dur_id: _Optional[int] = ..., children_id: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
 
-class ScheduleRequest(_message.Message):
+class SolveRequest(_message.Message):
     __slots__ = ("tasks",)
     TASKS_FIELD_NUMBER: _ClassVar[int]
     tasks: _containers.RepeatedCompositeFieldContainer[Task]
     def __init__(self, tasks: _Optional[_Iterable[_Union[Task, _Mapping]]] = ...) -> None: ...
 
-class ScheduleResponse(_message.Message):
-    __slots__ = ("schedule",)
-    SCHEDULE_FIELD_NUMBER: _ClassVar[int]
-    schedule: _containers.RepeatedCompositeFieldContainer[ScheduledTask]
-    def __init__(self, schedule: _Optional[_Iterable[_Union[ScheduledTask, _Mapping]]] = ...) -> None: ...
+class SolveResponse(_message.Message):
+    __slots__ = ("status", "score", "solution")
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    SCORE_FIELD_NUMBER: _ClassVar[int]
+    SOLUTION_FIELD_NUMBER: _ClassVar[int]
+    status: SolveStatus
+    score: int
+    solution: _containers.RepeatedCompositeFieldContainer[SolvedTask]
+    def __init__(self, status: _Optional[_Union[SolveStatus, str]] = ..., score: _Optional[int] = ..., solution: _Optional[_Iterable[_Union[SolvedTask, _Mapping]]] = ...) -> None: ...

@@ -26,16 +26,16 @@ message Task {
   // in terms of the atomic unit
   int64 unit = 2;
   // in terms of the atomic unit
-  int64 start = 3;
+  optional int64 start = 3;
   // in terms of the atomic unit
-  int64 end = 4;
+  optional int64 end = 4;
 
   repeated int64 prereqs = 5;
   repeated DurConfig dur_cfgs = 6;
   repeated ChildrenConfig children_cfgs = 7;
 }
 
-message ScheduledTask {
+message SolvedTask {
   // the id passed in the request
   int64 id = 1;
   // in terms of the task's unit
@@ -55,14 +55,24 @@ message ScheduledTask {
   int64 end = 7;
 }
 
-// Schedule
-message ScheduleRequest {
-  repeated Task tasks = 1;
-}
-message ScheduleResponse {
-  repeated ScheduledTask schedule = 1;
+enum SolveStatus {
+  FEASIBLE = 0;
+  INFEASIBLE = 1;
+  MODEL_INVALID = 2;
+  OPTIMAL = 3;
+  UNKNOWN = 4;
 }
 
-service Service {
-  rpc Schedule(ScheduleRequest) returns (ScheduleResponse);
+// Solve
+message SolveRequest {
+  repeated Task tasks = 1;
+}
+message SolveResponse {
+  SolveStatus status = 1;
+  int64 score = 2;
+  repeated SolvedTask solution = 3;
+}
+
+service Solver {
+  rpc Solve(SolveRequest) returns (SolveResponse);
 }
