@@ -95,3 +95,36 @@ Should be able to see:
 - Calendar events should automatically sync to fixed tasks.
 - Progress updates for events should happen automatically.
 
+# GUI
+
+- Not selectable pane: Shows current date
+- Pane 1: Today's tasks
+    - List of tasks surrounded by a border.
+    - Tasks selectable
+    - Left/right allow date to be changed.
+- Pane 2: Today's timeline
+    - A continuous timeline showing allocated time.
+    - Allocations selectable.
+    - Tasks selectable
+    - Left/right allow date to be changed.
+- Pane 3: Viewer / Editor
+    - Allocation view:
+        - Shown if selected allocation
+        - Contains button for new allocation
+    - Allocation edit/create:
+        - Choose which task the allocation corresponds to
+        - Choose start/end graphically (on the timeline)
+            - Move each one independently
+            - Move both together
+        - Contains button for cancel/save.
+    - Task view:
+        - Shown if selected task
+        - Contains edit button
+        - Contains new unrelated/parent/child/prereq/postreq
+          options.
+    - Task edit/create:
+        - [[#Create / Edit task]] workflow
+        - Contains new unrelated/parent/child/prereq/postreq
+          options.
+        - Contains cancel/save button.
+
