@@ -51,6 +51,7 @@ Parameters:
           parent task set to the current ask.
         - Action: New cost configuration (disabled if no child
           present)
+    4. Can choose to add a duration config with no children.
 6. Ask: Optional constraints
     1. Ask: Parent
     2. Ask: Explicit start/end time restrictions.
