@@ -13,7 +13,7 @@
         let
           libs = with pkgs; [
             stdenv.cc.cc.lib
-            libz
+            zlib
           ];
         in
         pkgs.mkShell {
@@ -23,6 +23,7 @@
             with pkgs;
             [
               pkg-config
+              gcc
             ]
           );
 

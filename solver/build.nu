@@ -1,1 +1,1 @@
-uv run nuitka --clang --mode=onefile ./src/solver/daemon.py
+uv run nuitka --mode=onefile ./src/solver/daemon.py

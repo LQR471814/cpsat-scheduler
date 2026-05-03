@@ -25,22 +25,16 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "grpcio" },
-    { name = "ortools" },
-]
-
-[package.dev-dependencies]
-dev = [
     { name = "nuitka", extra = ["app"] },
+    { name = "ortools" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "grpcio", specifier = ">=1.80.0" },
+    { name = "nuitka", extras = ["app"], specifier = ">=4.0.8" },
     { name = "ortools", specifier = ">=9.15.6755" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "nuitka", extras = ["app"], specifier = ">=4.0.8" }]
 
 [[package]]
 name = "grpcio"
