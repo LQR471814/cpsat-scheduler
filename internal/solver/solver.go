@@ -5,6 +5,7 @@ import (
 	"cpsat-scheduler/internal/solver/solverpb"
 	"net"
 	"net/url"
+	"os/exec"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,7 +18,13 @@ type Solver struct {
 	solverpb.SolverClient
 }
 
-func NewSolver() (solver Solver, err error) {
+func NewSolver(daemonPath string) (solver Solver, err error) {
+	cmd := exec.Command(daemonPath)
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
 	u := &url.URL{
 		Scheme: "unix",
 		Path:   socketPath,
@@ -39,6 +46,6 @@ func NewSolver() (solver Solver, err error) {
 	return
 }
 
-func (c Solver) Close() {
-	c.Close()
+func (s Solver) Close() {
+	s.Close()
 }
