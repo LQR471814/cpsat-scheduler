@@ -256,7 +256,7 @@ func NewTaskBuilder(ctx *Context) TaskBuilder {
 	return TaskBuilder{ctx: ctx}
 }
 
-func (b TaskBuilder) LoadExisting(task int64) (out TaskBuilder, err error) {
+func (b TaskBuilder) Load(task int64) (out TaskBuilder, err error) {
 	tx, err := b.ctx.driver.BeginTx(b.ctx.ctx, nil)
 	if err != nil {
 		return
@@ -271,7 +271,7 @@ func (b TaskBuilder) LoadExisting(task int64) (out TaskBuilder, err error) {
 	return
 }
 
-func (b TaskBuilder) Build() (id int64, err error) {
+func (b TaskBuilder) Save() (id int64, err error) {
 	tx, err := b.ctx.driver.BeginTx(b.ctx.ctx, nil)
 	if err != nil {
 		return

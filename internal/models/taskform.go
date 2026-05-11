@@ -58,9 +58,9 @@ func (f *TaskForm) setError(err string) {
 	// TODO: implement
 }
 
-func (f TaskForm) controlFilled() bool {
-	// TODO: implement
-}
+// func (f TaskForm) controlFilled() bool {
+// 	// TODO: implement
+// }
 
 /**
 task:
@@ -80,11 +80,11 @@ func (f TaskForm) Update(msg tea.Msg) (next tea.Model, cmd tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.Code {
 		case tea.KeyTab:
-			if !f.controlFilled() {
-				(&f).setError("required field not filled.")
-				next = f
-				return
-			}
+			// if !f.controlFilled() {
+			// 	(&f).setError("required field not filled.")
+			// 	next = f
+			// 	return
+			// }
 			if msg.Mod.Contains(tea.ModShift) {
 			} else {
 
@@ -100,4 +100,5 @@ func (f TaskForm) Update(msg tea.Msg) (next tea.Model, cmd tea.Cmd) {
 }
 
 func (f TaskForm) View() tea.View {
+	return tea.NewView("")
 }
