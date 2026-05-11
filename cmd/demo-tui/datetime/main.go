@@ -43,7 +43,9 @@ func main() {
 	}
 	defer f.Close()
 
-	input := models.NewTimePicker(0, 0)
+	var hour uint
+	var minute uint
+	input := models.NewTimePicker(&hour, &minute)
 	model := testModel{inner: input}
 
 	program := tea.NewProgram(model)

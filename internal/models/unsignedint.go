@@ -53,6 +53,16 @@ func (n *UnsignedInput) Append(msg tea.KeyPressMsg) {
 	if n.cursor >= n.opts.MaxDigits {
 		return
 	}
+	if msg.Code < '0' || msg.Code > '9' {
+		return
+	}
+	if *n.value == 0 && msg.Code == '0' {
+		n.cursor = 1
+		return
+	}
+	if *n.value == 0 && msg.Code != '0' {
+		n.cursor = 0
+	}
 	*n.value *= 10
 	*n.value += uint(msg.Code - '0')
 	n.cursor++
@@ -97,7 +107,10 @@ var highlightStyle = lipgloss.NewStyle().Underline(true)
 // var focusedStyle = lipgloss.NewStyle().Background(lipgloss.Color("#EB4268"))
 
 func (n UnsignedInput) View() tea.View {
-	text := strconv.FormatUint(uint64(*n.value), 10)[:n.cursor]
+	text := strconv.FormatUint(uint64(*n.value), 10)
+	if len(text) > int(n.cursor) {
+		text = text[:n.cursor]
+	}
 
 	text = strings.Repeat(
 		string(n.opts.Placeholder),

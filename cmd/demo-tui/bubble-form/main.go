@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	hour         uint
-	minute       uint
-	burger       string
-	toppings     []string
-	sauceLevel   int
-	name         string
-	instructions string
-	discount     bool
+	year, month, day uint
+	hour, minute     uint
+	burger           string
+	toppings         []string
+	sauceLevel       int
+	name             string
+	instructions     string
+	discount         bool
 )
 
 type model struct {
@@ -30,6 +30,17 @@ func newModel() model {
 	return model{
 		form: huh.NewForm(
 			huh.NewGroup(
+				models.NewDatePickerField(
+					"date",
+					"Choose the date for your meal.",
+					&year,
+					&month,
+					&day,
+					models.DatePickerFieldOption{
+						Required: false,
+					},
+				),
+
 				models.NewTimePickerField(
 					"time",
 					"Choose the time for your meal.",
