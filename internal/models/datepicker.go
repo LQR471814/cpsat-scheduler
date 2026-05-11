@@ -10,11 +10,11 @@ type DatePicker struct {
 	month, day, year UnsignedInput
 }
 
-func NewDatePicker(month, day, year uint) DatePicker {
+func NewDatePicker(month, day, year *uint) DatePicker {
 	return DatePicker{
-		month: NewUnsignedInput(month, 2, 'm'),
-		day:   NewUnsignedInput(day, 2, 'd'),
-		year:  NewUnsignedInput(year, 4, 'y'),
+		month: NewUnsignedInput(month, UnsignedInputOptions{2, 'm'}),
+		day:   NewUnsignedInput(day, UnsignedInputOptions{2, 'd'}),
+		year:  NewUnsignedInput(year, UnsignedInputOptions{4, 'y'}),
 	}
 }
 

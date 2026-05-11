@@ -1,14 +1,18 @@
 package main
 
 import (
+	"cpsat-scheduler/internal/models"
 	"errors"
 	"fmt"
+	"os"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
 )
 
 var (
+	hour         uint
+	minute       uint
 	burger       string
 	toppings     []string
 	sauceLevel   int
@@ -26,6 +30,16 @@ func newModel() model {
 	return model{
 		form: huh.NewForm(
 			huh.NewGroup(
+				models.NewTimePickerField(
+					"time",
+					"Choose the time for your meal.",
+					&hour,
+					&minute,
+					models.TimePickerFieldOption{
+						Required: false,
+					},
+				),
+
 				// Ask the user for a base burger and toppings.
 				huh.NewSelect[string]().
 					Title("Choose your burger").
@@ -116,10 +130,17 @@ func (m model) View() tea.View {
 }
 
 func main() {
+	f, err := tea.LogToFile("debug.log", "debug")
+	if err != nil {
+		fmt.Println("fatal:", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
 	m := newModel()
 
 	program := tea.NewProgram(m)
-	_, err := program.Run()
+	_, err = program.Run()
 	if err != nil {
 		return
 	}
