@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -69,7 +70,8 @@ var checkStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Red)
 
 func (m model) View() tea.View {
-	s := fmt.Sprintf("%s\n", titleStyle.Render("What to buy?"))
+	var s strings.Builder
+	fmt.Fprintf(&s, "%s\n", titleStyle.Render("What to buy?"))
 	for i, choice := range m.choices {
 		cursor := " "
 		if m.cursor == i {
@@ -79,10 +81,10 @@ func (m model) View() tea.View {
 		if _, ok := m.selected[i]; ok {
 			checked = checkStyle.Render("x")
 		}
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		fmt.Fprintf(&s, "%s [%s] %s\n", cursor, checked, choice)
 	}
-	s += fmt.Sprintf("\n%s\n", titleStyle.Render("Q to quit."))
-	return tea.NewView(s)
+	fmt.Fprintf(&s, "\n%s\n", titleStyle.Render("Q to quit."))
+	return tea.NewView(s.String())
 }
 
 func main() {
