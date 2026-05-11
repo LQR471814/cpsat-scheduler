@@ -12,14 +12,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-type datePickerEvent struct {
-	focus bool
-}
-
-func (f datePickerEvent) Focused() bool {
-	return f.focus
-}
-
 type DatePickerFieldOption struct {
 	Desc     string
 	Required bool

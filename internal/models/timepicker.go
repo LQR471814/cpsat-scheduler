@@ -6,10 +6,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-type timePickerEvent struct {
-	focus bool
-}
-
 type TimePicker struct {
 	hour   UnsignedInput
 	minute UnsignedInput
