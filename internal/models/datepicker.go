@@ -73,7 +73,7 @@ func (p *DatePicker) handleAppend(msg tea.KeyPressMsg) {
 	p.day.Append(msg)
 }
 
-func (p *DatePicker) validate() {
+func (p *DatePicker) Validate() {
 	year := p.year.Value()
 	month := p.month.Value()
 	day := p.day.Value()
@@ -99,7 +99,7 @@ func (p DatePicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			p.handleDelete()
 		}
 	}
-	p.validate()
+	p.Validate()
 	return p, nil
 }
 
@@ -123,16 +123,32 @@ func (p DatePicker) View() tea.View {
 	return tea.NewView(text)
 }
 
+func (p DatePicker) SetYear(y uint) {
+	p.year.Set(y)
+}
+
 func (p DatePicker) Year() uint {
 	return p.year.Value()
+}
+
+func (p DatePicker) SetMonth(m uint) {
+	p.month.Set(m)
 }
 
 func (p DatePicker) Month() uint {
 	return p.month.Value()
 }
 
+func (p DatePicker) SetDay(d uint) {
+	p.day.Set(d)
+}
+
 func (p DatePicker) Day() uint {
 	return p.day.Value()
+}
+
+func (p DatePicker) Err() bool {
+	return p.err
 }
 
 type Date struct {

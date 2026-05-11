@@ -61,6 +61,10 @@ func (p *TimePicker) handleAppend(msg tea.KeyPressMsg) {
 	p.hour.Append(msg)
 }
 
+func (p *TimePicker) Validate() {
+	p.err = p.hour.Value() >= 24 || p.minute.Value() >= 60
+}
+
 func (p TimePicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -71,7 +75,7 @@ func (p TimePicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			p.handleDelete()
 		}
 	}
-	p.err = p.hour.Value() >= 24 || p.minute.Value() >= 60
+	p.Validate()
 	return p, nil
 }
 
@@ -95,8 +99,20 @@ func (p TimePicker) View() tea.View {
 	return tea.NewView(text)
 }
 
+func (p TimePicker) Err() bool {
+	return p.err
+}
+
+func (p TimePicker) SetHour(hour uint) {
+	p.hour.Set(hour)
+}
+
 func (p TimePicker) Hour() uint {
 	return p.hour.Value()
+}
+
+func (p TimePicker) SetMinute(minute uint) {
+	p.minute.Set(minute)
 }
 
 func (p TimePicker) Minute() uint {

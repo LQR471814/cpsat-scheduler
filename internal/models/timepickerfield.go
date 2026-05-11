@@ -94,7 +94,7 @@ func (p *TimePickerField) Focus() tea.Cmd {
 
 // Errors and Validation
 func (p *TimePickerField) Error() error {
-	if p.picker.err {
+	if p.picker.Err() {
 		return fmt.Errorf("invalid time")
 	}
 	return nil
@@ -118,7 +118,7 @@ func (p *TimePickerField) RunAccessible(w io.Writer, r io.Reader) (err error) {
 	if err != nil {
 		return
 	}
-	*p.picker.hour.value = uint(hour)
+	p.picker.SetHour(uint(hour))
 
 	fmt.Fprintln(w, "Minute:")
 	value, err = rd.ReadString('\n')
@@ -129,7 +129,9 @@ func (p *TimePickerField) RunAccessible(w io.Writer, r io.Reader) (err error) {
 	if err != nil {
 		return
 	}
-	*p.picker.minute.value = uint(minute)
+	p.picker.SetMinute(uint(minute))
+
+	p.picker.Validate()
 	return
 }
 
@@ -190,13 +192,13 @@ func (p *TimePickerField) WithPosition(huh.FieldPosition) huh.Field {
 
 // GetKey returns the field's key.
 func (p *TimePickerField) GetKey() string {
-	return p.key
+	return p.common.GetKey()
 }
 
 // GetValue returns the field's value.
 func (p *TimePickerField) GetValue() any {
 	return Time{
-		Hour:   p.picker.hour.Value(),
-		Minute: p.picker.minute.Value(),
+		Hour:   p.picker.Hour(),
+		Minute: p.picker.Minute(),
 	}
 }

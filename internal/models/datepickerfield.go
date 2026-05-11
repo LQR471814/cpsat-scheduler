@@ -101,7 +101,7 @@ func (p *DatePickerField) Focus() tea.Cmd {
 
 // Errors and Validation
 func (p *DatePickerField) Error() error {
-	if p.picker.err {
+	if p.picker.Err() {
 		return fmt.Errorf("invalid date")
 	}
 	return nil
@@ -126,7 +126,7 @@ func (p *DatePickerField) RunAccessible(w io.Writer, r io.Reader) (err error) {
 	if err != nil {
 		return
 	}
-	*p.picker.year.value = uint(year)
+	p.picker.SetYear(uint(year))
 
 	fmt.Fprintln(w, "Month:")
 	value, err = rd.ReadString('\n')
@@ -137,7 +137,7 @@ func (p *DatePickerField) RunAccessible(w io.Writer, r io.Reader) (err error) {
 	if err != nil {
 		return
 	}
-	*p.picker.month.value = uint(month)
+	p.picker.SetMonth(uint(month))
 
 	fmt.Fprintln(w, "Day:")
 	value, err = rd.ReadString('\n')
@@ -148,9 +148,9 @@ func (p *DatePickerField) RunAccessible(w io.Writer, r io.Reader) (err error) {
 	if err != nil {
 		return
 	}
-	*p.picker.day.value = uint(day)
+	p.picker.SetDay(uint(day))
 
-	p.picker.validate()
+	p.picker.Validate()
 	return
 }
 
@@ -217,8 +217,8 @@ func (p *DatePickerField) GetKey() string {
 // GetValue returns the field's value.
 func (p *DatePickerField) GetValue() any {
 	return Date{
-		Year:  p.picker.year.Value(),
-		Month: p.picker.month.Value(),
-		Day:   p.picker.day.Value(),
+		Year:  p.picker.Year(),
+		Month: p.picker.Month(),
+		Day:   p.picker.Day(),
 	}
 }
