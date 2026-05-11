@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message DurState {
+  int64 pes = 1;
+  int64 exp = 2;
+  int64 opt = 3;
+
+  optional google.protobuf.Timestamp deadline = 4;
+  // zero if null
+  int64 total_cost = 5;
+}
+
+message ChildrenConfigState {
+  string desc = 1;
+  optional google.protobuf.Timestamp deadline = 2;
+  // zero if null
+  int64 exp_cost = 3;
+  repeated int64 children = 4;
+}
+
+message TaskState {
+  string name = 1;
+  string desc = 2;
+  int64 timescale = 3;
+
+  DurState duration_cfg = 4;
+  repeated ChildrenConfigState children_cfgs = 5;
+
+  repeated int64 prereqs = 6;
+  repeated int64 postreqs = 7;
+  optional int64 parent = 8;
+}
+
+message TaskEntry {
+  int64 id = 1;
+  string name = 2;
+}
+
+// ReadTask
+message ReadTaskRequest {
+  int64 id = 1;
+}
+message ReadTaskResponse {
+  TaskState state = 1;
+}
+
+// CreateTask
+message CreateTaskRequest {
+  TaskState state = 1;
+}
+message CreateTaskResponse {}
+
+// UpdateTask
+message UpdateTaskRequest {
+  int64 id = 1;
+  TaskState state = 2;
+}
+message UpdateTaskResponse {}
+
+// DeleteTask
+message DeleteTaskRequest {
+  int64 id = 1;
+}
+message DeleteTaskResponse {}
+
+// ListDayTasks
+message ListDayTasksRequest {
+  google.protobuf.Timestamp day = 1;
+}
+message ListDayTasksResponse {
+  repeated TaskEntry entries = 1;
+}
+
+enum RelativeType {
+  PARENT = 0;
+  CHILD = 1;
+  PREREQ = 2;
+  POSTREQ = 3;
+}
+
+// ListRelatives
+message ListRelativesRequest {
+  RelativeType type = 1;
+  int64 task_id = 2;
+}
+message ListRelativesResponse {
+  repeated TaskEntry entries = 1;
+}
+
+service API {
+  rpc ReadTask(ReadTaskRequest) returns (ReadTaskResponse);
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse);
+  rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
+  rpc ListDayTasks(ListDayTasksRequest) returns (ListDayTasksResponse);
+  rpc ListRelatives(ListRelativesRequest) returns (ListRelativesResponse);
+}
+
