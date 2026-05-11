@@ -34,11 +34,8 @@ create table dur_config (
 	task integer not null references task (id) on update cascade on delete cascade,
 
 	pes integer not null,
-	pes_unit integer not null,
 	exp integer not null,
-	exp_unit integer not null,
 	opt integer not null,
-	opt_unit integer not null,
 
 	deadline timestamp,
 	total_cost integer

@@ -9,35 +9,29 @@ import (
 )
 
 type DurState struct {
-	PesUnit int64
-	Pes     int64
-
-	ExpUnit int64
-	Exp     int64
-
-	OptUnit int64
-	Opt     int64
-
-	Deadline  sql.NullTime
-	TotalCost sql.NullInt64
+	Pes       int64         `msgpack:"pes"`
+	Exp       int64         `msgpack:"exp"`
+	Opt       int64         `msgpack:"opt"`
+	Deadline  sql.NullTime  `msgpack:"deadline"`
+	TotalCost sql.NullInt64 `msgpack:"total_cost"`
 }
 
 type ChildrenConfigState struct {
-	Desc     string
-	Deadline sql.NullTime
-	ExpCost  sql.NullInt64
-	Children []int64
+	Desc     string        `msgpack:"desc"`
+	Deadline sql.NullTime  `msgpack:"deadline"`
+	ExpCost  sql.NullInt64 `msgpack:"exp_cost"`
+	Children []int64       `msgpack:"children"`
 }
 
 type TaskState struct {
-	Name         string
-	Desc         string
-	Timescale    *int64
-	DurationCfg  *DurState
-	ChildrenCfgs []ChildrenConfigState
-	Prereqs      []int64
-	Postreqs     []int64
-	Parent       *int64
+	Name         string                `msgpack:"name"`
+	Desc         string                `msgpack:"desc"`
+	Timescale    *int64                `msgpack:"timescale"`
+	DurationCfg  *DurState             `msgpack:"duration_cfg"`
+	ChildrenCfgs []ChildrenConfigState `msgpack:"children_cfgs"`
+	Prereqs      []int64               `msgpack:"prereqs"`
+	Postreqs     []int64               `msgpack:"postreqs"`
+	Parent       *int64                `msgpack:"parent"`
 }
 
 func (s *TaskState) loadTask(
@@ -73,11 +67,8 @@ func (s *TaskState) loadConfigs(ctx context.Context, txqry *db.Queries, task int
 		s.DurationCfg = &DurState{
 			Deadline:  cfg.Deadline,
 			Pes:       cfg.Pes,
-			PesUnit:   cfg.PesUnit,
 			Exp:       cfg.Exp,
-			ExpUnit:   cfg.ExpUnit,
 			Opt:       cfg.Opt,
-			OptUnit:   cfg.OptUnit,
 			TotalCost: cfg.TotalCost,
 		}
 	}
