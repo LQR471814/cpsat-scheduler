@@ -19,12 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	API_ReadTask_FullMethodName      = "/API/ReadTask"
-	API_CreateTask_FullMethodName    = "/API/CreateTask"
-	API_UpdateTask_FullMethodName    = "/API/UpdateTask"
-	API_DeleteTask_FullMethodName    = "/API/DeleteTask"
-	API_ListDayTasks_FullMethodName  = "/API/ListDayTasks"
-	API_ListRelatives_FullMethodName = "/API/ListRelatives"
+	API_ReadTask_FullMethodName           = "/API/ReadTask"
+	API_CreateTask_FullMethodName         = "/API/CreateTask"
+	API_UpdateTask_FullMethodName         = "/API/UpdateTask"
+	API_DeleteTask_FullMethodName         = "/API/DeleteTask"
+	API_ListScheduledTasks_FullMethodName = "/API/ListScheduledTasks"
+	API_ListRelatives_FullMethodName      = "/API/ListRelatives"
 )
 
 // APIClient is the client API for API service.
@@ -35,7 +35,7 @@ type APIClient interface {
 	CreateTask(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*CreateTaskResponse, error)
 	UpdateTask(ctx context.Context, in *UpdateTaskRequest, opts ...grpc.CallOption) (*UpdateTaskResponse, error)
 	DeleteTask(ctx context.Context, in *DeleteTaskRequest, opts ...grpc.CallOption) (*DeleteTaskResponse, error)
-	ListDayTasks(ctx context.Context, in *ListDayTasksRequest, opts ...grpc.CallOption) (*ListDayTasksResponse, error)
+	ListScheduledTasks(ctx context.Context, in *ListScheduledTasksRequest, opts ...grpc.CallOption) (*ListScheduledTasksResponse, error)
 	ListRelatives(ctx context.Context, in *ListRelativesRequest, opts ...grpc.CallOption) (*ListRelativesResponse, error)
 }
 
@@ -87,10 +87,10 @@ func (c *aPIClient) DeleteTask(ctx context.Context, in *DeleteTaskRequest, opts 
 	return out, nil
 }
 
-func (c *aPIClient) ListDayTasks(ctx context.Context, in *ListDayTasksRequest, opts ...grpc.CallOption) (*ListDayTasksResponse, error) {
+func (c *aPIClient) ListScheduledTasks(ctx context.Context, in *ListScheduledTasksRequest, opts ...grpc.CallOption) (*ListScheduledTasksResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListDayTasksResponse)
-	err := c.cc.Invoke(ctx, API_ListDayTasks_FullMethodName, in, out, cOpts...)
+	out := new(ListScheduledTasksResponse)
+	err := c.cc.Invoke(ctx, API_ListScheduledTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ type APIServer interface {
 	CreateTask(context.Context, *CreateTaskRequest) (*CreateTaskResponse, error)
 	UpdateTask(context.Context, *UpdateTaskRequest) (*UpdateTaskResponse, error)
 	DeleteTask(context.Context, *DeleteTaskRequest) (*DeleteTaskResponse, error)
-	ListDayTasks(context.Context, *ListDayTasksRequest) (*ListDayTasksResponse, error)
+	ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error)
 	ListRelatives(context.Context, *ListRelativesRequest) (*ListRelativesResponse, error)
 	mustEmbedUnimplementedAPIServer()
 }
@@ -139,8 +139,8 @@ func (UnimplementedAPIServer) UpdateTask(context.Context, *UpdateTaskRequest) (*
 func (UnimplementedAPIServer) DeleteTask(context.Context, *DeleteTaskRequest) (*DeleteTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTask not implemented")
 }
-func (UnimplementedAPIServer) ListDayTasks(context.Context, *ListDayTasksRequest) (*ListDayTasksResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListDayTasks not implemented")
+func (UnimplementedAPIServer) ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListScheduledTasks not implemented")
 }
 func (UnimplementedAPIServer) ListRelatives(context.Context, *ListRelativesRequest) (*ListRelativesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListRelatives not implemented")
@@ -238,20 +238,20 @@ func _API_DeleteTask_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _API_ListDayTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListDayTasksRequest)
+func _API_ListScheduledTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListScheduledTasksRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(APIServer).ListDayTasks(ctx, in)
+		return srv.(APIServer).ListScheduledTasks(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: API_ListDayTasks_FullMethodName,
+		FullMethod: API_ListScheduledTasks_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).ListDayTasks(ctx, req.(*ListDayTasksRequest))
+		return srv.(APIServer).ListScheduledTasks(ctx, req.(*ListScheduledTasksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -298,8 +298,8 @@ var API_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _API_DeleteTask_Handler,
 		},
 		{
-			MethodName: "ListDayTasks",
-			Handler:    _API_ListDayTasks_Handler,
+			MethodName: "ListScheduledTasks",
+			Handler:    _API_ListScheduledTasks_Handler,
 		},
 		{
 			MethodName: "ListRelatives",

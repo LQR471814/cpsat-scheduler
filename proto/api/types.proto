@@ -65,11 +65,12 @@ message DeleteTaskRequest {
 }
 message DeleteTaskResponse {}
 
-// ListDayTasks
-message ListDayTasksRequest {
-  google.protobuf.Timestamp day = 1;
+// ListScheduledTasks
+message ListScheduledTasksRequest {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
 }
-message ListDayTasksResponse {
+message ListScheduledTasksResponse {
   repeated TaskEntry entries = 1;
 }
 
@@ -88,12 +89,20 @@ message ListRelativesResponse {
   repeated TaskEntry entries = 1;
 }
 
+// ProgressUpdate
+message ProgressUpdateRequest {
+  int64 target_task_id = 1;
+  google.protobuf.Timestamp start = 2;
+  google.protobuf.Timestamp end = 3;
+}
+message ProgressUpdateResponse {}
+
 service API {
   rpc ReadTask(ReadTaskRequest) returns (ReadTaskResponse);
   rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
   rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse);
   rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
-  rpc ListDayTasks(ListDayTasksRequest) returns (ListDayTasksResponse);
+  rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
   rpc ListRelatives(ListRelativesRequest) returns (ListRelativesResponse);
 }
 

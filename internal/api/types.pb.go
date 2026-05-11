@@ -712,28 +712,29 @@ func (*DeleteTaskResponse) Descriptor() ([]byte, []int) {
 	return file_api_types_proto_rawDescGZIP(), []int{11}
 }
 
-// ListDayTasks
-type ListDayTasksRequest struct {
+// ListScheduledTasks
+type ListScheduledTasksRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Day           *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=day,proto3" json:"day,omitempty"`
+	Start         *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	End           *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListDayTasksRequest) Reset() {
-	*x = ListDayTasksRequest{}
+func (x *ListScheduledTasksRequest) Reset() {
+	*x = ListScheduledTasksRequest{}
 	mi := &file_api_types_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListDayTasksRequest) String() string {
+func (x *ListScheduledTasksRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListDayTasksRequest) ProtoMessage() {}
+func (*ListScheduledTasksRequest) ProtoMessage() {}
 
-func (x *ListDayTasksRequest) ProtoReflect() protoreflect.Message {
+func (x *ListScheduledTasksRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_api_types_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -745,39 +746,46 @@ func (x *ListDayTasksRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListDayTasksRequest.ProtoReflect.Descriptor instead.
-func (*ListDayTasksRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListScheduledTasksRequest.ProtoReflect.Descriptor instead.
+func (*ListScheduledTasksRequest) Descriptor() ([]byte, []int) {
 	return file_api_types_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *ListDayTasksRequest) GetDay() *timestamppb.Timestamp {
+func (x *ListScheduledTasksRequest) GetStart() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Day
+		return x.Start
 	}
 	return nil
 }
 
-type ListDayTasksResponse struct {
+func (x *ListScheduledTasksRequest) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+type ListScheduledTasksResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entries       []*TaskEntry           `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListDayTasksResponse) Reset() {
-	*x = ListDayTasksResponse{}
+func (x *ListScheduledTasksResponse) Reset() {
+	*x = ListScheduledTasksResponse{}
 	mi := &file_api_types_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListDayTasksResponse) String() string {
+func (x *ListScheduledTasksResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListDayTasksResponse) ProtoMessage() {}
+func (*ListScheduledTasksResponse) ProtoMessage() {}
 
-func (x *ListDayTasksResponse) ProtoReflect() protoreflect.Message {
+func (x *ListScheduledTasksResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_api_types_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -789,12 +797,12 @@ func (x *ListDayTasksResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListDayTasksResponse.ProtoReflect.Descriptor instead.
-func (*ListDayTasksResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListScheduledTasksResponse.ProtoReflect.Descriptor instead.
+func (*ListScheduledTasksResponse) Descriptor() ([]byte, []int) {
 	return file_api_types_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ListDayTasksResponse) GetEntries() []*TaskEntry {
+func (x *ListScheduledTasksResponse) GetEntries() []*TaskEntry {
 	if x != nil {
 		return x.Entries
 	}
@@ -898,6 +906,103 @@ func (x *ListRelativesResponse) GetEntries() []*TaskEntry {
 	return nil
 }
 
+// ProgressUpdate
+type ProgressUpdateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TargetTaskId  int64                  `protobuf:"varint,1,opt,name=target_task_id,json=targetTaskId,proto3" json:"target_task_id,omitempty"`
+	Start         *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	End           *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProgressUpdateRequest) Reset() {
+	*x = ProgressUpdateRequest{}
+	mi := &file_api_types_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProgressUpdateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProgressUpdateRequest) ProtoMessage() {}
+
+func (x *ProgressUpdateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_types_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProgressUpdateRequest.ProtoReflect.Descriptor instead.
+func (*ProgressUpdateRequest) Descriptor() ([]byte, []int) {
+	return file_api_types_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ProgressUpdateRequest) GetTargetTaskId() int64 {
+	if x != nil {
+		return x.TargetTaskId
+	}
+	return 0
+}
+
+func (x *ProgressUpdateRequest) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *ProgressUpdateRequest) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+type ProgressUpdateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProgressUpdateResponse) Reset() {
+	*x = ProgressUpdateResponse{}
+	mi := &file_api_types_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProgressUpdateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProgressUpdateResponse) ProtoMessage() {}
+
+func (x *ProgressUpdateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_types_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProgressUpdateResponse.ProtoReflect.Descriptor instead.
+func (*ProgressUpdateResponse) Descriptor() ([]byte, []int) {
+	return file_api_types_proto_rawDescGZIP(), []int{17}
+}
+
 var File_api_types_proto protoreflect.FileDescriptor
 
 const file_api_types_proto_rawDesc = "" +
@@ -946,10 +1051,11 @@ const file_api_types_proto_rawDesc = "" +
 	"\x12UpdateTaskResponse\"#\n" +
 	"\x11DeleteTaskRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x14\n" +
-	"\x12DeleteTaskResponse\"C\n" +
-	"\x13ListDayTasksRequest\x12,\n" +
-	"\x03day\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x03day\"<\n" +
-	"\x14ListDayTasksResponse\x12$\n" +
+	"\x12DeleteTaskResponse\"{\n" +
+	"\x19ListScheduledTasksRequest\x120\n" +
+	"\x05start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"B\n" +
+	"\x1aListScheduledTasksResponse\x12$\n" +
 	"\aentries\x18\x01 \x03(\v2\n" +
 	".TaskEntryR\aentries\"\xa7\x01\n" +
 	"\x14ListRelativesRequest\x126\n" +
@@ -964,7 +1070,12 @@ const file_api_types_proto_rawDesc = "" +
 	"\aPOSTREQ\x10\x03\"=\n" +
 	"\x15ListRelativesResponse\x12$\n" +
 	"\aentries\x18\x01 \x03(\v2\n" +
-	".TaskEntryR\aentries2\xd8\x02\n" +
+	".TaskEntryR\aentries\"\x9d\x01\n" +
+	"\x15ProgressUpdateRequest\x12$\n" +
+	"\x0etarget_task_id\x18\x01 \x01(\x03R\ftargetTaskId\x120\n" +
+	"\x05start\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"\x18\n" +
+	"\x16ProgressUpdateResponse2\xea\x02\n" +
 	"\x03API\x12/\n" +
 	"\bReadTask\x12\x10.ReadTaskRequest\x1a\x11.ReadTaskResponse\x125\n" +
 	"\n" +
@@ -972,8 +1083,8 @@ const file_api_types_proto_rawDesc = "" +
 	"\n" +
 	"UpdateTask\x12\x12.UpdateTaskRequest\x1a\x13.UpdateTaskResponse\x125\n" +
 	"\n" +
-	"DeleteTask\x12\x12.DeleteTaskRequest\x1a\x13.DeleteTaskResponse\x12;\n" +
-	"\fListDayTasks\x12\x14.ListDayTasksRequest\x1a\x15.ListDayTasksResponse\x12>\n" +
+	"DeleteTask\x12\x12.DeleteTaskRequest\x1a\x13.DeleteTaskResponse\x12M\n" +
+	"\x12ListScheduledTasks\x12\x1a.ListScheduledTasksRequest\x1a\x1b.ListScheduledTasksResponse\x12>\n" +
 	"\rListRelatives\x12\x15.ListRelativesRequest\x1a\x16.ListRelativesResponseB\x1cB\n" +
 	"TypesProtoP\x01Z\finternal/apib\x06proto3"
 
@@ -990,7 +1101,7 @@ func file_api_types_proto_rawDescGZIP() []byte {
 }
 
 var file_api_types_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_types_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_api_types_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_types_proto_goTypes = []any{
 	(ListRelativesRequest_RelativeType)(0), // 0: ListRelativesRequest.RelativeType
 	(*DurState)(nil),                       // 1: DurState
@@ -1005,41 +1116,46 @@ var file_api_types_proto_goTypes = []any{
 	(*UpdateTaskResponse)(nil),             // 10: UpdateTaskResponse
 	(*DeleteTaskRequest)(nil),              // 11: DeleteTaskRequest
 	(*DeleteTaskResponse)(nil),             // 12: DeleteTaskResponse
-	(*ListDayTasksRequest)(nil),            // 13: ListDayTasksRequest
-	(*ListDayTasksResponse)(nil),           // 14: ListDayTasksResponse
+	(*ListScheduledTasksRequest)(nil),      // 13: ListScheduledTasksRequest
+	(*ListScheduledTasksResponse)(nil),     // 14: ListScheduledTasksResponse
 	(*ListRelativesRequest)(nil),           // 15: ListRelativesRequest
 	(*ListRelativesResponse)(nil),          // 16: ListRelativesResponse
-	(*timestamppb.Timestamp)(nil),          // 17: google.protobuf.Timestamp
+	(*ProgressUpdateRequest)(nil),          // 17: ProgressUpdateRequest
+	(*ProgressUpdateResponse)(nil),         // 18: ProgressUpdateResponse
+	(*timestamppb.Timestamp)(nil),          // 19: google.protobuf.Timestamp
 }
 var file_api_types_proto_depIdxs = []int32{
-	17, // 0: DurState.deadline:type_name -> google.protobuf.Timestamp
-	17, // 1: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
+	19, // 0: DurState.deadline:type_name -> google.protobuf.Timestamp
+	19, // 1: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
 	1,  // 2: TaskState.duration_cfg:type_name -> DurState
 	2,  // 3: TaskState.children_cfgs:type_name -> ChildrenConfigState
 	3,  // 4: ReadTaskResponse.state:type_name -> TaskState
 	3,  // 5: CreateTaskRequest.state:type_name -> TaskState
 	3,  // 6: UpdateTaskRequest.state:type_name -> TaskState
-	17, // 7: ListDayTasksRequest.day:type_name -> google.protobuf.Timestamp
-	4,  // 8: ListDayTasksResponse.entries:type_name -> TaskEntry
-	0,  // 9: ListRelativesRequest.type:type_name -> ListRelativesRequest.RelativeType
-	4,  // 10: ListRelativesResponse.entries:type_name -> TaskEntry
-	5,  // 11: API.ReadTask:input_type -> ReadTaskRequest
-	7,  // 12: API.CreateTask:input_type -> CreateTaskRequest
-	9,  // 13: API.UpdateTask:input_type -> UpdateTaskRequest
-	11, // 14: API.DeleteTask:input_type -> DeleteTaskRequest
-	13, // 15: API.ListDayTasks:input_type -> ListDayTasksRequest
-	15, // 16: API.ListRelatives:input_type -> ListRelativesRequest
-	6,  // 17: API.ReadTask:output_type -> ReadTaskResponse
-	8,  // 18: API.CreateTask:output_type -> CreateTaskResponse
-	10, // 19: API.UpdateTask:output_type -> UpdateTaskResponse
-	12, // 20: API.DeleteTask:output_type -> DeleteTaskResponse
-	14, // 21: API.ListDayTasks:output_type -> ListDayTasksResponse
-	16, // 22: API.ListRelatives:output_type -> ListRelativesResponse
-	17, // [17:23] is the sub-list for method output_type
-	11, // [11:17] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	19, // 7: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
+	19, // 8: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
+	4,  // 9: ListScheduledTasksResponse.entries:type_name -> TaskEntry
+	0,  // 10: ListRelativesRequest.type:type_name -> ListRelativesRequest.RelativeType
+	4,  // 11: ListRelativesResponse.entries:type_name -> TaskEntry
+	19, // 12: ProgressUpdateRequest.start:type_name -> google.protobuf.Timestamp
+	19, // 13: ProgressUpdateRequest.end:type_name -> google.protobuf.Timestamp
+	5,  // 14: API.ReadTask:input_type -> ReadTaskRequest
+	7,  // 15: API.CreateTask:input_type -> CreateTaskRequest
+	9,  // 16: API.UpdateTask:input_type -> UpdateTaskRequest
+	11, // 17: API.DeleteTask:input_type -> DeleteTaskRequest
+	13, // 18: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
+	15, // 19: API.ListRelatives:input_type -> ListRelativesRequest
+	6,  // 20: API.ReadTask:output_type -> ReadTaskResponse
+	8,  // 21: API.CreateTask:output_type -> CreateTaskResponse
+	10, // 22: API.UpdateTask:output_type -> UpdateTaskResponse
+	12, // 23: API.DeleteTask:output_type -> DeleteTaskResponse
+	14, // 24: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
+	16, // 25: API.ListRelatives:output_type -> ListRelativesResponse
+	20, // [20:26] is the sub-list for method output_type
+	14, // [14:20] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_api_types_proto_init() }
@@ -1056,7 +1172,7 @@ func file_api_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_types_proto_rawDesc), len(file_api_types_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
