@@ -16,6 +16,10 @@ type datePickerEvent struct {
 	focus bool
 }
 
+func (f datePickerEvent) Focused() bool {
+	return f.focus
+}
+
 type DatePickerFieldOption struct {
 	Desc     string
 	Required bool
@@ -26,12 +30,8 @@ type DatePickerField struct {
 	picker DatePicker
 	opts   DatePickerFieldOption
 	title  string
-	key    string
 
-	focused       bool
-	theme         huh.Theme
-	darkBg        bool
-	width, height int
+	common commonField
 }
 
 func NewDatePickerField(
@@ -43,8 +43,8 @@ func NewDatePickerField(
 	return &DatePickerField{
 		picker: NewDatePicker(month, day, year),
 		title:  title,
-		key:    key,
 		opts:   opts,
+		common: newCommonField(key),
 	}
 }
 
@@ -53,39 +53,17 @@ func (p *DatePickerField) Init() tea.Cmd {
 }
 
 func (p *DatePickerField) Update(msg tea.Msg) (huh.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.BackgroundColorMsg:
-		p.darkBg = msg.IsDark()
-		return p, nil
-	case datePickerEvent:
-		p.focused = msg.focus
-		return p, nil
-	case tea.KeyPressMsg:
-		switch {
-		case msg.Code == tea.KeyTab && msg.Mod == 0:
-			return p, huh.NextField
-		case msg.Code == tea.KeyTab && msg.Mod == tea.ModShift:
-			return p, huh.PrevField
-		}
+	cmd := p.common.handleUpdate(msg)
+	if cmd != nil {
+		return p, cmd
 	}
 	updated, cmd := p.picker.Update(msg)
 	p.picker = updated.(DatePicker)
 	return p, cmd
 }
 
-func (p *DatePickerField) getStyles() *huh.FieldStyles {
-	theme := p.theme
-	if theme == nil {
-		theme = huh.ThemeFunc(huh.ThemeCharm)
-	}
-	if p.focused {
-		return &theme.Theme(p.darkBg).Focused
-	}
-	return &theme.Theme(p.darkBg).Blurred
-}
-
 func (p *DatePickerField) View() string {
-	styles := p.getStyles()
+	styles := p.common.getStyles()
 	baseStyle := styles.Base
 	titleStyle := styles.Title
 	descStyle := styles.Description
@@ -109,24 +87,16 @@ func (p *DatePickerField) View() string {
 			content,
 		)
 	}
-	return baseStyle.Width(p.width).Height(p.height).Render(joined)
+	return baseStyle.Width(p.common.width).Height(p.common.height).Render(joined)
 }
 
 // Bubble Tea Events
 func (p *DatePickerField) Blur() tea.Cmd {
-	return func() tea.Msg {
-		return datePickerEvent{
-			focus: false,
-		}
-	}
+	return p.common.Blur()
 }
 
 func (p *DatePickerField) Focus() tea.Cmd {
-	return func() tea.Msg {
-		return datePickerEvent{
-			focus: true,
-		}
-	}
+	return p.common.Focus()
 }
 
 // Errors and Validation
@@ -212,7 +182,7 @@ func (p *DatePickerField) KeyBinds() []key.Binding {
 
 // WithTheme sets the theme on a field.
 func (p *DatePickerField) WithTheme(th huh.Theme) huh.Field {
-	p.theme = th
+	p.common.handleWithTheme(th)
 	return p
 }
 
@@ -223,13 +193,13 @@ func (p *DatePickerField) WithKeyMap(km *huh.KeyMap) huh.Field {
 
 // WithWidth sets the width of a field.
 func (p *DatePickerField) WithWidth(width int) huh.Field {
-	p.width = width
+	p.common.handleWithWidth(width)
 	return p
 }
 
 // WithHeight sets the height of a field.
 func (p *DatePickerField) WithHeight(height int) huh.Field {
-	p.height = height
+	p.common.handleWithHeight(height)
 	return p
 }
 
@@ -241,7 +211,7 @@ func (p *DatePickerField) WithPosition(huh.FieldPosition) huh.Field {
 
 // GetKey returns the field's key.
 func (p *DatePickerField) GetKey() string {
-	return p.key
+	return p.common.GetKey()
 }
 
 // GetValue returns the field's value.

@@ -23,11 +23,7 @@ type TimePickerField struct {
 	opts   TimePickerFieldOption
 	title  string
 	key    string
-
-	focused       bool
-	theme         huh.Theme
-	darkBg        bool
-	width, height int
+	common commonField
 }
 
 func NewTimePickerField(
@@ -41,6 +37,7 @@ func NewTimePickerField(
 		title:  title,
 		key:    key,
 		opts:   opts,
+		common: newCommonField(key),
 	}
 }
 
@@ -49,39 +46,17 @@ func (p *TimePickerField) Init() tea.Cmd {
 }
 
 func (p *TimePickerField) Update(msg tea.Msg) (huh.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.BackgroundColorMsg:
-		p.darkBg = msg.IsDark()
-		return p, nil
-	case timePickerEvent:
-		p.focused = msg.focus
-		return p, nil
-	case tea.KeyPressMsg:
-		switch {
-		case msg.Code == tea.KeyTab && msg.Mod == 0:
-			return p, huh.NextField
-		case msg.Code == tea.KeyTab && msg.Mod == tea.ModShift:
-			return p, huh.PrevField
-		}
+	cmd := p.common.handleUpdate(msg)
+	if cmd != nil {
+		return p, cmd
 	}
 	updated, cmd := p.picker.Update(msg)
 	p.picker = updated.(TimePicker)
 	return p, cmd
 }
 
-func (p *TimePickerField) getStyles() *huh.FieldStyles {
-	theme := p.theme
-	if theme == nil {
-		theme = huh.ThemeFunc(huh.ThemeCharm)
-	}
-	if p.focused {
-		return &theme.Theme(p.darkBg).Focused
-	}
-	return &theme.Theme(p.darkBg).Blurred
-}
-
 func (p *TimePickerField) View() string {
-	styles := p.getStyles()
+	styles := p.common.getStyles()
 	baseStyle := styles.Base
 	titleStyle := styles.Title
 	descStyle := styles.Description
@@ -105,24 +80,16 @@ func (p *TimePickerField) View() string {
 			content,
 		)
 	}
-	out := baseStyle.Width(p.width).Height(p.height).Render(joined)
+	out := baseStyle.Width(p.common.width).Height(p.common.height).Render(joined)
 	return out
 }
 
 // Bubble Tea Events
 func (p *TimePickerField) Blur() tea.Cmd {
-	return func() tea.Msg {
-		return timePickerEvent{
-			focus: false,
-		}
-	}
+	return p.common.Blur()
 }
 func (p *TimePickerField) Focus() tea.Cmd {
-	return func() tea.Msg {
-		return timePickerEvent{
-			focus: true,
-		}
-	}
+	return p.common.Focus()
 }
 
 // Errors and Validation
@@ -194,7 +161,7 @@ func (p *TimePickerField) KeyBinds() []key.Binding {
 
 // WithTheme sets the theme on a field.
 func (p *TimePickerField) WithTheme(th huh.Theme) huh.Field {
-	p.theme = th
+	p.common.handleWithTheme(th)
 	return p
 }
 
@@ -205,13 +172,13 @@ func (p *TimePickerField) WithKeyMap(km *huh.KeyMap) huh.Field {
 
 // WithWidth sets the width of a field.
 func (p *TimePickerField) WithWidth(width int) huh.Field {
-	p.width = width
+	p.common.handleWithWidth(width)
 	return p
 }
 
 // WithHeight sets the height of a field.
 func (p *TimePickerField) WithHeight(height int) huh.Field {
-	p.height = height
+	p.common.handleWithHeight(height)
 	return p
 }
 
