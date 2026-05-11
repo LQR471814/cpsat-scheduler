@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"strconv"
 	"strings"
 
@@ -98,9 +97,8 @@ var highlightStyle = lipgloss.NewStyle().Underline(true)
 // var focusedStyle = lipgloss.NewStyle().Background(lipgloss.Color("#EB4268"))
 
 func (n UnsignedInput) View() tea.View {
-	text := strconv.FormatUint(uint64(*n.value), 10)
+	text := strconv.FormatUint(uint64(*n.value), 10)[:n.cursor]
 
-	log.Println(n.cursor, text)
 	text = strings.Repeat(
 		string(n.opts.Placeholder),
 		int(n.opts.MaxDigits)-len(text),
