@@ -73,15 +73,14 @@ message ListDayTasksResponse {
   repeated TaskEntry entries = 1;
 }
 
-enum RelativeType {
-  PARENT = 0;
-  CHILD = 1;
-  PREREQ = 2;
-  POSTREQ = 3;
-}
-
 // ListRelatives
 message ListRelativesRequest {
+  enum RelativeType {
+    PARENT = 0;
+    CHILD = 1;
+    PREREQ = 2;
+    POSTREQ = 3;
+  }
   RelativeType type = 1;
   int64 task_id = 2;
 }

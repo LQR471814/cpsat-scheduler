@@ -22,24 +22,24 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type RelativeType int32
+type ListRelativesRequest_RelativeType int32
 
 const (
-	RelativeType_PARENT  RelativeType = 0
-	RelativeType_CHILD   RelativeType = 1
-	RelativeType_PREREQ  RelativeType = 2
-	RelativeType_POSTREQ RelativeType = 3
+	ListRelativesRequest_PARENT  ListRelativesRequest_RelativeType = 0
+	ListRelativesRequest_CHILD   ListRelativesRequest_RelativeType = 1
+	ListRelativesRequest_PREREQ  ListRelativesRequest_RelativeType = 2
+	ListRelativesRequest_POSTREQ ListRelativesRequest_RelativeType = 3
 )
 
-// Enum value maps for RelativeType.
+// Enum value maps for ListRelativesRequest_RelativeType.
 var (
-	RelativeType_name = map[int32]string{
+	ListRelativesRequest_RelativeType_name = map[int32]string{
 		0: "PARENT",
 		1: "CHILD",
 		2: "PREREQ",
 		3: "POSTREQ",
 	}
-	RelativeType_value = map[string]int32{
+	ListRelativesRequest_RelativeType_value = map[string]int32{
 		"PARENT":  0,
 		"CHILD":   1,
 		"PREREQ":  2,
@@ -47,31 +47,31 @@ var (
 	}
 )
 
-func (x RelativeType) Enum() *RelativeType {
-	p := new(RelativeType)
+func (x ListRelativesRequest_RelativeType) Enum() *ListRelativesRequest_RelativeType {
+	p := new(ListRelativesRequest_RelativeType)
 	*p = x
 	return p
 }
 
-func (x RelativeType) String() string {
+func (x ListRelativesRequest_RelativeType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (RelativeType) Descriptor() protoreflect.EnumDescriptor {
+func (ListRelativesRequest_RelativeType) Descriptor() protoreflect.EnumDescriptor {
 	return file_api_types_proto_enumTypes[0].Descriptor()
 }
 
-func (RelativeType) Type() protoreflect.EnumType {
+func (ListRelativesRequest_RelativeType) Type() protoreflect.EnumType {
 	return &file_api_types_proto_enumTypes[0]
 }
 
-func (x RelativeType) Number() protoreflect.EnumNumber {
+func (x ListRelativesRequest_RelativeType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use RelativeType.Descriptor instead.
-func (RelativeType) EnumDescriptor() ([]byte, []int) {
-	return file_api_types_proto_rawDescGZIP(), []int{0}
+// Deprecated: Use ListRelativesRequest_RelativeType.Descriptor instead.
+func (ListRelativesRequest_RelativeType) EnumDescriptor() ([]byte, []int) {
+	return file_api_types_proto_rawDescGZIP(), []int{14, 0}
 }
 
 type DurState struct {
@@ -803,9 +803,9 @@ func (x *ListDayTasksResponse) GetEntries() []*TaskEntry {
 
 // ListRelatives
 type ListRelativesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          RelativeType           `protobuf:"varint,1,opt,name=type,proto3,enum=RelativeType" json:"type,omitempty"`
-	TaskId        int64                  `protobuf:"varint,2,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	state         protoimpl.MessageState            `protogen:"open.v1"`
+	Type          ListRelativesRequest_RelativeType `protobuf:"varint,1,opt,name=type,proto3,enum=ListRelativesRequest_RelativeType" json:"type,omitempty"`
+	TaskId        int64                             `protobuf:"varint,2,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -840,11 +840,11 @@ func (*ListRelativesRequest) Descriptor() ([]byte, []int) {
 	return file_api_types_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *ListRelativesRequest) GetType() RelativeType {
+func (x *ListRelativesRequest) GetType() ListRelativesRequest_RelativeType {
 	if x != nil {
 		return x.Type
 	}
-	return RelativeType_PARENT
+	return ListRelativesRequest_PARENT
 }
 
 func (x *ListRelativesRequest) GetTaskId() int64 {
@@ -951,20 +951,20 @@ const file_api_types_proto_rawDesc = "" +
 	"\x03day\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x03day\"<\n" +
 	"\x14ListDayTasksResponse\x12$\n" +
 	"\aentries\x18\x01 \x03(\v2\n" +
-	".TaskEntryR\aentries\"R\n" +
-	"\x14ListRelativesRequest\x12!\n" +
-	"\x04type\x18\x01 \x01(\x0e2\r.RelativeTypeR\x04type\x12\x17\n" +
-	"\atask_id\x18\x02 \x01(\x03R\x06taskId\"=\n" +
-	"\x15ListRelativesResponse\x12$\n" +
-	"\aentries\x18\x01 \x03(\v2\n" +
-	".TaskEntryR\aentries*>\n" +
+	".TaskEntryR\aentries\"\xa7\x01\n" +
+	"\x14ListRelativesRequest\x126\n" +
+	"\x04type\x18\x01 \x01(\x0e2\".ListRelativesRequest.RelativeTypeR\x04type\x12\x17\n" +
+	"\atask_id\x18\x02 \x01(\x03R\x06taskId\">\n" +
 	"\fRelativeType\x12\n" +
 	"\n" +
 	"\x06PARENT\x10\x00\x12\t\n" +
 	"\x05CHILD\x10\x01\x12\n" +
 	"\n" +
 	"\x06PREREQ\x10\x02\x12\v\n" +
-	"\aPOSTREQ\x10\x032\xd8\x02\n" +
+	"\aPOSTREQ\x10\x03\"=\n" +
+	"\x15ListRelativesResponse\x12$\n" +
+	"\aentries\x18\x01 \x03(\v2\n" +
+	".TaskEntryR\aentries2\xd8\x02\n" +
 	"\x03API\x12/\n" +
 	"\bReadTask\x12\x10.ReadTaskRequest\x1a\x11.ReadTaskResponse\x125\n" +
 	"\n" +
@@ -992,24 +992,24 @@ func file_api_types_proto_rawDescGZIP() []byte {
 var file_api_types_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_types_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_api_types_proto_goTypes = []any{
-	(RelativeType)(0),             // 0: RelativeType
-	(*DurState)(nil),              // 1: DurState
-	(*ChildrenConfigState)(nil),   // 2: ChildrenConfigState
-	(*TaskState)(nil),             // 3: TaskState
-	(*TaskEntry)(nil),             // 4: TaskEntry
-	(*ReadTaskRequest)(nil),       // 5: ReadTaskRequest
-	(*ReadTaskResponse)(nil),      // 6: ReadTaskResponse
-	(*CreateTaskRequest)(nil),     // 7: CreateTaskRequest
-	(*CreateTaskResponse)(nil),    // 8: CreateTaskResponse
-	(*UpdateTaskRequest)(nil),     // 9: UpdateTaskRequest
-	(*UpdateTaskResponse)(nil),    // 10: UpdateTaskResponse
-	(*DeleteTaskRequest)(nil),     // 11: DeleteTaskRequest
-	(*DeleteTaskResponse)(nil),    // 12: DeleteTaskResponse
-	(*ListDayTasksRequest)(nil),   // 13: ListDayTasksRequest
-	(*ListDayTasksResponse)(nil),  // 14: ListDayTasksResponse
-	(*ListRelativesRequest)(nil),  // 15: ListRelativesRequest
-	(*ListRelativesResponse)(nil), // 16: ListRelativesResponse
-	(*timestamppb.Timestamp)(nil), // 17: google.protobuf.Timestamp
+	(ListRelativesRequest_RelativeType)(0), // 0: ListRelativesRequest.RelativeType
+	(*DurState)(nil),                       // 1: DurState
+	(*ChildrenConfigState)(nil),            // 2: ChildrenConfigState
+	(*TaskState)(nil),                      // 3: TaskState
+	(*TaskEntry)(nil),                      // 4: TaskEntry
+	(*ReadTaskRequest)(nil),                // 5: ReadTaskRequest
+	(*ReadTaskResponse)(nil),               // 6: ReadTaskResponse
+	(*CreateTaskRequest)(nil),              // 7: CreateTaskRequest
+	(*CreateTaskResponse)(nil),             // 8: CreateTaskResponse
+	(*UpdateTaskRequest)(nil),              // 9: UpdateTaskRequest
+	(*UpdateTaskResponse)(nil),             // 10: UpdateTaskResponse
+	(*DeleteTaskRequest)(nil),              // 11: DeleteTaskRequest
+	(*DeleteTaskResponse)(nil),             // 12: DeleteTaskResponse
+	(*ListDayTasksRequest)(nil),            // 13: ListDayTasksRequest
+	(*ListDayTasksResponse)(nil),           // 14: ListDayTasksResponse
+	(*ListRelativesRequest)(nil),           // 15: ListRelativesRequest
+	(*ListRelativesResponse)(nil),          // 16: ListRelativesResponse
+	(*timestamppb.Timestamp)(nil),          // 17: google.protobuf.Timestamp
 }
 var file_api_types_proto_depIdxs = []int32{
 	17, // 0: DurState.deadline:type_name -> google.protobuf.Timestamp
@@ -1021,7 +1021,7 @@ var file_api_types_proto_depIdxs = []int32{
 	3,  // 6: UpdateTaskRequest.state:type_name -> TaskState
 	17, // 7: ListDayTasksRequest.day:type_name -> google.protobuf.Timestamp
 	4,  // 8: ListDayTasksResponse.entries:type_name -> TaskEntry
-	0,  // 9: ListRelativesRequest.type:type_name -> RelativeType
+	0,  // 9: ListRelativesRequest.type:type_name -> ListRelativesRequest.RelativeType
 	4,  // 10: ListRelativesResponse.entries:type_name -> TaskEntry
 	5,  // 11: API.ReadTask:input_type -> ReadTaskRequest
 	7,  // 12: API.CreateTask:input_type -> CreateTaskRequest
