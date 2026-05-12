@@ -51,6 +51,8 @@ func main() {
 	impl := newServer(ctx, logger, driver)
 	server := grpc.NewServer()
 	api.RegisterAPIServer(server, impl)
+
+	logger.Info("listening...", "path", socket_path)
 	err = listenServer(ctx, server)
 	if err != nil {
 		slog.Error("listen", "err", err)

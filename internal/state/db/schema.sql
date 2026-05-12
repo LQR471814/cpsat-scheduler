@@ -105,4 +105,4 @@ create table scheduled_task (
 );
 
 create index idx_scheduled_profile
-on scheduled_task (profile, id);
+on scheduled_task (profile, task);

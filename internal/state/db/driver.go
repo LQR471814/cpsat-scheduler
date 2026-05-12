@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/url"
+	"path/filepath"
 
 	_ "embed"
 
@@ -25,7 +26,7 @@ var sqlite_options = url.Values{
 	},
 }
 
-func configureSQLite(ctx context.Context, driver *sql.DB) (err error) {
+func configureSQLite(driver *sql.DB) (err error) {
 	driver.SetMaxOpenConns(1)
 	driver.SetMaxIdleConns(1)
 	driver.SetConnMaxLifetime(0)
@@ -60,9 +61,13 @@ WHERE type='table' AND name='profile'`)
 }
 
 func OpenDB(ctx context.Context, logger *slog.Logger, file string) (driver *sql.DB, err error) {
+	abspath, err := filepath.Abs(file)
+	if err != nil {
+		return
+	}
 	link := &url.URL{
 		Scheme:   "file",
-		Path:     file,
+		Path:     abspath,
 		RawQuery: sqlite_options.Encode(),
 	}
 	driver, err = sql.Open("sqlite", link.String())
@@ -75,7 +80,7 @@ func OpenDB(ctx context.Context, logger *slog.Logger, file string) (driver *sql.
 		return
 	}
 
-	err = configureSQLite(ctx, driver)
+	err = configureSQLite(driver)
 	if err != nil {
 		return
 	}
