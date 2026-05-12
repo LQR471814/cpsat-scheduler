@@ -2,6 +2,11 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
+message ProfileEntry {
+  int64 id = 1;
+  string name = 2;
+}
+
 message DurState {
   int64 pes = 1;
   int64 exp = 2;
@@ -31,11 +36,20 @@ message TaskState {
   repeated int64 prereqs = 6;
   repeated int64 postreqs = 7;
   optional int64 parent = 8;
+
+  optional google.protobuf.Timestamp start = 9;
+  optional google.protobuf.Timestamp end = 10;
 }
 
 message TaskEntry {
   int64 id = 1;
   string name = 2;
+}
+
+// ListProfiles
+message ListProfilesRequest {}
+message ListProfilesResponse {
+  repeated ProfileEntry entries = 1;
 }
 
 // ReadTask
@@ -46,18 +60,13 @@ message ReadTaskResponse {
   TaskState state = 1;
 }
 
-// CreateTask
-message CreateTaskRequest {
-  TaskState state = 1;
+// SaveTask
+message SaveTaskRequest {
+  optional int64 id = 1;
+  int64 profile_id = 2;
+  TaskState state = 3;
 }
-message CreateTaskResponse {}
-
-// UpdateTask
-message UpdateTaskRequest {
-  int64 id = 1;
-  TaskState state = 2;
-}
-message UpdateTaskResponse {}
+message SaveTaskResponse {}
 
 // DeleteTask
 message DeleteTaskRequest {
@@ -67,15 +76,17 @@ message DeleteTaskResponse {}
 
 // ListScheduledTasks
 message ListScheduledTasksRequest {
-  google.protobuf.Timestamp start = 1;
-  google.protobuf.Timestamp end = 2;
+  int64 profile_id = 1;
+  int64 timescale = 2;
+  google.protobuf.Timestamp start = 3;
+  google.protobuf.Timestamp end = 4;
 }
 message ListScheduledTasksResponse {
   repeated TaskEntry entries = 1;
 }
 
-// ListRelatives
-message ListRelativesRequest {
+// ListPossibleRelatives
+message ListPossibleRelativesRequest {
   enum RelativeType {
     PARENT = 0;
     CHILD = 1;
@@ -85,7 +96,7 @@ message ListRelativesRequest {
   RelativeType type = 1;
   int64 task_id = 2;
 }
-message ListRelativesResponse {
+message ListPossibleRelativesResponse {
   repeated TaskEntry entries = 1;
 }
 
@@ -98,11 +109,12 @@ message ProgressUpdateRequest {
 message ProgressUpdateResponse {}
 
 service API {
+  rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc ReadTask(ReadTaskRequest) returns (ReadTaskResponse);
-  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
-  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse);
+  rpc SaveTask(SaveTaskRequest) returns (SaveTaskResponse);
   rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
   rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
-  rpc ListRelatives(ListRelativesRequest) returns (ListRelativesResponse);
+  rpc ListPossibleRelatives(ListPossibleRelativesRequest) returns (ListPossibleRelativesResponse);
+  rpc ProgressUpdate(ProgressUpdateRequest) returns (ProgressUpdateResponse);
 }
 

@@ -3,6 +3,7 @@ create table profile (
 	id integer primary key autoincrement,
 	name text not null,
 
+	-- this is in terms of seconds
 	atomic_timescale_duration int not null,
 	universe_start timestamp not null,
 	pert_gen_choices int
@@ -28,6 +29,9 @@ create table task (
 	end int
 );
 
+create index idx_task_profile
+on task (profile, id);
+
 -- Duration type cost config (exactly 1 per task, not mut. excl with children_config)
 create table dur_config (
 	id integer primary key autoincrement,
@@ -41,6 +45,9 @@ create table dur_config (
 	total_cost integer
 );
 
+create index idx_dur_task
+on dur_config (task, id);
+
 -- Children type cost config (many possible per task, not mut. excl with dur_config)
 create table children_config (
 	id integer primary key autoincrement,
@@ -51,6 +58,9 @@ create table children_config (
 	exp_cost integer,
 	total_cost integer
 );
+
+create index idx_children_task
+on children_config (task, id);
 
 -- Child part of a cost config
 create table children_config_child (
@@ -83,3 +93,16 @@ create table allocation (
 	end timestamp not null
 );
 
+create index idx_allocation_task
+on allocation (task, id);
+
+-- Scheduled task
+create table scheduled_task (
+	task integer primary key references task (id) on update cascade on delete cascade,
+	profile integer not null references profile (id),
+	start timestamp not null,
+	end timestamp not null
+);
+
+create index idx_scheduled_profile
+on scheduled_task (profile, id);

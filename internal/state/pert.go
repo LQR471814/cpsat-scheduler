@@ -1,8 +1,8 @@
 package state
 
 import (
-	"cpsat-scheduler/internal/state/db"
 	"cpsat-scheduler/internal/solver/solverpb"
+	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"math"
 	"time"
@@ -83,9 +83,9 @@ func pertDurCfgs(
 		p := math.Pow(float64(x)/float64(choices), float64(1)/float64(3))
 		dur := roundInt64(pertPPF(
 			p,
-			float64(durcfg.Opt*durcfg.OptUnit),
-			float64(durcfg.Exp*durcfg.ExpUnit),
-			float64(durcfg.Pes*durcfg.PesUnit),
+			float64(durcfg.Opt),
+			float64(durcfg.Exp),
+			float64(durcfg.Pes),
 		))
 		out = append(out, &solverpb.DurConfig{
 			Intervals: deadlineIntervals(

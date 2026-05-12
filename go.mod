@@ -8,6 +8,7 @@ require (
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.3
 	github.com/dave/jennifer v1.7.1
+	github.com/lmittmann/tint v1.1.3
 	golang.org/x/tools v0.42.0
 	gonum.org/v1/gonum v0.17.0
 	google.golang.org/grpc v1.80.0

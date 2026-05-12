@@ -59,10 +59,10 @@ WHERE type='table' AND name='profile'`)
 	return
 }
 
-func OpenDB(ctx context.Context, logger *slog.Logger, db string) (driver *sql.DB, err error) {
+func OpenDB(ctx context.Context, logger *slog.Logger, file string) (driver *sql.DB, err error) {
 	link := &url.URL{
 		Scheme:   "file",
-		Path:     db,
+		Path:     file,
 		RawQuery: sqlite_options.Encode(),
 	}
 	driver, err = sql.Open("sqlite", link.String())

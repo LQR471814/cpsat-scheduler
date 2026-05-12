@@ -1,3 +1,6 @@
+-- name: GetProfile :one
+select * from profile where id = ?;
+
 -- name: ListProfiles :many
 select * from profile;
 
@@ -53,9 +56,10 @@ values (?, ?) on conflict do nothing;
 -- name: ListChildrenConfigs :many
 select * from children_config where task = ?;
 
--- name: CreateChildrenConfig :exec
+-- name: CreateChildrenConfig :one
 insert into children_config (task, desc, deadline, exp_cost, total_cost)
-values (?, ?, ?, ?, ?);
+values (?, ?, ?, ?, ?)
+returning id;
 
 -- name: DeleteChildrenConfigs :exec
 delete from children_config where task = ?;
@@ -84,4 +88,20 @@ values (?, ?) on conflict do nothing;
 -- name: CreateAlloc :exec
 insert into allocation (task, desc, start, end)
 values (?, ?, ?, ?) on conflict do nothing;
+
+-- name: ListScheduledTasks :many
+select st.*, t.name from scheduled_task st
+inner join task t on st.task = t.id
+where st.start >= ? and st.end <= ? and st.profile = ?;
+
+-- name: SaveScheduledTask :exec
+insert into scheduled_task (task, profile, start, end)
+values (?, ?, ?, ?) on conflict do update set
+	start = excluded.start,
+	end = excluded.end,
+	profile = excluded.profile;
+
+-- name: DeleteSchedule :exec
+delete from scheduled_task
+where profile = ?;
 

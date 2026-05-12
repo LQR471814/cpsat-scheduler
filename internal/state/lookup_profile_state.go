@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func LookupProfileState(c Context) (pbtasks []*solverpb.Task, err error) {
+func LookupProfileState(c Context, profileID int64) (pbtasks []*solverpb.Task, err error) {
 	ctx := c.ctx
 	tx, err := c.driver.BeginTx(ctx, nil)
 	if err != nil {
@@ -15,14 +15,18 @@ func LookupProfileState(c Context) (pbtasks []*solverpb.Task, err error) {
 	defer tx.Rollback()
 	txqry := c.db.WithTx(tx)
 
-	tasks, err := txqry.ListTasks(ctx, c.profile.ID)
+	profile, err := txqry.GetProfile(c.ctx, profileID)
+	if err != nil {
+		return
+	}
+	tasks, err := txqry.ListTasks(ctx, profile.ID)
 	if err != nil {
 		return
 	}
 
 	choices := int64(4)
-	if c.profile.PertGenChoices.Valid {
-		choices = c.profile.PertGenChoices.Int64
+	if profile.PertGenChoices.Valid {
+		choices = profile.PertGenChoices.Int64
 	}
 
 	pbtasks = make([]*solverpb.Task, len(tasks))
@@ -55,8 +59,8 @@ func LookupProfileState(c Context) (pbtasks []*solverpb.Task, err error) {
 			Prereqs: prereqs,
 		}
 		task.DurCfgs, err = pertDurCfgs(
-			c.profile.UniverseStart,
-			time.Duration(c.profile.AtomicTimescaleDuration),
+			profile.UniverseStart,
+			time.Duration(profile.AtomicTimescaleDuration),
 			choices,
 			durCfg,
 		)
@@ -64,7 +68,7 @@ func LookupProfileState(c Context) (pbtasks []*solverpb.Task, err error) {
 			return
 		}
 
-		task.ChildrenCfgs, err = lookupChildCfgs(c, txqry, t)
+		task.ChildrenCfgs, err = lookupChildCfgs(c, txqry, profile, t)
 		if err != nil {
 			return
 		}
@@ -74,7 +78,7 @@ func LookupProfileState(c Context) (pbtasks []*solverpb.Task, err error) {
 	return
 }
 
-func lookupChildCfgs(c Context, txqry *db.Queries, task db.Task) (out []*solverpb.ChildrenConfig, err error) {
+func lookupChildCfgs(c Context, txqry *db.Queries, profile db.Profile, task db.Task) (out []*solverpb.ChildrenConfig, err error) {
 	ctx := c.ctx
 	var childrenCfgs []db.ChildrenConfig
 	childrenCfgs, err = txqry.ListChildrenConfigs(ctx, task.ID)
@@ -88,8 +92,8 @@ func lookupChildCfgs(c Context, txqry *db.Queries, task db.Task) (out []*solverp
 			return
 		}
 		deadline := convertDeadline(
-			c.profile.UniverseStart,
-			time.Duration(c.profile.AtomicTimescaleDuration),
+			profile.UniverseStart,
+			time.Duration(profile.AtomicTimescaleDuration),
 			childCfg.Deadline,
 		)
 		out = append(out, &solverpb.ChildrenConfig{
