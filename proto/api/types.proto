@@ -30,7 +30,7 @@ message TaskState {
   string desc = 2;
   int64 timescale = 3;
 
-  DurState duration_cfg = 4;
+  optional DurState duration_cfg = 4;
   repeated ChildrenConfigState children_cfgs = 5;
 
   repeated int64 prereqs = 6;

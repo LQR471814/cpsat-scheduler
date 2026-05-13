@@ -277,7 +277,7 @@ type TaskState struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Desc          string                 `protobuf:"bytes,2,opt,name=desc,proto3" json:"desc,omitempty"`
 	Timescale     int64                  `protobuf:"varint,3,opt,name=timescale,proto3" json:"timescale,omitempty"`
-	DurationCfg   *DurState              `protobuf:"bytes,4,opt,name=duration_cfg,json=durationCfg,proto3" json:"duration_cfg,omitempty"`
+	DurationCfg   *DurState              `protobuf:"bytes,4,opt,name=duration_cfg,json=durationCfg,proto3,oneof" json:"duration_cfg,omitempty"`
 	ChildrenCfgs  []*ChildrenConfigState `protobuf:"bytes,5,rep,name=children_cfgs,json=childrenCfgs,proto3" json:"children_cfgs,omitempty"`
 	Prereqs       []int64                `protobuf:"varint,6,rep,packed,name=prereqs,proto3" json:"prereqs,omitempty"`
 	Postreqs      []int64                `protobuf:"varint,7,rep,packed,name=postreqs,proto3" json:"postreqs,omitempty"`
@@ -1116,19 +1116,20 @@ const file_api_types_proto_rawDesc = "" +
 	"\bdeadline\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\bdeadline\x88\x01\x01\x12\x19\n" +
 	"\bexp_cost\x18\x03 \x01(\x03R\aexpCost\x12\x1a\n" +
 	"\bchildren\x18\x04 \x03(\x03R\bchildrenB\v\n" +
-	"\t_deadline\"\x94\x03\n" +
+	"\t_deadline\"\xaa\x03\n" +
 	"\tTaskState\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04desc\x18\x02 \x01(\tR\x04desc\x12\x1c\n" +
-	"\ttimescale\x18\x03 \x01(\x03R\ttimescale\x12,\n" +
-	"\fduration_cfg\x18\x04 \x01(\v2\t.DurStateR\vdurationCfg\x129\n" +
+	"\ttimescale\x18\x03 \x01(\x03R\ttimescale\x121\n" +
+	"\fduration_cfg\x18\x04 \x01(\v2\t.DurStateH\x00R\vdurationCfg\x88\x01\x01\x129\n" +
 	"\rchildren_cfgs\x18\x05 \x03(\v2\x14.ChildrenConfigStateR\fchildrenCfgs\x12\x18\n" +
 	"\aprereqs\x18\x06 \x03(\x03R\aprereqs\x12\x1a\n" +
 	"\bpostreqs\x18\a \x03(\x03R\bpostreqs\x12\x1b\n" +
-	"\x06parent\x18\b \x01(\x03H\x00R\x06parent\x88\x01\x01\x125\n" +
-	"\x05start\x18\t \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x05start\x88\x01\x01\x121\n" +
+	"\x06parent\x18\b \x01(\x03H\x01R\x06parent\x88\x01\x01\x125\n" +
+	"\x05start\x18\t \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x05start\x88\x01\x01\x121\n" +
 	"\x03end\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x03end\x88\x01\x01B\t\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampH\x03R\x03end\x88\x01\x01B\x0f\n" +
+	"\r_duration_cfgB\t\n" +
 	"\a_parentB\b\n" +
 	"\x06_startB\x06\n" +
 	"\x04_end\"/\n" +

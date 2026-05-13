@@ -226,25 +226,26 @@ func SaveProtoTaskState(
 	task *int64,
 	profile int64,
 	state *api.TaskState,
-) (int64, error) {
-	id, err := saveProtoTask(ctx, txqry, task, profile, state)
-	if err != nil {
-		return 0, err
+) (id int64, err error) {
+	if state.DurationCfg == nil && len(state.ChildrenCfgs) == 0 {
+		err = fmt.Errorf("invalid input: either duration_cfg must be specified or at least one children_cfg must be specified, both can be specified but not neither")
+		return
 	}
 
+	id, err = saveProtoTask(ctx, txqry, task, profile, state)
+	if err != nil {
+		return
+	}
 	if task != nil {
 		if err = deletePreviousProtoConfigs(ctx, txqry, id); err != nil {
-			return 0, err
+			return
 		}
 	}
-
 	if err = saveProtoConfigs(ctx, txqry, id, state); err != nil {
-		return 0, err
+		return
 	}
-
 	if err = saveProtoConstraints(ctx, txqry, id, state); err != nil {
-		return 0, err
+		return
 	}
-
-	return id, nil
+	return
 }
