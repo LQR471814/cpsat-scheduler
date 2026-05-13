@@ -6,15 +6,15 @@ def req [method: string]: any -> any {
 		| from json
 }
 
-def "list profiles" []: nothing -> table<id: int, name: string> {
+export def "list profiles" []: nothing -> table<id: int, name: string> {
 	{} | req ListProfiles | get entries
 }
 
-def "read task" [id: int]: nothing -> record<state: record<name: string, desc: string, timescale: int, duration_cfg: record<pes: int, exp: int, opt: int, deadline: record<seconds: int, nanos: int>, total_cost: int>, children_cfgs: list<record<desc: string, deadline: record<seconds: int, nanos: int>, exp_cost: int, children: list<int>>>, prereqs: list<int>, postreqs: list<int>, parent: int, start: record<seconds: int, nanos: int>, end: record<seconds: int, nanos: int>>> {
+export def "read task" [id: int]: nothing -> record<state: record<name: string, desc: string, timescale: int, duration_cfg: record<pes: int, exp: int, opt: int, deadline: record<seconds: int, nanos: int>, total_cost: int>, children_cfgs: list<record<desc: string, deadline: record<seconds: int, nanos: int>, exp_cost: int, children: list<int>>>, prereqs: list<int>, postreqs: list<int>, parent: int, start: record<seconds: int, nanos: int>, end: record<seconds: int, nanos: int>>> {
 	{id: $id} | req ReadTask
 }
 
-def "save task" [
+export def "save task" [
 	profile_id: int
 	state: record<name: string, desc: string, timescale: int, duration_cfg: record<pes: int, exp: int, opt: int, deadline: record<seconds: int, nanos: int>, total_cost: int>, children_cfgs: list<record<desc: string, deadline: record<seconds: int, nanos: int>, exp_cost: int, children: list<int>>>, prereqs: list<int>, postreqs: list<int>, parent: int, start: record<seconds: int, nanos: int>, end: record<seconds: int, nanos: int>>
 	--id: int
@@ -26,11 +26,11 @@ def "save task" [
 	} | req SaveTask
 }
 
-def "delete task" [id: int]: nothing -> record {
+export def "delete task" [id: int]: nothing -> record {
 	{id: $id} | req DeleteTask
 }
 
-def "list scheduled tasks" [
+export def "list scheduled tasks" [
 	profile_id: int
 	timescale: int
 	start: record<seconds: int, nanos: int>
@@ -44,7 +44,7 @@ def "list scheduled tasks" [
 	} | req ListScheduledTasks | get entries
 }
 
-def "list possible relatives" [
+export def "list possible relatives" [
 	type: string # PARENT | CHILD | PREREQ | POSTREQ
 	task_id: int
 ]: nothing -> table<id: int, name: string> {
@@ -54,7 +54,7 @@ def "list possible relatives" [
 	} | req ListPossibleRelatives | get entries
 }
 
-def "progress update" [
+export def "progress update" [
 	target_task_id: int
 	start: record<seconds: int, nanos: int>
 	end: record<seconds: int, nanos: int>
