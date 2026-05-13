@@ -57,12 +57,19 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 		if err != nil {
 			return err
 		}
+		childrenEntries := make([]*api.Entry, len(children))
+		for i, child := range children {
+			childrenEntries[i] = &api.Entry{
+				Id:   child.ID,
+				Name: child.Name,
+			}
+		}
 
 		s.ChildrenCfgs[i] = &api.ChildrenConfigState{
 			Desc:     c.Desc,
 			Deadline: SQLTimeToProto(c.Deadline),
 			ExpCost:  SQLInt64ToProto(c.ExpCost),
-			Children: children,
+			Children: childrenEntries,
 		}
 	}
 
@@ -72,11 +79,28 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s *api.TaskState) error {
 	var err error
 
-	if s.Prereqs, err = txqry.ListPrereq(ctx, task); err != nil {
+	prereqs, err := txqry.ListPrereq(ctx, task)
+	if err != nil {
 		return err
 	}
-	if s.Postreqs, err = txqry.ListPostreq(ctx, task); err != nil {
+	s.Prereqs = make([]*api.Entry, len(prereqs))
+	for i, r := range prereqs {
+		s.Prereqs[i] = &api.Entry{
+			Id:   r.ID,
+			Name: r.Name,
+		}
+	}
+
+	postreqs, err := txqry.ListPostreq(ctx, task)
+	if err != nil {
 		return err
+	}
+	s.Postreqs = make([]*api.Entry, len(postreqs))
+	for i, r := range postreqs {
+		s.Postreqs[i] = &api.Entry{
+			Id:   r.ID,
+			Name: r.Name,
+		}
 	}
 
 	par, err := txqry.GetParent(ctx, task)
@@ -87,7 +111,10 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 		return err
 	}
 
-	s.Parent = &par.ID
+	s.Parent = &api.Entry{
+		Id:   par.ID,
+		Name: par.Name,
+	}
 	return nil
 }
 
@@ -174,7 +201,7 @@ func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 		for _, child := range cfg.Children {
 			if err := txqry.AddChildToConfig(ctx, db.AddChildToConfigParams{
 				Cfg:   id,
-				Child: child,
+				Child: child.Id,
 			}); err != nil {
 				return err
 			}
@@ -187,7 +214,7 @@ func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 func saveProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s *api.TaskState) error {
 	for _, req := range s.Prereqs {
 		if err := txqry.SetPrereq(ctx, db.SetPrereqParams{
-			Prereq:  req,
+			Prereq:  req.Id,
 			Postreq: task,
 		}); err != nil {
 			return err
@@ -197,7 +224,7 @@ func saveProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 	for _, req := range s.Postreqs {
 		if err := txqry.SetPrereq(ctx, db.SetPrereqParams{
 			Prereq:  task,
-			Postreq: req,
+			Postreq: req.Id,
 		}); err != nil {
 			return err
 		}
@@ -205,7 +232,7 @@ func saveProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 
 	if s.Parent != nil {
 		return txqry.SetChild(ctx, db.SetChildParams{
-			Parent: *s.Parent,
+			Parent: s.Parent.Id,
 			Child:  task,
 		})
 	}

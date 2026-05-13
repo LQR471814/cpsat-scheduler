@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 message Entry {
   int64 id = 1;
@@ -8,9 +9,9 @@ message Entry {
 }
 
 message DurState {
-  int64 pes = 1;
-  int64 exp = 2;
-  int64 opt = 3;
+  google.protobuf.Duration pes = 1;
+  google.protobuf.Duration exp = 2;
+  google.protobuf.Duration opt = 3;
 
   optional google.protobuf.Timestamp deadline = 4;
   // zero if null

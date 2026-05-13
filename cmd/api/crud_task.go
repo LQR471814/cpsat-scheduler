@@ -12,10 +12,10 @@ func (s server) ListProfiles(ctx context.Context, req *api.ListProfilesRequest) 
 		return
 	}
 	res = &api.ListProfilesResponse{
-		Entries: make([]*api.ProfileEntry, len(profiles)),
+		Entries: make([]*api.Entry, len(profiles)),
 	}
 	for i, p := range profiles {
-		res.Entries[i] = &api.ProfileEntry{
+		res.Entries[i] = &api.Entry{
 			Id:   p.ID,
 			Name: p.Name,
 		}

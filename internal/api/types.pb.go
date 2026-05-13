@@ -9,6 +9,7 @@ package api
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -128,9 +129,9 @@ func (x *Entry) GetName() string {
 
 type DurState struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	Pes      int64                  `protobuf:"varint,1,opt,name=pes,proto3" json:"pes,omitempty"`
-	Exp      int64                  `protobuf:"varint,2,opt,name=exp,proto3" json:"exp,omitempty"`
-	Opt      int64                  `protobuf:"varint,3,opt,name=opt,proto3" json:"opt,omitempty"`
+	Pes      *durationpb.Duration   `protobuf:"bytes,1,opt,name=pes,proto3" json:"pes,omitempty"`
+	Exp      *durationpb.Duration   `protobuf:"bytes,2,opt,name=exp,proto3" json:"exp,omitempty"`
+	Opt      *durationpb.Duration   `protobuf:"bytes,3,opt,name=opt,proto3" json:"opt,omitempty"`
 	Deadline *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=deadline,proto3,oneof" json:"deadline,omitempty"`
 	// zero if null
 	TotalCost     int64 `protobuf:"varint,5,opt,name=total_cost,json=totalCost,proto3" json:"total_cost,omitempty"`
@@ -168,25 +169,25 @@ func (*DurState) Descriptor() ([]byte, []int) {
 	return file_api_types_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *DurState) GetPes() int64 {
+func (x *DurState) GetPes() *durationpb.Duration {
 	if x != nil {
 		return x.Pes
 	}
-	return 0
+	return nil
 }
 
-func (x *DurState) GetExp() int64 {
+func (x *DurState) GetExp() *durationpb.Duration {
 	if x != nil {
 		return x.Exp
 	}
-	return 0
+	return nil
 }
 
-func (x *DurState) GetOpt() int64 {
+func (x *DurState) GetOpt() *durationpb.Duration {
 	if x != nil {
 		return x.Opt
 	}
-	return 0
+	return nil
 }
 
 func (x *DurState) GetDeadline() *timestamppb.Timestamp {
@@ -1055,14 +1056,14 @@ var File_api_types_proto protoreflect.FileDescriptor
 
 const file_api_types_proto_rawDesc = "" +
 	"\n" +
-	"\x0fapi/types.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"+\n" +
+	"\x0fapi/types.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"+\n" +
 	"\x05Entry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"\xa9\x01\n" +
-	"\bDurState\x12\x10\n" +
-	"\x03pes\x18\x01 \x01(\x03R\x03pes\x12\x10\n" +
-	"\x03exp\x18\x02 \x01(\x03R\x03exp\x12\x10\n" +
-	"\x03opt\x18\x03 \x01(\x03R\x03opt\x12;\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"\xfa\x01\n" +
+	"\bDurState\x12+\n" +
+	"\x03pes\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x03pes\x12+\n" +
+	"\x03exp\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x03exp\x12+\n" +
+	"\x03opt\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x03opt\x12;\n" +
 	"\bdeadline\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\bdeadline\x88\x01\x01\x12\x1d\n" +
 	"\n" +
 	"total_cost\x18\x05 \x01(\x03R\ttotalCostB\v\n" +
@@ -1179,48 +1180,52 @@ var file_api_types_proto_goTypes = []any{
 	(*ListPossibleRelativesResponse)(nil), // 16: ListPossibleRelativesResponse
 	(*ProgressUpdateRequest)(nil),         // 17: ProgressUpdateRequest
 	(*ProgressUpdateResponse)(nil),        // 18: ProgressUpdateResponse
-	(*timestamppb.Timestamp)(nil),         // 19: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),           // 19: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),         // 20: google.protobuf.Timestamp
 }
 var file_api_types_proto_depIdxs = []int32{
-	19, // 0: DurState.deadline:type_name -> google.protobuf.Timestamp
-	19, // 1: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
-	1,  // 2: ChildrenConfigState.children:type_name -> Entry
-	2,  // 3: TaskState.duration_cfg:type_name -> DurState
-	3,  // 4: TaskState.children_cfgs:type_name -> ChildrenConfigState
-	1,  // 5: TaskState.prereqs:type_name -> Entry
-	1,  // 6: TaskState.postreqs:type_name -> Entry
-	1,  // 7: TaskState.parent:type_name -> Entry
-	19, // 8: TaskState.start:type_name -> google.protobuf.Timestamp
-	19, // 9: TaskState.end:type_name -> google.protobuf.Timestamp
-	1,  // 10: ListProfilesResponse.entries:type_name -> Entry
-	4,  // 11: ReadTaskResponse.state:type_name -> TaskState
-	4,  // 12: SaveTaskRequest.state:type_name -> TaskState
-	19, // 13: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
-	19, // 14: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
-	1,  // 15: ListScheduledTasksResponse.entries:type_name -> Entry
-	0,  // 16: ListPossibleRelativesRequest.type:type_name -> ListPossibleRelativesRequest.RelativeType
-	1,  // 17: ListPossibleRelativesResponse.entries:type_name -> Entry
-	19, // 18: ProgressUpdateRequest.start:type_name -> google.protobuf.Timestamp
-	19, // 19: ProgressUpdateRequest.end:type_name -> google.protobuf.Timestamp
-	5,  // 20: API.ListProfiles:input_type -> ListProfilesRequest
-	7,  // 21: API.ReadTask:input_type -> ReadTaskRequest
-	9,  // 22: API.SaveTask:input_type -> SaveTaskRequest
-	11, // 23: API.DeleteTask:input_type -> DeleteTaskRequest
-	13, // 24: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
-	15, // 25: API.ListPossibleRelatives:input_type -> ListPossibleRelativesRequest
-	17, // 26: API.ProgressUpdate:input_type -> ProgressUpdateRequest
-	6,  // 27: API.ListProfiles:output_type -> ListProfilesResponse
-	8,  // 28: API.ReadTask:output_type -> ReadTaskResponse
-	10, // 29: API.SaveTask:output_type -> SaveTaskResponse
-	12, // 30: API.DeleteTask:output_type -> DeleteTaskResponse
-	14, // 31: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
-	16, // 32: API.ListPossibleRelatives:output_type -> ListPossibleRelativesResponse
-	18, // 33: API.ProgressUpdate:output_type -> ProgressUpdateResponse
-	27, // [27:34] is the sub-list for method output_type
-	20, // [20:27] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	19, // 0: DurState.pes:type_name -> google.protobuf.Duration
+	19, // 1: DurState.exp:type_name -> google.protobuf.Duration
+	19, // 2: DurState.opt:type_name -> google.protobuf.Duration
+	20, // 3: DurState.deadline:type_name -> google.protobuf.Timestamp
+	20, // 4: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
+	1,  // 5: ChildrenConfigState.children:type_name -> Entry
+	2,  // 6: TaskState.duration_cfg:type_name -> DurState
+	3,  // 7: TaskState.children_cfgs:type_name -> ChildrenConfigState
+	1,  // 8: TaskState.prereqs:type_name -> Entry
+	1,  // 9: TaskState.postreqs:type_name -> Entry
+	1,  // 10: TaskState.parent:type_name -> Entry
+	20, // 11: TaskState.start:type_name -> google.protobuf.Timestamp
+	20, // 12: TaskState.end:type_name -> google.protobuf.Timestamp
+	1,  // 13: ListProfilesResponse.entries:type_name -> Entry
+	4,  // 14: ReadTaskResponse.state:type_name -> TaskState
+	4,  // 15: SaveTaskRequest.state:type_name -> TaskState
+	20, // 16: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
+	20, // 17: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
+	1,  // 18: ListScheduledTasksResponse.entries:type_name -> Entry
+	0,  // 19: ListPossibleRelativesRequest.type:type_name -> ListPossibleRelativesRequest.RelativeType
+	1,  // 20: ListPossibleRelativesResponse.entries:type_name -> Entry
+	20, // 21: ProgressUpdateRequest.start:type_name -> google.protobuf.Timestamp
+	20, // 22: ProgressUpdateRequest.end:type_name -> google.protobuf.Timestamp
+	5,  // 23: API.ListProfiles:input_type -> ListProfilesRequest
+	7,  // 24: API.ReadTask:input_type -> ReadTaskRequest
+	9,  // 25: API.SaveTask:input_type -> SaveTaskRequest
+	11, // 26: API.DeleteTask:input_type -> DeleteTaskRequest
+	13, // 27: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
+	15, // 28: API.ListPossibleRelatives:input_type -> ListPossibleRelativesRequest
+	17, // 29: API.ProgressUpdate:input_type -> ProgressUpdateRequest
+	6,  // 30: API.ListProfiles:output_type -> ListProfilesResponse
+	8,  // 31: API.ReadTask:output_type -> ReadTaskResponse
+	10, // 32: API.SaveTask:output_type -> SaveTaskResponse
+	12, // 33: API.DeleteTask:output_type -> DeleteTaskResponse
+	14, // 34: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
+	16, // 35: API.ListPossibleRelatives:output_type -> ListPossibleRelativesResponse
+	18, // 36: API.ProgressUpdate:output_type -> ProgressUpdateResponse
+	30, // [30:37] is the sub-list for method output_type
+	23, // [23:30] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_api_types_proto_init() }

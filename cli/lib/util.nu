@@ -1,76 +1,137 @@
 # choose table allows one to choose a row from a table via fuzzy search
 export def "choose table" [--header: string]: table<id: int, name: string> -> oneof<record<id: int, name: string>, nothing> {
-	let width = ($in | length | math log 10 | math floor) + 1
-	let choices: list<string> = $in | each {|x|
-		let id_display = $x.id | fill --alignment left --width $width
-		let name_display = $x.name
-		$"($id_display) - ($name_display)"
-	}
-	let answer = $choices | str join "\n" | gum filter --header ($header | default "") # nu-lint-ignore: check_typed_flag_before_use
-	if ($answer | is-empty) {
-		return null
-	}
-	$answer
-		| parse --regex `(?<id>\d+) +- (?<name>.+)`
-		| update id { into int }
-		| first
+    let width = ($in | length | math log 10 | math floor) + 1
+    let choices: list<string> = $in | each {|x|
+        let id_display = $x.id | fill --alignment left --width $width
+        let name_display = $x.name
+        $"($id_display) - ($name_display)"
+    }
+    let answer = $choices | str join "\n" | gum filter --header $header | default ""
+    if ($answer | is-empty) { # nu-lint-ignore: check_typed_flag_before_use
+        return null
+    }
+    $answer | parse --regex `(?<id>\d+) +- (?<name>.+)` | update id { into int } | first
 }
 
-# print title prints a title to STDOUT
-export def "print title" [text: string]: nothing -> nothing {
-	gum style --foreground 212 $text --bold
-}
+
+# print label prints a label to STDOUT
+export def "print label" [text: string]: nothing -> nothing { gum style --foreground 212 $text --bold }
+
+
+# print section title prints a section title
+export def "print section title" [text: string]: nothing -> nothing { gum style --align center --width 30 --border hidden normal $text }
+
+
+# print date prints a date value (without time)
+export def "print date" [date: datetime]: nothing -> nothing { gum style --foreground 121 ($date | format date %Y-%m-%d) }
+
+
+# print duration prints a duration value
+export def "print duration" [dur: duration]: nothing -> nothing { gum style --foreground 138 ($dur | into string) }
+
 
 # choose date allows the user to choose a date, returns null if aborted
 export def "choose date" []: nothing -> oneof<datetime, nothing> {
-	let result = datepicker -y -f %Y-%m-%d -d
-		| complete
-		| $in.stdout
-	if ($result | is-empty) {
-		return null
-	}
-	$result | into datetime
+    let result = datepicker -y -f %Y-%m-%d -d | complete | $in.stdout
+    if ($result | is-empty) {
+        return null
+    }
+    $result | into datetime
 }
+
 
 # input text provides a nice single-line text input, returns null if aborted
 export def "input text" [placeholder: string]: nothing -> oneof<string, nothing> {
-	let result = gum input --placeholder $placeholder --prompt ""
-	if $result == "not submitted" {
-		return null
-	}
-	$result
+    let result = gum input --placeholder $placeholder --prompt ""
+    if $result == "not submitted" {
+        return null
+    }
+    $result
 }
+
 
 # input multiline provides a nice multi-line text input with ability
 # to use editor to input, returns null if aborted
 export def "input multiline" [placeholder: string]: nothing -> oneof<string, nothing> {
-	let result = gum write --placeholder $placeholder --prompt ""
-	if $result == "not submitted" {
-		return null
-	}
-	$result
+    let result = gum write --placeholder $placeholder --prompt ""
+    if $result == "not submitted" {
+        return null
+    }
+    $result
 }
+
 
 # input int provides a single integer input, does validation, returns
 # null if aborted
 export def "input int" [placeholder: string]: nothing -> oneof<int, nothing> {
-	let result = input text $placeholder
-	if not $result {
-		return null
-	}
-	$result | into int
+    let result = input text $placeholder
+    if not $result {
+        return null
+    }
+    $result | into int
 }
+
 
 # exec form executes a form script with the given env vars, it
 # automatically handles output capture and response parsing
-export def "exec form" [script: path, vars: record]: nothing -> any { # nu-lint-ignore: missing_output_type
-	do { # nu-lint-ignore: try_instead_of_do
-		let id = random chars --length 8
-		$vars | load-env
-		$env.p_out = $"/tmp/cpsat-cli.form-state.($id)"
-		nu -e (open $script) # nu-lint-ignore: catch_builtin_error_try
-		let res = open $env.p_out | from msgpack # nu-lint-ignore: catch_builtin_error_try
-		try { rm $env.p_out }
-		$res
-	}
+export def "exec form" [script: path, params: any]: nothing -> any { # nu-lint-ignore: missing_output_type, add_type_hints_arguments
+    do { # nu-lint-ignore: try_instead_of_do
+        let id = random chars --length 8
+        load-env {
+			p_in: $"/tmp/cpsat-cli.form-state.in.($id)"
+			p_out: $"/tmp/cpsat-cli.form-state.out.($id)"
+		}
+        $params | to msgpack | save $env.p_in # nu-lint-ignore: catch_builtin_error_try
+        let res = nu -e open $script
+        open $env.p_out | from msgpack # nu-lint-ignore: catch_builtin_error_try
+        try {
+            rm $env.p_in
+            rm $env.p_out
+        }
+        $res
+    }
 }
+
+
+# get form params gets the input parameters of a form
+export def "get form params" []: nothing -> any { # nu-lint-ignore: missing_output_type
+    open $env.p_in | from msgpack # nu-lint-ignore: catch_builtin_error_try
+}
+
+
+# save form output saves the output of a form into the output file
+export def "save form output" []: any -> nothing {
+    to msgpack | save $env.p_out # nu-lint-ignore: catch_builtin_error_try
+}
+
+
+let epoch: datetime = 0 | into datetime
+
+
+# from proto time converts a protobuf timestamp into a nushell datetime
+export def "from proto time" []: record<seconds: int, nanos: int> -> datetime {
+    $epoch + $in.seconds * 1sec + $in.nanos * 1ns
+}
+
+
+# to proto time converts a nushell datetime into a protobuf timestamp
+export def "to proto time" []: datetime -> record<seconds: int, nanos: int> {
+    let dur: duration = $in - $epoch
+    {
+        seconds: ($dur // 1sec) # nu-lint-ignore: division_to_format_duration
+        nanos: ($dur mod 1sec | into int)
+    }
+}
+
+
+# from proto dur converts a protobuf timestamp into a nushell datetime
+export def "from proto dur" []: record<seconds: int, nanos: int> -> duration {
+    $in.seconds * 1sec + $in.nanos * 1ns
+}
+
+
+# to proto dur converts a nushell datetime into a protobuf timestamp
+export def "to proto dur" []: duration -> record<seconds: int, nanos: int> { {
+    seconds: ($in // 1sec)  # nu-lint-ignore: division_to_format_duration
+    nanos: ($in mod 1sec | into int)
+} }

@@ -21,10 +21,10 @@ func (s server) ListScheduledTasks(ctx context.Context, in *api.ListScheduledTas
 		Profile: in.ProfileId,
 	})
 	res = &api.ListScheduledTasksResponse{
-		Entries: make([]*api.TaskEntry, len(scheduled)),
+		Entries: make([]*api.Entry, len(scheduled)),
 	}
 	for i, s := range scheduled {
-		res.Entries[i] = &api.TaskEntry{
+		res.Entries[i] = &api.Entry{
 			Id:   s.Task,
 			Name: s.Name,
 		}
@@ -101,14 +101,14 @@ where cc.child = t.id
 	}
 	defer rows.Close()
 
-	var items []*api.TaskEntry
+	var items []*api.Entry
 	for rows.Next() {
 		var task db.Task
 		err = rows.Scan(&task)
 		if err != nil {
 			return
 		}
-		items = append(items, &api.TaskEntry{
+		items = append(items, &api.Entry{
 			Id:   task.ID,
 			Name: task.Name,
 		})

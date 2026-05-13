@@ -238,22 +238,30 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 }
 
 const listChildrenConfigChildren = `-- name: ListChildrenConfigChildren :many
-select child from children_config_child where cfg = ?
+select cc.child as id, t.name from children_config_child cc
+inner join task t
+	on cc.child = t.id
+where cfg = ?
 `
 
-func (q *Queries) ListChildrenConfigChildren(ctx context.Context, cfg int64) ([]int64, error) {
+type ListChildrenConfigChildrenRow struct {
+	ID   int64
+	Name string
+}
+
+func (q *Queries) ListChildrenConfigChildren(ctx context.Context, cfg int64) ([]ListChildrenConfigChildrenRow, error) {
 	rows, err := q.db.QueryContext(ctx, listChildrenConfigChildren, cfg)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	var items []ListChildrenConfigChildrenRow
 	for rows.Next() {
-		var child int64
-		if err := rows.Scan(&child); err != nil {
+		var i ListChildrenConfigChildrenRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, child)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -299,22 +307,30 @@ func (q *Queries) ListChildrenConfigs(ctx context.Context, task int64) ([]Childr
 }
 
 const listPostreq = `-- name: ListPostreq :many
-select postreq from prereq where prereq = ?
+select p.postreq as id, t.name from prereq p
+inner join task t
+	on t.id = p.postreq
+where prereq = ?
 `
 
-func (q *Queries) ListPostreq(ctx context.Context, prereq int64) ([]int64, error) {
+type ListPostreqRow struct {
+	ID   int64
+	Name string
+}
+
+func (q *Queries) ListPostreq(ctx context.Context, prereq int64) ([]ListPostreqRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPostreq, prereq)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	var items []ListPostreqRow
 	for rows.Next() {
-		var postreq int64
-		if err := rows.Scan(&postreq); err != nil {
+		var i ListPostreqRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, postreq)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -326,22 +342,30 @@ func (q *Queries) ListPostreq(ctx context.Context, prereq int64) ([]int64, error
 }
 
 const listPrereq = `-- name: ListPrereq :many
-select prereq from prereq where postreq = ?
+select p.prereq as id, t.name from prereq p
+inner join task t
+	on t.id = p.prereq
+where postreq = ?
 `
 
-func (q *Queries) ListPrereq(ctx context.Context, postreq int64) ([]int64, error) {
+type ListPrereqRow struct {
+	ID   int64
+	Name string
+}
+
+func (q *Queries) ListPrereq(ctx context.Context, postreq int64) ([]ListPrereqRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPrereq, postreq)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	var items []ListPrereqRow
 	for rows.Next() {
-		var prereq int64
-		if err := rows.Scan(&prereq); err != nil {
+		var i ListPrereqRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, prereq)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

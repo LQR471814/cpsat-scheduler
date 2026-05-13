@@ -43,10 +43,16 @@ delete from dur_config where task = ?;
 
 
 -- name: ListPrereq :many
-select prereq from prereq where postreq = ?;
+select p.prereq as id, t.name from prereq p
+inner join task t
+	on t.id = p.prereq
+where postreq = ?;
 
 -- name: ListPostreq :many
-select postreq from prereq where prereq = ?;
+select p.postreq as id, t.name from prereq p
+inner join task t
+	on t.id = p.postreq
+where prereq = ?;
 
 -- name: SetPrereq :exec
 insert into prereq (prereq, postreq)
@@ -65,7 +71,10 @@ returning id;
 delete from children_config where task = ?;
 
 -- name: ListChildrenConfigChildren :many
-select child from children_config_child where cfg = ?;
+select cc.child as id, t.name from children_config_child cc
+inner join task t
+	on cc.child = t.id
+where cfg = ?;
 
 -- name: AddChildToConfig :exec
 insert into children_config_child (cfg, child)
