@@ -673,6 +673,7 @@ func (x *SaveTaskRequest) GetState() *TaskState {
 
 type SaveTaskResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -705,6 +706,13 @@ func (x *SaveTaskResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SaveTaskResponse.ProtoReflect.Descriptor instead.
 func (*SaveTaskResponse) Descriptor() ([]byte, []int) {
 	return file_api_types_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SaveTaskResponse) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
 }
 
 // DeleteTask
@@ -1150,8 +1158,9 @@ const file_api_types_proto_rawDesc = "" +
 	"profile_id\x18\x02 \x01(\x03R\tprofileId\x12 \n" +
 	"\x05state\x18\x03 \x01(\v2\n" +
 	".TaskStateR\x05stateB\x05\n" +
-	"\x03_id\"\x12\n" +
-	"\x10SaveTaskResponse\"#\n" +
+	"\x03_id\"\"\n" +
+	"\x10SaveTaskResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"#\n" +
 	"\x11DeleteTaskRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x14\n" +
 	"\x12DeleteTaskResponse\"\xb8\x01\n" +

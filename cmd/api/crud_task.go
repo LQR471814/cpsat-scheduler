@@ -45,7 +45,12 @@ func (s server) SaveTask(ctx context.Context, in *api.SaveTaskRequest) (res *api
 	}
 	defer tx.Rollback()
 	txqry := s.db.WithTx(tx)
-	_, err = state.SaveProtoTaskState(ctx, txqry, in.Id, in.ProfileId, in.State)
+	var id int64
+	id, err = state.SaveProtoTaskState(ctx, txqry, in.Id, in.ProfileId, in.State)
+	if err != nil {
+		return
+	}
+	res = &api.SaveTaskResponse{Id: id}
 	return
 }
 
@@ -57,5 +62,9 @@ func (s server) DeleteTask(ctx context.Context, in *api.DeleteTaskRequest) (res 
 	defer tx.Rollback()
 	txqry := s.db.WithTx(tx)
 	err = txqry.DeleteChildrenConfigs(ctx, in.Id)
+	if err != nil {
+		return
+	}
+	res = &api.DeleteTaskResponse{}
 	return
 }
