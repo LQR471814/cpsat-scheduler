@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-message ProfileEntry {
+message Entry {
   int64 id = 1;
   string name = 2;
 }
@@ -22,7 +22,7 @@ message ChildrenConfigState {
   optional google.protobuf.Timestamp deadline = 2;
   // zero if null
   int64 exp_cost = 3;
-  repeated int64 children = 4;
+  repeated Entry children = 4;
 }
 
 message TaskState {
@@ -33,23 +33,18 @@ message TaskState {
   optional DurState duration_cfg = 4;
   repeated ChildrenConfigState children_cfgs = 5;
 
-  repeated int64 prereqs = 6;
-  repeated int64 postreqs = 7;
-  optional int64 parent = 8;
+  repeated Entry prereqs = 6;
+  repeated Entry postreqs = 7;
+  optional Entry parent = 8;
 
   optional google.protobuf.Timestamp start = 9;
   optional google.protobuf.Timestamp end = 10;
 }
 
-message TaskEntry {
-  int64 id = 1;
-  string name = 2;
-}
-
 // ListProfiles
 message ListProfilesRequest {}
 message ListProfilesResponse {
-  repeated ProfileEntry entries = 1;
+  repeated Entry entries = 1;
 }
 
 // ReadTask
@@ -84,7 +79,7 @@ message ListScheduledTasksRequest {
   google.protobuf.Timestamp end = 4;
 }
 message ListScheduledTasksResponse {
-  repeated TaskEntry entries = 1;
+  repeated Entry entries = 1;
 }
 
 // ListPossibleRelatives
@@ -99,7 +94,7 @@ message ListPossibleRelativesRequest {
   int64 task_id = 2;
 }
 message ListPossibleRelativesResponse {
-  repeated TaskEntry entries = 1;
+  repeated Entry entries = 1;
 }
 
 // ProgressUpdate
