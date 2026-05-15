@@ -1,17 +1,17 @@
 use ../lib.nu # nu-lint-ignore: dont_mix_different_effects
 
 let parent_type = lib type entry record
-let ts_type = lib type timestamp
+let ts_type = lib type proto timestamp
 let req_type = lib type entry table
 
 let state_type = {
 	type: record
 	fields: [[key, value];
-		[id ({type: int} | lib type optional)]
-		[parent ($parent_type | lib type optional)]
-		[start ($ts_type | lib type optional)]
-		[end ($ts_type | lib type optional)]
-		[prereqs $req_type]
+		[id       ({type: int} | lib type optional)]
+		[parent   ($parent_type | lib type optional)]
+		[start    ($ts_type | lib type optional)]
+		[end      ($ts_type | lib type optional)]
+		[prereqs  $req_type]
 		[postreqs $req_type]
 	]
 }
@@ -83,7 +83,9 @@ let form = {
 			}
 			list: {
 				closure_bodies: {
-					add: "state list possible relatives PREREQ $p.id | util choose table --header 'Add a task as a prerequisite:'"
+					add: "let chosen = state list possible relatives PREREQ $p.id | util choose table --header 'Add a task as a prerequisite:'
+if $chosen == null { return }
+$env.state.prereqs ++= $chosen"
 				}
 			}
 		}
@@ -97,7 +99,9 @@ let form = {
 			}
 			list: {
 				closure_bodies: {
-					add: "state list possible relatives POSTREQ $p.id | util choose table --header 'Add a task as a postrequisite:'"
+					add: "let chosen = state list possible relatives POSTREQ $p.id | util choose table --header 'Add a task as a postrequisite:'
+if $chosen == null { return }
+$env.state.postreqs ++= $chosen"
 				}
 			}
 		}

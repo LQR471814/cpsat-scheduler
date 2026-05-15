@@ -5,7 +5,7 @@ export def "type optional" []: any -> any {
 	}
 }
 
-export def "type timestamp" []: nothing -> any {
+export def "type proto timestamp" []: nothing -> any {
 	{
 		type: record
 		fields: [[key value];

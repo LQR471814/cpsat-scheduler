@@ -90,7 +90,9 @@ def "display prereqs" []: table<id: int, name: string> -> string {
 }
 
 def "add prereqs" []: nothing -> nothing {
-    state list possible relatives PREREQ $p.id | util choose table --header 'Add a task as a prerequisite:'
+    let chosen = state list possible relatives PREREQ $p.id | util choose table --header 'Add a task as a prerequisite:'
+    if $chosen == null { return }                                                                                       
+    $env.state.prereqs ++= $chosen                                                                                      
 }
 
 def "add prereqs value" [value: table<id: int, name: string>]: nothing -> nothing {
@@ -118,7 +120,9 @@ def "display postreqs" []: table<id: int, name: string> -> string {
 }
 
 def "add postreqs" []: nothing -> nothing {
-    state list possible relatives POSTREQ $p.id | util choose table --header 'Add a task as a postrequisite:'
+    let chosen = state list possible relatives POSTREQ $p.id | util choose table --header 'Add a task as a postrequisite:'
+    if $chosen == null { return }                                                                                         
+    $env.state.postreqs ++= $chosen                                                                                       
 }
 
 def "add postreqs value" [value: table<id: int, name: string>]: nothing -> nothing {
