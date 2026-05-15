@@ -11,6 +11,16 @@ $env.state = $p.state | params post process
 
 
 
+def "params post process" []: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> -> any {
+    update start { util from proto time }    
+        | update end { util from proto time }
+}
+
+def "returns post process" []: any -> record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+    update start { util to proto time }    
+        | update end { util to proto time }
+}
+
 def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(optional-fields\)"
 }
@@ -172,8 +182,8 @@ def submit []: nothing -> nothing {
 }
 
 def cancel []: nothing -> nothing {
-    null | returns post process | util save form output
-    exit # nu-lint-ignore: exit_only_in_main           
+    null | util save form output            
+    exit # nu-lint-ignore: exit_only_in_main
 }
 
 def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {

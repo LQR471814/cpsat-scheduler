@@ -9,17 +9,20 @@ import (
 )
 
 const (
-	cmd_prompt_prefix = "prompt prefix"
-	cmd_next          = "next"
-	cmd_submit        = "submit"
-	cmd_cancel        = "cancel"
-	cmd_help          = "help"
+	cmd_prompt_prefix       = "prompt prefix"
+	cmd_next                = "next"
+	cmd_submit              = "submit"
+	cmd_cancel              = "cancel"
+	cmd_help                = "help"
+	cmd_params_postprocess  = "params post process"
+	cmd_returns_postprocess = "returns post process"
 )
 
 var (
 	nullType   = TypeDef{Type: "nothing"}
 	boolType   = TypeDef{Type: "bool"}
 	stringType = TypeDef{Type: "string"}
+	anyType    = TypeDef{Type: "any"}
 )
 
 var indentStyle = lipgloss.NewStyle().MarginLeft(4)
@@ -313,9 +316,9 @@ $env.PROMPT_COMMAND = {|| $"(%s) ($in | do $cmd)" }
 
 $env.state = $p.state`, cmd_prompt_prefix)
 	if f.Closures.ParamPostProcess != nil {
-		fmt.Fprint(w, ` | params post process
+		fmt.Fprintf(w, ` | %s
 
-`)
+`, cmd_params_postprocess)
 	}
 
 }
@@ -402,7 +405,7 @@ func (f Form) submitFn() Closure {
 	fmt.Fprintf(&body, `next
 $env.state`)
 	if f.Closures.ReturnsPostProcess != nil {
-		fmt.Fprint(&body, " | returns post process")
+		fmt.Fprintf(&body, " | %s", cmd_returns_postprocess)
 	}
 	fmt.Fprint(&body, ` | util save form output
 exit # nu-lint-ignore: exit_only_in_main`)
@@ -418,9 +421,6 @@ exit # nu-lint-ignore: exit_only_in_main`)
 func (f Form) cancelFn() Closure {
 	var body strings.Builder
 	fmt.Fprint(&body, `null`)
-	if f.Closures.ReturnsPostProcess != nil {
-		fmt.Fprint(&body, " | returns post process")
-	}
 	fmt.Fprint(&body, ` | util save form output
 exit # nu-lint-ignore: exit_only_in_main`)
 	return Closure{
@@ -429,6 +429,26 @@ exit # nu-lint-ignore: exit_only_in_main`)
 		Body:   Block(body.String()),
 		In:     nullType,
 		Out:    nullType,
+	}
+}
+
+func (f Form) paramsPostProcessFn() Closure {
+	return Closure{
+		Name:   cmd_params_postprocess,
+		Params: nil,
+		In:     f.Params,
+		Out:    anyType,
+		Body:   *f.Closures.ParamPostProcess,
+	}
+}
+
+func (f Form) returnsPostProcessFn() Closure {
+	return Closure{
+		Name:   cmd_returns_postprocess,
+		Params: nil,
+		In:     anyType,
+		Out:    f.Returns,
+		Body:   *f.Closures.ReturnsPostProcess,
 	}
 }
 
@@ -475,6 +495,14 @@ func (f Form) Render(w io.Writer) {
 
 	if f.Frontmatter != nil {
 		fmt.Fprint(w, *f.Frontmatter)
+		renderMargin(w)
+	}
+	if f.Closures.ParamPostProcess != nil {
+		f.paramsPostProcessFn().Render(w)
+		renderMargin(w)
+	}
+	if f.Closures.ReturnsPostProcess != nil {
+		f.returnsPostProcessFn().Render(w)
 		renderMargin(w)
 	}
 
