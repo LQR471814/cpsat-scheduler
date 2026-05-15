@@ -3,9 +3,9 @@ use ../lib.nu
 const script_path = path self | path dirname # nu-lint-ignore: dont_mix_different_effects
 
 let state = [[key, value];
-	[id {type: oneof, generic_unnamed: [{type: int} {type: "nothing"}]}]
-	[name {type: oneof, generic_unnamed: [{type: string} {type: "nothing"}]}]
-	[desc {type: oneof, generic_unnamed: [{type: string} {type: "nothing"}]}]
+	[id        {type: oneof, generic_unnamed: [{type: int} {type: "nothing"}]}]
+	[name      {type: oneof, generic_unnamed: [{type: string} {type: "nothing"}]}]
+	[desc      {type: oneof, generic_unnamed: [{type: string} {type: "nothing"}]}]
 	[timescale {type: oneof, generic_unnamed: [{type: int} {type: "nothing"}]}]
 ]
 
@@ -66,7 +66,7 @@ let form = {
 			}
 		}
 		{
-			name: timescale
+			name: unit
 			display_name: "Timescale unit"
 			type: {type: int}
 			closure_bodies: {

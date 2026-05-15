@@ -68,23 +68,23 @@ def "get desc" []: nothing -> string {
     $env.state.desc
 }
 
-def "validate timescale" []: int -> bool {
+def "validate unit" []: int -> bool {
     $env.state.timescale | is-not-empty
 }
 
-def timescale []: nothing -> nothing {
+def unit []: nothing -> nothing {
     $env.state.timescale = $timescales | util choose table --header 'Timescale unit:' | get id?
 }
 
-def "set timescale" [value: int]: nothing -> nothing {
+def "set unit" [value: int]: nothing -> nothing {
     $env.state.timescale = $value
 }
 
-def "unset timescale" []: nothing -> nothing {
+def "unset unit" []: nothing -> nothing {
     $env.state.timescale = null
 }
 
-def "get timescale" []: nothing -> int {
+def "get unit" []: nothing -> int {
     $env.state.timescale
 }
 
@@ -102,23 +102,23 @@ def status []: nothing -> nothing {
 }
 
 def next []: nothing -> bool {
-    # nu-lint-ignore: print_and_return_data                                
-    if not ($env.state.name | validate name) {                             
-        name                                                               
-        if not ($env.state.name | validate name) { return false }          
-        return (next)                                                      
-    }                                                                      
-    if not ($env.state.desc | validate desc) {                             
-        desc                                                               
-        if not ($env.state.desc | validate desc) { return false }          
-        return (next)                                                      
-    }                                                                      
-    if not ($env.state.timescale | validate timescale) {                   
-        timescale                                                          
-        if not ($env.state.timescale | validate timescale) { return false }
-        return (next)                                                      
-    }                                                                      
-    true                                                                   
+    # nu-lint-ignore: print_and_return_data                           
+    if not ($env.state.name | validate name) {                        
+        name                                                          
+        if not ($env.state.name | validate name) { return false }     
+        return (next)                                                 
+    }                                                                 
+    if not ($env.state.desc | validate desc) {                        
+        desc                                                          
+        if not ($env.state.desc | validate desc) { return false }     
+        return (next)                                                 
+    }                                                                 
+    if not ($env.state.timescale | validate unit) {                   
+        unit                                                          
+        if not ($env.state.timescale | validate unit) { return false }
+        return (next)                                                 
+    }                                                                 
+    true                                                              
 }
 
 def submit []: nothing -> nothing {
