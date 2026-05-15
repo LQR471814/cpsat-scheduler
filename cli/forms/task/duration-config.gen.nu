@@ -37,6 +37,14 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(duration-config\)"
 }
 
+def "get pert" []: nothing -> list<int> {
+    $env.state.cfg.pert
+}
+
+def "set pert" []: oneof<list<int>, nothing> -> nothing {
+    $env.state.cfg.pert = $in
+}
+
 def "validate pert" []: list<int> -> bool {
     $env.state.cfg.pert.opt != null and $env.state.cfg.pert.exp != null and $env.state.cfg.pert.pes != null
 }
@@ -46,27 +54,31 @@ def "set pert" [opt: int, exp: int, pes: int]: nothing -> nothing {
 }
 
 def "unset pert" []: nothing -> nothing {
-    $env.state.cfg.pert = null
+    null | set pert
 }
 
-def "get pert" []: nothing -> list<int> {
-    $env.state.cfg.pert
+def "get deadline" []: nothing -> oneof<datetime, nothing> {
+    $env.state.cfg.deadline
+}
+
+def "set deadline" []: oneof<oneof<datetime, nothing>, nothing> -> nothing {
+    
 }
 
 def deadline []: nothing -> nothing {
     util choose date
 }
 
-def "set deadline" [value: oneof<datetime, nothing>]: nothing -> nothing {
-    $env.state.cfg.deadline = $value
-}
-
 def "unset deadline" []: nothing -> nothing {
-    $env.state.cfg.deadline = null
+    null | set deadline
 }
 
-def "get deadline" []: nothing -> oneof<datetime, nothing> {
-    $env.state.cfg.deadline
+def "get cost" []: nothing -> int {
+    $env.state.cfg.total_cost
+}
+
+def "set cost" []: oneof<int, nothing> -> nothing {
+    
 }
 
 def "validate cost" []: int -> bool {
@@ -77,27 +89,19 @@ def cost []: nothing -> nothing {
     util input int
 }
 
-def "set cost" [value: int]: nothing -> nothing {
-    $env.state.cfg.total_cost = $value
-}
-
 def "unset cost" []: nothing -> nothing {
-    $env.state.cfg.total_cost = null
-}
-
-def "get cost" []: nothing -> int {
-    $env.state.cfg.total_cost
+    null | set cost
 }
 
 def status []: nothing -> nothing {
     util print label 'PERT (time estimates)'                      
-    print $env.state.cfg.pert                                     
+    print ($env.state.cfg.pert)                                   
     print ""                                                      
     util print label 'Deadline'                                   
-    print $env.state.cfg.deadline                                 
+    print ($env.state.cfg.deadline)                               
     print ""                                                      
     util print label 'Expected cost under minimum time investment'
-    print $env.state.cfg.total_cost                               
+    print ($env.state.cfg.total_cost)                             
     print ""                                                      
                                                                   
 }

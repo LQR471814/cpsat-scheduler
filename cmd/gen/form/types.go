@@ -33,7 +33,12 @@ type FormClosures struct {
 }
 
 type FieldClosureBodies struct {
-	KeyAccess Expr `json:"key_access"`
+	// Getter is the body of a []: nothing -> field_type, it should retrieve
+	// the current value of the field
+	Getter Expr `json:"getter"`
+	// Setter is the body of a []: field_type -> nothing, it should mutate the
+	// value of the field to the input value of the closure
+	Setter Expr `json:"setter"`
 	// Validate is body of []: field_type -> oneof<string, nothing>
 	Validate *Block `json:"validate"`
 	// DisplayValue is body of []: field_type -> string
@@ -42,8 +47,14 @@ type FieldClosureBodies struct {
 
 type FieldAtomicClosuresBodies struct {
 	// Set is body of []: nothing -> nothing
-	Set       *Block   `json:"set"`
+	Set *Block `json:"set"`
+	// SetStatic provides a non-interactive command that is more user-friendly
+	// than directly using the setter, if not specified no command will be
+	// generated
 	SetStatic *Closure `json:"set_static"`
+	// GetStatic provides a non-interactive command that provides more
+	// user-friendly output than directly results from the getter, if not
+	// specified, no function will be generated
 	GetStatic *Closure `json:"get_static"`
 }
 
@@ -55,10 +66,8 @@ type FieldListClosuresBodies struct {
 	// Add is body of []: nothing -> nothing
 	Add       *Block   `json:"add"`
 	AddStatic *Closure `json:"add_static"`
-	// Remove is body of []: nothing -> nothing
-	Remove *Block `json:"remove"`
-	// List is body of []: nothing -> any
-	List *Block `json:"list"`
+	Remove    *Closure `json:"remove"`
+	List      *Closure `json:"list"`
 }
 
 type FieldList struct {

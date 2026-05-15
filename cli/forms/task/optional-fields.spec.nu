@@ -33,7 +33,8 @@ let form = {
 			display_name: Parent
 			type: $parent_type
 			closure_bodies: {
-				key_access: "$env.state.parent"
+				getter: "$env.state.parent"
+				setter: "$env.state.parent = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -49,7 +50,8 @@ let form = {
 				validate: "if $env.state.start != null and $env.state.end != null {
 	$env.state.start < $env.state.end
 } else { true }"
-				key_access: "$env.state.start"
+				getter: "$env.state.start"
+				setter: "$env.state.start = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -65,7 +67,8 @@ let form = {
 				validate: "if $env.state.start != null and $env.state.end != null {
 	$env.state.start < $env.state.end
 } else { true }"
-				key_access: "$env.state.end"
+				getter: "$env.state.end"
+				setter: "$env.state.end = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -79,7 +82,8 @@ let form = {
 			type: $req_type
 			closure_bodies: {
 				display_value: "$in.name"
-				key_access: "$env.state.prereqs"
+				getter: "$env.state.prereqs"
+				setter: "$env.state.prereqs = $in"
 			}
 			list: {
 				closure_bodies: {
@@ -95,7 +99,8 @@ $env.state.prereqs ++= $chosen"
 			type: $req_type
 			closure_bodies: {
 				display_value: "$in.name"
-				key_access: "$env.state.postreqs"
+				getter: "$env.state.postreqs"
+				setter: "$env.state.postreqs = $in"
 			}
 			list: {
 				closure_bodies: {

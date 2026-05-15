@@ -25,20 +25,28 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(optional-fields\)"
 }
 
+def "get parent" []: nothing -> record<id: int, name: string> {
+    $env.state.parent
+}
+
+def "set parent" []: oneof<record<id: int, name: string>, nothing> -> nothing {
+    $env.state.parent = $in
+}
+
 def parent []: nothing -> nothing {
     $env.state.parent = state list possible relatives PARENT $p.id | util choose table --header 'Choose parent'
 }
 
-def "set parent" [value: record<id: int, name: string>]: nothing -> nothing {
-    $env.state.parent = $value
-}
-
 def "unset parent" []: nothing -> nothing {
-    $env.state.parent = null
+    null | set parent
 }
 
-def "get parent" []: nothing -> record<id: int, name: string> {
-    $env.state.parent
+def "get start" []: nothing -> record<seconds: int, nanos: int> {
+    $env.state.start
+}
+
+def "set start" []: oneof<record<seconds: int, nanos: int>, nothing> -> nothing {
+    $env.state.start = $in
 }
 
 def "validate start" []: record<seconds: int, nanos: int> -> bool {
@@ -51,16 +59,16 @@ def start []: nothing -> nothing {
     $env.state.start = util choose date
 }
 
-def "set start" [value: record<seconds: int, nanos: int>]: nothing -> nothing {
-    $env.state.start = $value
-}
-
 def "unset start" []: nothing -> nothing {
-    $env.state.start = null
+    null | set start
 }
 
-def "get start" []: nothing -> record<seconds: int, nanos: int> {
-    $env.state.start
+def "get end" []: nothing -> record<seconds: int, nanos: int> {
+    $env.state.end
+}
+
+def "set end" []: oneof<record<seconds: int, nanos: int>, nothing> -> nothing {
+    $env.state.end = $in
 }
 
 def "validate end" []: record<seconds: int, nanos: int> -> bool {
@@ -73,20 +81,32 @@ def end []: nothing -> nothing {
     $env.state.end = util choose date
 }
 
-def "set end" [value: record<seconds: int, nanos: int>]: nothing -> nothing {
-    $env.state.end = $value
-}
-
 def "unset end" []: nothing -> nothing {
-    $env.state.end = null
+    null | set end
 }
 
-def "get end" []: nothing -> record<seconds: int, nanos: int> {
-    $env.state.end
+def "get prereqs" []: nothing -> table<id: int, name: string> {
+    $env.state.prereqs
+}
+
+def "set prereqs" []: oneof<table<id: int, name: string>, nothing> -> nothing {
+    $env.state.prereqs = $in
 }
 
 def "display prereqs" []: table<id: int, name: string> -> string {
     $in.name
+}
+
+def "remove prereqs" []: nothing -> nothing {
+    let element = get prereqs                                 
+    | each { display prereqs }                                
+    | enumerate                                               
+    | rename id name                                          
+    | util choose table --header "Choose a prereqs to remove:"
+    if $element == null {                                     
+        return false                                          
+    }                                                         
+    set prereqs (get prereqs | drop nth $element.id)          
 }
 
 def "add prereqs" []: nothing -> nothing {
@@ -95,28 +115,28 @@ def "add prereqs" []: nothing -> nothing {
     $env.state.prereqs ++= $chosen                                                                                      
 }
 
-def "add prereqs value" [value: table<id: int, name: string>]: nothing -> nothing {
-    $env.state.prereqs ++= $value
+def "get postreqs" []: nothing -> table<id: int, name: string> {
+    $env.state.postreqs
 }
 
-def "remove prereqs" []: nothing -> nothing {
-    let element = $env.state.prereqs                              
-    | each { display prereqs }                                    
-    | enumerate                                                   
-    | rename id name                                              
-    | util choose table --header "Choose a prereqs to remove:"    
-    if $element == null {                                         
-        return false                                              
-    }                                                             
-    $env.state.prereqs = $env.state.prereqs | drop nth $element.id
-}
-
-def "list prereqs" []: nothing -> table<id: int, name: string> {
-    $env.state.prereqs
+def "set postreqs" []: oneof<table<id: int, name: string>, nothing> -> nothing {
+    $env.state.postreqs = $in
 }
 
 def "display postreqs" []: table<id: int, name: string> -> string {
     $in.name
+}
+
+def "remove postreqs" []: nothing -> nothing {
+    let element = get postreqs                                 
+    | each { display postreqs }                                
+    | enumerate                                                
+    | rename id name                                           
+    | util choose table --header "Choose a postreqs to remove:"
+    if $element == null {                                      
+        return false                                           
+    }                                                          
+    set postreqs (get postreqs | drop nth $element.id)         
 }
 
 def "add postreqs" []: nothing -> nothing {
@@ -125,35 +145,15 @@ def "add postreqs" []: nothing -> nothing {
     $env.state.postreqs ++= $chosen                                                                                       
 }
 
-def "add postreqs value" [value: table<id: int, name: string>]: nothing -> nothing {
-    $env.state.postreqs ++= $value
-}
-
-def "remove postreqs" []: nothing -> nothing {
-    let element = $env.state.postreqs                               
-    | each { display postreqs }                                     
-    | enumerate                                                     
-    | rename id name                                                
-    | util choose table --header "Choose a postreqs to remove:"     
-    if $element == null {                                           
-        return false                                                
-    }                                                               
-    $env.state.postreqs = $env.state.postreqs | drop nth $element.id
-}
-
-def "list postreqs" []: nothing -> table<id: int, name: string> {
-    $env.state.postreqs
-}
-
 def status []: nothing -> nothing {
     util print label 'Parent'                     
-    print $env.state.parent                       
+    print ($env.state.parent)                     
     print ""                                      
     util print label 'Must start after'           
-    print $env.state.start                        
+    print ($env.state.start)                      
     print ""                                      
     util print label 'Must end before'            
-    print $env.state.end                          
+    print ($env.state.end)                        
     print ""                                      
     util print label 'Prerequisites'              
     print ($env.state.prereqs | display prereqs)  

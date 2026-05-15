@@ -42,7 +42,8 @@ let form = {
 			type: {type: string}
 			closure_bodies: {
 				validate: "$env.state.name | is-not-empty"
-				key_access: "$env.state.name"
+				getter: "$env.state.name"
+				setter: "$env.state.name = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -56,7 +57,8 @@ let form = {
 			type: {type: string}
 			closure_bodies: {
 				validate: "$env.state.desc | is-not-empty"
-				key_access: "$env.state.desc"
+				getter: "$env.state.desc"
+				setter: "$env.state.desc = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -70,7 +72,8 @@ let form = {
 			type: {type: int}
 			closure_bodies: {
 				validate: "$env.state.timescale | is-not-empty"
-				key_access: "$env.state.timescale"
+				getter: "$env.state.timescale"
+				setter: "$env.state.timescale = $in"
 			}
 			atomic: {
 				closure_bodies: {

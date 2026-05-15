@@ -17,20 +17,28 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(children-config-list\)"
 }
 
+def "get desc" []: nothing -> string {
+    $env.state.desc
+}
+
+def "set desc" []: oneof<string, nothing> -> nothing {
+    $env.state.desc = $in
+}
+
 def desc []: nothing -> nothing {
     $env.state.desc = util input multiline Description...
 }
 
-def "set desc" [value: string]: nothing -> nothing {
-    $env.state.desc = $value
-}
-
 def "unset desc" []: nothing -> nothing {
-    $env.state.desc = null
+    null | set desc
 }
 
-def "get desc" []: nothing -> string {
-    $env.state.desc
+def "get exp_cost" []: nothing -> int {
+    $env.state.exp_cost
+}
+
+def "set exp_cost" []: oneof<int, nothing> -> nothing {
+    $env.state.exp_cost = $in
 }
 
 def "validate exp_cost" []: int -> bool {
@@ -41,16 +49,16 @@ def exp_cost []: nothing -> nothing {
     $env.state.exp_cost = util input int 'Cost... (integer)'
 }
 
-def "set exp_cost" [value: int]: nothing -> nothing {
-    $env.state.exp_cost = $value
-}
-
 def "unset exp_cost" []: nothing -> nothing {
-    $env.state.exp_cost = null
+    null | set exp_cost
 }
 
-def "get exp_cost" []: nothing -> int {
-    $env.state.exp_cost
+def "get deadline" []: nothing -> record<seconds: int, nanos: int> {
+    $env.state.deadline
+}
+
+def "set deadline" []: oneof<record<seconds: int, nanos: int>, nothing> -> nothing {
+    $env.state.deadline = $in
 }
 
 def "validate deadline" []: record<seconds: int, nanos: int> -> bool {
@@ -61,20 +69,32 @@ def deadline []: nothing -> nothing {
     $env.state.deadline = util choose date
 }
 
-def "set deadline" [value: record<seconds: int, nanos: int>]: nothing -> nothing {
-    $env.state.deadline = $value
-}
-
 def "unset deadline" []: nothing -> nothing {
-    $env.state.deadline = null
+    null | set deadline
 }
 
-def "get deadline" []: nothing -> record<seconds: int, nanos: int> {
-    $env.state.deadline
+def "get children" []: nothing -> table<id: int, name: string> {
+    $env.state.children
+}
+
+def "set children" []: oneof<table<id: int, name: string>, nothing> -> nothing {
+    $env.state.children = $in
 }
 
 def "validate children" []: table<id: int, name: string> -> bool {
     $env.state.children | is-not-empty
+}
+
+def "remove children" []: nothing -> nothing {
+    let element = get children                                 
+    | each { to json -r }                                      
+    | enumerate                                                
+    | rename id name                                           
+    | util choose table --header "Choose a children to remove:"
+    if $element == null {                                      
+        return false                                           
+    }                                                          
+    set children (get children | drop nth $element.id)         
 }
 
 def "add children" []: nothing -> nothing {
@@ -83,38 +103,18 @@ def "add children" []: nothing -> nothing {
     $env.state.children ++= $child                                                                             
 }
 
-def "add children value" [value: table<id: int, name: string>]: nothing -> nothing {
-    $env.state.children ++= $value
-}
-
-def "remove children" []: nothing -> nothing {
-    let element = $env.state.children                               
-    | each { to json -r }                                           
-    | enumerate                                                     
-    | rename id name                                                
-    | util choose table --header "Choose a children to remove:"     
-    if $element == null {                                           
-        return false                                                
-    }                                                               
-    $env.state.children = $env.state.children | drop nth $element.id
-}
-
-def "list children" []: nothing -> table<id: int, name: string> {
-    $env.state.children
-}
-
 def status []: nothing -> nothing {
     util print label 'Description'  
-    print $env.state.desc           
+    print ($env.state.desc)         
     print ""                        
     util print label 'Expected cost'
-    print $env.state.exp_cost       
+    print ($env.state.exp_cost)     
     print ""                        
     util print label 'Deadline'     
-    print $env.state.deadline       
+    print ($env.state.deadline)     
     print ""                        
     util print label 'Children'     
-    print $env.state.children       
+    print ($env.state.children)     
     print ""                        
                                     
 }

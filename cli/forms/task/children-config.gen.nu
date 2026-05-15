@@ -13,6 +13,14 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(children-configs\)"
 }
 
+def "get configs" []: nothing -> table {
+    $env.state.children_cfgs
+}
+
+def "set configs" []: oneof<table, nothing> -> nothing {
+    $env.state.children_cfgs = $in
+}
+
 def "display configs" []: table -> string {
     [                                       
         (if ($in.desc | is-not-empty) {     
@@ -23,6 +31,18 @@ def "display configs" []: table -> string {
     ] | str join ' '                        
 }
 
+def "remove configs" []: nothing -> nothing {
+    let element = get configs                                 
+    | each { display configs }                                
+    | enumerate                                               
+    | rename id name                                          
+    | util choose table --header "Choose a configs to remove:"
+    if $element == null {                                     
+        return false                                          
+    }                                                         
+    set configs (get configs | drop nth $element.id)          
+}
+
 def "add configs" []: nothing -> nothing {
     let results = util exec form ./children-config.gen.nu {
         task: $p.task                                      
@@ -31,26 +51,6 @@ def "add configs" []: nothing -> nothing {
     }                                                      
     if $results == null { return }                         
     $env.state.children_cfgs ++= $results                  
-}
-
-def "add configs value" [value: table]: nothing -> nothing {
-    $env.state.children_cfgs ++= $value
-}
-
-def "remove configs" []: nothing -> nothing {
-    let element = $env.state.children_cfgs                                    
-    | each { display configs }                                                
-    | enumerate                                                               
-    | rename id name                                                          
-    | util choose table --header "Choose a configs to remove:"                
-    if $element == null {                                                     
-        return false                                                          
-    }                                                                         
-    $env.state.children_cfgs = $env.state.children_cfgs | drop nth $element.id
-}
-
-def "list configs" []: nothing -> table {
-    $env.state.children_cfgs
 }
 
 def status []: nothing -> nothing {

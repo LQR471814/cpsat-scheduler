@@ -28,6 +28,14 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(required-fields\)"
 }
 
+def "get name" []: nothing -> string {
+    $env.state.name
+}
+
+def "set name" []: oneof<string, nothing> -> nothing {
+    $env.state.name = $in
+}
+
 def "validate name" []: string -> bool {
     $env.state.name | is-not-empty
 }
@@ -36,16 +44,16 @@ def name []: nothing -> nothing {
     $env.state.name = util input text Name...
 }
 
-def "set name" [value: string]: nothing -> nothing {
-    $env.state.name = $value
-}
-
 def "unset name" []: nothing -> nothing {
-    $env.state.name = null
+    null | set name
 }
 
-def "get name" []: nothing -> string {
-    $env.state.name
+def "get desc" []: nothing -> string {
+    $env.state.desc
+}
+
+def "set desc" []: oneof<string, nothing> -> nothing {
+    $env.state.desc = $in
 }
 
 def "validate desc" []: string -> bool {
@@ -56,16 +64,16 @@ def desc []: nothing -> nothing {
     $env.state.desc = util input text Description...
 }
 
-def "set desc" [value: string]: nothing -> nothing {
-    $env.state.desc = $value
-}
-
 def "unset desc" []: nothing -> nothing {
-    $env.state.desc = null
+    null | set desc
 }
 
-def "get desc" []: nothing -> string {
-    $env.state.desc
+def "get unit" []: nothing -> int {
+    $env.state.timescale
+}
+
+def "set unit" []: oneof<int, nothing> -> nothing {
+    $env.state.timescale = $in
 }
 
 def "validate unit" []: int -> bool {
@@ -76,27 +84,19 @@ def unit []: nothing -> nothing {
     $env.state.timescale = $timescales | util choose table --header 'Timescale unit:' | get id?
 }
 
-def "set unit" [value: int]: nothing -> nothing {
-    $env.state.timescale = $value
-}
-
 def "unset unit" []: nothing -> nothing {
-    $env.state.timescale = null
-}
-
-def "get unit" []: nothing -> int {
-    $env.state.timescale
+    null | set unit
 }
 
 def status []: nothing -> nothing {
     util print label 'Name'          
-    print $env.state.name            
+    print ($env.state.name)          
     print ""                         
     util print label 'Desc'          
-    print $env.state.desc            
+    print ($env.state.desc)          
     print ""                         
     util print label 'Timescale unit'
-    print $env.state.timescale       
+    print ($env.state.timescale)     
     print ""                         
                                      
 }

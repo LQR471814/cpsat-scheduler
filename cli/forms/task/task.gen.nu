@@ -13,88 +13,91 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(task\)"
 }
 
-def task []: nothing -> nothing {
-    $env.state.name = util input text Name...
+def "get req" []: nothing -> record<name: string, desc: string, timescale: int> {
+    $env.state | select name desc timescale
 }
 
-def "set task" [value: string]: nothing -> nothing {
-    $env.state.name = $value
+def "set req" []: oneof<record<name: string, desc: string, timescale: int>, nothing> -> nothing {
+    let value = $in                                                      
+    $env.state = $env.state | merge ($value | select name desc timescale)
 }
 
-def "unset task" []: nothing -> nothing {
-    $env.state.name = null
+def req []: nothing -> nothing {
+    util exec form ./required-fields.gen.nu (get req)
 }
 
-def "get task" []: nothing -> string {
-    $env.state.name
+def "unset req" []: nothing -> nothing {
+    null | set req
 }
 
-def "validate desc" []: string -> bool {
-    $env.state.desc | is-not-empty
+def "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+    $env.state | select parent start end prereqs postreqs
 }
 
-def desc []: nothing -> nothing {
-    $env.state.desc = util input text Description...
+def "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
+    let value = $in                                                                    
+    $env.state = $env.state | merge ($value | select parent start end prereqs postreqs)
 }
 
-def "set desc" [value: string]: nothing -> nothing {
-    $env.state.desc = $value
+def opt []: nothing -> nothing {
+    util exec form ./optional-fields.gen.nu (get opt | merge { id: $env.id })
 }
 
-def "unset desc" []: nothing -> nothing {
-    $env.state.desc = null
+def "unset opt" []: nothing -> nothing {
+    null | set opt
 }
 
-def "get desc" []: nothing -> string {
-    $env.state.desc
+def "get dur" []: nothing -> oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing> {
+    $env.state | get dur_cfg
 }
 
-def "validate unit" []: int -> bool {
-    $env.state.timescale | is-not-empty
+def "set dur" []: oneof<oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing>, nothing> -> nothing {
+    $env.state.dur_cfg = $in
 }
 
-def unit []: nothing -> nothing {
-    $env.state.timescale = $timescales | util choose table --header 'Timescale unit:' | get id?
+def dur []: nothing -> nothing {
+    util exec form ./duration-config.gen.nu ({ task: $env.id, cfg: (get dur) })
 }
 
-def "set unit" [value: int]: nothing -> nothing {
-    $env.state.timescale = $value
+def "unset dur" []: nothing -> nothing {
+    null | set dur
 }
 
-def "unset unit" []: nothing -> nothing {
-    $env.state.timescale = null
+def "get children" []: nothing -> table {
+    $env.state | get children_cfgs
 }
 
-def "get unit" []: nothing -> int {
-    $env.state.timescale
+def "set children" []: oneof<table, nothing> -> nothing {
+    $env.state.children_cfgs = $in
+}
+
+def children []: nothing -> nothing {
+    util exec form ./children-config-list.gen.nu ({ task: $env.id, children_cfgs: (get children) })
+}
+
+def "unset children" []: nothing -> nothing {
+    null | set children
 }
 
 def status []: nothing -> nothing {
-    util print label 'Task'          
-    print $env.state.name            
-    print ""                         
-    util print label 'Desc'          
-    print $env.state.desc            
-    print ""                         
-    util print label 'Timescale unit'
-    print $env.state.timescale       
-    print ""                         
-                                     
+    util print label 'Required'                                  
+    print ($env.state | select name desc timescale)              
+    print ""                                                     
+    util print label 'Optional'                                  
+    print ($env.state | select parent start end prereqs postreqs)
+    print ""                                                     
+    util print label 'Duration configuration'                    
+    print ($env.state | get dur_cfg)                             
+    print ""                                                     
+    util print label 'Children configurations'                   
+    print ($env.state | get children_cfgs)                       
+    print ""                                                     
+                                                                 
 }
 
 def next []: nothing -> bool {
-    # nu-lint-ignore: print_and_return_data                           
-    if not ($env.state.desc | validate desc) {                        
-        desc                                                          
-        if not ($env.state.desc | validate desc) { return false }     
-        return (next)                                                 
-    }                                                                 
-    if not ($env.state.timescale | validate unit) {                   
-        unit                                                          
-        if not ($env.state.timescale | validate unit) { return false }
-        return (next)                                                 
-    }                                                                 
-    true                                                              
+    # nu-lint-ignore: print_and_return_data
+    true                                   
 }
 
 def submit []: nothing -> nothing {

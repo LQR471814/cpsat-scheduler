@@ -30,7 +30,8 @@ let form = {
 			display_name: Description
 			type: $desc_type
 			closure_bodies: {
-				key_access: "$env.state.desc"
+				getter: "$env.state.desc"
+				setter: "$env.state.desc = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -43,7 +44,8 @@ let form = {
 			display_name: "Expected cost"
 			type: $exp_cost_type
 			closure_bodies: {
-				key_access: "$env.state.exp_cost"
+				getter: "$env.state.exp_cost"
+				setter: "$env.state.exp_cost = $in"
 				validate: "$env.state.exp_cost != null"
 			}
 			atomic: {
@@ -57,7 +59,8 @@ let form = {
 			display_name: Deadline
 			type: $deadline_type
 			closure_bodies: {
-				key_access: "$env.state.deadline"
+				getter: "$env.state.deadline"
+				setter: "$env.state.deadline = $in"
 				validate: "$env.state.deadline != null"
 			}
 			atomic: {
@@ -71,7 +74,8 @@ let form = {
 			display_name: Children
 			type: $children_type
 			closure_bodies: {
-				key_access: "$env.state.children"
+				getter: "$env.state.children"
+				setter: "$env.state.children = $in"
 				validate: "$env.state.children | is-not-empty"
 			}
 			list: {

@@ -20,7 +20,8 @@ let form = {
 			display_name: Configs
 			type: {type: table}
 			closure_bodies: {
-				key_access: "$env.state.children_cfgs"
+				getter: "$env.state.children_cfgs"
+				setter: "$env.state.children_cfgs = $in"
 				display_value: "[
     (if ($in.desc | is-not-empty) {
         $in.desc | str substring 0..<12

@@ -95,6 +95,26 @@ func (c Closure) Render(w io.Writer) {
 	fmt.Fprint(w, "\n}")
 }
 
+func (d FieldDef) getterFn() Closure {
+	return Closure{
+		Name:   fmt.Sprintf("get %s", d.Name),
+		Params: nil,
+		In:     nullType,
+		Out:    d.Type,
+		Body:   Block(d.ClosureBodies.Getter),
+	}
+}
+
+func (d FieldDef) setterFn() Closure {
+	return Closure{
+		Name:   fmt.Sprintf("set %s", d.Name),
+		Params: nil,
+		In:     TypeDef{Type: "oneof", Positional: []TypeDef{d.Type, nullType}},
+		Out:    nullType,
+		Body:   Block(d.ClosureBodies.Setter),
+	}
+}
+
 func (d FieldDef) setFn() Closure {
 	return Closure{
 		Name:   d.Name,
@@ -105,60 +125,30 @@ func (d FieldDef) setFn() Closure {
 	}
 }
 
-func (d FieldDef) staticSetFn() Closure {
-	var body Block
-	if d.Atomic.ClosureBodies.SetStatic != nil {
-		return *d.Atomic.ClosureBodies.SetStatic
-	} else {
-		body = Block(fmt.Sprintf(`%s = $value`, d.ClosureBodies.KeyAccess))
-	}
-	return Closure{
-		Name: fmt.Sprintf("set %s", d.Name),
-		Params: []KeyValue[TypeDef]{
-			{"value", d.Type},
-		},
-		In:   nullType,
-		Out:  nullType,
-		Body: body,
-	}
-}
-
 func (d FieldDef) unsetFn() Closure {
 	return Closure{
 		Name:   fmt.Sprintf("unset %s", d.Name),
 		Params: nil,
 		In:     nullType,
 		Out:    nullType,
-		Body:   Block(fmt.Sprintf("%s = null", d.ClosureBodies.KeyAccess)),
-	}
-}
-
-func (d FieldDef) getFn() Closure {
-	var body Block
-	if d.Atomic.ClosureBodies.GetStatic != nil {
-		return *d.Atomic.ClosureBodies.GetStatic
-	} else {
-		body = Block(d.ClosureBodies.KeyAccess)
-	}
-	return Closure{
-		Name:   fmt.Sprintf("get %s", d.Name),
-		Params: nil,
-		In:     nullType,
-		Out:    d.Type,
-		Body:   body,
+		Body:   Block(fmt.Sprintf("null | set %s", d.Name)),
 	}
 }
 
 func (d FieldDef) renderAtomicField(w io.Writer) {
+	if d.Atomic.ClosureBodies.SetStatic != nil {
+		d.Atomic.ClosureBodies.SetStatic.Render(w)
+		renderMargin(w)
+	}
+	if d.Atomic.ClosureBodies.GetStatic != nil {
+		d.Atomic.ClosureBodies.GetStatic.Render(w)
+		renderMargin(w)
+	}
 	if d.Atomic.ClosureBodies.Set != nil {
 		d.setFn().Render(w)
 		renderMargin(w)
 	}
-	d.staticSetFn().Render(w)
-	renderMargin(w)
 	d.unsetFn().Render(w)
-	renderMargin(w)
-	d.getFn().Render(w)
 	renderMargin(w)
 }
 
@@ -172,38 +162,27 @@ func (d FieldDef) addFn() Closure {
 	}
 }
 
-func (d FieldDef) staticAddFn() Closure {
-	var body Block
-	if d.List.ClosuresBodies.AddStatic != nil {
-		return *d.List.ClosuresBodies.AddStatic
-	} else {
-		body = Block(fmt.Sprintf(`%s ++= $value`, d.ClosureBodies.KeyAccess))
-	}
-	return Closure{
-		Name: fmt.Sprintf("add %s value", d.Name),
-		Params: []KeyValue[TypeDef]{
-			{"value", d.Type},
-		},
-		In:   nullType,
-		Out:  nullType,
-		Body: body,
-	}
-}
-
 func (d FieldDef) removeFn() Closure {
+	if d.List.ClosuresBodies.Remove != nil {
+		return *d.List.ClosuresBodies.Remove
+	}
 	displayValueCmd := fmt.Sprintf("to json -r")
 	if d.ClosureBodies.DisplayValue != nil {
 		displayValueCmd = fmt.Sprintf("display %s", d.Name)
 	}
-	body := fmt.Sprintf(`let element = %[1]s
-| each { %[3]s }
+	body := fmt.Sprintf(
+		`let element = get %[1]s
+| each { %[2]s }
 | enumerate
 | rename id name
-| util choose table --header "Choose a %[2]s to remove:"
+| util choose table --header "Choose a %[1]s to remove:"
 if $element == null {
 	return false
 }
-%[1]s = %[1]s | drop nth $element.id`, d.ClosureBodies.KeyAccess, d.Name, displayValueCmd)
+set %[1]s (get %[1]s | drop nth $element.id)`,
+		d.Name,
+		displayValueCmd,
+	)
 	return Closure{
 		Name:   fmt.Sprintf("remove %s", d.Name),
 		Params: nil,
@@ -213,36 +192,24 @@ if $element == null {
 	}
 }
 
-func (d FieldDef) listFn() Closure {
-	var body Block
-	if d.List.ClosuresBodies.List != nil {
-		body = *d.List.ClosuresBodies.List
-	} else {
-		body = Block(d.ClosureBodies.KeyAccess)
-	}
-	return Closure{
-		Name:   fmt.Sprintf("list %s", d.Name),
-		Params: nil,
-		In:     nullType,
-		Out:    d.Type,
-		Body:   body,
-	}
-}
-
 func (d FieldDef) renderListField(w io.Writer) {
+	d.removeFn().Render(w)
+	renderMargin(w)
+
 	if d.List.ClosuresBodies.Add != nil {
 		d.addFn().Render(w)
 		renderMargin(w)
 	}
 
-	d.staticAddFn().Render(w)
-	renderMargin(w)
+	if d.List.ClosuresBodies.AddStatic != nil {
+		d.List.ClosuresBodies.AddStatic.Render(w)
+		renderMargin(w)
+	}
 
-	d.removeFn().Render(w)
-	renderMargin(w)
-
-	d.listFn().Render(w)
-	renderMargin(w)
+	if d.List.ClosuresBodies.List != nil {
+		d.List.ClosuresBodies.List.Render(w)
+		renderMargin(w)
+	}
 }
 
 func (d FieldDef) displayValueFn() Closure {
@@ -266,6 +233,10 @@ func (d FieldDef) validateFn() Closure {
 }
 
 func (d FieldDef) Render(w io.Writer) {
+	d.getterFn().Render(w)
+	renderMargin(w)
+	d.setterFn().Render(w)
+	renderMargin(w)
 	if d.ClosureBodies.Validate != nil {
 		d.validateFn().Render(w)
 		renderMargin(w)
@@ -328,7 +299,12 @@ func (f Form) statusFn() Closure {
 	for _, field := range f.Fields {
 		fmt.Fprintf(&body, "util print label '%s'\n", field.DisplayName)
 		if field.ClosureBodies.DisplayValue != nil {
-			fmt.Fprintf(&body, "print (%s | display %s)\n", field.ClosureBodies.KeyAccess, field.Name)
+			fmt.Fprintf(
+				&body,
+				"print (%s | display %s)\n",
+				field.ClosureBodies.Getter,
+				field.Name,
+			)
 		} else {
 			switch field.Type.Type {
 			case "datetime":
@@ -338,7 +314,7 @@ func (f Form) statusFn() Closure {
 			default:
 				fmt.Fprint(&body, "print")
 			}
-			fmt.Fprintf(&body, " %s\n", field.ClosureBodies.KeyAccess)
+			fmt.Fprintf(&body, " (%s)\n", field.ClosureBodies.Getter)
 		}
 		fmt.Fprint(&body, "print \"\"\n")
 	}
@@ -365,13 +341,13 @@ func (f Form) nextFn() Closure {
 	if not (%[1]s | validate %[2]s) { return false }
 	return (next)
 }
-`, field.ClosureBodies.KeyAccess, field.Name)
+`, field.ClosureBodies.Getter, field.Name)
 			} else {
 				fmt.Fprintf(&body, `if not (%[1]s | validate %[2]s) {
 	print "set %[2]s with 'set %[2]s'"
 	return false
 }
-`, field.ClosureBodies.KeyAccess, field.Name)
+`, field.ClosureBodies.Getter, field.Name)
 			}
 		} else if field.List != nil {
 			if field.List.ClosuresBodies.Add != nil {
@@ -380,13 +356,13 @@ func (f Form) nextFn() Closure {
 	if not (%[1]s | validate %[2]s) { return false }
 	return (next)
 }
-`, field.ClosureBodies.KeyAccess, field.Name)
+`, field.ClosureBodies.Getter, field.Name)
 			} else {
 				fmt.Fprintf(&body, `if not (%[1]s | validate %[2]s) {
 	print "add a %[2]s with 'add %[2]s'"
 	return false
 }
-`, field.ClosureBodies.KeyAccess, field.Name)
+`, field.ClosureBodies.Getter, field.Name)
 			}
 		}
 	}

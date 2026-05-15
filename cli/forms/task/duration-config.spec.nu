@@ -59,7 +59,8 @@ let form = {
 				]
 			}
 			closure_bodies: {
-				key_access: "$env.state.cfg.pert"
+				getter: "$env.state.cfg.pert"
+				setter: "$env.state.cfg.pert = $in"
 				validate: "$env.state.cfg.pert.opt != null and $env.state.cfg.pert.exp != null and $env.state.cfg.pert.pes != null"
 			}
 			atomic: {
@@ -83,7 +84,7 @@ let form = {
 			display_name: Deadline
 			type: ({type: datetime} | lib type optional)
 			closure_bodies: {
-				key_access: "$env.state.cfg.deadline"
+				getter: "$env.state.cfg.deadline"
 			}
 			atomic: {
 				closure_bodies: {
@@ -96,7 +97,7 @@ let form = {
 			display_name: "Expected cost under minimum time investment"
 			type: {type: int}
 			closure_bodies: {
-				key_access: "$env.state.cfg.total_cost"
+				getter: "$env.state.cfg.total_cost"
 				validate: "$env.state.cfg.total_cost != null"
 			}
 			atomic: {
