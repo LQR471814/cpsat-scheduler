@@ -40,9 +40,9 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 		s.DurationCfg = &api.DurState{
 			Deadline: SQLTimeToProto(cfg.Deadline),
 			Pert: &api.PERT{
-				Pes: cfg.Pes,
-				Exp: cfg.Exp,
-				Opt: cfg.Opt,
+				Pes: SQLDurationToProto(cfg.Pes),
+				Exp: SQLDurationToProto(cfg.Exp),
+				Opt: SQLDurationToProto(cfg.Opt),
 			},
 			TotalCost: SQLInt64ToProto(cfg.TotalCost),
 		}
@@ -175,9 +175,9 @@ func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 	if s.DurationCfg != nil {
 		if err := txqry.CreateDurConfig(ctx, db.CreateDurConfigParams{
 			Task:      task,
-			Pes:       s.DurationCfg.Pes,
-			Exp:       s.DurationCfg.Exp,
-			Opt:       s.DurationCfg.Opt,
+			Pes:       ProtoToSQLDuration(s.DurationCfg.Pert.Pes),
+			Exp:       ProtoToSQLDuration(s.DurationCfg.Pert.Exp),
+			Opt:       ProtoToSQLDuration(s.DurationCfg.Pert.Opt),
 			Deadline:  ProtoTimeToSQL(s.DurationCfg.Deadline),
 			TotalCost: ProtoInt64ToSQL(s.DurationCfg.TotalCost),
 		}); err != nil {
