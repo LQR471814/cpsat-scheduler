@@ -1,10 +1,8 @@
 use lib/util.nu
-
-
 use lib/state.nu
 
 
-let p: record<task: int, prompt_prefix: string> = util get form params
+let p: record<task: int, state: record, prompt_prefix: string> = util get form params
 
 
 let cmd = $env.PROMPT_COMMAND
@@ -13,7 +11,7 @@ let cmd = $env.PROMPT_COMMAND
 $env.PROMPT_COMMAND = {|| $"($p.prompt_prefix) \(edit\) ($in | do $cmd)" }
 
 
-$env.state = {
+$env.state = $p.state | default {
     desc: null
     deadline: null
     exp_cost: null

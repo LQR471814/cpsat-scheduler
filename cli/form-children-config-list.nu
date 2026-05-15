@@ -6,7 +6,11 @@ let p: record<task: int, children_cfgs: table, prompt_prefix: string> = util get
 
 let cmd = $env.PROMPT_COMMAND
 
-$env.PROMPT_COMMAND = {|| $"($p.prompt_prefix) \(children configs\) ($in | do $cmd)" }
+def "prompt prefix" []: nothing -> string {
+    $"($p.prompt_prefix) \(children configs\)"
+}
+
+$env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = []
 
@@ -20,10 +24,13 @@ def "config to string" []: record<desc: int, deadline: record<seconds: int, nano
 ] | str join " " }
 
 
-def "add config" [] {
-    util exec form ./form-children-config.nu {
-
+def "add config" []: nothing -> bool {
+    let results: record = util exec form ./form-children-config.nu {
+        task: $p.task
+        state: null
+        prompt_prefix: (prompt prefix)
     }
+    $env.state ++= $results
 }
 
 
@@ -35,3 +42,4 @@ def "remove config" []: nothing -> bool {
     }
     false
 }
+
