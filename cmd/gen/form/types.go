@@ -42,11 +42,9 @@ type FieldClosureBodies struct {
 
 type FieldAtomicClosuresBodies struct {
 	// Set is body of []: nothing -> nothing
-	Set *Block `json:"set"`
-	// SetStatic is body of []: nothing -> nothing
-	SetStatic *Block `json:"set_static"`
-	// GetStatic is body of []: nothing -> field_type
-	GetStatic *Block `json:"get_static"`
+	Set       *Block   `json:"set"`
+	SetStatic *Closure `json:"set_static"`
+	GetStatic *Closure `json:"get_static"`
 }
 
 type FieldAtomic struct {
@@ -55,9 +53,8 @@ type FieldAtomic struct {
 
 type FieldListClosuresBodies struct {
 	// Add is body of []: nothing -> nothing
-	Add *Block `json:"add"`
-	// AddStatic is body of []: nothing -> nothing
-	AddStatic *Block `json:"add_static"`
+	Add       *Block   `json:"add"`
+	AddStatic *Closure `json:"add_static"`
 	// Remove is body of []: nothing -> nothing
 	Remove *Block `json:"remove"`
 	// List is body of []: nothing -> any
@@ -85,4 +82,5 @@ type Form struct {
 	Returns     TypeDef      `json:"returns"`
 	Closures    FormClosures `json:"closures"`
 	Fields      []FieldDef   `json:"fields"`
+	Backmatter  *Block       `json:"backmatter"`
 }

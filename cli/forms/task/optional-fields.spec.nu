@@ -106,6 +106,7 @@ $env.state.postreqs ++= $chosen"
 			}
 		}
 	]
+	backmatter: status
 }
 
 const self_path = path self

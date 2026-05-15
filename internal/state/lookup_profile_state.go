@@ -40,10 +40,14 @@ func LookupProfileState(c Context, profileID int64) (pbtasks []*solverpb.Task, e
 			end = &t.End.Int64
 		}
 
-		var prereqs []int64
-		prereqs, err = txqry.ListPrereq(ctx, t.ID)
+		var rows []db.ListPrereqRow
+		rows, err = txqry.ListPrereq(ctx, t.ID)
 		if err != nil {
 			return
+		}
+		prereqs := make([]int64, len(rows))
+		for i, r := range rows {
+			prereqs[i] = r.ID
 		}
 
 		var durCfg db.DurConfig
@@ -86,10 +90,14 @@ func lookupChildCfgs(c Context, txqry *db.Queries, profile db.Profile, task db.T
 		return
 	}
 	for _, childCfg := range childrenCfgs {
-		var children []int64
-		children, err = txqry.ListChildrenConfigChildren(ctx, childCfg.ID)
+		var rows []db.ListChildrenConfigChildrenRow
+		rows, err = txqry.ListChildrenConfigChildren(ctx, childCfg.ID)
 		if err != nil {
 			return
+		}
+		children := make([]int64, len(rows))
+		for i, r := range rows {
+			children[i] = r.ID
 		}
 		deadline := convertDeadline(
 			profile.UniverseStart,

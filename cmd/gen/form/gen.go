@@ -108,7 +108,7 @@ func (d FieldDef) setFn() Closure {
 func (d FieldDef) staticSetFn() Closure {
 	var body Block
 	if d.Atomic.ClosureBodies.SetStatic != nil {
-		body = *d.Atomic.ClosureBodies.SetStatic
+		return *d.Atomic.ClosureBodies.SetStatic
 	} else {
 		body = Block(fmt.Sprintf(`%s = $value`, d.ClosureBodies.KeyAccess))
 	}
@@ -136,7 +136,7 @@ func (d FieldDef) unsetFn() Closure {
 func (d FieldDef) getFn() Closure {
 	var body Block
 	if d.Atomic.ClosureBodies.GetStatic != nil {
-		body = *d.Atomic.ClosureBodies.GetStatic
+		return *d.Atomic.ClosureBodies.GetStatic
 	} else {
 		body = Block(d.ClosureBodies.KeyAccess)
 	}
@@ -175,7 +175,7 @@ func (d FieldDef) addFn() Closure {
 func (d FieldDef) staticAddFn() Closure {
 	var body Block
 	if d.List.ClosuresBodies.AddStatic != nil {
-		body = *d.List.ClosuresBodies.AddStatic
+		return *d.List.ClosuresBodies.AddStatic
 	} else {
 		body = Block(fmt.Sprintf(`%s ++= $value`, d.ClosureBodies.KeyAccess))
 	}
@@ -531,5 +531,7 @@ func (f Form) Render(w io.Writer) {
 	f.renderAliasBlock(w)
 	renderMargin(w)
 
-	fmt.Fprintln(w, "status")
+	if f.Backmatter != nil {
+		fmt.Fprint(w, *f.Backmatter)
+	}
 }

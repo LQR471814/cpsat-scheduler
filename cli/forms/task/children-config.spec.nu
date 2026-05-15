@@ -42,6 +42,7 @@ $env.state.children_cfgs ++= $results"
 			}
 		}
 	]
+	backmatter: status
 }
 
 const self_path = path self

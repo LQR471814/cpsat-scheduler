@@ -2,46 +2,25 @@ use ../lib.nu
 
 const script_path = path self | path dirname # nu-lint-ignore: dont_mix_different_effects
 
-let state = [[key, value];
-	[name      ({type: string} | lib type optional)]
-	[desc      ({type: string} | lib type optional)]
-	[timescale ({type: int} | lib type optional)]
-]
-
-let frontmatter = 'let timescales: table<id: int, name: string> = [[id, name];
-    [96, "day"]
-    [672, "week"]
-    [2688, "month"]
-    [8064, "quarter"]
-    [32256, "year"]
-    [64512, "2 year"]
-    [129024, "4 year"]
-    [258048, "8 year"]
-    [516096, "16 year"]
-    [1032192, "32 year"]
-    [2064384, "64 year"]
-    [4128768, "128 year"]
-]'
+let state = {
+	type: record,
+	fields: [[key, value];
+		[task    ({type: int} | lib type optional)]
+		[profile {type: int}]
+	]
+}
 
 let form = {
-	name: required-fields
-	frontmatter: $frontmatter
-	params: {
-		type: record
-		fields: $state
-	}
-	returns: {
-		type: record
-		fields: $state
-	}
+	name: task
+	params: $state
+	returns: $state
 	closures: {}
 	fields: [
 		{
-			name: name
-			display_name: Name
+			name: task
+			display_name: Task
 			type: {type: string}
 			closure_bodies: {
-				validate: "$env.state.name | is-not-empty"
 				key_access: "$env.state.name"
 			}
 			atomic: {
@@ -79,7 +58,40 @@ let form = {
 			}
 		}
 	]
-	backmatter: status
+	backmatter: "
+if $p.task != null {
+	$env.state = state read task $p.task | get state
+	$env.id = $p.id
+} else {
+	let results = util exec form ./required-fields.gen.nu {
+		prompt_prefix: (prompt prefix)
+		name: null
+		desc: null
+		timescale: null
+	}
+	if $results == null {
+		cancel
+	}
+	let state = {
+		parent: null
+        start: null
+        end: null
+        prereqs: []
+        postreqs: []
+
+		duration_cfg: {
+            opt: 2
+            exp: 4
+            pes: 6
+            total_cost: 0
+        }
+        children_cfgs: []
+	} | merge $results
+	let id = state save task $p.profile $state | get id
+	$env.state = $state
+	$env.id = $id
+}
+	"
 }
 
 const script_path = path self

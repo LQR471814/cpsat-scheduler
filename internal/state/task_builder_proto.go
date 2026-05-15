@@ -38,10 +38,12 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 		return err
 	} else {
 		s.DurationCfg = &api.DurState{
-			Deadline:  SQLTimeToProto(cfg.Deadline),
-			Pes:       cfg.Pes,
-			Exp:       cfg.Exp,
-			Opt:       cfg.Opt,
+			Deadline: SQLTimeToProto(cfg.Deadline),
+			Pert: &api.PERT{
+				Pes: cfg.Pes,
+				Exp: cfg.Exp,
+				Opt: cfg.Opt,
+			},
 			TotalCost: SQLInt64ToProto(cfg.TotalCost),
 		}
 	}

@@ -15,6 +15,16 @@ export def "type proto timestamp" []: nothing -> any {
 	}
 }
 
+export def "type proto duration" []: nothing -> any {
+	{
+		type: record
+		fields: [[key value];
+			[seconds {type: int}]
+			[nanos {type: int}]
+		]
+	}
+}
+
 export def "type entry record" []: nothing -> any {
 	{
 		type: record

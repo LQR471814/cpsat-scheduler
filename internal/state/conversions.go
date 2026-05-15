@@ -5,8 +5,17 @@ import (
 	"database/sql"
 	"time"
 
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func SQLDurationToProto(duration int64) *durationpb.Duration {
+	return durationpb.New(time.Duration(duration) * time.Second)
+}
+
+func ProtoToSQLDuration(duration *durationpb.Duration) int64 {
+	return duration.Seconds
+}
 
 func SQLTimeToProto(t sql.NullTime) *timestamppb.Timestamp {
 	if !t.Valid {

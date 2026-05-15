@@ -1,7 +1,7 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
 
-let p: record<prompt_prefix: string, state: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>, >> = util get form params
+let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, profile: int>> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -9,42 +9,23 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-let timescales: table<id: int, name: string> = [[id, name];
-    [96, "day"]
-    [672, "week"]
-    [2688, "month"]
-    [8064, "quarter"]
-    [32256, "year"]
-    [64512, "2 year"]
-    [129024, "4 year"]
-    [258048, "8 year"]
-    [516096, "16 year"]
-    [1032192, "32 year"]
-    [2064384, "64 year"]
-    [4128768, "128 year"]
-]
-
 def "prompt prefix" []: nothing -> string {
-    $"($p.prompt_prefix) \(required-fields\)"
+    $"($p.prompt_prefix) \(task\)"
 }
 
-def "validate name" []: string -> bool {
-    $env.state.name | is-not-empty
-}
-
-def name []: nothing -> nothing {
+def task []: nothing -> nothing {
     $env.state.name = util input text Name...
 }
 
-def "set name" [value: string]: nothing -> nothing {
+def "set task" [value: string]: nothing -> nothing {
     $env.state.name = $value
 }
 
-def "unset name" []: nothing -> nothing {
+def "unset task" []: nothing -> nothing {
     $env.state.name = null
 }
 
-def "get name" []: nothing -> string {
+def "get task" []: nothing -> string {
     $env.state.name
 }
 
@@ -89,7 +70,7 @@ def "get unit" []: nothing -> int {
 }
 
 def status []: nothing -> nothing {
-    util print label 'Name'          
+    util print label 'Task'          
     print $env.state.name            
     print ""                         
     util print label 'Desc'          
@@ -103,11 +84,6 @@ def status []: nothing -> nothing {
 
 def next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data                           
-    if not ($env.state.name | validate name) {                        
-        name                                                          
-        if not ($env.state.name | validate name) { return false }     
-        return (next)                                                 
-    }                                                                 
     if not ($env.state.desc | validate desc) {                        
         desc                                                          
         if not ($env.state.desc | validate desc) { return false }     
@@ -154,4 +130,37 @@ alias done = submit
 alias d = submit
 alias c = cancel
 
-status
+
+if $p.task != null {
+	$env.state = state read task $p.task | get state
+	$env.id = $p.id
+} else {
+	let results = util exec form ./required-fields.gen.nu {
+		prompt_prefix: (prompt prefix)
+		name: null
+		desc: null
+		timescale: null
+	}
+	if $results == null {
+		cancel
+	}
+	let state = {
+		parent: null
+        start: null
+        end: null
+        prereqs: []
+        postreqs: []
+
+		duration_cfg: {
+            opt: 2
+            exp: 4
+            pes: 6
+            total_cost: 0
+        }
+        children_cfgs: []
+	} | merge $results
+	let id = state save task $p.profile $state | get id
+	$env.state = $state
+	$env.id = $id
+}
+	

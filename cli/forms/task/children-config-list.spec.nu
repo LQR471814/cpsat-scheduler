@@ -83,6 +83,7 @@ $env.state.children ++= $child"
 			}
 		}
 	]
+	backmatter: status
 }
 
 const self_path = path self

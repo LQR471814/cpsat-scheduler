@@ -8,14 +8,17 @@ message Entry {
   string name = 2;
 }
 
-message DurState {
+message PERT {
   google.protobuf.Duration pes = 1;
   google.protobuf.Duration exp = 2;
   google.protobuf.Duration opt = 3;
+}
 
-  optional google.protobuf.Timestamp deadline = 4;
+message DurState {
+  PERT pert = 1;
+  optional google.protobuf.Timestamp deadline = 2;
   // zero if null
-  int64 total_cost = 5;
+  int64 total_cost = 3;
 }
 
 message ChildrenConfigState {
