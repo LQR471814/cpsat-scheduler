@@ -179,7 +179,7 @@ func (d FieldDef) removeFn() Closure {
 if $element == null {
 	return false
 }
-set %[1]s (get %[1]s | drop nth $element.id)`,
+get %[1]s | drop nth $element.id | set %[1]s`,
 		d.Name,
 		displayValueCmd,
 	)

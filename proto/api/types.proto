@@ -45,11 +45,34 @@ message TaskState {
   optional google.protobuf.Timestamp end = 10;
 }
 
+// CreateProfile
+message CreateProfileRequest {
+  string name = 1;
+  google.protobuf.Duration atomic_timescale = 2;
+  google.protobuf.Timestamp universe_start = 3;
+  int64 gen_pert_choices = 4;
+}
+message CreateProfileResponse {}
+
+message Profile {
+  int64 id = 1;
+  string name = 2;
+  google.protobuf.Duration atomic_timescale = 3;
+  google.protobuf.Timestamp universe_start = 4;
+  optional int64 gen_pert_choices = 5;
+}
+
 // ListProfiles
 message ListProfilesRequest {}
 message ListProfilesResponse {
-  repeated Entry entries = 1;
+  repeated Profile entries = 1;
 }
+
+// RemoveProfile
+message RemoveProfileRequest {
+  int64 id = 1;
+}
+message RemoveProfileResponse {}
 
 // ReadTask
 message ReadTaskRequest {
@@ -111,9 +134,13 @@ message ProgressUpdateResponse {}
 
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
+  rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
+  rpc RemoveProfile(RemoveProfileRequest) returns (RemoveProfileResponse);
+
   rpc ReadTask(ReadTaskRequest) returns (ReadTaskResponse);
   rpc SaveTask(SaveTaskRequest) returns (SaveTaskResponse);
   rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
+
   rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
   rpc ListPossibleRelatives(ListPossibleRelativesRequest) returns (ListPossibleRelativesResponse);
   rpc ProgressUpdate(ProgressUpdateRequest) returns (ProgressUpdateResponse);

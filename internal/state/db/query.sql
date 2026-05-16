@@ -4,6 +4,14 @@ select * from profile where id = ?;
 -- name: ListProfiles :many
 select * from profile;
 
+-- name: CreateProfile :one
+insert into profile (name, atomic_timescale_duration, universe_start, pert_gen_choices)
+values (?, ?, ?, ?)
+returning id;
+
+-- name: DeleteProfile :exec
+delete from profile where id = ?;
+
 
 -- name: ListTimescales :many
 select name, size from timescale_unit where profile = ?
