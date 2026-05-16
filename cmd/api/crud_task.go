@@ -6,23 +6,6 @@ import (
 	"cpsat-scheduler/internal/state"
 )
 
-func (s server) ListProfiles(ctx context.Context, req *api.ListProfilesRequest) (res *api.ListProfilesResponse, err error) {
-	profiles, err := s.db.ListProfiles(ctx)
-	if err != nil {
-		return
-	}
-	res = &api.ListProfilesResponse{
-		Entries: make([]*api.Entry, len(profiles)),
-	}
-	for i, p := range profiles {
-		res.Entries[i] = &api.Entry{
-			Id:   p.ID,
-			Name: p.Name,
-		}
-	}
-	return
-}
-
 func (s server) ReadTask(ctx context.Context, in *api.ReadTaskRequest) (res *api.ReadTaskResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
