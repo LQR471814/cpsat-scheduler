@@ -23,7 +23,8 @@ def "switch profile" []: nothing -> bool {
 		return true
 	}
 	let profile = $profile_list
-		| util choose table
+		| select id name
+		| util choose table --header "Choose profile"
 	if $profile == null {
 		return false
 	}
