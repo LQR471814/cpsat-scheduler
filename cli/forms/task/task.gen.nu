@@ -1,7 +1,7 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
 
-let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, profile: int>> = util get form params
+let p: record<prompt_prefix: string, state: record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -9,7 +9,7 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def "returns post process" []: any -> record<task: oneof<int, nothing>, profile: int> {
+def "returns post process" []: any -> record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, > {
     let input = $in                  
     state save task $p.profile $input
     $input                           
@@ -140,9 +140,9 @@ alias d = submit
 alias c = cancel
 
 
-if $p.task != null {
-	$env.state = state read task $p.task | get state
-	$env.id = $p.id
+if $p.payload.task? != null {
+	$env.state = state read task $p.payload.task | get state
+	$env.id = $p.payload.task
 } else {
 	let results = util exec form ./required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
@@ -154,11 +154,11 @@ if $p.task != null {
 		cancel
 	}
 	let state = {
-		parent: null
-        start: null
-        end: null
-        prereqs: []
-        postreqs: []
+		parent: $p.payload.parent?
+        start: $p.payload.start?
+        end: $p.payload.end?
+        prereqs: (if $p.payload.prereq? { [$p.payload.prereq] } else { [] })
+        postreqs: (if $p.payload.postreq? { [$p.payload.postreq] } else { [] })
 
 		duration_cfg: {
             opt: 2

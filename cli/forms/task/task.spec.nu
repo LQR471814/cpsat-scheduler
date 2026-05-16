@@ -4,9 +4,29 @@ const script_path = path self | path dirname # nu-lint-ignore: dont_mix_differen
 
 let state = {
 	type: record,
-	fields: [[key, value];
-		[task    ({type: int} | lib type optional)]
+	fields: [[key value];
 		[profile {type: int}]
+
+		[payload {
+			type: oneof
+			positional: [
+				{
+					type: record
+					fields: [[key value];
+						[task {type: int}]
+					]
+				}
+				{
+					type: record
+					fields: [[key value];
+						[parent  ({type: int} | lib type optional)]
+						[prereq  ({type: int} | lib type optional)]
+						[postreq ({type: int} | lib type optional)]
+						[child   ({type: int} | lib type optional)]
+					]
+				}
+			]
+		}]
 	]
 }
 
@@ -121,9 +141,9 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 		}
 	]
 	backmatter: "
-if $p.task != null {
-	$env.state = state read task $p.task | get state
-	$env.id = $p.id
+if $p.payload.task? != null {
+	$env.state = state read task $p.payload.task | get state
+	$env.id = $p.payload.task
 } else {
 	let results = util exec form ./required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
@@ -135,11 +155,11 @@ if $p.task != null {
 		cancel
 	}
 	let state = {
-		parent: null
-        start: null
-        end: null
-        prereqs: []
-        postreqs: []
+		parent: $p.payload.parent?
+        start: $p.payload.start?
+        end: $p.payload.end?
+        prereqs: (if $p.payload.prereq? { [$p.payload.prereq] } else { [] })
+        postreqs: (if $p.payload.postreq? { [$p.payload.postreq] } else { [] })
 
 		duration_cfg: {
             opt: 2
