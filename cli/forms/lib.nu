@@ -7,21 +7,13 @@ export def "type optional" []: any -> any {
 
 export def "type proto timestamp" []: nothing -> any {
 	{
-		type: record
-		fields: [[key value];
-			[seconds {type: int}]
-			[nanos {type: int}]
-		]
+		type: string
 	}
 }
 
 export def "type proto duration" []: nothing -> any {
 	{
-		type: record
-		fields: [[key value];
-			[seconds {type: int}]
-			[nanos {type: int}]
-		]
+		type: string
 	}
 }
 

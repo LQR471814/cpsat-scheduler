@@ -1,1 +1,1 @@
-nu -e (open ./main.nu)
+nu -e "source main.nu"

@@ -82,8 +82,8 @@ export def "exec form" [script: path, params: any]: nothing -> any { # nu-lint-i
 			p_out: $"/tmp/cpsat-cli.form-state.out.($id)"
 		}
         $params | to msgpack | save $env.p_in # nu-lint-ignore: catch_builtin_error_try
-        let res = nu -e open $script
-        open $env.p_out | from msgpack # nu-lint-ignore: catch_builtin_error_try
+        nu -e $"source '($script)'"
+        let res = open $env.p_out | from msgpack # nu-lint-ignore: catch_builtin_error_try
         try {
             rm $env.p_in
             rm $env.p_out
@@ -105,35 +105,26 @@ export def "save form output" []: any -> nothing {
 }
 
 
-def epoch []: nothing -> datetime {
-    0 | into datetime
-}
-
-
 # from proto time converts a protobuf timestamp into a nushell datetime
-export def "from proto time" []: record<seconds: int, nanos: int> -> datetime {
-    (epoch) + $in.seconds * 1sec + $in.nanos * 1ns
+export def "from proto time" []: string -> datetime {
+    into datetime | date to-timezone local
 }
 
 
 # to proto time converts a nushell datetime into a protobuf timestamp
-export def "to proto time" []: datetime -> record<seconds: int, nanos: int> {
-    let dur: duration = $in - (epoch)
-    {
-        seconds: ($dur // 1sec) # nu-lint-ignore: division_to_format_duration
-        nanos: ($dur mod 1sec | into int)
-    }
+export def "to proto time" []: datetime -> string {
+    format date %+
 }
 
 
 # from proto dur converts a protobuf timestamp into a nushell datetime
-export def "from proto dur" []: record<seconds: int, nanos: int> -> duration {
-    $in.seconds * 1sec + $in.nanos * 1ns
+export def "from proto dur" []: string -> duration {
+    let seconds = str substring 0..<(($in | str length) - 1) | into float
+    $seconds * 1sec
 }
 
 
 # to proto dur converts a nushell datetime into a protobuf timestamp
-export def "to proto dur" []: duration -> record<seconds: int, nanos: int> { {
-    seconds: ($in // 1sec)  # nu-lint-ignore: division_to_format_duration
-    nanos: ($in mod 1sec | into int)
-} }
+export def "to proto dur" []: duration -> string {
+    $"($in / 1sec)s"
+}

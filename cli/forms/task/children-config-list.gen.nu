@@ -1,7 +1,7 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
 
-let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<record<seconds: int, nanos: int>, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
+let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -9,7 +9,7 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def "returns post process" []: any -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<record<seconds: int, nanos: int>, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
+def "returns post process" []: any -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
     reject task
 }
 
@@ -53,15 +53,15 @@ def "unset exp_cost" []: nothing -> nothing {
     null | set exp_cost
 }
 
-def "get deadline" []: nothing -> record<seconds: int, nanos: int> {
+def "get deadline" []: nothing -> string {
     $env.state.deadline
 }
 
-def "set deadline" []: oneof<record<seconds: int, nanos: int>, nothing> -> nothing {
+def "set deadline" []: oneof<string, nothing> -> nothing {
     $env.state.deadline = $in
 }
 
-def "validate deadline" []: record<seconds: int, nanos: int> -> bool {
+def "validate deadline" []: string -> bool {
     $env.state.deadline != null
 }
 

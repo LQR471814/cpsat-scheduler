@@ -39,11 +39,11 @@ def "unset req" []: nothing -> nothing {
     null | set req
 }
 
-def "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+def "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
     $env.state | select parent start end prereqs postreqs
 }
 
-def "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
+def "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
     let value = $in                                                                    
     $env.state = $env.state | merge ($value | select parent start end prereqs postreqs)
 }
@@ -59,11 +59,11 @@ def "unset opt" []: nothing -> nothing {
     null | set opt
 }
 
-def "get dur" []: nothing -> oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing> {
+def "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing> {
     $env.state | get dur_cfg
 }
 
-def "set dur" []: oneof<oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing>, nothing> -> nothing {
+def "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, nothing> -> nothing {
     $env.state.dur_cfg = $in
 }
 

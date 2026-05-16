@@ -13,31 +13,35 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(profiles\)"
 }
 
-def "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: record<seconds: int, nanos: int>, universe_start: record<seconds: int, nanos: int>, gen_pert_choices: oneof<int, nothing>, > {
-    $env.state | default []
+def "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, > {
+    $env.state
 }
 
-def "set profiles" []: oneof<table<id: int, name: string, atomic_timescale: record<seconds: int, nanos: int>, universe_start: record<seconds: int, nanos: int>, gen_pert_choices: oneof<int, nothing>, >, nothing> -> nothing {
+def "set profiles" []: oneof<table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, >, nothing> -> nothing {
     $env.state = $in
 }
 
-def "remove profiles" []: nothing -> nothing {
-    let element = get profiles                                 
-    | each { to json -r }                                      
-    | enumerate                                                
-    | rename id name                                           
-    | util choose table --header "Choose a profiles to remove:"
-    if $element == null {                                      
-        return false                                           
-    }                                                          
-    get profiles | drop nth $element.id | set profiles         
+def "remove profile" []: nothing -> nothing {
+    let element = get profiles                                    
+        | select id name                                          
+        | util choose table --header 'Choose a profile to remove:'
+    if $element == null {                                         
+        return false                                              
+    }                                                             
+    state remove profile $element.id                              
+    $env.state = state list profiles                              
+}
+
+def "add profile" [name: string, atomic_timescale: duration, universe_start: datetime, --pert_choices: int]: nothing -> nothing {
+    state create profile $name ($atomic_timescale | util to proto dur) ($universe_start | util to proto time) ($pert_choices | default 4) | complete
+    $env.state = state list profiles                                                                                                                
 }
 
 def status []: nothing -> nothing {
-    util print label 'Profiles'    
-    print ($env.state | default [])
-    print ""                       
-                                   
+    util print label 'Profiles'
+    print ($env.state)         
+    print ""                   
+                               
 }
 
 def next []: nothing -> bool {

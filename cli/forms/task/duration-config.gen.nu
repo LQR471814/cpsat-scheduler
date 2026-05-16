@@ -1,7 +1,7 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
 
-let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing>, >> = util get form params
+let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, >> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -11,7 +11,7 @@ $env.state = $p.state | params post process
 
 
 
-def "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing>, > -> any {
+def "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > -> any {
     update cfg { default {                             
             pert: {                                    
                 opt: null                              
@@ -26,7 +26,7 @@ def "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<recor
     | update cfg.deadline? { util from proto time }    
 }
 
-def "returns post process" []: any -> record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: record<seconds: int, nanos: int>, exp: record<seconds: int, nanos: int>, pes: record<seconds: int, nanos: int>>, deadline: record<seconds: int, nanos: int>, total_cost: int>, nothing>, > {
+def "returns post process" []: any -> record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > {
     update cfg.pert.opt? { util to proto duration }  
     | update cfg.pert.exp? { util to proto duration }
     | update cfg.pert.pes? { util to proto duration }

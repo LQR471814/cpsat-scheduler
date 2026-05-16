@@ -1,7 +1,7 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
 
-let p: record<prompt_prefix: string, state: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>> = util get form params
+let p: record<prompt_prefix: string, state: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -11,12 +11,12 @@ $env.state = $p.state | params post process
 
 
 
-def "params post process" []: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> -> any {
+def "params post process" []: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> -> any {
     update start { util from proto time }    
         | update end { util from proto time }
 }
 
-def "returns post process" []: any -> record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<record<seconds: int, nanos: int>, nothing>, end: oneof<record<seconds: int, nanos: int>, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+def "returns post process" []: any -> record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
     update start { util to proto time }    
         | update end { util to proto time }
 }
@@ -41,15 +41,15 @@ def "unset parent" []: nothing -> nothing {
     null | set parent
 }
 
-def "get start" []: nothing -> record<seconds: int, nanos: int> {
+def "get start" []: nothing -> string {
     $env.state.start
 }
 
-def "set start" []: oneof<record<seconds: int, nanos: int>, nothing> -> nothing {
+def "set start" []: oneof<string, nothing> -> nothing {
     $env.state.start = $in
 }
 
-def "validate start" []: record<seconds: int, nanos: int> -> bool {
+def "validate start" []: string -> bool {
     if $env.state.start != null and $env.state.end != null {
         $env.state.start < $env.state.end                   
     } else { true }                                         
@@ -63,15 +63,15 @@ def "unset start" []: nothing -> nothing {
     null | set start
 }
 
-def "get end" []: nothing -> record<seconds: int, nanos: int> {
+def "get end" []: nothing -> string {
     $env.state.end
 }
 
-def "set end" []: oneof<record<seconds: int, nanos: int>, nothing> -> nothing {
+def "set end" []: oneof<string, nothing> -> nothing {
     $env.state.end = $in
 }
 
-def "validate end" []: record<seconds: int, nanos: int> -> bool {
+def "validate end" []: string -> bool {
     if $env.state.start != null and $env.state.end != null {
         $env.state.start < $env.state.end                   
     } else { true }                                         
