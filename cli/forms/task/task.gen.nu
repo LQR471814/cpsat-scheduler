@@ -29,7 +29,10 @@ def "set req" []: oneof<record<name: string, desc: string, timescale: int>, noth
 }
 
 def req []: nothing -> nothing {
-    util exec form ./required-fields.gen.nu (get req)
+    util exec form ./required-fields.gen.nu {             
+                            prompt_prefix: (prompt prefix)
+                            state: (get req)              
+                        }                                 
 }
 
 def "unset req" []: nothing -> nothing {
@@ -46,7 +49,10 @@ def "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, noth
 }
 
 def opt []: nothing -> nothing {
-    util exec form ./optional-fields.gen.nu (get opt | merge { id: $env.id })
+    util exec form ./optional-fields.gen.nu {   
+        prompt_prefix: (prompt prefix)          
+        state: (get opt | merge { id: $env.id })
+    }                                           
 }
 
 def "unset opt" []: nothing -> nothing {
@@ -62,7 +68,10 @@ def "set dur" []: oneof<oneof<record<pert: record<opt: record<seconds: int, nano
 }
 
 def dur []: nothing -> nothing {
-    util exec form ./duration-config.gen.nu ({ task: $env.id, cfg: (get dur) })
+    util exec form ./duration-config.gen.nu {   
+        prompt_prefix: (prompt prefix)          
+        state: { task: $env.id, cfg: (get dur) }
+    }                                           
 }
 
 def "unset dur" []: nothing -> nothing {
@@ -78,7 +87,13 @@ def "set children" []: oneof<table, nothing> -> nothing {
 }
 
 def children []: nothing -> nothing {
-    util exec form ./children-config-list.gen.nu ({ task: $env.id, children_cfgs: (get children) })
+    util exec form ./children-config-list.gen.nu {
+        prompt_prefix: (prompt prefix)            
+        state: {                                  
+            task: $env.id                         
+            children_cfgs: (get children)         
+        }                                         
+    }                                             
 }
 
 def "unset children" []: nothing -> nothing {
@@ -146,9 +161,11 @@ if $p.payload.task? != null {
 } else {
 	let results = util exec form ./required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
-		name: null
-		desc: null
-		timescale: null
+		state: {
+			name: null
+			desc: null
+			timescale: null
+		}
 	}
 	if $results == null {
 		cancel

@@ -40,7 +40,7 @@ def "remove configs" []: nothing -> nothing {
     if $element == null {                                     
         return false                                          
     }                                                         
-    set configs (get configs | drop nth $element.id)          
+    get configs | drop nth $element.id | set configs          
 }
 
 def "add configs" []: nothing -> nothing {

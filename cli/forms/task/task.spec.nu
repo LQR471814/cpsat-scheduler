@@ -1,7 +1,5 @@
 use ../lib.nu
 
-const script_path = path self | path dirname # nu-lint-ignore: dont_mix_different_effects
-
 let state = {
 	type: record,
 	fields: [[key value];
@@ -86,7 +84,10 @@ $env.state = $env.state | merge ($value | select name desc timescale)"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./required-fields.gen.nu (get req)"
+					set: "util exec form ./required-fields.gen.nu {
+						prompt_prefix: (prompt prefix)
+						state: (get req)
+					}"
 				}
 			}
 		}
@@ -104,7 +105,10 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./optional-fields.gen.nu (get opt | merge { id: $env.id })"
+					set: "util exec form ./optional-fields.gen.nu {
+	prompt_prefix: (prompt prefix)
+	state: (get opt | merge { id: $env.id })
+}"
 				}
 			}
 		}
@@ -121,7 +125,10 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./duration-config.gen.nu ({ task: $env.id, cfg: (get dur) })"
+					set: "util exec form ./duration-config.gen.nu {
+	prompt_prefix: (prompt prefix)
+	state: { task: $env.id, cfg: (get dur) }
+}"
 				}
 			}
 		}
@@ -135,7 +142,13 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./children-config-list.gen.nu ({ task: $env.id, children_cfgs: (get children) })"
+					set: "util exec form ./children-config-list.gen.nu {
+	prompt_prefix: (prompt prefix)
+	state: {
+		task: $env.id
+		children_cfgs: (get children)
+	}
+}"
 				}
 			}
 		}
@@ -147,9 +160,11 @@ if $p.payload.task? != null {
 } else {
 	let results = util exec form ./required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
-		name: null
-		desc: null
-		timescale: null
+		state: {
+			name: null
+			desc: null
+			timescale: null
+		}
 	}
 	if $results == null {
 		cancel

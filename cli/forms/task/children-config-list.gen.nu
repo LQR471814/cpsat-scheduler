@@ -94,7 +94,7 @@ def "remove children" []: nothing -> nothing {
     if $element == null {                                      
         return false                                           
     }                                                          
-    set children (get children | drop nth $element.id)         
+    get children | drop nth $element.id | set children         
 }
 
 def "add children" []: nothing -> nothing {

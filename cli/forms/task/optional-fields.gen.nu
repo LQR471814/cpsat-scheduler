@@ -106,7 +106,7 @@ def "remove prereqs" []: nothing -> nothing {
     if $element == null {                                     
         return false                                          
     }                                                         
-    set prereqs (get prereqs | drop nth $element.id)          
+    get prereqs | drop nth $element.id | set prereqs          
 }
 
 def "add prereqs" []: nothing -> nothing {
@@ -136,7 +136,7 @@ def "remove postreqs" []: nothing -> nothing {
     if $element == null {                                      
         return false                                           
     }                                                          
-    set postreqs (get postreqs | drop nth $element.id)         
+    get postreqs | drop nth $element.id | set postreqs         
 }
 
 def "add postreqs" []: nothing -> nothing {
