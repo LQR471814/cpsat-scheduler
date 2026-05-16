@@ -46,7 +46,11 @@ let form = {
 	name: task
 	params: $state
 	returns: $state
-	closures: {}
+	closures: {
+		returns_post_process: "let input = $in
+state save task $p.profile $input
+$input"
+	}
 	fields: [
 		{
 			name: req

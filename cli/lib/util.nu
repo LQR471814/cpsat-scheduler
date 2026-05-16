@@ -105,18 +105,20 @@ export def "save form output" []: any -> nothing {
 }
 
 
-let epoch: datetime = 0 | into datetime
+def epoch []: nothing -> datetime {
+    0 | into datetime
+}
 
 
 # from proto time converts a protobuf timestamp into a nushell datetime
 export def "from proto time" []: record<seconds: int, nanos: int> -> datetime {
-    $epoch + $in.seconds * 1sec + $in.nanos * 1ns
+    (epoch) + $in.seconds * 1sec + $in.nanos * 1ns
 }
 
 
 # to proto time converts a nushell datetime into a protobuf timestamp
 export def "to proto time" []: datetime -> record<seconds: int, nanos: int> {
-    let dur: duration = $in - $epoch
+    let dur: duration = $in - (epoch)
     {
         seconds: ($dur // 1sec) # nu-lint-ignore: division_to_format_duration
         nanos: ($dur mod 1sec | into int)

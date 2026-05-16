@@ -9,6 +9,12 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
+def "returns post process" []: any -> record<task: oneof<int, nothing>, profile: int> {
+    let input = $in                  
+    state save task $p.profile $input
+    $input                           
+}
+
 def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(task\)"
 }
@@ -101,9 +107,9 @@ def next []: nothing -> bool {
 }
 
 def submit []: nothing -> nothing {
-    next                                    
-    $env.state | util save form output      
-    exit # nu-lint-ignore: exit_only_in_main
+    next                                                     
+    $env.state | returns post process | util save form output
+    exit # nu-lint-ignore: exit_only_in_main                 
 }
 
 def cancel []: nothing -> nothing {
