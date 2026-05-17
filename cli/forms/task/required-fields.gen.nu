@@ -24,71 +24,71 @@ let timescales: table<id: int, name: string> = [[id, name];
     [4128768, "128 year"]
 ]
 
-def "prompt prefix" []: nothing -> string {
+def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(required-fields\)"
 }
 
-def "get name" []: nothing -> string {
+def --env "get name" []: nothing -> string {
     $env.state.name
 }
 
-def "set name" []: oneof<string, nothing> -> nothing {
+def --env "set name" []: oneof<string, nothing> -> nothing {
     $env.state.name = $in
 }
 
-def "validate name" []: string -> bool {
+def --env "validate name" []: string -> bool {
     $env.state.name | is-not-empty
 }
 
-def name []: nothing -> nothing {
+def --env name []: nothing -> nothing {
     $env.state.name = util input text Name...
 }
 
-def "unset name" []: nothing -> nothing {
+def --env "unset name" []: nothing -> nothing {
     null | set name
 }
 
-def "get desc" []: nothing -> string {
+def --env "get desc" []: nothing -> string {
     $env.state.desc
 }
 
-def "set desc" []: oneof<string, nothing> -> nothing {
+def --env "set desc" []: oneof<string, nothing> -> nothing {
     $env.state.desc = $in
 }
 
-def "validate desc" []: string -> bool {
+def --env "validate desc" []: string -> bool {
     $env.state.desc | is-not-empty
 }
 
-def desc []: nothing -> nothing {
+def --env desc []: nothing -> nothing {
     $env.state.desc = util input text Description...
 }
 
-def "unset desc" []: nothing -> nothing {
+def --env "unset desc" []: nothing -> nothing {
     null | set desc
 }
 
-def "get unit" []: nothing -> int {
+def --env "get unit" []: nothing -> int {
     $env.state.timescale
 }
 
-def "set unit" []: oneof<int, nothing> -> nothing {
+def --env "set unit" []: oneof<int, nothing> -> nothing {
     $env.state.timescale = $in
 }
 
-def "validate unit" []: int -> bool {
+def --env "validate unit" []: int -> bool {
     $env.state.timescale | is-not-empty
 }
 
-def unit []: nothing -> nothing {
+def --env unit []: nothing -> nothing {
     $env.state.timescale = $timescales | util choose table --header 'Timescale unit:' | get id?
 }
 
-def "unset unit" []: nothing -> nothing {
+def --env "unset unit" []: nothing -> nothing {
     null | set unit
 }
 
-def status []: nothing -> nothing {
+def --env status []: nothing -> nothing {
     util print label 'Name'          
     print ($env.state.name)          
     print ""                         
@@ -101,7 +101,7 @@ def status []: nothing -> nothing {
                                      
 }
 
-def next []: nothing -> bool {
+def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data                           
     if not ($env.state.name | validate name) {                        
         name                                                          
@@ -121,18 +121,18 @@ def next []: nothing -> bool {
     true                                                              
 }
 
-def submit []: nothing -> nothing {
+def --env submit []: nothing -> nothing {
     next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def cancel []: nothing -> nothing {
+def --env cancel []: nothing -> nothing {
     null | util save form output            
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
+def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
     [[group cmd desc];                                                       
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            

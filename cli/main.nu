@@ -16,7 +16,7 @@ def profiles []: nothing -> nothing {
 	}
 }
 
-def "switch profile" []: nothing -> bool {
+def --env "switch profile" []: nothing -> bool {
 	let profile_list = state list profiles
 	if ($profile_list | is-empty) {
 		profiles

@@ -9,19 +9,19 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def "prompt prefix" []: nothing -> string {
+def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(profiles\)"
 }
 
-def "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, > {
+def --env "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, > {
     $env.state
 }
 
-def "set profiles" []: oneof<table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, >, nothing> -> nothing {
+def --env "set profiles" []: oneof<table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, >, nothing> -> nothing {
     $env.state = $in
 }
 
-def "remove profile" []: nothing -> nothing {
+def --env "remove profile" []: nothing -> nothing {
     let element = get profiles                                    
         | select id name                                          
         | util choose table --header 'Choose a profile to remove:'
@@ -32,35 +32,35 @@ def "remove profile" []: nothing -> nothing {
     $env.state = state list profiles                              
 }
 
-def "add profile" [name: string, atomic_timescale: duration, universe_start: datetime, --pert_choices: int]: nothing -> nothing {
+def --env "add profile" [name: string, atomic_timescale: duration, universe_start: datetime, --pert_choices: int]: nothing -> nothing {
     state create profile $name ($atomic_timescale | util to proto dur) ($universe_start | util to proto time) ($pert_choices | default 4) | complete
     $env.state = state list profiles                                                                                                                
 }
 
-def status []: nothing -> nothing {
+def --env status []: nothing -> nothing {
     util print label 'Profiles'
     print ($env.state)         
     print ""                   
                                
 }
 
-def next []: nothing -> bool {
+def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data
     true                                   
 }
 
-def submit []: nothing -> nothing {
+def --env submit []: nothing -> nothing {
     next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def cancel []: nothing -> nothing {
+def --env cancel []: nothing -> nothing {
     null | util save form output            
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
+def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
     [[group cmd desc];                                                       
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            

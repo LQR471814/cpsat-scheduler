@@ -9,19 +9,19 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def "prompt prefix" []: nothing -> string {
+def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(children-configs\)"
 }
 
-def "get configs" []: nothing -> table {
+def --env "get configs" []: nothing -> table {
     $env.state.children_cfgs
 }
 
-def "set configs" []: oneof<table, nothing> -> nothing {
+def --env "set configs" []: oneof<table, nothing> -> nothing {
     $env.state.children_cfgs = $in
 }
 
-def "display configs" []: table -> string {
+def --env "display configs" []: table -> string {
     [                                       
         (if ($in.desc | is-not-empty) {     
             $in.desc | str substring 0..<12 
@@ -31,7 +31,7 @@ def "display configs" []: table -> string {
     ] | str join ' '                        
 }
 
-def "remove configs" []: nothing -> nothing {
+def --env "remove configs" []: nothing -> nothing {
     let element = get configs                                 
     | each { display configs }                                
     | enumerate                                               
@@ -43,7 +43,7 @@ def "remove configs" []: nothing -> nothing {
     get configs | drop nth $element.id | set configs          
 }
 
-def "add configs" []: nothing -> nothing {
+def --env "add configs" []: nothing -> nothing {
     let results = util exec form ./children-config.gen.nu {
         task: $p.task                                      
         state: null                                        
@@ -53,30 +53,30 @@ def "add configs" []: nothing -> nothing {
     $env.state.children_cfgs ++= $results                  
 }
 
-def status []: nothing -> nothing {
+def --env status []: nothing -> nothing {
     util print label 'Configs'                        
     print ($env.state.children_cfgs | display configs)
     print ""                                          
                                                       
 }
 
-def next []: nothing -> bool {
+def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data
     true                                   
 }
 
-def submit []: nothing -> nothing {
+def --env submit []: nothing -> nothing {
     next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def cancel []: nothing -> nothing {
+def --env cancel []: nothing -> nothing {
     null | util save form output            
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
+def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
     [[group cmd desc];                                                       
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            

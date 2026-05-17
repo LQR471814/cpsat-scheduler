@@ -9,84 +9,84 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def "returns post process" []: any -> record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, > {
+def --env "returns post process" []: any -> record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, > {
     let input = $in                  
     state save task $p.profile $input
     $input                           
 }
 
-def "prompt prefix" []: nothing -> string {
+def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(task\)"
 }
 
-def "get req" []: nothing -> record<name: string, desc: string, timescale: int> {
+def --env "get req" []: nothing -> record<name: string, desc: string, timescale: int> {
     $env.state | select name desc timescale
 }
 
-def "set req" []: oneof<record<name: string, desc: string, timescale: int>, nothing> -> nothing {
+def --env "set req" []: oneof<record<name: string, desc: string, timescale: int>, nothing> -> nothing {
     let value = $in                                                      
     $env.state = $env.state | merge ($value | select name desc timescale)
 }
 
-def req []: nothing -> nothing {
+def --env req []: nothing -> nothing {
     util exec form ./required-fields.gen.nu {             
                             prompt_prefix: (prompt prefix)
                             state: (get req)              
                         }                                 
 }
 
-def "unset req" []: nothing -> nothing {
+def --env "unset req" []: nothing -> nothing {
     null | set req
 }
 
-def "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+def --env "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
     $env.state | select parent start end prereqs postreqs
 }
 
-def "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
+def --env "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
     let value = $in                                                                    
     $env.state = $env.state | merge ($value | select parent start end prereqs postreqs)
 }
 
-def opt []: nothing -> nothing {
+def --env opt []: nothing -> nothing {
     util exec form ./optional-fields.gen.nu {   
         prompt_prefix: (prompt prefix)          
         state: (get opt | merge { id: $env.id })
     }                                           
 }
 
-def "unset opt" []: nothing -> nothing {
+def --env "unset opt" []: nothing -> nothing {
     null | set opt
 }
 
-def "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing> {
+def --env "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing> {
     $env.state | get dur_cfg
 }
 
-def "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, nothing> -> nothing {
+def --env "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, nothing> -> nothing {
     $env.state.dur_cfg = $in
 }
 
-def dur []: nothing -> nothing {
+def --env dur []: nothing -> nothing {
     util exec form ./duration-config.gen.nu {   
         prompt_prefix: (prompt prefix)          
         state: { task: $env.id, cfg: (get dur) }
     }                                           
 }
 
-def "unset dur" []: nothing -> nothing {
+def --env "unset dur" []: nothing -> nothing {
     null | set dur
 }
 
-def "get children" []: nothing -> table {
+def --env "get children" []: nothing -> table {
     $env.state | get children_cfgs
 }
 
-def "set children" []: oneof<table, nothing> -> nothing {
+def --env "set children" []: oneof<table, nothing> -> nothing {
     $env.state.children_cfgs = $in
 }
 
-def children []: nothing -> nothing {
+def --env children []: nothing -> nothing {
     util exec form ./children-config-list.gen.nu {
         prompt_prefix: (prompt prefix)            
         state: {                                  
@@ -96,11 +96,11 @@ def children []: nothing -> nothing {
     }                                             
 }
 
-def "unset children" []: nothing -> nothing {
+def --env "unset children" []: nothing -> nothing {
     null | set children
 }
 
-def status []: nothing -> nothing {
+def --env status []: nothing -> nothing {
     util print label 'Required'                                  
     print ($env.state | select name desc timescale)              
     print ""                                                     
@@ -116,23 +116,23 @@ def status []: nothing -> nothing {
                                                                  
 }
 
-def next []: nothing -> bool {
+def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data
     true                                   
 }
 
-def submit []: nothing -> nothing {
+def --env submit []: nothing -> nothing {
     next                                                     
     $env.state | returns post process | util save form output
     exit # nu-lint-ignore: exit_only_in_main                 
 }
 
-def cancel []: nothing -> nothing {
+def --env cancel []: nothing -> nothing {
     null | util save form output            
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
+def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
     [[group cmd desc];                                                       
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            

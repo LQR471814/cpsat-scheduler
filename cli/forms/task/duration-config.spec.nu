@@ -53,9 +53,11 @@ let form = {
 			name: pert
 			display_name: "PERT (time estimates)"
 			type: {
-				type: list,
-				positional: [
-					{type: int}
+				type: record,
+				fields: [[key value];
+					[opt {type: int}]
+					[exp {type: int}]
+					[pes {type: int}]
 				]
 			}
 			closure_bodies: {
@@ -66,13 +68,13 @@ let form = {
 			atomic: {
 				closure_bodies: {
 					set_static: {
-						name: "set pert"
+						name: "pert"
 						params: [[key value];
 							[opt {type: int}]
 							[exp {type: int}]
 							[pes {type: int}]
 						]
-						body: "$env.state.cfg.pert = {opt: $opt, exp: $exp, pes: $pes}"
+						body: "{opt: $opt, exp: $exp, pes: $pes} | set pert"
 						in: {type: "nothing"}
 						out: {type: "nothing"}
 					}
@@ -102,7 +104,7 @@ let form = {
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util input int"
+					set: "util input int 'Expected cost...'"
 				}
 			}
 		}

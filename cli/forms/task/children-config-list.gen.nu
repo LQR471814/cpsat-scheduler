@@ -9,83 +9,83 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def "returns post process" []: any -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
+def --env "returns post process" []: any -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
     reject task
 }
 
-def "prompt prefix" []: nothing -> string {
+def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(children-config-list\)"
 }
 
-def "get desc" []: nothing -> string {
+def --env "get desc" []: nothing -> string {
     $env.state.desc
 }
 
-def "set desc" []: oneof<string, nothing> -> nothing {
+def --env "set desc" []: oneof<string, nothing> -> nothing {
     $env.state.desc = $in
 }
 
-def desc []: nothing -> nothing {
+def --env desc []: nothing -> nothing {
     $env.state.desc = util input multiline Description...
 }
 
-def "unset desc" []: nothing -> nothing {
+def --env "unset desc" []: nothing -> nothing {
     null | set desc
 }
 
-def "get exp_cost" []: nothing -> int {
+def --env "get exp_cost" []: nothing -> int {
     $env.state.exp_cost
 }
 
-def "set exp_cost" []: oneof<int, nothing> -> nothing {
+def --env "set exp_cost" []: oneof<int, nothing> -> nothing {
     $env.state.exp_cost = $in
 }
 
-def "validate exp_cost" []: int -> bool {
+def --env "validate exp_cost" []: int -> bool {
     $env.state.exp_cost != null
 }
 
-def exp_cost []: nothing -> nothing {
+def --env exp_cost []: nothing -> nothing {
     $env.state.exp_cost = util input int 'Cost... (integer)'
 }
 
-def "unset exp_cost" []: nothing -> nothing {
+def --env "unset exp_cost" []: nothing -> nothing {
     null | set exp_cost
 }
 
-def "get deadline" []: nothing -> string {
+def --env "get deadline" []: nothing -> string {
     $env.state.deadline
 }
 
-def "set deadline" []: oneof<string, nothing> -> nothing {
+def --env "set deadline" []: oneof<string, nothing> -> nothing {
     $env.state.deadline = $in
 }
 
-def "validate deadline" []: string -> bool {
+def --env "validate deadline" []: string -> bool {
     $env.state.deadline != null
 }
 
-def deadline []: nothing -> nothing {
+def --env deadline []: nothing -> nothing {
     $env.state.deadline = util choose date
 }
 
-def "unset deadline" []: nothing -> nothing {
+def --env "unset deadline" []: nothing -> nothing {
     null | set deadline
 }
 
-def "get children" []: nothing -> table<id: int, name: string> {
+def --env "get children" []: nothing -> table<id: int, name: string> {
     $env.state.children
 }
 
-def "set children" []: oneof<table<id: int, name: string>, nothing> -> nothing {
+def --env "set children" []: oneof<table<id: int, name: string>, nothing> -> nothing {
     $env.state.children = $in
 }
 
-def "validate children" []: table<id: int, name: string> -> bool {
+def --env "validate children" []: table<id: int, name: string> -> bool {
     $env.state.children | is-not-empty
 }
 
-def "remove children" []: nothing -> nothing {
+def --env "remove children" []: nothing -> nothing {
     let element = get children                                 
     | each { to json -r }                                      
     | enumerate                                                
@@ -97,13 +97,13 @@ def "remove children" []: nothing -> nothing {
     get children | drop nth $element.id | set children         
 }
 
-def "add children" []: nothing -> nothing {
+def --env "add children" []: nothing -> nothing {
     let child = state list possible relatives CHILD $p.task | util choose table --header 'Choose child to add:'
     if $child == null { return }                                                                               
     $env.state.children ++= $child                                                                             
 }
 
-def status []: nothing -> nothing {
+def --env status []: nothing -> nothing {
     util print label 'Description'  
     print ($env.state.desc)         
     print ""                        
@@ -119,7 +119,7 @@ def status []: nothing -> nothing {
                                     
 }
 
-def next []: nothing -> bool {
+def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data                              
     if not ($env.state.exp_cost | validate exp_cost) {                   
         exp_cost                                                         
@@ -139,18 +139,18 @@ def next []: nothing -> bool {
     true                                                                 
 }
 
-def submit []: nothing -> nothing {
+def --env submit []: nothing -> nothing {
     next                                                     
     $env.state | returns post process | util save form output
     exit # nu-lint-ignore: exit_only_in_main                 
 }
 
-def cancel []: nothing -> nothing {
+def --env cancel []: nothing -> nothing {
     null | util save form output            
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
+def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
     [[group cmd desc];                                                       
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            

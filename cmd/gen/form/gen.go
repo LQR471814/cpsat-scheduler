@@ -72,10 +72,11 @@ func (d TypeDef) Render(w io.Writer) {
 }
 
 func (c Closure) Render(w io.Writer) {
+	// we set --env by default because environment may be set inside functions
 	if strings.Contains(c.Name, " ") {
-		fmt.Fprintf(w, `def "%s" [`, c.Name)
+		fmt.Fprintf(w, `def --env "%s" [`, c.Name)
 	} else {
-		fmt.Fprintf(w, `def %s [`, c.Name)
+		fmt.Fprintf(w, `def --env %s [`, c.Name)
 	}
 	i := 0
 	for _, entry := range c.Params {

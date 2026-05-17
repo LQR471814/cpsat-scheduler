@@ -11,7 +11,7 @@ $env.state = $p.state | params post process
 
 
 
-def "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > -> any {
+def --env "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > -> any {
     update cfg { default {                             
             pert: {                                    
                 opt: null                              
@@ -26,74 +26,74 @@ def "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<recor
     | update cfg.deadline? { util from proto time }    
 }
 
-def "returns post process" []: any -> record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > {
+def --env "returns post process" []: any -> record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > {
     update cfg.pert.opt? { util to proto duration }  
     | update cfg.pert.exp? { util to proto duration }
     | update cfg.pert.pes? { util to proto duration }
     | update cfg.deadline? { util to proto time }    
 }
 
-def "prompt prefix" []: nothing -> string {
+def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(duration-config\)"
 }
 
-def "get pert" []: nothing -> list<int> {
+def --env "get pert" []: nothing -> record<opt: int, exp: int, pes: int> {
     $env.state.cfg.pert
 }
 
-def "set pert" []: oneof<list<int>, nothing> -> nothing {
+def --env "set pert" []: oneof<record<opt: int, exp: int, pes: int>, nothing> -> nothing {
     $env.state.cfg.pert = $in
 }
 
-def "validate pert" []: list<int> -> bool {
+def --env "validate pert" []: record<opt: int, exp: int, pes: int> -> bool {
     $env.state.cfg.pert.opt != null and $env.state.cfg.pert.exp != null and $env.state.cfg.pert.pes != null
 }
 
-def "set pert" [opt: int, exp: int, pes: int]: nothing -> nothing {
-    $env.state.cfg.pert = {opt: $opt, exp: $exp, pes: $pes}
+def --env pert [opt: int, exp: int, pes: int]: nothing -> nothing {
+    {opt: $opt, exp: $exp, pes: $pes} | set pert
 }
 
-def "unset pert" []: nothing -> nothing {
+def --env "unset pert" []: nothing -> nothing {
     null | set pert
 }
 
-def "get deadline" []: nothing -> oneof<datetime, nothing> {
+def --env "get deadline" []: nothing -> oneof<datetime, nothing> {
     $env.state.cfg.deadline
 }
 
-def "set deadline" []: oneof<oneof<datetime, nothing>, nothing> -> nothing {
+def --env "set deadline" []: oneof<oneof<datetime, nothing>, nothing> -> nothing {
     
 }
 
-def deadline []: nothing -> nothing {
+def --env deadline []: nothing -> nothing {
     util choose date
 }
 
-def "unset deadline" []: nothing -> nothing {
+def --env "unset deadline" []: nothing -> nothing {
     null | set deadline
 }
 
-def "get cost" []: nothing -> int {
+def --env "get cost" []: nothing -> int {
     $env.state.cfg.total_cost
 }
 
-def "set cost" []: oneof<int, nothing> -> nothing {
+def --env "set cost" []: oneof<int, nothing> -> nothing {
     
 }
 
-def "validate cost" []: int -> bool {
+def --env "validate cost" []: int -> bool {
     $env.state.cfg.total_cost != null
 }
 
-def cost []: nothing -> nothing {
-    util input int
+def --env cost []: nothing -> nothing {
+    util input int 'Expected cost...'
 }
 
-def "unset cost" []: nothing -> nothing {
+def --env "unset cost" []: nothing -> nothing {
     null | set cost
 }
 
-def status []: nothing -> nothing {
+def --env status []: nothing -> nothing {
     util print label 'PERT (time estimates)'                      
     print ($env.state.cfg.pert)                                   
     print ""                                                      
@@ -106,7 +106,7 @@ def status []: nothing -> nothing {
                                                                   
 }
 
-def next []: nothing -> bool {
+def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data                                
     if not ($env.state.cfg.pert | validate pert) {                         
         print "set pert with 'set pert'"                                   
@@ -120,18 +120,18 @@ def next []: nothing -> bool {
     true                                                                   
 }
 
-def submit []: nothing -> nothing {
+def --env submit []: nothing -> nothing {
     next                                                     
     $env.state | returns post process | util save form output
     exit # nu-lint-ignore: exit_only_in_main                 
 }
 
-def cancel []: nothing -> nothing {
+def --env cancel []: nothing -> nothing {
     null | util save form output            
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
+def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
     [[group cmd desc];                                                       
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
