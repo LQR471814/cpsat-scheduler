@@ -267,7 +267,7 @@ func (d FieldDef) validateFn() Closure {
 	return Closure{
 		Name:   fmt.Sprintf("validate %s", d.Name),
 		Params: nil,
-		In:     d.Type,
+		In:     TypeDef{Type: "oneof", Positional: []TypeDef{d.Type, nullType}},
 		Out:    boolType,
 		Body:   *d.ClosureBodies.Validate,
 	}
@@ -337,6 +337,7 @@ $env.state = $p.state`, cmd_prompt_prefix)
 
 func (f Form) statusFn() Closure {
 	var body strings.Builder
+	fmt.Fprintf(&body, "util print section title 'Form: %s'\n", f.Name)
 	for _, field := range f.Fields {
 		fmt.Fprintf(&body, "util print label '%s'\n", field.DisplayName)
 		if field.ClosureBodies.DisplayValue != nil {
@@ -470,10 +471,14 @@ func (f Form) returnsPostProcessFn() Closure {
 }
 
 func (f Form) helpFn() Closure {
+	var fields strings.Builder
+	for _, f := range f.Fields {
+		fmt.Fprintf(&fields, "'%s'\n", f.Name)
+	}
 	return Closure{
 		Name:   cmd_help,
 		Params: nil,
-		Body: Block(`[[group cmd desc];
+		Body: Block(fmt.Sprintf(`print [[group cmd desc];
 	[common "status, s"       "Show form status."]
 	[null   "next, n"         "Fill in next unfilled field."]
 	[null   "submit, done, d" "Submit form."]
@@ -485,16 +490,12 @@ func (f Form) helpFn() Closure {
 	[lists  "add <field>"     "Add to list."]
 	[null   "list <field>"    "List elements."]
 	[null   "remove <field>"  "Remove from list interactively."]
-]`),
-		In: nullType,
-		Out: TypeDef{
-			Type: "table",
-			Fields: []KeyValue[TypeDef]{
-				{"group", TypeDef{Type: "oneof", Positional: []TypeDef{stringType, nullType}}},
-				{"cmd", stringType},
-				{"desc", stringType},
-			},
-		},
+]
+print ([
+	%s
+] | wrap fields)`, fields.String())),
+		In:  nullType,
+		Out: nullType,
 	}
 }
 
@@ -503,7 +504,10 @@ func (f Form) renderAliasBlock(w io.Writer) {
 alias n = next
 alias done = submit
 alias d = submit
-alias c = cancel`)
+alias c = cancel
+
+status
+help`)
 }
 
 func (f Form) Render(w io.Writer) {
@@ -545,10 +549,10 @@ func (f Form) Render(w io.Writer) {
 	f.helpFn().Render(w)
 	renderMargin(w)
 
-	f.renderAliasBlock(w)
-	renderMargin(w)
-
 	if f.Backmatter != nil {
 		fmt.Fprint(w, *f.Backmatter)
 	}
+
+	f.renderAliasBlock(w)
+	renderMargin(w)
 }

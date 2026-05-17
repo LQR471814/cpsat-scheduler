@@ -34,7 +34,7 @@ def --env "set parent" []: oneof<record<id: int, name: string>, nothing> -> noth
 }
 
 def --env parent []: nothing -> nothing {
-    $env.state.parent = state list possible relatives PARENT $p.id | util choose table --header 'Choose parent'
+    $env.state.parent = state list possible relatives PARENT $p.state.id | util choose table --header 'Choose parent'
 }
 
 def --env "unset parent" []: nothing -> nothing {
@@ -49,7 +49,7 @@ def --env "set start" []: oneof<string, nothing> -> nothing {
     $env.state.start = $in
 }
 
-def --env "validate start" []: string -> bool {
+def --env "validate start" []: oneof<string, nothing> -> bool {
     if $env.state.start != null and $env.state.end != null {
         $env.state.start < $env.state.end                   
     } else { true }                                         
@@ -71,7 +71,7 @@ def --env "set end" []: oneof<string, nothing> -> nothing {
     $env.state.end = $in
 }
 
-def --env "validate end" []: string -> bool {
+def --env "validate end" []: oneof<string, nothing> -> bool {
     if $env.state.start != null and $env.state.end != null {
         $env.state.start < $env.state.end                   
     } else { true }                                         
@@ -110,9 +110,9 @@ def --env "remove prereqs" []: nothing -> nothing {
 }
 
 def --env "add prereqs" []: nothing -> nothing {
-    let chosen = state list possible relatives PREREQ $p.id | util choose table --header 'Add a task as a prerequisite:'
-    if $chosen == null { return }                                                                                       
-    $env.state.prereqs ++= $chosen                                                                                      
+    let chosen = state list possible relatives PREREQ $p.state.id | util choose table --header 'Add a task as a prerequisite:'
+    if $chosen == null { return }                                                                                             
+    $env.state.prereqs ++= $chosen                                                                                            
 }
 
 def --env "get postreqs" []: nothing -> table<id: int, name: string> {
@@ -140,28 +140,29 @@ def --env "remove postreqs" []: nothing -> nothing {
 }
 
 def --env "add postreqs" []: nothing -> nothing {
-    let chosen = state list possible relatives POSTREQ $p.id | util choose table --header 'Add a task as a postrequisite:'
-    if $chosen == null { return }                                                                                         
-    $env.state.postreqs ++= $chosen                                                                                       
+    let chosen = state list possible relatives POSTREQ $p.state.id | util choose table --header 'Add a task as a postrequisite:'
+    if $chosen == null { return }                                                                                               
+    $env.state.postreqs ++= $chosen                                                                                             
 }
 
 def --env status []: nothing -> nothing {
-    util print label 'Parent'                     
-    print ($env.state.parent)                     
-    print ""                                      
-    util print label 'Must start after'           
-    print ($env.state.start)                      
-    print ""                                      
-    util print label 'Must end before'            
-    print ($env.state.end)                        
-    print ""                                      
-    util print label 'Prerequisites'              
-    print ($env.state.prereqs | display prereqs)  
-    print ""                                      
-    util print label 'Postrequisites'             
-    print ($env.state.postreqs | display postreqs)
-    print ""                                      
-                                                  
+    util print section title 'Form: optional-fields'
+    util print label 'Parent'                       
+    print ($env.state.parent)                       
+    print ""                                        
+    util print label 'Must start after'             
+    print ($env.state.start)                        
+    print ""                                        
+    util print label 'Must end before'              
+    print ($env.state.end)                          
+    print ""                                        
+    util print label 'Prerequisites'                
+    print ($env.state.prereqs | display prereqs)    
+    print ""                                        
+    util print label 'Postrequisites'               
+    print ($env.state.postreqs | display postreqs)  
+    print ""                                        
+                                                    
 }
 
 def --env next []: nothing -> bool {
@@ -190,8 +191,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -204,6 +205,14 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'parent'                                                             
+    'start'                                                                  
+    'end'                                                                    
+    'prereqs'                                                                
+    'postreqs'                                                               
+                                                                             
+    ] | wrap fields)                                                         
 }
 
 alias s = status
@@ -213,3 +222,5 @@ alias d = submit
 alias c = cancel
 
 status
+help
+

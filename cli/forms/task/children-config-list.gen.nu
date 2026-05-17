@@ -41,7 +41,7 @@ def --env "set exp_cost" []: oneof<int, nothing> -> nothing {
     $env.state.exp_cost = $in
 }
 
-def --env "validate exp_cost" []: int -> bool {
+def --env "validate exp_cost" []: oneof<int, nothing> -> bool {
     $env.state.exp_cost != null
 }
 
@@ -61,7 +61,7 @@ def --env "set deadline" []: oneof<string, nothing> -> nothing {
     $env.state.deadline = $in
 }
 
-def --env "validate deadline" []: string -> bool {
+def --env "validate deadline" []: oneof<string, nothing> -> bool {
     $env.state.deadline != null
 }
 
@@ -81,7 +81,7 @@ def --env "set children" []: oneof<table<id: int, name: string>, nothing> -> not
     $env.state.children = $in
 }
 
-def --env "validate children" []: table<id: int, name: string> -> bool {
+def --env "validate children" []: oneof<table<id: int, name: string>, nothing> -> bool {
     $env.state.children | is-not-empty
 }
 
@@ -98,25 +98,26 @@ def --env "remove children" []: nothing -> nothing {
 }
 
 def --env "add children" []: nothing -> nothing {
-    let child = state list possible relatives CHILD $p.task | util choose table --header 'Choose child to add:'
-    if $child == null { return }                                                                               
-    $env.state.children ++= $child                                                                             
+    let child = state list possible relatives CHILD $p.state.task | util choose table --header 'Choose child to add:'
+    if $child == null { return }                                                                                     
+    $env.state.children ++= $child                                                                                   
 }
 
 def --env status []: nothing -> nothing {
-    util print label 'Description'  
-    print ($env.state.desc)         
-    print ""                        
-    util print label 'Expected cost'
-    print ($env.state.exp_cost)     
-    print ""                        
-    util print label 'Deadline'     
-    print ($env.state.deadline)     
-    print ""                        
-    util print label 'Children'     
-    print ($env.state.children)     
-    print ""                        
-                                    
+    util print section title 'Form: children-config-list'
+    util print label 'Description'                       
+    print ($env.state.desc)                              
+    print ""                                             
+    util print label 'Expected cost'                     
+    print ($env.state.exp_cost)                          
+    print ""                                             
+    util print label 'Deadline'                          
+    print ($env.state.deadline)                          
+    print ""                                             
+    util print label 'Children'                          
+    print ($env.state.children)                          
+    print ""                                             
+                                                         
 }
 
 def --env next []: nothing -> bool {
@@ -150,8 +151,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -164,6 +165,13 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'desc'                                                               
+    'exp_cost'                                                               
+    'deadline'                                                               
+    'children'                                                               
+                                                                             
+    ] | wrap fields)                                                         
 }
 
 alias s = status
@@ -173,3 +181,5 @@ alias d = submit
 alias c = cancel
 
 status
+help
+

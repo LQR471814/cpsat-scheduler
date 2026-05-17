@@ -32,9 +32,9 @@ def --env "switch profile" []: nothing -> bool {
 	true
 }
 
-def "new task" []: nothing -> nothing {
+def --env "new task" []: nothing -> nothing {
 	util exec form ./forms/task/task.gen.nu {
-		prompt_prefix: ""
+		prompt_prefix: (prompt prefix)
 		state: {
 			profile: $env.profile
 			payload: {}
@@ -43,7 +43,18 @@ def "new task" []: nothing -> nothing {
 	null
 }
 
+def help []: nothing -> nothing {
+	print [[cmd help];
+		[profiles "Manage profiles"]
+		['switch profile' "Switch to a different profile"]
+		['new task' "Create a task"]]
+}
+
 if not (switch profile) {
 	exit
 }
+
+alias c = exit
+
+help
 

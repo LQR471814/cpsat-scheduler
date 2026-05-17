@@ -38,10 +38,11 @@ def --env "add profile" [name: string, atomic_timescale: duration, universe_star
 }
 
 def --env status []: nothing -> nothing {
-    util print label 'Profiles'
-    print ($env.state)         
-    print ""                   
-                               
+    util print section title 'Form: profiles'
+    util print label 'Profiles'              
+    print ($env.state)                       
+    print ""                                 
+                                             
 }
 
 def --env next []: nothing -> bool {
@@ -60,8 +61,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -74,12 +75,18 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'profiles'                                                           
+                                                                             
+    ] | wrap fields)                                                         
 }
 
-alias s = status
+$env.state = state list profilesalias s = status
 alias n = next
 alias done = submit
 alias d = submit
 alias c = cancel
 
-$env.state = state list profiles
+status
+help
+

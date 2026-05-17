@@ -68,7 +68,7 @@ let form = {
 		}
 		{
 			name: unit
-			display_name: "Timescale unit"
+			display_name: "Timescale unit (bounds maximum duration)"
 			type: {type: int}
 			closure_bodies: {
 				validate: "$env.state.timescale | is-not-empty"
@@ -82,7 +82,6 @@ let form = {
 			}
 		}
 	]
-	backmatter: status
 }
 
 const script_path = path self

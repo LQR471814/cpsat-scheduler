@@ -32,15 +32,15 @@ let form = {
 			}
 			list: {
 				closure_bodies: {
-					add: "let results = util exec form ./children-config.gen.nu {
-	task: $p.task
+					add: "let results = util exec form ./forms/task/children-config.gen.nu {
+	task: $p.state.task
 	state: null
 	prompt_prefix: (prompt prefix)
 }
 if $results == null { return }
 $env.state.children_cfgs ++= $results"
-					edit: "let result = util exec form ./children-config.gen.nu {
-	task: $p.task
+					edit: "let result = util exec form ./forms/task/children-config.gen.nu {
+	task: $p.state.task
 	state: $in
 	prompt_prefix: (prompt prefix)
 }
@@ -50,7 +50,6 @@ $result"
 			}
 		}
 	]
-	backmatter: status
 }
 
 const self_path = path self

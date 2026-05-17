@@ -19,7 +19,7 @@ export def "print label" [text: string]: nothing -> nothing { gum style --foregr
 
 
 # print section title prints a section title
-export def "print section title" [text: string]: nothing -> nothing { gum style --align center --width 30 --border hidden normal $text }
+export def "print section title" [text: string]: nothing -> nothing { gum style --align center --width 30 --border hidden $text }
 
 
 # print date prints a date value (without time)

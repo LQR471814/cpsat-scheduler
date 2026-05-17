@@ -45,7 +45,7 @@ def --env "set pert" []: oneof<record<opt: int, exp: int, pes: int>, nothing> ->
     $env.state.cfg.pert = $in
 }
 
-def --env "validate pert" []: record<opt: int, exp: int, pes: int> -> bool {
+def --env "validate pert" []: oneof<record<opt: int, exp: int, pes: int>, nothing> -> bool {
     $env.state.cfg.pert.opt != null and $env.state.cfg.pert.exp != null and $env.state.cfg.pert.pes != null
 }
 
@@ -81,7 +81,7 @@ def --env "set cost" []: oneof<int, nothing> -> nothing {
     
 }
 
-def --env "validate cost" []: int -> bool {
+def --env "validate cost" []: oneof<int, nothing> -> bool {
     $env.state.cfg.total_cost != null
 }
 
@@ -94,6 +94,7 @@ def --env "unset cost" []: nothing -> nothing {
 }
 
 def --env status []: nothing -> nothing {
+    util print section title 'Form: duration-config'              
     util print label 'PERT (time estimates)'                      
     print ($env.state.cfg.pert)                                   
     print ""                                                      
@@ -131,8 +132,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -145,6 +146,12 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'pert'                                                               
+    'deadline'                                                               
+    'cost'                                                                   
+                                                                             
+    ] | wrap fields)                                                         
 }
 
 alias s = status
@@ -154,3 +161,5 @@ alias d = submit
 alias c = cancel
 
 status
+help
+

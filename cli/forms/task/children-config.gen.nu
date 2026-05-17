@@ -44,40 +44,41 @@ def --env "remove config" []: nothing -> nothing {
 }
 
 def --env "add config" []: nothing -> nothing {
-    let results = util exec form ./children-config.gen.nu {
-        task: $p.task                                      
-        state: null                                        
-        prompt_prefix: (prompt prefix)                     
-    }                                                      
-    if $results == null { return }                         
-    $env.state.children_cfgs ++= $results                  
+    let results = util exec form ./forms/task/children-config.gen.nu {
+        task: $p.state.task                                           
+        state: null                                                   
+        prompt_prefix: (prompt prefix)                                
+    }                                                                 
+    if $results == null { return }                                    
+    $env.state.children_cfgs ++= $results                             
 }
 
 def --env "edit config" []: nothing -> nothing {
-    let element = get config                                  
-    | each { display config }                                 
-    | enumerate                                               
-    | rename id name                                          
-    | util choose table --header "Choose a config to edit:"   
-    if $element == null {                                     
-        return                                                
-    }                                                         
-    try {                                                     
-        let updated = (get config | get $element.id) | do {   
-        let result = util exec form ./children-config.gen.nu {
-        task: $p.task                                         
-        state: $in                                            
-        prompt_prefix: (prompt prefix)                        
-    }                                                         
-    if $result == null { error make {msg: 'form aborted'} }   
-    $result                                                   
-        }                                                     
-        set (config | update $element.id { $updated })        
-    }                                                         
-                                                              
+    let element = get config                                             
+    | each { display config }                                            
+    | enumerate                                                          
+    | rename id name                                                     
+    | util choose table --header "Choose a config to edit:"              
+    if $element == null {                                                
+        return                                                           
+    }                                                                    
+    try {                                                                
+        let updated = (get config | get $element.id) | do {              
+        let result = util exec form ./forms/task/children-config.gen.nu {
+        task: $p.state.task                                              
+        state: $in                                                       
+        prompt_prefix: (prompt prefix)                                   
+    }                                                                    
+    if $result == null { error make {msg: 'form aborted'} }              
+    $result                                                              
+        }                                                                
+        set (config | update $element.id { $updated })                   
+    }                                                                    
+                                                                         
 }
 
 def --env status []: nothing -> nothing {
+    util print section title 'Form: children-configs'
     util print label 'Configs'                       
     print ($env.state.children_cfgs | display config)
     print ""                                         
@@ -100,8 +101,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -114,6 +115,10 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'config'                                                             
+                                                                             
+    ] | wrap fields)                                                         
 }
 
 alias s = status
@@ -123,3 +128,5 @@ alias d = submit
 alias c = cancel
 
 status
+help
+

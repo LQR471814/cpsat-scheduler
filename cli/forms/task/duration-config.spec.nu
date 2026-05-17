@@ -109,7 +109,6 @@ let form = {
 			}
 		}
 	]
-	backmatter: status
 }
 
 const self_path = path self

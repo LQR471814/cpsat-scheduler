@@ -80,14 +80,13 @@ let form = {
 			}
 			list: {
 				closure_bodies: {
-					add: "let child = state list possible relatives CHILD $p.task | util choose table --header 'Choose child to add:'
+					add: "let child = state list possible relatives CHILD $p.state.task | util choose table --header 'Choose child to add:'
 if $child == null { return }
 $env.state.children ++= $child"
 				}
 			}
 		}
 	]
-	backmatter: status
 }
 
 const self_path = path self

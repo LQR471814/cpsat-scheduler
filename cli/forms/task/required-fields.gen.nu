@@ -36,7 +36,7 @@ def --env "set name" []: oneof<string, nothing> -> nothing {
     $env.state.name = $in
 }
 
-def --env "validate name" []: string -> bool {
+def --env "validate name" []: oneof<string, nothing> -> bool {
     $env.state.name | is-not-empty
 }
 
@@ -56,7 +56,7 @@ def --env "set desc" []: oneof<string, nothing> -> nothing {
     $env.state.desc = $in
 }
 
-def --env "validate desc" []: string -> bool {
+def --env "validate desc" []: oneof<string, nothing> -> bool {
     $env.state.desc | is-not-empty
 }
 
@@ -76,7 +76,7 @@ def --env "set unit" []: oneof<int, nothing> -> nothing {
     $env.state.timescale = $in
 }
 
-def --env "validate unit" []: int -> bool {
+def --env "validate unit" []: oneof<int, nothing> -> bool {
     $env.state.timescale | is-not-empty
 }
 
@@ -89,16 +89,17 @@ def --env "unset unit" []: nothing -> nothing {
 }
 
 def --env status []: nothing -> nothing {
-    util print label 'Name'          
-    print ($env.state.name)          
-    print ""                         
-    util print label 'Desc'          
-    print ($env.state.desc)          
-    print ""                         
-    util print label 'Timescale unit'
-    print ($env.state.timescale)     
-    print ""                         
-                                     
+    util print section title 'Form: required-fields'           
+    util print label 'Name'                                    
+    print ($env.state.name)                                    
+    print ""                                                   
+    util print label 'Desc'                                    
+    print ($env.state.desc)                                    
+    print ""                                                   
+    util print label 'Timescale unit (bounds maximum duration)'
+    print ($env.state.timescale)                               
+    print ""                                                   
+                                                               
 }
 
 def --env next []: nothing -> bool {
@@ -132,8 +133,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -146,6 +147,12 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'name'                                                               
+    'desc'                                                                   
+    'unit'                                                                   
+                                                                             
+    ] | wrap fields)                                                         
 }
 
 alias s = status
@@ -155,3 +162,5 @@ alias d = submit
 alias c = cancel
 
 status
+help
+

@@ -66,7 +66,7 @@ let form = {
 	returns: $state
 	closures: {
 		returns_post_process: "let input = $in
-state save task $p.profile $input
+state save task $p.state.profile $input
 $input"
 	}
 	fields: [
@@ -84,7 +84,7 @@ $env.state = $env.state | merge ($value | select name desc timescale)"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./required-fields.gen.nu {
+					set: "util exec form ./forms/task/required-fields.gen.nu {
 						prompt_prefix: (prompt prefix)
 						state: (get req)
 					}"
@@ -105,7 +105,7 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./optional-fields.gen.nu {
+					set: "util exec form ./forms/task/optional-fields.gen.nu {
 	prompt_prefix: (prompt prefix)
 	state: (get opt | merge { id: $env.id })
 }"
@@ -125,7 +125,7 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./duration-config.gen.nu {
+					set: "util exec form ./forms/task/duration-config.gen.nu {
 	prompt_prefix: (prompt prefix)
 	state: { task: $env.id, cfg: (get dur) }
 }"
@@ -142,7 +142,7 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./children-config-list.gen.nu {
+					set: "util exec form ./forms/task/children-config-list.gen.nu {
 	prompt_prefix: (prompt prefix)
 	state: {
 		task: $env.id
@@ -154,11 +154,11 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 		}
 	]
 	backmatter: "
-if $p.payload.task? != null {
-	$env.state = state read task $p.payload.task | get state
-	$env.id = $p.payload.task
+if $p.state.payload.task? != null {
+	$env.state = state read task $p.state.payload.task | get state
+	$env.id = $p.state.payload.task
 } else {
-	let results = util exec form ./required-fields.gen.nu {
+	let results = util exec form ./forms/task/required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
 		state: {
 			name: null
@@ -170,11 +170,11 @@ if $p.payload.task? != null {
 		cancel
 	}
 	let state = {
-		parent: $p.payload.parent?
-        start: $p.payload.start?
-        end: $p.payload.end?
-        prereqs: (if $p.payload.prereq? { [$p.payload.prereq] } else { [] })
-        postreqs: (if $p.payload.postreq? { [$p.payload.postreq] } else { [] })
+		parent: $p.state.payload.parent?
+        start: $p.state.payload.start?
+        end: $p.state.payload.end?
+        prereqs: (if $p.state.payload.prereq? { [$p.state.payload.prereq] } else { [] })
+        postreqs: (if $p.state.payload.postreq? { [$p.state.payload.postreq] } else { [] })
 
 		duration_cfg: {
             opt: 2
@@ -184,7 +184,7 @@ if $p.payload.task? != null {
         }
         children_cfgs: []
 	} | merge $results
-	let id = state save task $p.profile $state | get id
+	let id = state save task $p.state.profile $state | get id
 	$env.state = $state
 	$env.id = $id
 }

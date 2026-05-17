@@ -10,9 +10,9 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 $env.state = $p.state
 
 def --env "returns post process" []: any -> record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, > {
-    let input = $in                  
-    state save task $p.profile $input
-    $input                           
+    let input = $in                        
+    state save task $p.state.profile $input
+    $input                                 
 }
 
 def --env "prompt prefix" []: nothing -> string {
@@ -29,7 +29,7 @@ def --env "set req" []: oneof<record<name: string, desc: string, timescale: int>
 }
 
 def --env req []: nothing -> nothing {
-    util exec form ./required-fields.gen.nu {             
+    util exec form ./forms/task/required-fields.gen.nu {  
                             prompt_prefix: (prompt prefix)
                             state: (get req)              
                         }                                 
@@ -49,10 +49,10 @@ def --env "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>
 }
 
 def --env opt []: nothing -> nothing {
-    util exec form ./optional-fields.gen.nu {   
-        prompt_prefix: (prompt prefix)          
-        state: (get opt | merge { id: $env.id })
-    }                                           
+    util exec form ./forms/task/optional-fields.gen.nu {
+        prompt_prefix: (prompt prefix)                  
+        state: (get opt | merge { id: $env.id })        
+    }                                                   
 }
 
 def --env "unset opt" []: nothing -> nothing {
@@ -68,10 +68,10 @@ def --env "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string
 }
 
 def --env dur []: nothing -> nothing {
-    util exec form ./duration-config.gen.nu {   
-        prompt_prefix: (prompt prefix)          
-        state: { task: $env.id, cfg: (get dur) }
-    }                                           
+    util exec form ./forms/task/duration-config.gen.nu {
+        prompt_prefix: (prompt prefix)                  
+        state: { task: $env.id, cfg: (get dur) }        
+    }                                                   
 }
 
 def --env "unset dur" []: nothing -> nothing {
@@ -87,13 +87,13 @@ def --env "set children" []: oneof<table, nothing> -> nothing {
 }
 
 def --env children []: nothing -> nothing {
-    util exec form ./children-config-list.gen.nu {
-        prompt_prefix: (prompt prefix)            
-        state: {                                  
-            task: $env.id                         
-            children_cfgs: (get children)         
-        }                                         
-    }                                             
+    util exec form ./forms/task/children-config-list.gen.nu {
+        prompt_prefix: (prompt prefix)                       
+        state: {                                             
+            task: $env.id                                    
+            children_cfgs: (get children)                    
+        }                                                    
+    }                                                        
 }
 
 def --env "unset children" []: nothing -> nothing {
@@ -101,6 +101,7 @@ def --env "unset children" []: nothing -> nothing {
 }
 
 def --env status []: nothing -> nothing {
+    util print section title 'Form: task'                        
     util print label 'Required'                                  
     print ($env.state | select name desc timescale)              
     print ""                                                     
@@ -132,8 +133,8 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, desc: string> {
-    [[group cmd desc];                                                       
+def --env help []: nothing -> nothing {
+    print [[group cmd desc];                                                 
         [common "status, s"       "Show form status."]                       
         [null   "next, n"         "Fill in next unfilled field."]            
         [null   "submit, done, d" "Submit form."]                            
@@ -146,20 +147,21 @@ def --env help []: nothing -> table<group: oneof<string, nothing>, cmd: string, 
         [null   "list <field>"    "List elements."]                          
         [null   "remove <field>"  "Remove from list interactively."]         
     ]                                                                        
+    print ([                                                                 
+        'req'                                                                
+    'opt'                                                                    
+    'dur'                                                                    
+    'children'                                                               
+                                                                             
+    ] | wrap fields)                                                         
 }
 
-alias s = status
-alias n = next
-alias done = submit
-alias d = submit
-alias c = cancel
 
-
-if $p.payload.task? != null {
-	$env.state = state read task $p.payload.task | get state
-	$env.id = $p.payload.task
+if $p.state.payload.task? != null {
+	$env.state = state read task $p.state.payload.task | get state
+	$env.id = $p.state.payload.task
 } else {
-	let results = util exec form ./required-fields.gen.nu {
+	let results = util exec form ./forms/task/required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
 		state: {
 			name: null
@@ -171,11 +173,11 @@ if $p.payload.task? != null {
 		cancel
 	}
 	let state = {
-		parent: $p.payload.parent?
-        start: $p.payload.start?
-        end: $p.payload.end?
-        prereqs: (if $p.payload.prereq? { [$p.payload.prereq] } else { [] })
-        postreqs: (if $p.payload.postreq? { [$p.payload.postreq] } else { [] })
+		parent: $p.state.payload.parent?
+        start: $p.state.payload.start?
+        end: $p.state.payload.end?
+        prereqs: (if $p.state.payload.prereq? { [$p.state.payload.prereq] } else { [] })
+        postreqs: (if $p.state.payload.postreq? { [$p.state.payload.postreq] } else { [] })
 
 		duration_cfg: {
             opt: 2
@@ -185,8 +187,16 @@ if $p.payload.task? != null {
         }
         children_cfgs: []
 	} | merge $results
-	let id = state save task $p.profile $state | get id
+	let id = state save task $p.state.profile $state | get id
 	$env.state = $state
 	$env.id = $id
 }
-	
+	alias s = status
+alias n = next
+alias done = submit
+alias d = submit
+alias c = cancel
+
+status
+help
+

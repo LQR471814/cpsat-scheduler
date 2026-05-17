@@ -38,7 +38,7 @@ let form = {
 			}
 			atomic: {
 				closure_bodies: {
-					set: "$env.state.parent = state list possible relatives PARENT $p.id | util choose table --header 'Choose parent'"
+					set: "$env.state.parent = state list possible relatives PARENT $p.state.id | util choose table --header 'Choose parent'"
 				}
 			}
 		}
@@ -87,7 +87,7 @@ let form = {
 			}
 			list: {
 				closure_bodies: {
-					add: "let chosen = state list possible relatives PREREQ $p.id | util choose table --header 'Add a task as a prerequisite:'
+					add: "let chosen = state list possible relatives PREREQ $p.state.id | util choose table --header 'Add a task as a prerequisite:'
 if $chosen == null { return }
 $env.state.prereqs ++= $chosen"
 				}
@@ -104,14 +104,13 @@ $env.state.prereqs ++= $chosen"
 			}
 			list: {
 				closure_bodies: {
-					add: "let chosen = state list possible relatives POSTREQ $p.id | util choose table --header 'Add a task as a postrequisite:'
+					add: "let chosen = state list possible relatives POSTREQ $p.state.id | util choose table --header 'Add a task as a postrequisite:'
 if $chosen == null { return }
 $env.state.postreqs ++= $chosen"
 				}
 			}
 		}
 	]
-	backmatter: status
 }
 
 const self_path = path self
