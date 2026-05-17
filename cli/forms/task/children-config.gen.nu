@@ -13,15 +13,15 @@ def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(children-configs\)"
 }
 
-def --env "get configs" []: nothing -> table {
+def --env "get config" []: nothing -> table {
     $env.state.children_cfgs
 }
 
-def --env "set configs" []: oneof<table, nothing> -> nothing {
+def --env "set config" []: oneof<table, nothing> -> nothing {
     $env.state.children_cfgs = $in
 }
 
-def --env "display configs" []: table -> string {
+def --env "display config" []: table -> string {
     [                                       
         (if ($in.desc | is-not-empty) {     
             $in.desc | str substring 0..<12 
@@ -31,19 +31,19 @@ def --env "display configs" []: table -> string {
     ] | str join ' '                        
 }
 
-def --env "remove configs" []: nothing -> nothing {
-    let element = get configs                                 
-    | each { display configs }                                
-    | enumerate                                               
-    | rename id name                                          
-    | util choose table --header "Choose a configs to remove:"
-    if $element == null {                                     
-        return false                                          
-    }                                                         
-    get configs | drop nth $element.id | set configs          
+def --env "remove config" []: nothing -> nothing {
+    let element = get config                                 
+    | each { display config }                                
+    | enumerate                                              
+    | rename id name                                         
+    | util choose table --header "Choose a config to remove:"
+    if $element == null {                                    
+        return                                               
+    }                                                        
+    get config | drop nth $element.id | set config           
 }
 
-def --env "add configs" []: nothing -> nothing {
+def --env "add config" []: nothing -> nothing {
     let results = util exec form ./children-config.gen.nu {
         task: $p.task                                      
         state: null                                        
@@ -53,11 +53,35 @@ def --env "add configs" []: nothing -> nothing {
     $env.state.children_cfgs ++= $results                  
 }
 
+def --env "edit config" []: nothing -> nothing {
+    let element = get config                                  
+    | each { display config }                                 
+    | enumerate                                               
+    | rename id name                                          
+    | util choose table --header "Choose a config to edit:"   
+    if $element == null {                                     
+        return                                                
+    }                                                         
+    try {                                                     
+        let updated = (get config | get $element.id) | do {   
+        let result = util exec form ./children-config.gen.nu {
+        task: $p.task                                         
+        state: $in                                            
+        prompt_prefix: (prompt prefix)                        
+    }                                                         
+    if $result == null { error make {msg: 'form aborted'} }   
+    $result                                                   
+        }                                                     
+        set (config | update $element.id { $updated })        
+    }                                                         
+                                                              
+}
+
 def --env status []: nothing -> nothing {
-    util print label 'Configs'                        
-    print ($env.state.children_cfgs | display configs)
-    print ""                                          
-                                                      
+    util print label 'Configs'                       
+    print ($env.state.children_cfgs | display config)
+    print ""                                         
+                                                     
 }
 
 def --env next []: nothing -> bool {

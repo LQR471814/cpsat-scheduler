@@ -1,4 +1,4 @@
-- [ ] ! Fix mutable state throughout CLI (large ref.)
+- [x] ! Fix mutable state throughout CLI (large ref.)
 - [ ] ! Impl. editing of list elem. (large ref.)
 - [ ] Impl. event input
 - [ ] Impl. progress update
@@ -7,4 +7,5 @@
 - [ ] Impl. scheduling
     - [ ] Backend
     - [ ] CLI
+- [ ] Add proper form for profiles.
 

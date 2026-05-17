@@ -64,7 +64,9 @@ type FieldAtomic struct {
 
 type FieldListClosuresBodies struct {
 	// Add is body of []: nothing -> nothing
-	Add       *Block   `json:"add"`
+	Add *Block `json:"add"`
+	// Edit is body of []: field_type -> field_type (may throw, which counts as abort)
+	Edit      *Block   `json:"edit"`
 	AddStatic *Closure `json:"add_static"`
 	Remove    *Closure `json:"remove"`
 	List      *Closure `json:"list"`

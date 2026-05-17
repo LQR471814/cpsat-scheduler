@@ -104,7 +104,7 @@ def --env "remove prereqs" []: nothing -> nothing {
     | rename id name                                          
     | util choose table --header "Choose a prereqs to remove:"
     if $element == null {                                     
-        return false                                          
+        return                                                
     }                                                         
     get prereqs | drop nth $element.id | set prereqs          
 }
@@ -134,7 +134,7 @@ def --env "remove postreqs" []: nothing -> nothing {
     | rename id name                                           
     | util choose table --header "Choose a postreqs to remove:"
     if $element == null {                                      
-        return false                                           
+        return                                                 
     }                                                          
     get postreqs | drop nth $element.id | set postreqs         
 }

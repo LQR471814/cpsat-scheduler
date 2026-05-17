@@ -92,7 +92,7 @@ def --env "remove children" []: nothing -> nothing {
     | rename id name                                           
     | util choose table --header "Choose a children to remove:"
     if $element == null {                                      
-        return false                                           
+        return                                                 
     }                                                          
     get children | drop nth $element.id | set children         
 }

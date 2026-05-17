@@ -163,6 +163,41 @@ func (d FieldDef) addFn() Closure {
 	}
 }
 
+func (d FieldDef) editFn() Closure {
+	displayValueCmd := fmt.Sprintf("to json -r")
+	if d.ClosureBodies.DisplayValue != nil {
+		displayValueCmd = fmt.Sprintf("display %s", d.Name)
+	}
+	var body Block
+	body = Block(fmt.Sprintf(
+		`let element = get %[1]s
+| each { %[2]s }
+| enumerate
+| rename id name
+| util choose table --header "Choose a %[1]s to edit:"
+if $element == null {
+	return
+}
+try {
+	let updated = (get %[1]s | get $element.id) | do {
+	%[3]s
+	}
+	set (%[1]s | update $element.id { $updated })
+}
+		`,
+		d.Name,
+		displayValueCmd,
+		*d.List.ClosuresBodies.Edit,
+	))
+	return Closure{
+		Name:   fmt.Sprintf("edit %s", d.Name),
+		Params: nil,
+		In:     nullType,
+		Out:    nullType,
+		Body:   body,
+	}
+}
+
 func (d FieldDef) removeFn() Closure {
 	if d.List.ClosuresBodies.Remove != nil {
 		return *d.List.ClosuresBodies.Remove
@@ -178,7 +213,7 @@ func (d FieldDef) removeFn() Closure {
 | rename id name
 | util choose table --header "Choose a %[1]s to remove:"
 if $element == null {
-	return false
+	return
 }
 get %[1]s | drop nth $element.id | set %[1]s`,
 		d.Name,
@@ -199,6 +234,11 @@ func (d FieldDef) renderListField(w io.Writer) {
 
 	if d.List.ClosuresBodies.Add != nil {
 		d.addFn().Render(w)
+		renderMargin(w)
+	}
+
+	if d.List.ClosuresBodies.Edit != nil {
+		d.editFn().Render(w)
 		renderMargin(w)
 	}
 

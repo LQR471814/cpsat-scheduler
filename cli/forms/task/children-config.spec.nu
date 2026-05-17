@@ -16,7 +16,7 @@ let form = {
 	closures: {}
 	fields: [
 		{
-			name: configs
+			name: config
 			display_name: Configs
 			type: {type: table}
 			closure_bodies: {
@@ -39,6 +39,13 @@ let form = {
 }
 if $results == null { return }
 $env.state.children_cfgs ++= $results"
+					edit: "let result = util exec form ./children-config.gen.nu {
+	task: $p.task
+	state: $in
+	prompt_prefix: (prompt prefix)
+}
+if $result == null { error make {msg: 'form aborted'} }
+$result"
 				}
 			}
 		}
