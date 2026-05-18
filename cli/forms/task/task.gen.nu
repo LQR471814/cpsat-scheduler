@@ -135,26 +135,25 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                 
-        [common "status, s"       "Show form status."]                       
-        [null   "next, n"         "Fill in next unfilled field."]            
-        [null   "submit, done, d" "Submit form."]                            
-        [null   "cancel, c"       "Abort form."]                             
-        [fields "<field>"         "Set field value with interactive picker."]
-        [null   "set <field>"     "Set field value."]                        
-        [null   "get <field>"     "Get field value."]                        
-        [null   "unset <field>"   "Unset field value."]                      
-        [lists  "add <field>"     "Add to list."]                            
-        [null   "list <field>"    "List elements."]                          
-        [null   "remove <field>"  "Remove from list interactively."]         
-    ]                                                                        
-    print ([                                                                 
-        'req'                                                                
-    'opt'                                                                    
-    'dur'                                                                    
-    'children'                                                               
-                                                                             
-    ] | wrap fields)                                                         
+    print [[group cmd desc];                                                
+        [common "status, s" "Show form status."]                            
+        [null "next, n" "Fill in next unfilled field."]                     
+        [null "submit, done, d" "Submit form."]                             
+        [null "cancel, c" "Abort form."]                                    
+    ["req" 'req' 'Interactively set Required fields.']                      
+    [null 'set req' 'Set Required fields via nushell command.']             
+    [null 'get req' 'Get Required fields via nushell command.']             
+    ["opt" 'opt' 'Interactively set Optional fields.']                      
+    [null 'set opt' 'Set Optional fields via nushell command.']             
+    [null 'get opt' 'Get Optional fields via nushell command.']             
+    ["dur" 'dur' 'Interactively set Duration configuration.']               
+    [null 'set dur' 'Set Duration configuration via nushell command.']      
+    [null 'get dur' 'Get Duration configuration via nushell command.']      
+    ["children" 'children' 'Interactively set Children configurations.']    
+    [null 'set children' 'Set Children configurations via nushell command.']
+    [null 'get children' 'Get Children configurations via nushell command.']
+    ]                                                                       
+                                                                            
 }
 
 

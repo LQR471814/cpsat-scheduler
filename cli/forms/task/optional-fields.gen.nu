@@ -193,27 +193,26 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                 
-        [common "status, s"       "Show form status."]                       
-        [null   "next, n"         "Fill in next unfilled field."]            
-        [null   "submit, done, d" "Submit form."]                            
-        [null   "cancel, c"       "Abort form."]                             
-        [fields "<field>"         "Set field value with interactive picker."]
-        [null   "set <field>"     "Set field value."]                        
-        [null   "get <field>"     "Get field value."]                        
-        [null   "unset <field>"   "Unset field value."]                      
-        [lists  "add <field>"     "Add to list."]                            
-        [null   "list <field>"    "List elements."]                          
-        [null   "remove <field>"  "Remove from list interactively."]         
-    ]                                                                        
-    print ([                                                                 
-        'parent'                                                             
-    'start'                                                                  
-    'end'                                                                    
-    'prereqs'                                                                
-    'postreqs'                                                               
-                                                                             
-    ] | wrap fields)                                                         
+    print [[group cmd desc];                                         
+        [common "status, s" "Show form status."]                     
+        [null "next, n" "Fill in next unfilled field."]              
+        [null "submit, done, d" "Submit form."]                      
+        [null "cancel, c" "Abort form."]                             
+    ["parent" 'parent' 'Interactively set Parent.']                  
+    [null 'set parent' 'Set Parent via nushell command.']            
+    [null 'get parent' 'Get Parent via nushell command.']            
+    ["start" 'start' 'Interactively set Must start after.']          
+    [null 'set start' 'Set Must start after via nushell command.']   
+    [null 'get start' 'Get Must start after via nushell command.']   
+    ["end" 'end' 'Interactively set Must end before.']               
+    [null 'set end' 'Set Must end before via nushell command.']      
+    [null 'get end' 'Get Must end before via nushell command.']      
+    ["prereqs" 'prereqs' 'Interactively add a Prerequisites.']       
+    [null 'add prereqs' 'Add a Prerequisites via nushell command.']  
+    ["postreqs" 'postreqs' 'Interactively add a Postrequisites.']    
+    [null 'add postreqs' 'Add a Postrequisites via nushell command.']
+    ]                                                                
+                                                                     
 }
 
 alias s = status

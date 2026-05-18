@@ -153,26 +153,24 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                 
-        [common "status, s"       "Show form status."]                       
-        [null   "next, n"         "Fill in next unfilled field."]            
-        [null   "submit, done, d" "Submit form."]                            
-        [null   "cancel, c"       "Abort form."]                             
-        [fields "<field>"         "Set field value with interactive picker."]
-        [null   "set <field>"     "Set field value."]                        
-        [null   "get <field>"     "Get field value."]                        
-        [null   "unset <field>"   "Unset field value."]                      
-        [lists  "add <field>"     "Add to list."]                            
-        [null   "list <field>"    "List elements."]                          
-        [null   "remove <field>"  "Remove from list interactively."]         
-    ]                                                                        
-    print ([                                                                 
-        'desc'                                                               
-    'exp_cost'                                                               
-    'deadline'                                                               
-    'children'                                                               
-                                                                             
-    ] | wrap fields)                                                         
+    print [[group cmd desc];                                      
+        [common "status, s" "Show form status."]                  
+        [null "next, n" "Fill in next unfilled field."]           
+        [null "submit, done, d" "Submit form."]                   
+        [null "cancel, c" "Abort form."]                          
+    ["desc" 'desc' 'Interactively set Description.']              
+    [null 'set desc' 'Set Description via nushell command.']      
+    [null 'get desc' 'Get Description via nushell command.']      
+    ["exp_cost" 'exp_cost' 'Interactively set Expected cost.']    
+    [null 'set exp_cost' 'Set Expected cost via nushell command.']
+    [null 'get exp_cost' 'Get Expected cost via nushell command.']
+    ["deadline" 'deadline' 'Interactively set Deadline.']         
+    [null 'set deadline' 'Set Deadline via nushell command.']     
+    [null 'get deadline' 'Get Deadline via nushell command.']     
+    ["children" 'children' 'Interactively add a Children.']       
+    [null 'add children' 'Add a Children via nushell command.']   
+    ]                                                             
+                                                                  
 }
 
 alias s = status

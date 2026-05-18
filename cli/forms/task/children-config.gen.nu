@@ -103,23 +103,16 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                 
-        [common "status, s"       "Show form status."]                       
-        [null   "next, n"         "Fill in next unfilled field."]            
-        [null   "submit, done, d" "Submit form."]                            
-        [null   "cancel, c"       "Abort form."]                             
-        [fields "<field>"         "Set field value with interactive picker."]
-        [null   "set <field>"     "Set field value."]                        
-        [null   "get <field>"     "Get field value."]                        
-        [null   "unset <field>"   "Unset field value."]                      
-        [lists  "add <field>"     "Add to list."]                            
-        [null   "list <field>"    "List elements."]                          
-        [null   "remove <field>"  "Remove from list interactively."]         
-    ]                                                                        
-    print ([                                                                 
-        'config'                                                             
-                                                                             
-    ] | wrap fields)                                                         
+    print [[group cmd desc];                                
+        [common "status, s" "Show form status."]            
+        [null "next, n" "Fill in next unfilled field."]     
+        [null "submit, done, d" "Submit form."]             
+        [null "cancel, c" "Abort form."]                    
+    ["config" 'config' 'Interactively add a Configs.']      
+    [null 'add config' 'Add a Configs via nushell command.']
+    [null 'edit config' 'Edit a Configs]                    
+    ]                                                       
+                                                            
 }
 
 alias s = status

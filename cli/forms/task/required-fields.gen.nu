@@ -135,25 +135,22 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                 
-        [common "status, s"       "Show form status."]                       
-        [null   "next, n"         "Fill in next unfilled field."]            
-        [null   "submit, done, d" "Submit form."]                            
-        [null   "cancel, c"       "Abort form."]                             
-        [fields "<field>"         "Set field value with interactive picker."]
-        [null   "set <field>"     "Set field value."]                        
-        [null   "get <field>"     "Get field value."]                        
-        [null   "unset <field>"   "Unset field value."]                      
-        [lists  "add <field>"     "Add to list."]                            
-        [null   "list <field>"    "List elements."]                          
-        [null   "remove <field>"  "Remove from list interactively."]         
-    ]                                                                        
-    print ([                                                                 
-        'name'                                                               
-    'desc'                                                                   
-    'unit'                                                                   
-                                                                             
-    ] | wrap fields)                                                         
+    print [[group cmd desc];                                                             
+        [common "status, s" "Show form status."]                                         
+        [null "next, n" "Fill in next unfilled field."]                                  
+        [null "submit, done, d" "Submit form."]                                          
+        [null "cancel, c" "Abort form."]                                                 
+    ["name" 'name' 'Interactively set Name.']                                            
+    [null 'set name' 'Set Name via nushell command.']                                    
+    [null 'get name' 'Get Name via nushell command.']                                    
+    ["desc" 'desc' 'Interactively set Desc.']                                            
+    [null 'set desc' 'Set Desc via nushell command.']                                    
+    [null 'get desc' 'Get Desc via nushell command.']                                    
+    ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']        
+    [null 'set unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
+    [null 'get unit' 'Get Timescale unit (bounds maximum duration) via nushell command.']
+    ]                                                                                    
+                                                                                         
 }
 
 alias s = status

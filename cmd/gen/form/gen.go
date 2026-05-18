@@ -472,31 +472,121 @@ func (f Form) returnsPostProcessFn() Closure {
 }
 
 func (f Form) helpFn() Closure {
-	var fields strings.Builder
-	for _, f := range f.Fields {
-		fmt.Fprintf(&fields, "'%s'\n", f.Name)
+	var body strings.Builder
+	fmt.Fprint(&body, `print [[group cmd desc];
+	[common "status, s" "Show form status."]
+	[null "next, n" "Fill in next unfilled field."]
+	[null "submit, done, d" "Submit form."]
+	[null "cancel, c" "Abort form."]
+`)
+	prevGroup := "common"
+	writePrefix := func(f FieldDef) {
+		if f.Name != prevGroup {
+			fmt.Fprintf(&body, `["%s" `, f.Name)
+		} else {
+			fmt.Fprint(&body, `[null `)
+		}
+		prevGroup = f.Name
 	}
+	for _, f := range f.Fields {
+		if f.Atomic != nil {
+			if f.Atomic.ClosureBodies.Set != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'%s' 'Interactively set %s.']\n",
+					f.Name,
+					f.DisplayName,
+				)
+			}
+			if f.Atomic.ClosureBodies.SetStatic != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'%s' 'Set %s via nushell command.']\n",
+					f.Atomic.ClosureBodies.SetStatic.Name,
+					f.DisplayName,
+				)
+			} else {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'set %s' 'Set %s via nushell command.']\n",
+					f.Name,
+					f.DisplayName,
+				)
+			}
+			if f.Atomic.ClosureBodies.GetStatic != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'%s' 'Get %s via nushell command.']\n",
+					f.Atomic.ClosureBodies.GetStatic.Name,
+					f.DisplayName,
+				)
+			} else {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'get %s' 'Get %s via nushell command.']\n",
+					f.Name,
+					f.DisplayName,
+				)
+			}
+		} else if f.List != nil {
+			if f.List.ClosuresBodies.Add != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'%s' 'Interactively add a %s.']\n",
+					f.Name,
+					f.DisplayName,
+				)
+			}
+			if f.List.ClosuresBodies.AddStatic != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'%s' 'Add a %s via nushell command.']\n",
+					f.List.ClosuresBodies.AddStatic.Name,
+					f.DisplayName,
+				)
+			} else {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'add %s' 'Add a %s via nushell command.']\n",
+					f.Name,
+					f.DisplayName,
+				)
+			}
+			if f.List.ClosuresBodies.Edit != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'edit %s' 'Edit a %s]\n",
+					f.Name,
+					f.DisplayName,
+				)
+			}
+			if f.List.ClosuresBodies.Remove != nil {
+				writePrefix(f)
+				fmt.Fprintf(
+					&body,
+					"'%s' 'Remove a %s']\n",
+					f.List.ClosuresBodies.Remove.Name,
+					f.DisplayName,
+				)
+			}
+		}
+	}
+	fmt.Fprintln(&body, "]")
 	return Closure{
 		Name:   cmd_help,
 		Params: nil,
-		Body: Block(fmt.Sprintf(`print [[group cmd desc];
-	[common "status, s"       "Show form status."]
-	[null   "next, n"         "Fill in next unfilled field."]
-	[null   "submit, done, d" "Submit form."]
-	[null   "cancel, c"       "Abort form."]
-	[fields "<field>"         "Set field value with interactive picker."]
-	[null   "set <field>"     "Set field value."]
-	[null   "get <field>"     "Get field value."]
-	[null   "unset <field>"   "Unset field value."]
-	[lists  "add <field>"     "Add to list."]
-	[null   "list <field>"    "List elements."]
-	[null   "remove <field>"  "Remove from list interactively."]
-]
-print ([
-	%s
-] | wrap fields)`, fields.String())),
-		In:  nullType,
-		Out: nullType,
+		Body:   Block(body.String()),
+		In:     nullType,
+		Out:    nullType,
 	}
 }
 

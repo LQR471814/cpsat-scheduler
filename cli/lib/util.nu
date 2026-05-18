@@ -146,5 +146,5 @@ export def "from proto dur" []: string -> duration {
 
 # to proto dur converts a nushell datetime into a protobuf timestamp
 export def "to proto dur" []: duration -> string {
-    $"($in / 1sec)s"
+    $"($in / 1sec)s" # nu-lint-ignore: division_to_format_duration
 }

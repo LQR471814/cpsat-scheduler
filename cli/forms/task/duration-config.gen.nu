@@ -134,25 +134,21 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                 
-        [common "status, s"       "Show form status."]                       
-        [null   "next, n"         "Fill in next unfilled field."]            
-        [null   "submit, done, d" "Submit form."]                            
-        [null   "cancel, c"       "Abort form."]                             
-        [fields "<field>"         "Set field value with interactive picker."]
-        [null   "set <field>"     "Set field value."]                        
-        [null   "get <field>"     "Get field value."]                        
-        [null   "unset <field>"   "Unset field value."]                      
-        [lists  "add <field>"     "Add to list."]                            
-        [null   "list <field>"    "List elements."]                          
-        [null   "remove <field>"  "Remove from list interactively."]         
-    ]                                                                        
-    print ([                                                                 
-        'pert'                                                               
-    'deadline'                                                               
-    'cost'                                                                   
-                                                                             
-    ] | wrap fields)                                                         
+    print [[group cmd desc];                                                                
+        [common "status, s" "Show form status."]                                            
+        [null "next, n" "Fill in next unfilled field."]                                     
+        [null "submit, done, d" "Submit form."]                                             
+        [null "cancel, c" "Abort form."]                                                    
+    ["pert" 'pert' 'Set PERT (time estimates) via nushell command.']                        
+    [null 'get pert' 'Get PERT (time estimates) via nushell command.']                      
+    ["deadline" 'deadline' 'Interactively set Deadline.']                                   
+    [null 'set deadline' 'Set Deadline via nushell command.']                               
+    [null 'get deadline' 'Get Deadline via nushell command.']                               
+    ["cost" 'cost' 'Interactively set Expected cost under minimum time investment.']        
+    [null 'set cost' 'Set Expected cost under minimum time investment via nushell command.']
+    [null 'get cost' 'Get Expected cost under minimum time investment via nushell command.']
+    ]                                                                                       
+                                                                                            
 }
 
 alias s = status
