@@ -20,19 +20,19 @@ export def "create profile" [name: string, atomic_timescale: string, universe_st
 	} | req CreateProfile
 }
 
-export def "list profiles" []: nothing -> table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: int> {
-	{} | req ListProfiles | get entries?
+export def "list profiles" []: nothing -> table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>> {
+	{} | req ListProfiles | get entries
 }
 
 export def "remove profile" [id: int]: nothing -> record {
 	{id: $id} | req RemoveProfile
 }
 
-export def "read task" [id: int]: nothing -> record<state: record<name: string, desc: string, timescale: int, duration_cfg: record<pert: record<pes: string, exp: string, opt: string>, deadline: string, total_cost: int>, children_cfgs: list<record<desc: string, deadline: string, exp_cost: int, children: list<record<id: int, name: string>>>>, prereqs: list<record<id: int, name: string>>, postreqs: list<record<id: int, name: string>>, parent: record<id: int, name: string>, start: string, end: string>> {
+export def "read task" [id: int]: nothing -> record<state: record<name: string, desc: string, timescale: int, duration_cfg: oneof<record<pert: record<pes: string, exp: string, opt: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, children_cfgs: list<record<desc: string, deadline: oneof<string, nothing>, exp_cost: int, children: list<record<id: int, name: string>>>>, prereqs: list<record<id: int, name: string>>, postreqs: list<record<id: int, name: string>>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>>> {
 	{id: $id} | req ReadTask
 }
 
-export def "save task" [profile_id: int, state: record<name: string, desc: string, timescale: int, duration_cfg: record<pert: record<pes: string, exp: string, opt: string>, deadline: string, total_cost: int>, children_cfgs: list<record<desc: string, deadline: string, exp_cost: int, children: list<record<id: int, name: string>>>>, prereqs: list<record<id: int, name: string>>, postreqs: list<record<id: int, name: string>>, parent: record<id: int, name: string>, start: string, end: string>, --id: int]: nothing -> record<id: int> {
+export def "save task" [profile_id: int, state: record<name: string, desc: string, timescale: int, duration_cfg: oneof<record<pert: record<pes: string, exp: string, opt: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, children_cfgs: list<record<desc: string, deadline: oneof<string, nothing>, exp_cost: int, children: list<record<id: int, name: string>>>>, prereqs: list<record<id: int, name: string>>, postreqs: list<record<id: int, name: string>>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>>, --id: oneof<int, nothing>]: nothing -> record<id: int> {
 	{
 		id: $id
 		profile_id: $profile_id
@@ -50,14 +50,14 @@ export def "list scheduled tasks" [profile_id: int, timescale: int, start: strin
 		timescale: $timescale
 		start: $start
 		end: $end
-	} | req ListScheduledTasks | get entries?
+	} | req ListScheduledTasks | get entries
 }
 
 export def "list possible relatives" [type: string, task_id: int]: nothing -> table<id: int, name: string> {
 	{
 		type: $type
 		task_id: $task_id
-	} | req ListPossibleRelatives | get entries?
+	} | req ListPossibleRelatives | get entries
 }
 
 export def "progress update" [target_task_id: int, start: string, end: string]: nothing -> record {
@@ -67,4 +67,3 @@ export def "progress update" [target_task_id: int, start: string, end: string]: 
 		end: $end
 	} | req ProgressUpdate
 }
-

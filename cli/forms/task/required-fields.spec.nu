@@ -56,7 +56,7 @@ let form = {
 			display_name: Desc
 			type: {type: string}
 			closure_bodies: {
-				validate: "$env.state.desc | is-not-empty"
+				validate: "$env.state.desc != null"
 				getter: "$env.state.desc"
 				setter: "$env.state.desc = $in"
 			}
@@ -77,7 +77,7 @@ let form = {
 			}
 			atomic: {
 				closure_bodies: {
-					set: "$env.state.timescale = $timescales | util choose table --header 'Timescale unit:' | get id?"
+					set: "$env.state.timescale = $timescales | util choose table --header 'Timescale unit (bounds maximum duration):' | get id?"
 				}
 			}
 		}

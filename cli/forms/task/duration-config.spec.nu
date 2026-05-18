@@ -55,9 +55,9 @@ let form = {
 			type: {
 				type: record,
 				fields: [[key value];
-					[opt {type: int}]
-					[exp {type: int}]
-					[pes {type: int}]
+					[opt {type: duration}]
+					[exp {type: duration}]
+					[pes {type: duration}]
 				]
 			}
 			closure_bodies: {
@@ -70,9 +70,9 @@ let form = {
 					set_static: {
 						name: "pert"
 						params: [[key value];
-							[opt {type: int}]
-							[exp {type: int}]
-							[pes {type: int}]
+							[opt {type: duration}]
+							[exp {type: duration}]
+							[pes {type: duration}]
 						]
 						body: "{opt: $opt, exp: $exp, pes: $pes} | set pert"
 						in: {type: "nothing"}

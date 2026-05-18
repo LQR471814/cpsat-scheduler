@@ -187,8 +187,9 @@ def --env submit []: nothing -> nothing {
 }
 
 def --env cancel []: nothing -> nothing {
-    null | util save form output            
-    exit # nu-lint-ignore: exit_only_in_main
+    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+    null | util save form output                                                                           
+    exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
 def --env help []: nothing -> nothing {

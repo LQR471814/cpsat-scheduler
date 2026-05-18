@@ -37,19 +37,19 @@ def --env "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(duration-config\)"
 }
 
-def --env "get pert" []: nothing -> record<opt: int, exp: int, pes: int> {
+def --env "get pert" []: nothing -> record<opt: duration, exp: duration, pes: duration> {
     $env.state.cfg.pert
 }
 
-def --env "set pert" []: oneof<record<opt: int, exp: int, pes: int>, nothing> -> nothing {
+def --env "set pert" []: oneof<record<opt: duration, exp: duration, pes: duration>, nothing> -> nothing {
     $env.state.cfg.pert = $in
 }
 
-def --env "validate pert" []: oneof<record<opt: int, exp: int, pes: int>, nothing> -> bool {
+def --env "validate pert" []: oneof<record<opt: duration, exp: duration, pes: duration>, nothing> -> bool {
     $env.state.cfg.pert.opt != null and $env.state.cfg.pert.exp != null and $env.state.cfg.pert.pes != null
 }
 
-def --env pert [opt: int, exp: int, pes: int]: nothing -> nothing {
+def --env pert [opt: duration, exp: duration, pes: duration]: nothing -> nothing {
     {opt: $opt, exp: $exp, pes: $pes} | set pert
 }
 
@@ -128,8 +128,9 @@ def --env submit []: nothing -> nothing {
 }
 
 def --env cancel []: nothing -> nothing {
-    null | util save form output            
-    exit # nu-lint-ignore: exit_only_in_main
+    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+    null | util save form output                                                                           
+    exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
 def --env help []: nothing -> nothing {

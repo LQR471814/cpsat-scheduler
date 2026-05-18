@@ -72,7 +72,7 @@ $input"
 	fields: [
 		{
 			name: req
-			display_name: Required
+			display_name: "Required fields"
 			type: {
 				type: record
 				fields: $required_fields
@@ -93,7 +93,7 @@ $env.state = $env.state | merge ($value | select name desc timescale)"
 		}
 		{
 			name: opt
-			display_name: Optional
+			display_name: "Optional fields"
 			type: {
 				type: record
 				fields: $optional_fields
@@ -120,8 +120,8 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 				fields: $dur_cfg_fields
 			} | lib type optional)
 			closure_bodies: {
-				getter: "$env.state | get dur_cfg"
-				setter: "$env.state.dur_cfg = $in"
+				getter: "$env.state | get duration_cfg"
+				setter: "$env.state.duration_cfg = $in"
 			}
 			atomic: {
 				closure_bodies: {
@@ -158,7 +158,7 @@ if $p.state.payload.task? != null {
 	$env.state = state read task $p.state.payload.task | get state
 	$env.id = $p.state.payload.task
 } else {
-	let results = util exec form ./forms/task/required-fields.gen.nu {
+	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = util exec form ./forms/task/required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
 		state: {
 			name: null
@@ -170,20 +170,27 @@ if $p.state.payload.task? != null {
 		cancel
 	}
 	let state = {
+		name: $results.name
+		desc: $results.desc
+		timescale: $results.timescale
+
 		parent: $p.state.payload.parent?
         start: $p.state.payload.start?
         end: $p.state.payload.end?
-        prereqs: (if $p.state.payload.prereq? { [$p.state.payload.prereq] } else { [] })
-        postreqs: (if $p.state.payload.postreq? { [$p.state.payload.postreq] } else { [] })
+        prereqs: (if $p.state.payload.prereq? != null { [$p.state.payload.prereq] } else { [] })
+        postreqs: (if $p.state.payload.postreq? != null { [$p.state.payload.postreq] } else { [] })
 
 		duration_cfg: {
-            opt: 2
-            exp: 4
-            pes: 6
+			pert: {
+				opt: (30min | util to proto dur)
+				exp: (1hr | util to proto dur)
+				pes: (1hr + 30min | util to proto dur)
+			}
+			deadline: null
             total_cost: 0
         }
         children_cfgs: []
-	} | merge $results
+	}
 	let id = state save task $p.state.profile $state | get id
 	$env.state = $state
 	$env.id = $id

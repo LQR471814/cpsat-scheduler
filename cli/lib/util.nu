@@ -8,7 +8,13 @@ export def "choose table" [--header: string]: table<id: int, name: string> -> on
     }
     let answer = $choices
         | str join "\n"
-        | try { gum filter --header $header } catch { null }  # nu-lint-ignore: check_typed_flag_before_use
+        | try {
+            if $header != null {
+                gum filter --header $header
+            } else {
+                gum filter
+            }
+        } catch { null }
     if ($answer | is-empty) {
         return null
     }
@@ -69,6 +75,20 @@ export def "input int" [placeholder: string]: nothing -> oneof<int, nothing> {
     let result = input text $placeholder
     if $result == null { return null }
     $result | into int
+}
+
+
+# confirm prompts the user to confirm, returns true if user accepted, false if
+# rejected
+export def confirm [--prompt: string]: nothing -> bool {
+    try {
+        if $prompt != null {
+            gum confirm $prompt
+        } else {
+            gum confirm
+        }
+        true
+    } catch { false }
 }
 
 

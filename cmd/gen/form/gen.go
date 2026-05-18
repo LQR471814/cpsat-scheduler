@@ -438,6 +438,7 @@ exit # nu-lint-ignore: exit_only_in_main`)
 
 func (f Form) cancelFn() Closure {
 	var body strings.Builder
+	fmt.Fprintln(&body, `if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }`)
 	fmt.Fprint(&body, `null`)
 	fmt.Fprint(&body, ` | util save form output
 exit # nu-lint-ignore: exit_only_in_main`)

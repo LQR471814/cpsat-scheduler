@@ -60,11 +60,11 @@ def --env "unset opt" []: nothing -> nothing {
 }
 
 def --env "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing> {
-    $env.state | get dur_cfg
+    $env.state | get duration_cfg
 }
 
 def --env "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, nothing> -> nothing {
-    $env.state.dur_cfg = $in
+    $env.state.duration_cfg = $in
 }
 
 def --env dur []: nothing -> nothing {
@@ -102,14 +102,14 @@ def --env "unset children" []: nothing -> nothing {
 
 def --env status []: nothing -> nothing {
     util print section title 'Form: task'                        
-    util print label 'Required'                                  
+    util print label 'Required fields'                           
     print ($env.state | select name desc timescale)              
     print ""                                                     
-    util print label 'Optional'                                  
+    util print label 'Optional fields'                           
     print ($env.state | select parent start end prereqs postreqs)
     print ""                                                     
     util print label 'Duration configuration'                    
-    print ($env.state | get dur_cfg)                             
+    print ($env.state | get duration_cfg)                        
     print ""                                                     
     util print label 'Children configurations'                   
     print ($env.state | get children_cfgs)                       
@@ -129,8 +129,9 @@ def --env submit []: nothing -> nothing {
 }
 
 def --env cancel []: nothing -> nothing {
-    null | util save form output            
-    exit # nu-lint-ignore: exit_only_in_main
+    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+    null | util save form output                                                                           
+    exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
 def --env help []: nothing -> nothing {
@@ -161,7 +162,7 @@ if $p.state.payload.task? != null {
 	$env.state = state read task $p.state.payload.task | get state
 	$env.id = $p.state.payload.task
 } else {
-	let results = util exec form ./forms/task/required-fields.gen.nu {
+	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = util exec form ./forms/task/required-fields.gen.nu {
 		prompt_prefix: (prompt prefix)
 		state: {
 			name: null
@@ -173,20 +174,27 @@ if $p.state.payload.task? != null {
 		cancel
 	}
 	let state = {
+		name: $results.name
+		desc: $results.desc
+		timescale: $results.timescale
+
 		parent: $p.state.payload.parent?
         start: $p.state.payload.start?
         end: $p.state.payload.end?
-        prereqs: (if $p.state.payload.prereq? { [$p.state.payload.prereq] } else { [] })
-        postreqs: (if $p.state.payload.postreq? { [$p.state.payload.postreq] } else { [] })
+        prereqs: (if $p.state.payload.prereq? != null { [$p.state.payload.prereq] } else { [] })
+        postreqs: (if $p.state.payload.postreq? != null { [$p.state.payload.postreq] } else { [] })
 
 		duration_cfg: {
-            opt: 2
-            exp: 4
-            pes: 6
+			pert: {
+				opt: (30min | util to proto dur)
+				exp: (1hr | util to proto dur)
+				pes: (1hr + 30min | util to proto dur)
+			}
+			deadline: null
             total_cost: 0
         }
         children_cfgs: []
-	} | merge $results
+	}
 	let id = state save task $p.state.profile $state | get id
 	$env.state = $state
 	$env.id = $id

@@ -57,7 +57,7 @@ def --env "set desc" []: oneof<string, nothing> -> nothing {
 }
 
 def --env "validate desc" []: oneof<string, nothing> -> bool {
-    $env.state.desc | is-not-empty
+    $env.state.desc != null
 }
 
 def --env desc []: nothing -> nothing {
@@ -81,7 +81,7 @@ def --env "validate unit" []: oneof<int, nothing> -> bool {
 }
 
 def --env unit []: nothing -> nothing {
-    $env.state.timescale = $timescales | util choose table --header 'Timescale unit:' | get id?
+    $env.state.timescale = $timescales | util choose table --header 'Timescale unit (bounds maximum duration):' | get id?
 }
 
 def --env "unset unit" []: nothing -> nothing {
@@ -129,8 +129,9 @@ def --env submit []: nothing -> nothing {
 }
 
 def --env cancel []: nothing -> nothing {
-    null | util save form output            
-    exit # nu-lint-ignore: exit_only_in_main
+    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+    null | util save form output                                                                           
+    exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
 def --env help []: nothing -> nothing {
