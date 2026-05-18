@@ -6,8 +6,10 @@ export def "choose table" [--header: string]: table<id: int, name: string> -> on
         let name_display = $x.name
         $"($id_display) - ($name_display)"
     }
-    let answer = $choices | str join "\n" | gum filter --header $header | default ""
-    if ($answer | is-empty) { # nu-lint-ignore: check_typed_flag_before_use
+    let answer = $choices
+        | str join "\n"
+        | try { gum filter --header $header } catch { null }  # nu-lint-ignore: check_typed_flag_before_use
+    if ($answer | is-empty) {
         return null
     }
     $answer | parse --regex `(?<id>\d+) +- (?<name>.+)` | update id { into int } | first
@@ -42,8 +44,8 @@ export def "choose date" []: nothing -> oneof<datetime, nothing> {
 
 # input text provides a nice single-line text input, returns null if aborted
 export def "input text" [placeholder: string]: nothing -> oneof<string, nothing> {
-    let result = gum input --placeholder $placeholder --prompt ""
-    if $result == "not submitted" {
+    let result = try { gum input --placeholder $placeholder --prompt "" } catch { null }
+    if $result == null {
         return null
     }
     $result
@@ -53,8 +55,8 @@ export def "input text" [placeholder: string]: nothing -> oneof<string, nothing>
 # input multiline provides a nice multi-line text input with ability
 # to use editor to input, returns null if aborted
 export def "input multiline" [placeholder: string]: nothing -> oneof<string, nothing> {
-    let result = gum write --placeholder $placeholder --prompt ""
-    if $result == "not submitted" {
+    let result = try { gum write --placeholder $placeholder --prompt "" } catch { null }
+    if $result == null {
         return null
     }
     $result
@@ -65,9 +67,7 @@ export def "input multiline" [placeholder: string]: nothing -> oneof<string, not
 # null if aborted
 export def "input int" [placeholder: string]: nothing -> oneof<int, nothing> {
     let result = input text $placeholder
-    if not $result {
-        return null
-    }
+    if $result == null { return null }
     $result | into int
 }
 

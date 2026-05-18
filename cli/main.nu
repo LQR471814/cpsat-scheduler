@@ -51,6 +51,7 @@ def help []: nothing -> nothing {
 }
 
 if not (switch profile) {
+	print exiting!
 	exit
 }
 
