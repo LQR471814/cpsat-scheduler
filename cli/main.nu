@@ -1,5 +1,6 @@
 use lib/state.nu
 use lib/util.nu
+use forms/gen/index.nu
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -10,10 +11,10 @@ def "prompt prefix" []: nothing -> string {
 }
 
 def profiles []: nothing -> nothing {
-	util exec form ./forms/profiles.gen.nu {
+	{
 		prompt_prefix: (prompt prefix)
 		state: null
-	}
+	} | index form profiles
 }
 
 def --env "switch profile" []: nothing -> bool {
@@ -33,7 +34,8 @@ def --env "switch profile" []: nothing -> bool {
 }
 
 def --env "new task" []: nothing -> nothing {
-	util exec form ./forms/task/task.gen.nu {
+
+	util exec form ./forms/gen/task.gen.nu {
 		prompt_prefix: (prompt prefix)
 		state: {
 			profile: $env.profile

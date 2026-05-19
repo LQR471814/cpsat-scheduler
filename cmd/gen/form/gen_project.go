@@ -57,7 +57,7 @@ func (p Project) generateFormIndex() (err error) {
 		fmt.Fprint(f, " -> ")
 		fsrc.Form.Returns.Render(f)
 		fmt.Fprintf(f, ` {
-	util exec "./forms/gen/%s.gen.nu" $in
+	util exec form "./forms/gen/%s.gen.nu" $in
 }
 `, fsrc.Form.Name)
 	}
