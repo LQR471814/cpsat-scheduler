@@ -10,4 +10,5 @@
     - [ ] CLI
 - [ ] Improve validation & form errors
 - [ ] Impl. proper form for profiles.
+- [ ] Add delete fn. for forms
 
