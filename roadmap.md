@@ -8,5 +8,6 @@
 - [ ] Impl. scheduling
     - [ ] Backend
     - [ ] CLI
-- [ ] Add proper form for profiles.
+- [ ] Improve validation & form errors
+- [ ] Impl. proper form for profiles.
 
