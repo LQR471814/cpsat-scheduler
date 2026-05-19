@@ -103,15 +103,12 @@ where cc.child = t.id
 
 	var items []*api.Entry
 	for rows.Next() {
-		var task db.Task
-		err = rows.Scan(&task)
+		entry := &api.Entry{}
+		err = rows.Scan(&entry.Id, &entry.Name)
 		if err != nil {
 			return
 		}
-		items = append(items, &api.Entry{
-			Id:   task.ID,
-			Name: task.Name,
-		})
+		items = append(items, entry)
 	}
 
 	return
