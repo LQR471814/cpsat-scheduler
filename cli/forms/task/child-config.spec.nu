@@ -58,7 +58,7 @@ let form = {
 		{
 			name: deadline
 			display_name: Deadline
-			type: $deadline_type
+			type: {type: datetime}
 			closure_bodies: {
 				getter: "$env.state.deadline"
 				setter: "$env.state.deadline = $in"

@@ -38,6 +38,8 @@ export def "read task" [id: int]: nothing -> record<state: record<name: string, 
 		| update state.prereqs.id { into int }
 		| update state.postreqs.id { into int }
 		| update state.children.id { into int }
+		| update state.duration_cfg?.total_cost { into int }
+		| update state.children_cfgs.exp_cost { into int }
 }
 
 export def "save task" [profile_id: int, state: record<name: string, desc: string, timescale: int, duration_cfg: oneof<record<pert: record<pes: string, exp: string, opt: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, children_cfgs: list<record<desc: string, deadline: oneof<string, nothing>, exp_cost: int, children: list<record<id: int, name: string>>>>, prereqs: list<record<id: int, name: string>>, postreqs: list<record<id: int, name: string>>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>>, --id: oneof<int, nothing>]: nothing -> record<id: int> {
