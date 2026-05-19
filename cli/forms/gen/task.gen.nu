@@ -97,7 +97,7 @@ def --env children []: nothing -> nothing {
             task: $env.id                               
             children_cfgs: (get children)               
         }                                               
-    } | index form children-config-list                 
+    } | index form children-config                      
     if $results != null { $results | set children_cfgs }
 }
 
