@@ -1,5 +1,6 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
+use index.nu
 
 let p: record<prompt_prefix: string, state: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>> = util get form params
 
@@ -12,8 +13,8 @@ $env.state = $p.state | params post process
 
 
 def --env "params post process" []: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> -> any {
-    update start { util from proto time }    
-        | update end { util from proto time }
+    update start? { util from proto time }    
+        | update end? { util from proto time }
 }
 
 def --env "returns post process" []: any -> record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
@@ -41,15 +42,15 @@ def --env "unset parent" []: nothing -> nothing {
     null | set parent
 }
 
-def --env "get start" []: nothing -> string {
+def --env "get start" []: nothing -> datetime {
     $env.state.start
 }
 
-def --env "set start" []: oneof<string, nothing> -> nothing {
+def --env "set start" []: oneof<datetime, nothing> -> nothing {
     $env.state.start = $in
 }
 
-def --env "validate start" []: oneof<string, nothing> -> bool {
+def --env "validate start" []: oneof<datetime, nothing> -> bool {
     if $env.state.start != null and $env.state.end != null {
         $env.state.start < $env.state.end                   
     } else { true }                                         
@@ -63,15 +64,15 @@ def --env "unset start" []: nothing -> nothing {
     null | set start
 }
 
-def --env "get end" []: nothing -> string {
+def --env "get end" []: nothing -> datetime {
     $env.state.end
 }
 
-def --env "set end" []: oneof<string, nothing> -> nothing {
+def --env "set end" []: oneof<datetime, nothing> -> nothing {
     $env.state.end = $in
 }
 
-def --env "validate end" []: oneof<string, nothing> -> bool {
+def --env "validate end" []: oneof<datetime, nothing> -> bool {
     if $env.state.start != null and $env.state.end != null {
         $env.state.start < $env.state.end                   
     } else { true }                                         
@@ -109,7 +110,7 @@ def --env "remove prereqs" []: nothing -> nothing {
     get prereqs | drop nth $element.id | set prereqs          
 }
 
-def --env "add prereqs" []: nothing -> nothing {
+def --env prereqs []: nothing -> nothing {
     let chosen = state list possible relatives PREREQ $p.state.id | util choose table --header 'Add a task as a prerequisite:'
     if $chosen == null { return }                                                                                             
     $env.state.prereqs ++= $chosen                                                                                            
@@ -139,7 +140,7 @@ def --env "remove postreqs" []: nothing -> nothing {
     get postreqs | drop nth $element.id | set postreqs         
 }
 
-def --env "add postreqs" []: nothing -> nothing {
+def --env postreqs []: nothing -> nothing {
     let chosen = state list possible relatives POSTREQ $p.state.id | util choose table --header 'Add a task as a postrequisite:'
     if $chosen == null { return }                                                                                               
     $env.state.postreqs ++= $chosen                                                                                             
@@ -151,10 +152,10 @@ def --env status []: nothing -> nothing {
     print ($env.state.parent)                       
     print ""                                        
     util print label 'Must start after'             
-    print ($env.state.start)                        
+    util print date ($env.state.start)              
     print ""                                        
     util print label 'Must end before'              
-    print ($env.state.end)                          
+    util print date ($env.state.end)                
     print ""                                        
     util print label 'Prerequisites'                
     print ($env.state.prereqs | display prereqs)    
@@ -193,26 +194,26 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                         
-        [common "status, s" "Show form status."]                     
-        [null "next, n" "Fill in next unfilled field."]              
-        [null "submit, done, d" "Submit form."]                      
-        [null "cancel, c" "Abort form."]                             
-    ["parent" 'parent' 'Interactively set Parent.']                  
-    [null 'set parent' 'Set Parent via nushell command.']            
-    [null 'get parent' 'Get Parent via nushell command.']            
-    ["start" 'start' 'Interactively set Must start after.']          
-    [null 'set start' 'Set Must start after via nushell command.']   
-    [null 'get start' 'Get Must start after via nushell command.']   
-    ["end" 'end' 'Interactively set Must end before.']               
-    [null 'set end' 'Set Must end before via nushell command.']      
-    [null 'get end' 'Get Must end before via nushell command.']      
-    ["prereqs" 'prereqs' 'Interactively add a Prerequisites.']       
-    [null 'add prereqs' 'Add a Prerequisites via nushell command.']  
-    ["postreqs" 'postreqs' 'Interactively add a Postrequisites.']    
-    [null 'add postreqs' 'Add a Postrequisites via nushell command.']
-    ]                                                                
-                                                                     
+    print [[group cmd desc];                                             
+        [common "status, s" "Show form status."]                         
+        [null "next, n" "Fill in next unfilled field."]                  
+        [null "submit, done, d" "Submit form."]                          
+        [null "cancel, c" "Abort form."]                                 
+        ["parent" 'parent' 'Interactively set Parent.']                  
+        [null 'set parent' 'Set Parent via nushell command.']            
+        [null 'get parent' 'Get Parent via nushell command.']            
+        ["start" 'start' 'Interactively set Must start after.']          
+        [null 'set start' 'Set Must start after via nushell command.']   
+        [null 'get start' 'Get Must start after via nushell command.']   
+        ["end" 'end' 'Interactively set Must end before.']               
+        [null 'set end' 'Set Must end before via nushell command.']      
+        [null 'get end' 'Get Must end before via nushell command.']      
+        ["prereqs" 'prereqs' 'Interactively add a Prerequisites.']       
+        [null 'add prereqs' 'Add a Prerequisites via nushell command.']  
+        ["postreqs" 'postreqs' 'Interactively add a Postrequisites.']    
+        [null 'add postreqs' 'Add a Postrequisites via nushell command.']
+    ]                                                                    
+                                                                         
 }
 
 alias s = status

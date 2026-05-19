@@ -1,19 +1,20 @@
 use ../lib.nu # nu-lint-ignore: dont_mix_different_effects
 
-let state_type = {
-	type: record
-	fields: [[key, value];
-		[task  {type: int}]
-		[children_cfgs {type: table}]
-	]
-}
-
 let form = {
-	name: children-configs
+	name: children-config
+	use: (lib form imports)
 	frontmatter: null
-	params: $state_type
-	returns: $state_type
-	closures: {}
+	params: {
+		type: record
+		fields: [[key, value];
+			[task  {type: int}]
+			[children_cfgs {type: table}]
+		]
+	}
+	returns: {type: table}
+	closures: {
+		returns_post_process: "get children_cfgs"
+	}
 	fields: [
 		{
 			name: config
@@ -32,18 +33,22 @@ let form = {
 			}
 			list: {
 				closure_bodies: {
-					add: "let results = util exec form ./forms/task/children-config.gen.nu {
-	task: $p.state.task
-	state: null
+					add: "let results = {
+	state: {
+		task: $p.state.task
+		desc: null
+		deadline: null
+		exp_cost: null
+		children: []
+	}
 	prompt_prefix: (prompt prefix)
-}
+} | index form child-config
 if $results == null { return }
 $env.state.children_cfgs ++= $results"
-					edit: "let result = util exec form ./forms/task/children-config.gen.nu {
-	task: $p.state.task
-	state: $in
+					edit: "let result = {
+	state: ($in | merge { taks: $p.state.task })
 	prompt_prefix: (prompt prefix)
-}
+} | index form child-config
 if $result == null { error make {msg: 'form aborted'} }
 $result"
 				}
@@ -52,5 +57,4 @@ $result"
 	]
 }
 
-const self_path = path self
-$form | lib gen form $self_path
+$form | to json --raw

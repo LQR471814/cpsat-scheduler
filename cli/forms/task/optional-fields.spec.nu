@@ -18,12 +18,13 @@ let state_type = {
 
 let form = {
 	name: optional-fields
+	use: (lib form imports)
 	frontmatter: null
 	params: $state_type
 	returns: $state_type
 	closures: {
-		param_post_process: "update start { util from proto time }
-	| update end { util from proto time }"
+		param_post_process: "update start? { util from proto time }
+	| update end? { util from proto time }"
 		returns_post_process: "update start { util to proto time }
 	| update end { util to proto time }"
 	}
@@ -45,7 +46,7 @@ let form = {
 		{
 			name: start
 			display_name: "Must start after"
-			type: $ts_type
+			type: {type: datetime}
 			closure_bodies: {
 				validate: "if $env.state.start != null and $env.state.end != null {
 	$env.state.start < $env.state.end
@@ -62,7 +63,7 @@ let form = {
 		{
 			name: end
 			display_name: "Must end before"
-			type: $ts_type
+			type: {type: datetime}
 			closure_bodies: {
 				validate: "if $env.state.start != null and $env.state.end != null {
 	$env.state.start < $env.state.end
@@ -113,5 +114,4 @@ $env.state.postreqs ++= $chosen"
 	]
 }
 
-const self_path = path self
-$form | lib gen form $self_path
+$form | to json --raw

@@ -2,6 +2,7 @@ use ./lib.nu
 
 let form = {
 	name: profiles
+	use: (lib form imports)
 	params: {type: 'nothing'}
 	returns: {type: 'nothing'}
 	closures: {}
@@ -59,6 +60,5 @@ $env.state = state list profiles"
 	backmatter: "$env.state = state list profiles"
 }
 
-const script_path = path self
-$form | lib gen form $script_path
+$form | to json --raw
 

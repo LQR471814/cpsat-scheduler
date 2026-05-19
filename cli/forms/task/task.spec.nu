@@ -56,12 +56,13 @@ let dur_cfg_fields = [[key value];
 			[pes $dur_type]
 		]
 	}]
-	[deadline $deadline_type]
+	[deadline ($deadline_type | lib type optional)]
 	[total_cost {type: int}]
 ]
 
 let form = {
 	name: task
+	use: (lib form imports)
 	params: $state
 	returns: $state
 	closures: {
@@ -84,10 +85,11 @@ $env.state = $env.state | merge ($value | select name desc timescale)"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./forms/task/required-fields.gen.nu {
-						prompt_prefix: (prompt prefix)
-						state: (get req)
-					}"
+					set: "let results = {
+	prompt_prefix: (prompt prefix)
+	state: (get req)
+} | index form required-fields
+if $results != null { $results | set req }"
 				}
 			}
 		}
@@ -105,10 +107,11 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./forms/task/optional-fields.gen.nu {
+					set: "let results = {
 	prompt_prefix: (prompt prefix)
 	state: (get opt | merge { id: $env.id })
-}"
+} | index form optional-fields
+if $results != null { $results | set opt }"
 				}
 			}
 		}
@@ -125,10 +128,11 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./forms/task/duration-config.gen.nu {
+					set: "let results = {
 	prompt_prefix: (prompt prefix)
 	state: { task: $env.id, cfg: (get dur) }
-}"
+} | index form duration-config
+if $results != null { $results | set dur }"
 				}
 			}
 		}
@@ -142,13 +146,14 @@ $env.state = $env.state | merge ($value | select parent start end prereqs postre
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util exec form ./forms/task/children-config-list.gen.nu {
+					set: "let results = {
 	prompt_prefix: (prompt prefix)
 	state: {
 		task: $env.id
 		children_cfgs: (get children)
 	}
-}"
+} | index form children-config-list
+if $results != null { $results | set children_cfgs }"
 				}
 			}
 		}
@@ -158,14 +163,14 @@ if $p.state.payload.task? != null {
 	$env.state = state read task $p.state.payload.task | get state
 	$env.id = $p.state.payload.task
 } else {
-	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = util exec form ./forms/task/required-fields.gen.nu {
+	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = {
 		prompt_prefix: (prompt prefix)
 		state: {
 			name: null
 			desc: null
 			timescale: null
 		}
-	}
+	} | index form required-fields
 	if $results == null {
 		cancel
 	}
@@ -198,5 +203,4 @@ if $p.state.payload.task? != null {
 	"
 }
 
-const script_path = path self
-$form | lib gen form $script_path
+$form | to json --raw

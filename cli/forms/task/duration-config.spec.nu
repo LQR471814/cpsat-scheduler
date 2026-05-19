@@ -3,33 +3,34 @@ use ../lib.nu # nu-lint-ignore: dont_mix_different_effects
 let dur_type = lib type proto duration
 let deadline_type = lib type proto timestamp
 
-let state_type = {
+let cfg = {
 	type: record
 	fields: [[key value];
-		[task ({type: int} | lib type optional)]
-		[cfg ({
+		[pert {
 			type: record
 			fields: [[key value];
-				[pert {
-					type: record
-					fields: [[key value];
-						[opt $dur_type]
-						[exp $dur_type]
-						[pes $dur_type]
-					]
-				}]
-				[deadline $deadline_type]
-				[total_cost {type: int}]
+				[opt $dur_type]
+				[exp $dur_type]
+				[pes $dur_type]
 			]
-		} | lib type optional)]
+		}]
+		[deadline ($deadline_type | lib type optional)]
+		[total_cost {type: int}]
 	]
-}
+} | lib type optional
 
 let form = {
 	name: duration-config
+	use: (lib form imports)
 	frontmatter: null
-	params: $state_type
-	returns: $state_type
+	params: {
+	type: record
+	fields: [[key value];
+		[task ({type: int} | lib type optional)]
+		[cfg $cfg]
+	]
+}
+	returns: $cfg
 	closures: {
 		param_post_process: "update cfg { default {
 		pert: {
@@ -39,14 +40,15 @@ let form = {
 		}
 		deadline: null
 	} }
-| update cfg.pert.opt? { util from proto duration }
-| update cfg.pert.exp? { util from proto duration }
-| update cfg.pert.pes? { util from proto duration }
+| update cfg.pert.opt? { util from proto dur }
+| update cfg.pert.exp? { util from proto dur }
+| update cfg.pert.pes? { util from proto dur }
 | update cfg.deadline? { util from proto time }"
-		returns_post_process: "update cfg.pert.opt? { util to proto duration }
-| update cfg.pert.exp? { util to proto duration }
-| update cfg.pert.pes? { util to proto duration }
-| update cfg.deadline? { util to proto time }"
+		returns_post_process: "update cfg.pert.opt? { util to proto dur }
+| update cfg.pert.exp? { util to proto dur }
+| update cfg.pert.pes? { util to proto dur }
+| update cfg.deadline? { util to proto time }
+| get cfg"
 	}
 	fields: [
 		{
@@ -68,7 +70,7 @@ let form = {
 			atomic: {
 				closure_bodies: {
 					set_static: {
-						name: "pert"
+						name: pert
 						params: [[key value];
 							[opt {type: duration}]
 							[exp {type: duration}]
@@ -87,10 +89,12 @@ let form = {
 			type: ({type: datetime} | lib type optional)
 			closure_bodies: {
 				getter: "$env.state.cfg.deadline"
+				setter: "$env.state.cfg.deadline = $in"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util choose date"
+					set: "let results = util choose date
+if $results != null { $results | set deadline }"
 				}
 			}
 		}
@@ -104,12 +108,12 @@ let form = {
 			}
 			atomic: {
 				closure_bodies: {
-					set: "util input int 'Expected cost...'"
+					set: "let results = util input int 'Expected cost...'
+if $results != null { $results | set cost }"
 				}
 			}
 		}
 	]
 }
 
-const self_path = path self
-$form | lib gen form $self_path
+$form | to json --raw

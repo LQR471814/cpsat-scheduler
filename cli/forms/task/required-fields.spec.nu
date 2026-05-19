@@ -25,6 +25,7 @@ let frontmatter = 'let timescales: table<id: int, name: string> = [[id, name];
 
 let form = {
 	name: required-fields
+	use: (lib form imports)
 	frontmatter: $frontmatter
 	params: {
 		type: record
@@ -84,5 +85,4 @@ let form = {
 	]
 }
 
-const script_path = path self
-$form | lib gen form $script_path
+$form | to json --raw

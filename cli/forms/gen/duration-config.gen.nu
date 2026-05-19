@@ -1,7 +1,8 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
+use index.nu
 
-let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, >> = util get form params
+let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, >> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -11,26 +12,27 @@ $env.state = $p.state | params post process
 
 
 
-def --env "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > -> any {
-    update cfg { default {                             
-            pert: {                                    
-                opt: null                              
-                exp: null                              
-                pes: null                              
-            }                                          
-            deadline: null                             
-        } }                                            
-    | update cfg.pert.opt? { util from proto duration }
-    | update cfg.pert.exp? { util from proto duration }
-    | update cfg.pert.pes? { util from proto duration }
-    | update cfg.deadline? { util from proto time }    
+def --env "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, > -> any {
+    update cfg { default {                         
+            pert: {                                
+                opt: null                          
+                exp: null                          
+                pes: null                          
+            }                                      
+            deadline: null                         
+        } }                                        
+    | update cfg.pert.opt? { util from proto dur } 
+    | update cfg.pert.exp? { util from proto dur } 
+    | update cfg.pert.pes? { util from proto dur } 
+    | update cfg.deadline? { util from proto time }
 }
 
-def --env "returns post process" []: any -> record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, > {
-    update cfg.pert.opt? { util to proto duration }  
-    | update cfg.pert.exp? { util to proto duration }
-    | update cfg.pert.pes? { util to proto duration }
-    | update cfg.deadline? { util to proto time }    
+def --env "returns post process" []: any -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing> {
+    update cfg.pert.opt? { util to proto dur }   
+    | update cfg.pert.exp? { util to proto dur } 
+    | update cfg.pert.pes? { util to proto dur } 
+    | update cfg.deadline? { util to proto time }
+    | get cfg                                    
 }
 
 def --env "prompt prefix" []: nothing -> string {
@@ -62,11 +64,12 @@ def --env "get deadline" []: nothing -> oneof<datetime, nothing> {
 }
 
 def --env "set deadline" []: oneof<oneof<datetime, nothing>, nothing> -> nothing {
-    
+    $env.state.cfg.deadline = $in
 }
 
 def --env deadline []: nothing -> nothing {
-    util choose date
+    let results = util choose date                 
+    if $results != null { $results | set deadline }
 }
 
 def --env "unset deadline" []: nothing -> nothing {
@@ -86,7 +89,8 @@ def --env "validate cost" []: oneof<int, nothing> -> bool {
 }
 
 def --env cost []: nothing -> nothing {
-    util input int 'Expected cost...'
+    let results = util input int 'Expected cost...'
+    if $results != null { $results | set cost }    
 }
 
 def --env "unset cost" []: nothing -> nothing {
@@ -99,7 +103,7 @@ def --env status []: nothing -> nothing {
     print ($env.state.cfg.pert)                                   
     print ""                                                      
     util print label 'Deadline'                                   
-    print ($env.state.cfg.deadline)                               
+    util print date ($env.state.cfg.deadline)                     
     print ""                                                      
     util print label 'Expected cost under minimum time investment'
     print ($env.state.cfg.total_cost)                             
@@ -134,21 +138,21 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                                
-        [common "status, s" "Show form status."]                                            
-        [null "next, n" "Fill in next unfilled field."]                                     
-        [null "submit, done, d" "Submit form."]                                             
-        [null "cancel, c" "Abort form."]                                                    
-    ["pert" 'pert' 'Set PERT (time estimates) via nushell command.']                        
-    [null 'get pert' 'Get PERT (time estimates) via nushell command.']                      
-    ["deadline" 'deadline' 'Interactively set Deadline.']                                   
-    [null 'set deadline' 'Set Deadline via nushell command.']                               
-    [null 'get deadline' 'Get Deadline via nushell command.']                               
-    ["cost" 'cost' 'Interactively set Expected cost under minimum time investment.']        
-    [null 'set cost' 'Set Expected cost under minimum time investment via nushell command.']
-    [null 'get cost' 'Get Expected cost under minimum time investment via nushell command.']
-    ]                                                                                       
-                                                                                            
+    print [[group cmd desc];                                                                    
+        [common "status, s" "Show form status."]                                                
+        [null "next, n" "Fill in next unfilled field."]                                         
+        [null "submit, done, d" "Submit form."]                                                 
+        [null "cancel, c" "Abort form."]                                                        
+        ["pert" 'pert' 'Set PERT (time estimates) via nushell command.']                        
+        [null 'get pert' 'Get PERT (time estimates) via nushell command.']                      
+        ["deadline" 'deadline' 'Interactively set Deadline.']                                   
+        [null 'set deadline' 'Set Deadline via nushell command.']                               
+        [null 'get deadline' 'Get Deadline via nushell command.']                               
+        ["cost" 'cost' 'Interactively set Expected cost under minimum time investment.']        
+        [null 'set cost' 'Set Expected cost under minimum time investment via nushell command.']
+        [null 'get cost' 'Get Expected cost under minimum time investment via nushell command.']
+    ]                                                                                           
+                                                                                                
 }
 
 alias s = status

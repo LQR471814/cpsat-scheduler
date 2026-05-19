@@ -1,5 +1,6 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
+use index.nu
 
 let p: record<prompt_prefix: string, state: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>, >> = util get form params
 
@@ -135,22 +136,22 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                             
-        [common "status, s" "Show form status."]                                         
-        [null "next, n" "Fill in next unfilled field."]                                  
-        [null "submit, done, d" "Submit form."]                                          
-        [null "cancel, c" "Abort form."]                                                 
-    ["name" 'name' 'Interactively set Name.']                                            
-    [null 'set name' 'Set Name via nushell command.']                                    
-    [null 'get name' 'Get Name via nushell command.']                                    
-    ["desc" 'desc' 'Interactively set Desc.']                                            
-    [null 'set desc' 'Set Desc via nushell command.']                                    
-    [null 'get desc' 'Get Desc via nushell command.']                                    
-    ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']        
-    [null 'set unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
-    [null 'get unit' 'Get Timescale unit (bounds maximum duration) via nushell command.']
-    ]                                                                                    
-                                                                                         
+    print [[group cmd desc];                                                                 
+        [common "status, s" "Show form status."]                                             
+        [null "next, n" "Fill in next unfilled field."]                                      
+        [null "submit, done, d" "Submit form."]                                              
+        [null "cancel, c" "Abort form."]                                                     
+        ["name" 'name' 'Interactively set Name.']                                            
+        [null 'set name' 'Set Name via nushell command.']                                    
+        [null 'get name' 'Get Name via nushell command.']                                    
+        ["desc" 'desc' 'Interactively set Desc.']                                            
+        [null 'set desc' 'Set Desc via nushell command.']                                    
+        [null 'get desc' 'Get Desc via nushell command.']                                    
+        ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']        
+        [null 'set unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
+        [null 'get unit' 'Get Timescale unit (bounds maximum duration) via nushell command.']
+    ]                                                                                        
+                                                                                             
 }
 
 alias s = status

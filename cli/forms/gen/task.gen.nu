@@ -1,5 +1,6 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
+use index.nu
 
 let p: record<prompt_prefix: string, state: record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> = util get form params
 
@@ -29,10 +30,11 @@ def --env "set req" []: oneof<record<name: string, desc: string, timescale: int>
 }
 
 def --env req []: nothing -> nothing {
-    util exec form ./forms/task/required-fields.gen.nu {  
-                            prompt_prefix: (prompt prefix)
-                            state: (get req)              
-                        }                                 
+    let results = {                           
+        prompt_prefix: (prompt prefix)        
+        state: (get req)                      
+    } | index form required-fields            
+    if $results != null { $results | set req }
 }
 
 def --env "unset req" []: nothing -> nothing {
@@ -49,29 +51,31 @@ def --env "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>
 }
 
 def --env opt []: nothing -> nothing {
-    util exec form ./forms/task/optional-fields.gen.nu {
-        prompt_prefix: (prompt prefix)                  
-        state: (get opt | merge { id: $env.id })        
-    }                                                   
+    let results = {                             
+        prompt_prefix: (prompt prefix)          
+        state: (get opt | merge { id: $env.id })
+    } | index form optional-fields              
+    if $results != null { $results | set opt }  
 }
 
 def --env "unset opt" []: nothing -> nothing {
     null | set opt
 }
 
-def --env "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing> {
+def --env "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing> {
     $env.state | get duration_cfg
 }
 
-def --env "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: string, total_cost: int>, nothing>, nothing> -> nothing {
+def --env "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, nothing> -> nothing {
     $env.state.duration_cfg = $in
 }
 
 def --env dur []: nothing -> nothing {
-    util exec form ./forms/task/duration-config.gen.nu {
-        prompt_prefix: (prompt prefix)                  
-        state: { task: $env.id, cfg: (get dur) }        
-    }                                                   
+    let results = {                             
+        prompt_prefix: (prompt prefix)          
+        state: { task: $env.id, cfg: (get dur) }
+    } | index form duration-config              
+    if $results != null { $results | set dur }  
 }
 
 def --env "unset dur" []: nothing -> nothing {
@@ -87,13 +91,14 @@ def --env "set children" []: oneof<table, nothing> -> nothing {
 }
 
 def --env children []: nothing -> nothing {
-    util exec form ./forms/task/children-config-list.gen.nu {
-        prompt_prefix: (prompt prefix)                       
-        state: {                                             
-            task: $env.id                                    
-            children_cfgs: (get children)                    
-        }                                                    
-    }                                                        
+    let results = {                                     
+        prompt_prefix: (prompt prefix)                  
+        state: {                                        
+            task: $env.id                               
+            children_cfgs: (get children)               
+        }                                               
+    } | index form children-config-list                 
+    if $results != null { $results | set children_cfgs }
 }
 
 def --env "unset children" []: nothing -> nothing {
@@ -135,25 +140,25 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                                
-        [common "status, s" "Show form status."]                            
-        [null "next, n" "Fill in next unfilled field."]                     
-        [null "submit, done, d" "Submit form."]                             
-        [null "cancel, c" "Abort form."]                                    
-    ["req" 'req' 'Interactively set Required fields.']                      
-    [null 'set req' 'Set Required fields via nushell command.']             
-    [null 'get req' 'Get Required fields via nushell command.']             
-    ["opt" 'opt' 'Interactively set Optional fields.']                      
-    [null 'set opt' 'Set Optional fields via nushell command.']             
-    [null 'get opt' 'Get Optional fields via nushell command.']             
-    ["dur" 'dur' 'Interactively set Duration configuration.']               
-    [null 'set dur' 'Set Duration configuration via nushell command.']      
-    [null 'get dur' 'Get Duration configuration via nushell command.']      
-    ["children" 'children' 'Interactively set Children configurations.']    
-    [null 'set children' 'Set Children configurations via nushell command.']
-    [null 'get children' 'Get Children configurations via nushell command.']
-    ]                                                                       
-                                                                            
+    print [[group cmd desc];                                                    
+        [common "status, s" "Show form status."]                                
+        [null "next, n" "Fill in next unfilled field."]                         
+        [null "submit, done, d" "Submit form."]                                 
+        [null "cancel, c" "Abort form."]                                        
+        ["req" 'req' 'Interactively set Required fields.']                      
+        [null 'set req' 'Set Required fields via nushell command.']             
+        [null 'get req' 'Get Required fields via nushell command.']             
+        ["opt" 'opt' 'Interactively set Optional fields.']                      
+        [null 'set opt' 'Set Optional fields via nushell command.']             
+        [null 'get opt' 'Get Optional fields via nushell command.']             
+        ["dur" 'dur' 'Interactively set Duration configuration.']               
+        [null 'set dur' 'Set Duration configuration via nushell command.']      
+        [null 'get dur' 'Get Duration configuration via nushell command.']      
+        ["children" 'children' 'Interactively set Children configurations.']    
+        [null 'set children' 'Set Children configurations via nushell command.']
+        [null 'get children' 'Get Children configurations via nushell command.']
+    ]                                                                           
+                                                                                
 }
 
 
@@ -161,14 +166,14 @@ if $p.state.payload.task? != null {
 	$env.state = state read task $p.state.payload.task | get state
 	$env.id = $p.state.payload.task
 } else {
-	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = util exec form ./forms/task/required-fields.gen.nu {
+	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = {
 		prompt_prefix: (prompt prefix)
 		state: {
 			name: null
 			desc: null
 			timescale: null
 		}
-	}
+	} | index form required-fields
 	if $results == null {
 		cancel
 	}
@@ -198,7 +203,9 @@ if $p.state.payload.task? != null {
 	$env.state = $state
 	$env.id = $id
 }
-	alias s = status
+	
+
+alias s = status
 alias n = next
 alias done = submit
 alias d = submit

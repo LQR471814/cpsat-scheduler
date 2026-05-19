@@ -17,7 +17,8 @@ let state_type = {
 }
 
 let form = {
-	name: children-config-list
+	name: child-config
+	use: (lib form imports)
 	frontmatter: null
 	params: $state_type
 	returns: $state_type
@@ -89,5 +90,4 @@ $env.state.children ++= $child"
 	]
 }
 
-const self_path = path self
-$form | lib gen form $self_path
+$form | to json --raw

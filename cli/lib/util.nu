@@ -1,5 +1,9 @@
 # choose table allows one to choose a row from a table via fuzzy search
 export def "choose table" [--header: string]: table<id: int, name: string> -> oneof<record<id: int, name: string>, nothing> {
+    if ($in | is-empty) {
+        print "no choices possible"
+        return null
+    }
     let width = ($in | length | math log 10 | math floor) + 1
     let choices: list<string> = $in | each {|x|
         let id_display = $x.id | fill --alignment left --width $width
@@ -31,11 +35,17 @@ export def "print section title" [text: string]: nothing -> nothing { gum style 
 
 
 # print date prints a date value (without time)
-export def "print date" [date: datetime]: nothing -> nothing { gum style --foreground 121 ($date | format date %Y-%m-%d) }
+export def "print date" [date: oneof<datetime, nothing>]: nothing -> nothing {
+    if $date == null { return null }
+    gum style --foreground 121 ($date | format date %Y-%m-%d)
+}
 
 
 # print duration prints a duration value
-export def "print duration" [dur: duration]: nothing -> nothing { gum style --foreground 138 ($dur | into string) }
+export def "print duration" [dur: oneof<duration, nothing>]: nothing -> nothing {
+    if $dur == null { return null }
+    gum style --foreground 138 ($dur | into string)
+}
 
 
 # choose date allows the user to choose a date, returns null if aborted
@@ -146,5 +156,5 @@ export def "from proto dur" []: string -> duration {
 
 # to proto dur converts a nushell datetime into a protobuf timestamp
 export def "to proto dur" []: duration -> string {
-    $"($in / 1sec)s" # nu-lint-ignore: division_to_format_duration
+    $"($in / 1sec)s"
 }

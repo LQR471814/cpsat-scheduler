@@ -1,5 +1,6 @@
 use '../../lib/util.nu'
 use '../../lib/state.nu'
+use index.nu
 
 let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
 
@@ -14,7 +15,7 @@ def --env "returns post process" []: any -> record<task: int, desc: oneof<string
 }
 
 def --env "prompt prefix" []: nothing -> string {
-    $"($p.prompt_prefix) \(children-config-list\)"
+    $"($p.prompt_prefix) \(child-config\)"
 }
 
 def --env "get desc" []: nothing -> string {
@@ -97,27 +98,27 @@ def --env "remove children" []: nothing -> nothing {
     get children | drop nth $element.id | set children         
 }
 
-def --env "add children" []: nothing -> nothing {
+def --env children []: nothing -> nothing {
     let child = state list possible relatives CHILD $p.state.task | util choose table --header 'Choose child to add:'
     if $child == null { return }                                                                                     
     $env.state.children ++= $child                                                                                   
 }
 
 def --env status []: nothing -> nothing {
-    util print section title 'Form: children-config-list'
-    util print label 'Description'                       
-    print ($env.state.desc)                              
-    print ""                                             
-    util print label 'Expected cost'                     
-    print ($env.state.exp_cost)                          
-    print ""                                             
-    util print label 'Deadline'                          
-    print ($env.state.deadline)                          
-    print ""                                             
-    util print label 'Children'                          
-    print ($env.state.children)                          
-    print ""                                             
-                                                         
+    util print section title 'Form: child-config'
+    util print label 'Description'               
+    print ($env.state.desc)                      
+    print ""                                     
+    util print label 'Expected cost'             
+    print ($env.state.exp_cost)                  
+    print ""                                     
+    util print label 'Deadline'                  
+    print ($env.state.deadline)                  
+    print ""                                     
+    util print label 'Children'                  
+    print ($env.state.children)                  
+    print ""                                     
+                                                 
 }
 
 def --env next []: nothing -> bool {
@@ -153,24 +154,24 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                      
-        [common "status, s" "Show form status."]                  
-        [null "next, n" "Fill in next unfilled field."]           
-        [null "submit, done, d" "Submit form."]                   
-        [null "cancel, c" "Abort form."]                          
-    ["desc" 'desc' 'Interactively set Description.']              
-    [null 'set desc' 'Set Description via nushell command.']      
-    [null 'get desc' 'Get Description via nushell command.']      
-    ["exp_cost" 'exp_cost' 'Interactively set Expected cost.']    
-    [null 'set exp_cost' 'Set Expected cost via nushell command.']
-    [null 'get exp_cost' 'Get Expected cost via nushell command.']
-    ["deadline" 'deadline' 'Interactively set Deadline.']         
-    [null 'set deadline' 'Set Deadline via nushell command.']     
-    [null 'get deadline' 'Get Deadline via nushell command.']     
-    ["children" 'children' 'Interactively add a Children.']       
-    [null 'add children' 'Add a Children via nushell command.']   
-    ]                                                             
-                                                                  
+    print [[group cmd desc];                                          
+        [common "status, s" "Show form status."]                      
+        [null "next, n" "Fill in next unfilled field."]               
+        [null "submit, done, d" "Submit form."]                       
+        [null "cancel, c" "Abort form."]                              
+        ["desc" 'desc' 'Interactively set Description.']              
+        [null 'set desc' 'Set Description via nushell command.']      
+        [null 'get desc' 'Get Description via nushell command.']      
+        ["exp_cost" 'exp_cost' 'Interactively set Expected cost.']    
+        [null 'set exp_cost' 'Set Expected cost via nushell command.']
+        [null 'get exp_cost' 'Get Expected cost via nushell command.']
+        ["deadline" 'deadline' 'Interactively set Deadline.']         
+        [null 'set deadline' 'Set Deadline via nushell command.']     
+        [null 'get deadline' 'Get Deadline via nushell command.']     
+        ["children" 'children' 'Interactively add a Children.']       
+        [null 'add children' 'Add a Children via nushell command.']   
+    ]                                                                 
+                                                                      
 }
 
 alias s = status

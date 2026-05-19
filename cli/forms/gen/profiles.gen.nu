@@ -1,5 +1,6 @@
-use '../lib/util.nu'
-use '../lib/state.nu'
+use '../../lib/util.nu'
+use '../../lib/state.nu'
+use index.nu
 
 let p: record<prompt_prefix: string, state: nothing> = util get form params
 
@@ -63,18 +64,20 @@ def --env cancel []: nothing -> nothing {
 }
 
 def --env help []: nothing -> nothing {
-    print [[group cmd desc];                                        
-        [common "status, s" "Show form status."]                    
-        [null "next, n" "Fill in next unfilled field."]             
-        [null "submit, done, d" "Submit form."]                     
-        [null "cancel, c" "Abort form."]                            
-    ["profiles" 'add profile' 'Add a Profiles via nushell command.']
-    [null 'remove profile' 'Remove a Profiles']                     
-    ]                                                               
-                                                                    
+    print [[group cmd desc];                                            
+        [common "status, s" "Show form status."]                        
+        [null "next, n" "Fill in next unfilled field."]                 
+        [null "submit, done, d" "Submit form."]                         
+        [null "cancel, c" "Abort form."]                                
+        ["profiles" 'add profile' 'Add a Profiles via nushell command.']
+        [null 'remove profile' 'Remove a Profiles']                     
+    ]                                                                   
+                                                                        
 }
 
-$env.state = state list profilesalias s = status
+$env.state = state list profiles
+
+alias s = status
 alias n = next
 alias done = submit
 alias d = submit

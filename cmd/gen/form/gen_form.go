@@ -26,6 +26,7 @@ func (f Form) renderSetupBlock(w io.Writer) {
 	for _, imp := range f.Use {
 		fmt.Fprintf(w, "use '%s'\n", imp)
 	}
+	fmt.Fprintln(w, "use index.nu")
 	fmt.Fprintln(w)
 	fmt.Fprint(w, `let p: record<prompt_prefix: string, state: `)
 	f.Params.Render(w)
@@ -199,9 +200,9 @@ func (f Form) helpFn() Closure {
 	prevGroup := "common"
 	writePrefix := func(f FieldDef) {
 		if f.Name != prevGroup {
-			fmt.Fprintf(&body, `["%s" `, f.Name)
+			fmt.Fprintf(&body, `	["%s" `, f.Name)
 		} else {
-			fmt.Fprint(&body, `[null `)
+			fmt.Fprint(&body, `	[null `)
 		}
 		prevGroup = f.Name
 	}
