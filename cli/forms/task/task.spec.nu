@@ -35,6 +35,7 @@ let dur_cfg_fields = [[key value];
 let payload = {
 	type: oneof
 	positional: [
+		{type: "nothing"}
 		{
 			type: record
 			fields: [[key value];
@@ -63,11 +64,14 @@ let form = {
 			[payload $payload]
 		]
 	}
-	returns: $payload
+	returns: {
+		type: record,
+		fields: [[key value];
+			[id {type: int}]]
+	}
 	closures: {
 		returns_post_process: "let input = $in | get payload
-{profile_id: $p.state.profile, state: $input} | api.gen API SaveTask
-$input"
+{profile_id: $p.state.profile, state: $input} | api.gen API SaveTask"
 	}
 	fields: [
 		{

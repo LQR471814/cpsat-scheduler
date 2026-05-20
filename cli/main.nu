@@ -38,7 +38,7 @@ def --env "new task" []: nothing -> nothing {
 		prompt_prefix: (prompt prefix)
 		state: {
 			profile: $env.profile
-			payload: {}
+			payload: null
 		}
 	} | index form task
 	null

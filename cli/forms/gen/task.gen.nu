@@ -2,7 +2,7 @@ use '../../lib/util.nu'
 use '../../lib/api.gen.nu'
 use index.nu
 
-let p: record<prompt_prefix: string, state: record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> = util get form params
+let p: record<prompt_prefix: string, state: record<profile: int, payload: oneof<nothing, record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -10,10 +10,9 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def --env "returns post process" []: any -> oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >> {
+def --env "returns post process" []: any -> record<id: int> {
     let input = $in | get payload                                       
     {profile_id: $p.state.profile, state: $input} | api.gen API SaveTask
-    $input                                                              
 }
 
 def "prompt prefix" []: nothing -> string {
