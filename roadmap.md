@@ -1,6 +1,6 @@
 - [x] ! Fix mutable state throughout CLI (large ref.)
 - [x] ! Impl. editing of list elem. (large ref.)
-- [ ] ! Fix bugs
+- [x] ! Fix bugs
 - [ ] Impl. event input
 - [ ] Impl. progress update
     - [ ] Figure out logic + backend (unknown)
