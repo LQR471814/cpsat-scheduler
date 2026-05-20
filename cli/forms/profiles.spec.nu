@@ -42,7 +42,7 @@ let form = {
 	universe_start: $universe_start
 	gen_pert_choices: ($pert_choices | default 4)
 } | api.gen API CreateProfile | complete
-$env.state = api.gen API ListProfiles"
+$env.state = {} | api.gen API ListProfiles"
 					}
 					remove: {
 						name: "remove profile"
@@ -56,13 +56,13 @@ if $element == null {
 	return false
 }
 {id: $element.id} | api.gen API RemoveProfile
-$env.state = api.gen API ListProfiles"
+$env.state = {} | api.gen API ListProfiles"
 					}
 				}
 			}
 		}
 	]
-	backmatter: "$env.state = api.gen API ListProfiles"
+	backmatter: "$env.state = {} | api.gen API ListProfiles"
 }
 
 $form | to json --raw

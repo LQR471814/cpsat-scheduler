@@ -30,7 +30,7 @@ def "remove profile" []: nothing -> nothing {
         return false                                              
     }                                                             
     {id: $element.id} | api.gen API RemoveProfile                 
-    $env.state = api.gen API ListProfiles                         
+    $env.state = {} | api.gen API ListProfiles                         
 }
 
 def --env "add profile" [name: string, atomic_timescale: duration, universe_start: datetime, --pert_choices: int]: nothing -> nothing {
@@ -40,7 +40,7 @@ def --env "add profile" [name: string, atomic_timescale: duration, universe_star
         universe_start: $universe_start              
         gen_pert_choices: ($pert_choices | default 4)
     } | api.gen API CreateProfile | complete         
-    $env.state = api.gen API ListProfiles            
+    $env.state = {} | api.gen API ListProfiles            
 }
 
 def --env status []: nothing -> nothing {
@@ -80,7 +80,7 @@ def help []: nothing -> nothing {
                                                                         
 }
 
-$env.state = api.gen API ListProfiles
+$env.state = {} | api.gen API ListProfiles
 
 alias s = status
 alias n = next

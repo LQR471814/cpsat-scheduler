@@ -18,7 +18,7 @@ def profiles []: nothing -> nothing {
 }
 
 def --env "switch profile" []: nothing -> bool {
-	let profile_list = api.gen API ListProfiles | get entries
+	let profile_list = {} | api.gen API ListProfiles | get entries
 	if ($profile_list | is-empty) {
 		profiles
 		return true
