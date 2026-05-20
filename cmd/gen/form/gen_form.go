@@ -114,7 +114,7 @@ func (f Form) nextFn() nugen.Closure {
 		} else if field.List != nil {
 			if field.List.ClosuresBodies.Add != nil {
 				fmt.Fprintf(&body, `if not (%[1]s | validate %[2]s) {
-	add %[2]s
+	%[2]s
 	if not (%[1]s | validate %[2]s) { return false }
 	return (next)
 }

@@ -11,8 +11,8 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 $env.state = $p.state
 
 def --env "returns post process" []: any -> record<id: int> {
-    let input = $in | get payload                                       
-    {profile_id: $p.state.profile, state: $input} | api.gen API SaveTask
+    let input = $in                                                                                 
+    {id: $p.state.payload.task?, profile_id: $p.state.profile, state: $input} | api.gen API SaveTask
 }
 
 def "prompt prefix" []: nothing -> string {

@@ -137,7 +137,7 @@ def --env next []: nothing -> bool {
         return (next)                                                    
     }                                                                    
     if not ($env.state.children | validate children) {                   
-        add children                                                     
+        children                                                         
         if not ($env.state.children | validate children) { return false }
         return (next)                                                    
     }                                                                    

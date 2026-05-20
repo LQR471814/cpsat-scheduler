@@ -105,6 +105,7 @@ func (c GenContext) renderFieldTransform(
 	if optional {
 		question = "?"
 	}
+
 	transform := transformer
 	if transform == "$in" {
 		return
@@ -198,17 +199,40 @@ func (c GenContext) getDeserializerInner(msgName string) nugen.Closure {
 	fmt.Fprintln(&body, "$in")
 
 	// rename fields from lowerCamelCase to their original names
-	fmt.Fprint(&body, "| rename --column {")
 	for _, field := range c.messages[msgName].GetField() {
-		fmt.Fprint(&body, toLowerCamelCase(field.GetName()))
+		camelCase := toLowerCamelCase(field.GetName())
+		if camelCase == field.GetName() {
+			continue
+		}
+
+		if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL {
+			fmt.Fprintf(&body, "| if $in.%s? != null { ", camelCase)
+		} else {
+			fmt.Fprint(&body, "| ")
+		}
+
+		fmt.Fprint(&body, "rename --column {")
+		fmt.Fprint(&body, camelCase)
 		fmt.Fprint(&body, ": ")
 		fmt.Fprint(&body, field.GetName())
-		fmt.Fprint(&body, ", ")
+		fmt.Fprint(&body, "}")
+
+		if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL {
+			fmt.Fprint(&body, " }")
+		}
+		fmt.Fprintln(&body)
 	}
-	fmt.Fprintln(&body, "}")
 
 	for _, field := range c.messages[msgName].GetField() {
-		c.renderFieldTransform(&body, field, c.getFieldDeserialize(field))
+		deserializer := c.getFieldDeserialize(field)
+		c.renderFieldTransform(&body, field, deserializer)
+	}
+
+	for _, field := range c.messages[msgName].GetField() {
+		// buf curl will omit the field if it is empty list!
+		if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED {
+			fmt.Fprintf(&body, "| default [] %s\n", field.GetName())
+		}
 	}
 
 	return nugen.Closure{

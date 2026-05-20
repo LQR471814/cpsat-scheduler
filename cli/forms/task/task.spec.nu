@@ -70,8 +70,8 @@ let form = {
 			[id {type: int}]]
 	}
 	closures: {
-		returns_post_process: "let input = $in | get payload
-{profile_id: $p.state.profile, state: $input} | api.gen API SaveTask"
+		returns_post_process: "let input = $in
+{id: $p.state.payload.task?, profile_id: $p.state.profile, state: $input} | api.gen API SaveTask"
 	}
 	fields: [
 		{
