@@ -1,7 +1,7 @@
 use ../lib.nu # nu-lint-ignore: dont_mix_different_effects
 
 let desc_type = {type: string}
-let deadline_type = lib type proto timestamp
+let deadline_type = {type: datetime}
 let exp_cost_type = {type: int}
 let children_type = lib type entry table
 

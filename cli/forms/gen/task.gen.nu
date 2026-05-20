@@ -40,11 +40,11 @@ def --env "unset req" []: nothing -> nothing {
     null | set req
 }
 
-def --env "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+def --env "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
     $env.state | select parent start end prereqs postreqs
 }
 
-def --env "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
+def --env "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>, nothing> -> nothing {
     let value = $in                                                                    
     $env.state = $env.state | merge ($value | select parent start end prereqs postreqs)
 }
@@ -61,11 +61,11 @@ def --env "unset opt" []: nothing -> nothing {
     null | set opt
 }
 
-def --env "get dur" []: nothing -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing> {
+def --env "get dur" []: nothing -> oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing> {
     $env.state | get duration_cfg
 }
 
-def --env "set dur" []: oneof<oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, nothing> -> nothing {
+def --env "set dur" []: oneof<oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing>, nothing> -> nothing {
     $env.state.duration_cfg = $in
 }
 
@@ -90,14 +90,14 @@ def --env "set children" []: oneof<table, nothing> -> nothing {
 }
 
 def --env children []: nothing -> nothing {
-    let results = {                                     
-        prompt_prefix: (prompt prefix)                  
-        state: {                                        
-            task: $env.id                               
-            children_cfgs: (get children)               
-        }                                               
-    } | index form children-config                      
-    if $results != null { $results | set children_cfgs }
+    let results = {                                
+        prompt_prefix: (prompt prefix)             
+        state: {                                   
+            task: $env.id                          
+            children_cfgs: (get children)          
+        }                                          
+    } | index form children-config                 
+    if $results != null { $results | set children }
 }
 
 def --env "unset children" []: nothing -> nothing {

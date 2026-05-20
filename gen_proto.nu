@@ -11,3 +11,4 @@ buf generate
 mv api/*.gen.nu cli/lib/
 rm api
 rm --recursive solver/solverpb
+rm --recursive google

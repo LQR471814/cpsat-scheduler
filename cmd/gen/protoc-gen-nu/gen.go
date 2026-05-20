@@ -100,7 +100,7 @@ func (c GenContext) renderFieldTransform(
 	transformer string,
 ) {
 	// proto3 optional is effectively just syntax sugar for oneof
-	optional := field.GetProto3Optional() || field.OneofIndex != nil
+	optional := field.GetLabel() != descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL || field.OneofIndex != nil
 	var question string
 	if optional {
 		question = "?"
@@ -319,7 +319,7 @@ func (c GenContext) convertMessageTypeInner(msgName string) nugen.TypeDef {
 
 	var commonFields []nugen.KeyValue[nugen.TypeDef]
 	for _, field := range msg.GetField() {
-		if field.OneofIndex != nil {
+		if field.OneofIndex != nil && field.GetLabel() != descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL {
 			continue
 		}
 		commonFields = append(commonFields, c.convertFieldType(field))

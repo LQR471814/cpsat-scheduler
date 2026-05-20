@@ -1,7 +1,7 @@
 use ../lib.nu
 
 let parent_type = lib type entry record
-let ts_type = lib type proto timestamp
+let ts_type = {type: datetime}
 let req_type = lib type entry table
 
 let required_fields = [[key value];
@@ -17,8 +17,8 @@ let optional_fields = [[key value];
 	[postreqs $req_type]
 ]
 
-let dur_type = lib type proto duration
-let deadline_type = lib type proto timestamp
+let dur_type = {type: duration}
+let deadline_type = {type: datetime}
 let dur_cfg_fields = [[key value];
 	[pert {
 		type: record

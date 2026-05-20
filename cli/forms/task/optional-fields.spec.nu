@@ -1,7 +1,7 @@
 use ../lib.nu # nu-lint-ignore: dont_mix_different_effects
 
 let parent_type = lib type entry record
-let ts_type = lib type proto timestamp
+let ts_type = {type: datetime}
 let req_type = lib type entry table
 
 let state_type = {

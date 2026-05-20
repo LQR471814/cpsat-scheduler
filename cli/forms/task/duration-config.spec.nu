@@ -1,20 +1,17 @@
 use ../lib.nu # nu-lint-ignore: dont_mix_different_effects
 
-let dur_type = lib type proto duration
-let deadline_type = lib type proto timestamp
-
 let cfg = {
 	type: record
 	fields: [[key value];
 		[pert {
 			type: record
 			fields: [[key value];
-				[opt $dur_type]
-				[exp $dur_type]
-				[pes $dur_type]
+				[opt {type: duration}]
+				[exp {type: duration}]
+				[pes {type: duration}]
 			]
 		}]
-		[deadline ($deadline_type | lib type optional)]
+		[deadline ({type: datetime} | lib type optional)]
 		[total_cost {type: int}]
 	]
 } | lib type optional

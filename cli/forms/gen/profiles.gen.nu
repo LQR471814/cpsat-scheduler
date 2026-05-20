@@ -14,11 +14,11 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(profiles\)"
 }
 
-def --env "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, > {
+def --env "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: duration, universe_start: datetime, gen_pert_choices: oneof<int, nothing>, > {
     $env.state
 }
 
-def --env "set profiles" []: oneof<table<id: int, name: string, atomic_timescale: string, universe_start: string, gen_pert_choices: oneof<int, nothing>, >, nothing> -> nothing {
+def --env "set profiles" []: oneof<table<id: int, name: string, atomic_timescale: duration, universe_start: datetime, gen_pert_choices: oneof<int, nothing>, >, nothing> -> nothing {
     $env.state = $in
 }
 

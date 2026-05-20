@@ -15,8 +15,8 @@ let form = {
 				fields: [[key value];
 					[id {type: int}]
 					[name {type: string}]
-					[atomic_timescale (lib type proto duration)]
-					[universe_start (lib type proto timestamp)]
+					[atomic_timescale ({type: duration})]
+					[universe_start ({type: datetime})]
 					[gen_pert_choices ({type: int} | lib type optional)]
 				]
 			}

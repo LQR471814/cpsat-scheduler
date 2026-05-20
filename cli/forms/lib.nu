@@ -5,18 +5,6 @@ export def "type optional" []: any -> any {
 	}
 }
 
-export def "type proto timestamp" []: nothing -> any {
-	{
-		type: string
-	}
-}
-
-export def "type proto duration" []: nothing -> any {
-	{
-		type: string
-	}
-}
-
 export def "type entry record" []: nothing -> any {
 	{
 		type: record

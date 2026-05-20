@@ -25,7 +25,7 @@ def "serialize proto dur" []: duration -> string {
 def "serialize proto time" []: datetime -> string {
     format date %+
 }
-export def "API ListProfiles" []: record -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, >>> {
+export def "API ListProfiles" []: record -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>, >>> {
     serialize .ListProfilesRequest | req API ListProfiles | deserialize .ListProfilesResponse
 }
 
@@ -37,11 +37,11 @@ export def "API RemoveProfile" []: record<id: oneof<nothing, int>, > -> record {
     serialize .RemoveProfileRequest | req API RemoveProfile | deserialize .RemoveProfileResponse
 }
 
-export def "API ReadTask" []: record<id: oneof<nothing, int>, > -> record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, children_cfgs: list<record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, > {
+export def "API ReadTask" []: record<id: oneof<nothing, int>, > -> record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, >>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, >>, > {
     serialize .ReadTaskRequest | req API ReadTask | deserialize .ReadTaskResponse
 }
 
-export def "API SaveTask" []: record<profile_id: oneof<nothing, int>, state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, children_cfgs: list<record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, > -> record<id: oneof<nothing, int>, > {
+export def "API SaveTask" []: record<id: oneof<nothing, int>, profile_id: oneof<nothing, int>, state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, >>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, >>, > -> record<id: oneof<nothing, int>, > {
     serialize .SaveTaskRequest | req API SaveTask | deserialize .SaveTaskResponse
 }
 
@@ -61,7 +61,7 @@ export def "API ProgressUpdate" []: record<target_task_id: oneof<nothing, int>, 
     serialize .ProgressUpdateRequest | req API ProgressUpdate | deserialize .ProgressUpdateResponse
 }
 
-def "deserialize .DurState" []: any -> record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, total_cost: oneof<nothing, int>, > {
+def "deserialize .DurState" []: any -> record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, > {
     $in                                                                        
     | rename --column {pert: pert, deadline: deadline, totalCost: total_cost, }
     | update pert { deserialize .PERT }                                        
@@ -70,26 +70,18 @@ def "deserialize .DurState" []: any -> record<pert: oneof<nothing, record<pes: o
                                                                                
 }
 
-def "deserialize .ChildrenConfigState" []: any -> record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> {
-    $in                                                                                        
-    | rename --column {desc: desc, deadline: deadline, expCost: exp_cost, children: children, }
-    | update deadline? { deserialize proto time }                                              
-    | update exp_cost { into int }                                                             
-    | update children { each { deserialize .Entry } }                                          
-                                                                                               
-}
-
-def "deserialize .ProgressUpdateResponse" []: any -> record {
-    $in                 
-    | rename --column {}
-                        
-}
-
-def "deserialize .ReadTaskResponse" []: any -> record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, children_cfgs: list<record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, > {
-    $in                                      
-    | rename --column {state: state, }       
-    | update state { deserialize .TaskState }
-                                             
+def "deserialize .TaskState" []: any -> record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, >>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, > {
+    $in                                                                                                                                                                                                     
+    | rename --column {name: name, desc: desc, timescale: timescale, durationCfg: duration_cfg, childrenCfgs: children_cfgs, prereqs: prereqs, postreqs: postreqs, parent: parent, start: start, end: end, }
+    | update timescale { into int }                                                                                                                                                                         
+    | update duration_cfg? { deserialize .DurState }                                                                                                                                                        
+    | update children_cfgs? { each { deserialize .ChildrenConfigState } }                                                                                                                                   
+    | update prereqs? { each { deserialize .Entry } }                                                                                                                                                       
+    | update postreqs? { each { deserialize .Entry } }                                                                                                                                                      
+    | update parent? { deserialize .Entry }                                                                                                                                                                 
+    | update start? { deserialize proto time }                                                                                                                                                              
+    | update end? { deserialize proto time }                                                                                                                                                                
+                                                                                                                                                                                                            
 }
 
 def "deserialize .SaveTaskResponse" []: any -> record<id: oneof<nothing, int>, > {
@@ -99,31 +91,56 @@ def "deserialize .SaveTaskResponse" []: any -> record<id: oneof<nothing, int>, >
                                 
 }
 
-def "deserialize .TaskState" []: any -> record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, children_cfgs: list<record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> {
-    $in                                                                                                                                                                                                     
-    | rename --column {name: name, desc: desc, timescale: timescale, durationCfg: duration_cfg, childrenCfgs: children_cfgs, prereqs: prereqs, postreqs: postreqs, parent: parent, start: start, end: end, }
-    | update timescale { into int }                                                                                                                                                                         
-    | update duration_cfg? { deserialize .DurState }                                                                                                                                                        
-    | update children_cfgs { each { deserialize .ChildrenConfigState } }                                                                                                                                    
-    | update prereqs { each { deserialize .Entry } }                                                                                                                                                        
-    | update postreqs { each { deserialize .Entry } }                                                                                                                                                       
-    | update parent? { deserialize .Entry }                                                                                                                                                                 
-    | update start? { deserialize proto time }                                                                                                                                                              
-    | update end? { deserialize proto time }                                                                                                                                                                
-                                                                                                                                                                                                            
+def "deserialize .ListScheduledTasksResponse" []: any -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> {
+    $in                                              
+    | rename --column {entries: entries, }           
+    | update entries? { each { deserialize .Entry } }
+                                                     
 }
 
-def "deserialize .ListProfilesResponse" []: any -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, >>> {
-    $in                                               
-    | rename --column {entries: entries, }            
-    | update entries { each { deserialize .Profile } }
-                                                      
+def "deserialize .ProgressUpdateResponse" []: any -> record {
+    $in                 
+    | rename --column {}
+                        
+}
+
+def "deserialize .Profile" []: any -> record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>, > {
+    $in                                                                                                                                         
+    | rename --column {id: id, name: name, atomicTimescale: atomic_timescale, universeStart: universe_start, genPertChoices: gen_pert_choices, }
+    | update id { into int }                                                                                                                    
+    | update atomic_timescale { deserialize proto dur }                                                                                         
+    | update universe_start { deserialize proto time }                                                                                          
+    | update gen_pert_choices? { into int }                                                                                                     
+                                                                                                                                                
+}
+
+def "deserialize .ListProfilesResponse" []: any -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>, >>> {
+    $in                                                
+    | rename --column {entries: entries, }             
+    | update entries? { each { deserialize .Profile } }
+                                                       
 }
 
 def "deserialize .CreateProfileResponse" []: any -> record {
     $in                 
     | rename --column {}
                         
+}
+
+def "deserialize .PERT" []: any -> record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, > {
+    $in                                               
+    | rename --column {pes: pes, exp: exp, opt: opt, }
+    | update pes { deserialize proto dur }            
+    | update exp { deserialize proto dur }            
+    | update opt { deserialize proto dur }            
+                                                      
+}
+
+def "deserialize .ReadTaskResponse" []: any -> record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, >>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, >>, > {
+    $in                                      
+    | rename --column {state: state, }       
+    | update state { deserialize .TaskState }
+                                             
 }
 
 def "deserialize .RemoveProfileResponse" []: any -> record {
@@ -139,65 +156,26 @@ def "deserialize .Entry" []: any -> record<id: oneof<nothing, int>, name: oneof<
                                             
 }
 
+def "deserialize .ChildrenConfigState" []: any -> record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> {
+    $in                                                                                        
+    | rename --column {desc: desc, deadline: deadline, expCost: exp_cost, children: children, }
+    | update deadline? { deserialize proto time }                                              
+    | update exp_cost { into int }                                                             
+    | update children? { each { deserialize .Entry } }                                         
+                                                                                               
+}
+
 def "deserialize .DeleteTaskResponse" []: any -> record {
     $in                 
     | rename --column {}
                         
 }
 
-def "deserialize .ListScheduledTasksResponse" []: any -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> {
-    $in                                             
-    | rename --column {entries: entries, }          
-    | update entries { each { deserialize .Entry } }
-                                                    
-}
-
 def "deserialize .ListPossibleRelativesResponse" []: any -> record<entries: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> {
-    $in                                             
-    | rename --column {entries: entries, }          
-    | update entries { each { deserialize .Entry } }
-                                                    
-}
-
-def "deserialize .Profile" []: any -> record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, > {
-    $in                                                                                                                                         
-    | rename --column {id: id, name: name, atomicTimescale: atomic_timescale, universeStart: universe_start, genPertChoices: gen_pert_choices, }
-    | update id { into int }                                                                                                                    
-    | update atomic_timescale { deserialize proto dur }                                                                                         
-    | update universe_start { deserialize proto time }                                                                                          
-    | update gen_pert_choices? { into int }                                                                                                     
-                                                                                                                                                
-}
-
-def "deserialize .PERT" []: any -> record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, > {
-    $in                                               
-    | rename --column {pes: pes, exp: exp, opt: opt, }
-    | update pes { deserialize proto dur }            
-    | update exp { deserialize proto dur }            
-    | update opt { deserialize proto dur }            
-                                                      
-}
-
-def "serialize .TaskState" []: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, children_cfgs: list<record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> -> any {
-    $in                                                               
-    | update duration_cfg? { serialize .DurState }                    
-    | update children_cfgs { each { serialize .ChildrenConfigState } }
-    | update prereqs { each { serialize .Entry } }                    
-    | update postreqs { each { serialize .Entry } }                   
-    | update parent? { serialize .Entry }                             
-    | update start? { serialize proto time }                          
-    | update end? { serialize proto time }                            
-                                                                      
-}
-
-def "serialize .DeleteTaskRequest" []: record<id: oneof<nothing, int>, > -> any {
-    $in
-       
-}
-
-def "serialize .ReadTaskRequest" []: record<id: oneof<nothing, int>, > -> any {
-    $in
-       
+    $in                                              
+    | rename --column {entries: entries, }           
+    | update entries? { each { deserialize .Entry } }
+                                                     
 }
 
 def "serialize .PERT" []: record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, > -> any {
@@ -208,7 +186,21 @@ def "serialize .PERT" []: record<pes: oneof<nothing, duration>, exp: oneof<nothi
                                         
 }
 
-def "serialize .SaveTaskRequest" []: record<profile_id: oneof<nothing, int>, state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, children_cfgs: list<record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, > -> any {
+def "serialize .DurState" []: record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, > -> any {
+    $in                                        
+    | update pert { serialize .PERT }          
+    | update deadline? { serialize proto time }
+                                               
+}
+
+def "serialize .ChildrenConfigState" []: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> -> any {
+    $in                                             
+    | update deadline? { serialize proto time }     
+    | update children? { each { serialize .Entry } }
+                                                    
+}
+
+def "serialize .SaveTaskRequest" []: record<id: oneof<nothing, int>, profile_id: oneof<nothing, int>, state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, >>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, >>, > -> any {
     $in                                    
     | update state { serialize .TaskState }
                                            
@@ -245,16 +237,9 @@ def "serialize .CreateProfileRequest" []: record<name: oneof<nothing, string>, a
                                                      
 }
 
-def "serialize .RemoveProfileRequest" []: record<id: oneof<nothing, int>, > -> any {
+def "serialize .ReadTaskRequest" []: record<id: oneof<nothing, int>, > -> any {
     $in
        
-}
-
-def "serialize .DurState" []: record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, total_cost: oneof<nothing, int>, > -> any {
-    $in                                        
-    | update pert { serialize .PERT }          
-    | update deadline? { serialize proto time }
-                                               
 }
 
 def "serialize .Entry" []: record<id: oneof<nothing, int>, name: oneof<nothing, string>, > -> any {
@@ -262,10 +247,25 @@ def "serialize .Entry" []: record<id: oneof<nothing, int>, name: oneof<nothing, 
        
 }
 
-def "serialize .ChildrenConfigState" []: record<desc: oneof<nothing, string>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>> -> any {
-    $in                                            
-    | update deadline? { serialize proto time }    
-    | update children { each { serialize .Entry } }
-                                                   
+def "serialize .TaskState" []: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>, >>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>, >>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>, >>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, > -> any {
+    $in                                                                
+    | update duration_cfg? { serialize .DurState }                     
+    | update children_cfgs? { each { serialize .ChildrenConfigState } }
+    | update prereqs? { each { serialize .Entry } }                    
+    | update postreqs? { each { serialize .Entry } }                   
+    | update parent? { serialize .Entry }                              
+    | update start? { serialize proto time }                           
+    | update end? { serialize proto time }                             
+                                                                       
+}
+
+def "serialize .DeleteTaskRequest" []: record<id: oneof<nothing, int>, > -> any {
+    $in
+       
+}
+
+def "serialize .RemoveProfileRequest" []: record<id: oneof<nothing, int>, > -> any {
+    $in
+       
 }
 

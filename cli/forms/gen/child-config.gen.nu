@@ -2,7 +2,7 @@ use '../../lib/util.nu'
 use '../../lib/api.gen.nu'
 use index.nu
 
-let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
+let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<datetime, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -10,7 +10,7 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def --env "returns post process" []: any -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
+def --env "returns post process" []: any -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<datetime, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
     reject task
 }
 
