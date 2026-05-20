@@ -199,7 +199,7 @@ if $p.state.payload.task? != null {
         }
         children_cfgs: []
 	}
-	let id = {profile_id: $p.state.profile, state: $state} | api.gen API SaveTask | get id
+	let id = {id: null, profile_id: $p.state.profile, state: $state} | api.gen API SaveTask | get id
 	$env.state = $state
 	$env.id = $id
 }
