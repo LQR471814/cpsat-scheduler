@@ -10,18 +10,18 @@ export def req [api: string, method: string]: any -> any {
 		| from json
 }
 
-def "proto deserialize dur" []: string -> duration {
-	1sec * (str substring 0..<(($in | str length) - 1) | into float)
+def "deserialize proto dur" []: string -> duration {
+	1sec * ($in | str substring 0..<(($in | str length) - 1) | into float)
 }
 
-def "proto deserialize time" []: string -> datetime {
+def "deserialize proto time" []: string -> datetime {
 	into datetime | date to-timezone local
 }
 
-def "proto serialize dur" []: duration -> string {
+def "serialize proto dur" []: duration -> string {
     $"($in / 1sec)s"
 }
 
-def "proto serialize time" []: datetime -> string {
+def "serialize proto time" []: datetime -> string {
     format date %+
 }

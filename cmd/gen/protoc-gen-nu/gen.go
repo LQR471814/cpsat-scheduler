@@ -25,19 +25,19 @@ export def req [api: string, method: string]: any -> any {
 		| from json
 }
 
-def "proto deserialize dur" []: string -> duration {
-	1sec * (str substring 0..<(($in | str length) - 1) | into float)
+def "deserialize proto dur" []: string -> duration {
+	1sec * ($in | str substring 0..<(($in | str length) - 1) | into float)
 }
 
-def "proto deserialize time" []: string -> datetime {
+def "deserialize proto time" []: string -> datetime {
 	into datetime | date to-timezone local
 }
 
-def "proto serialize dur" []: duration -> string {
+def "serialize proto dur" []: duration -> string {
     $"($in / 1sec)s"
 }
 
-def "proto serialize time" []: datetime -> string {
+def "serialize proto time" []: datetime -> string {
     format date %+
 }
 `
@@ -79,9 +79,9 @@ func (c GenContext) getFieldSerialize(field *descriptorpb.FieldDescriptorProto) 
 	typeName := field.GetTypeName()
 	switch typeName {
 	case message_type_duration:
-		return "proto serialize dur"
+		return "serialize proto dur"
 	case message_type_timestamp:
-		return "proto serialize time"
+		return "serialize proto time"
 	}
 
 	switch field.GetType() {
@@ -137,9 +137,9 @@ func (c GenContext) getFieldDeserialize(field *descriptorpb.FieldDescriptorProto
 	fullTypeName := field.GetTypeName()
 	switch fullTypeName {
 	case message_type_duration:
-		return "proto deserialize dur"
+		return "deserialize proto dur"
 	case message_type_timestamp:
-		return "proto deserialize time"
+		return "deserialize proto time"
 	}
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_INT64,
@@ -187,7 +187,7 @@ func (c GenContext) getDeserializerInner(msgName string) nugen.Closure {
 		fmt.Fprint(&body, toLowerCamelCase(field.GetName()))
 		fmt.Fprint(&body, ": ")
 		fmt.Fprint(&body, field.GetName())
-		fmt.Fprint(&body, ",")
+		fmt.Fprint(&body, ", ")
 	}
 	fmt.Fprintln(&body, "}")
 
