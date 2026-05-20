@@ -89,28 +89,44 @@ func (c GenContext) getFieldSerialize(field *descriptorpb.FieldDescriptorProto) 
 	// 	descriptorpb.FieldDescriptorProto_TYPE_SFIXED64:
 	// 	return "into int"
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		return c.getDeserializer(typeName)
+		return c.getSerializer(typeName)
 	}
 	return "$in"
+}
+
+func (c GenContext) renderFieldTransform(
+	out io.Writer,
+	field *descriptorpb.FieldDescriptorProto,
+	transformer string,
+) {
+	// proto3 optional is effectively just syntax sugar for oneof
+	optional := field.GetProto3Optional() || field.OneofIndex != nil
+	var question string
+	if optional {
+		question = "?"
+	}
+	transform := transformer
+	if transform == "$in" {
+		return
+	}
+	if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED {
+		transform = fmt.Sprintf("each { %s }", transform)
+	}
+	fmt.Fprintf(
+		out,
+		"| update %s%s { %s }\n",
+		field.GetName(),
+		question,
+		transform,
+	)
 }
 
 func (c GenContext) getSerializerInner(msgName string) nugen.Closure {
 	var body strings.Builder
 	fmt.Fprintln(&body, "$in")
-	for _, field := range c.messages[msgName].GetField() {
-		// proto3 optional is effectively just syntax sugar for oneof
-		optional := field.OneofIndex != nil
-		var question string
-		if optional {
-			question = "?"
-		}
 
-		fmt.Fprintf(
-			&body, "| update %s%s { %s }\n",
-			field.GetName(),
-			question,
-			c.getFieldSerialize(field),
-		)
+	for _, field := range c.messages[msgName].GetField() {
+		c.renderFieldTransform(&body, field, c.getFieldSerialize(field))
 	}
 
 	return nugen.Closure{
@@ -192,18 +208,7 @@ func (c GenContext) getDeserializerInner(msgName string) nugen.Closure {
 	fmt.Fprintln(&body, "}")
 
 	for _, field := range c.messages[msgName].GetField() {
-		optional := field.GetProto3Optional() || field.OneofIndex != nil
-		var question string
-		if optional {
-			question = "?"
-		}
-
-		fmt.Fprintf(
-			&body, "| update %s%s { %s }\n",
-			field.GetName(),
-			question,
-			c.getFieldDeserialize(field),
-		)
+		c.renderFieldTransform(&body, field, c.getFieldDeserialize(field))
 	}
 
 	return nugen.Closure{

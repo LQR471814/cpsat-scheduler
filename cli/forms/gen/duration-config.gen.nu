@@ -13,26 +13,18 @@ $env.state = $p.state | params post process
 
 
 def --env "params post process" []: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, > -> any {
-    update cfg { default {                         
-            pert: {                                
-                opt: null                          
-                exp: null                          
-                pes: null                          
-            }                                      
-            deadline: null                         
-        } }                                        
-    | update cfg.pert.opt? { util from proto dur } 
-    | update cfg.pert.exp? { util from proto dur } 
-    | update cfg.pert.pes? { util from proto dur } 
-    | update cfg.deadline? { util from proto time }
+    update cfg { default {
+            pert: {       
+                opt: null 
+                exp: null 
+                pes: null 
+            }             
+            deadline: null
+        } }               
 }
 
 def --env "returns post process" []: any -> oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing> {
-    update cfg.pert.opt? { util to proto dur }   
-    | update cfg.pert.exp? { util to proto dur } 
-    | update cfg.pert.pes? { util to proto dur } 
-    | update cfg.deadline? { util to proto time }
-    | get cfg                                    
+    get cfg
 }
 
 def "prompt prefix" []: nothing -> string {

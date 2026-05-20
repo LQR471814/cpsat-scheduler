@@ -189,9 +189,9 @@ if $p.state.payload.task? != null {
 
 		duration_cfg: {
 			pert: {
-				opt: (30min | util to proto dur)
-				exp: (1hr | util to proto dur)
-				pes: (1hr + 30min | util to proto dur)
+				opt: 30min
+				exp: 1hr
+				pes: (1hr + 30min)
 			}
 			deadline: null
             total_cost: 0

@@ -22,12 +22,7 @@ let form = {
 	frontmatter: null
 	params: $state_type
 	returns: $state_type
-	closures: {
-		param_post_process: "update start? { util from proto time }
-	| update end? { util from proto time }"
-		returns_post_process: "update start { util to proto time }
-	| update end { util to proto time }"
-	}
+	closures: {}
 	fields: [
 		{
 			name: parent

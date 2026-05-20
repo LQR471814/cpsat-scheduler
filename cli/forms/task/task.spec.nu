@@ -156,7 +156,7 @@ if $results != null { $results | set dur }"
 		children_cfgs: (get children)
 	}
 } | index form children-config
-if $results != null { $results | set children_cfgs }"
+if $results != null { $results | set children }"
 				}
 			}
 		}
@@ -190,9 +190,9 @@ if $p.state.payload.task? != null {
 
 		duration_cfg: {
 			pert: {
-				opt: (30min | util to proto dur)
-				exp: (1hr | util to proto dur)
-				pes: (1hr + 30min | util to proto dur)
+				opt: 30min
+				exp: 1hr
+				pes: (1hr + 30min)
 			}
 			deadline: null
             total_cost: 0

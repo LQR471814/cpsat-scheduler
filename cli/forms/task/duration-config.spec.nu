@@ -39,16 +39,8 @@ let form = {
 			pes: null
 		}
 		deadline: null
-	} }
-| update cfg.pert.opt? { util from proto dur }
-| update cfg.pert.exp? { util from proto dur }
-| update cfg.pert.pes? { util from proto dur }
-| update cfg.deadline? { util from proto time }"
-		returns_post_process: "update cfg.pert.opt? { util to proto dur }
-| update cfg.pert.exp? { util to proto dur }
-| update cfg.pert.pes? { util to proto dur }
-| update cfg.deadline? { util to proto time }
-| get cfg"
+	} }"
+		returns_post_process: "get cfg"
 	}
 	fields: [
 		{

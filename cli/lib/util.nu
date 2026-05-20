@@ -135,26 +135,3 @@ export def "save form output" []: any -> nothing {
 }
 
 
-# from proto time converts a protobuf timestamp into a nushell datetime
-export def "from proto time" []: string -> datetime {
-    into datetime | date to-timezone local
-}
-
-
-# to proto time converts a nushell datetime into a protobuf timestamp
-export def "to proto time" []: datetime -> string {
-    format date %+
-}
-
-
-# from proto dur converts a protobuf timestamp into a nushell datetime
-export def "from proto dur" []: string -> duration {
-    let seconds = str substring 0..<(($in | str length) - 1) | into float
-    $seconds * 1sec
-}
-
-
-# to proto dur converts a nushell datetime into a protobuf timestamp
-export def "to proto dur" []: duration -> string {
-    $"($in / 1sec)s"
-}

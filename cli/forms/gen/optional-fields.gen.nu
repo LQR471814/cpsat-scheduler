@@ -8,19 +8,7 @@ let cmd = $env.PROMPT_COMMAND
 
 $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
-$env.state = $p.state | params post process
-
-
-
-def --env "params post process" []: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> -> any {
-    update start? { util from proto time }    
-        | update end? { util from proto time }
-}
-
-def --env "returns post process" []: any -> record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
-    update start { util to proto time }    
-        | update end { util to proto time }
-}
+$env.state = $p.state
 
 def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(optional-fields\)"
@@ -185,9 +173,9 @@ def --env next []: nothing -> bool {
 }
 
 def --env submit []: nothing -> nothing {
-    next                                                     
-    $env.state | returns post process | util save form output
-    exit # nu-lint-ignore: exit_only_in_main                 
+    next                                    
+    $env.state | util save form output      
+    exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env cancel []: nothing -> nothing {
