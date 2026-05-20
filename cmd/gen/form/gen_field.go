@@ -208,6 +208,12 @@ func (d FieldDef) validateFn() nugen.Closure {
 }
 
 func (d FieldDef) Render(w io.Writer) {
+	if d.ClosureBodies.Getter == "" {
+		panic("assert failed: getter should not be empty")
+	}
+	if d.ClosureBodies.Setter == "" {
+		panic("assert failed: setter should not be empty")
+	}
 	d.getterFn().Render(w)
 	nugen.RenderMargin(w)
 	d.setterFn().Render(w)

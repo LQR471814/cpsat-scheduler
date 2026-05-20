@@ -73,7 +73,7 @@ def --env "get cost" []: nothing -> int {
 }
 
 def --env "set cost" []: oneof<int, nothing> -> nothing {
-    
+    $env.state.cfg.total_cost = $in
 }
 
 def --env "validate cost" []: oneof<int, nothing> -> bool {

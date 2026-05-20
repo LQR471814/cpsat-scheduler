@@ -93,6 +93,7 @@ if $results != null { $results | set deadline }"
 			type: {type: int}
 			closure_bodies: {
 				getter: "$env.state.cfg.total_cost"
+				setter: "$env.state.cfg.total_cost = $in"
 				validate: "$env.state.cfg.total_cost != null"
 			}
 			atomic: {
