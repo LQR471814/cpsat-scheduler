@@ -6,6 +6,8 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -149,10 +151,45 @@ func (c GenContext) getFieldDeserialize(field *descriptorpb.FieldDescriptorProto
 	return "$in"
 }
 
+func capitalize(str string) string {
+	if len(str) == 0 {
+		return ""
+	}
+	firstRune, read := utf8.DecodeRune([]byte(str))
+	return string(unicode.ToLower(firstRune)) + str[read:]
+}
+
+func toLowerCamelCase(name string) string {
+	var out strings.Builder
+	var prevSep bool
+	for _, c := range name {
+		if c == '_' {
+			prevSep = true
+			continue
+		}
+		if prevSep {
+			prevSep = false
+			c = unicode.ToUpper(c)
+		}
+		out.WriteRune(c)
+	}
+	return capitalize(out.String())
+}
+
 func (c GenContext) getDeserializerInner(msgName string) nugen.Closure {
 	var body strings.Builder
 
 	fmt.Fprintln(&body, "$in")
+
+	// rename fields from lowerCamelCase to their original names
+	fmt.Fprint(&body, "| rename --column {")
+	for _, field := range c.messages[msgName].GetField() {
+		fmt.Fprint(&body, toLowerCamelCase(field.GetName()))
+		fmt.Fprint(&body, ": ")
+		fmt.Fprint(&body, field.GetName())
+		fmt.Fprint(&body, ",")
+	}
+	fmt.Fprintln(&body, "}")
 
 	for _, field := range c.messages[msgName].GetField() {
 		optional := field.GetProto3Optional() || field.OneofIndex != nil
