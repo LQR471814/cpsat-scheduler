@@ -107,6 +107,7 @@ if $results != null { $results | set req }"
 				getter: "$env.state | select parent start end prereqs postreqs"
 				setter: "let value = $in
 $env.state = $env.state | merge ($value | select parent start end prereqs postreqs)"
+				display_value: "table -e"
 			}
 			atomic: {
 				closure_bodies: {
@@ -128,6 +129,7 @@ if $results != null { $results | set opt }"
 			closure_bodies: {
 				getter: "$env.state | get duration_cfg"
 				setter: "$env.state.duration_cfg = $in"
+				display_value: "table -e"
 			}
 			atomic: {
 				closure_bodies: {
@@ -146,6 +148,7 @@ if $results != null { $results | set dur }"
 			closure_bodies: {
 				getter: "$env.state | get children_cfgs"
 				setter: "$env.state.children_cfgs = $in"
+				display_value: "table -e"
 			}
 			atomic: {
 				closure_bodies: {

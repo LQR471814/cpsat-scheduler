@@ -49,6 +49,10 @@ def --env "set opt" []: oneof<record<parent: oneof<record<id: int, name: string>
     $env.state = $env.state | merge ($value | select parent start end prereqs postreqs)
 }
 
+def --env "display opt" []: record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> -> string {
+    table -e
+}
+
 def --env opt []: nothing -> nothing {
     let results = {                             
         prompt_prefix: (prompt prefix)          
@@ -67,6 +71,10 @@ def --env "get dur" []: nothing -> oneof<record<pert: record<opt: duration, exp:
 
 def --env "set dur" []: oneof<oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing>, nothing> -> nothing {
     $env.state.duration_cfg = $in
+}
+
+def --env "display dur" []: oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing> -> string {
+    table -e
 }
 
 def --env dur []: nothing -> nothing {
@@ -89,6 +97,10 @@ def --env "set children" []: oneof<table, nothing> -> nothing {
     $env.state.children_cfgs = $in
 }
 
+def --env "display children" []: table -> string {
+    table -e
+}
+
 def --env children []: nothing -> nothing {
     let results = {                                
         prompt_prefix: (prompt prefix)             
@@ -105,20 +117,20 @@ def --env "unset children" []: nothing -> nothing {
 }
 
 def --env status []: nothing -> nothing {
-    util print section title 'Form: task'                        
-    util print label 'Required fields'                           
-    print ($env.state | select name desc timescale)              
-    print ""                                                     
-    util print label 'Optional fields'                           
-    print ($env.state | select parent start end prereqs postreqs)
-    print ""                                                     
-    util print label 'Duration configuration'                    
-    print ($env.state | get duration_cfg)                        
-    print ""                                                     
-    util print label 'Children configurations'                   
-    print ($env.state | get children_cfgs)                       
-    print ""                                                     
-                                                                 
+    util print section title 'Form: task'                                      
+    util print label 'Required fields'                                         
+    print ($env.state | select name desc timescale)                            
+    print ""                                                                   
+    util print label 'Optional fields'                                         
+    print ($env.state | select parent start end prereqs postreqs | display opt)
+    print ""                                                                   
+    util print label 'Duration configuration'                                  
+    print ($env.state | get duration_cfg | display dur)                        
+    print ""                                                                   
+    util print label 'Children configurations'                                 
+    print ($env.state | get children_cfgs | display children)                  
+    print ""                                                                   
+                                                                               
 }
 
 def --env next []: nothing -> bool {
