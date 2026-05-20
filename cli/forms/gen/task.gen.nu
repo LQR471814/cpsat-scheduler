@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/state.nu'
+use '../../lib/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> = util get form params
@@ -10,13 +10,13 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def --env "returns post process" []: any -> record<profile: int, payload: oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, > {
-    let input = $in                        
-    state save task $p.state.profile $input
-    $input                                 
+def --env "returns post process" []: any -> oneof<record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >> {
+    let input = $in | get payload                                       
+    {profile_id: $p.state.profile, state: $input} | api.gen API SaveTask
+    $input                                                              
 }
 
-def --env "prompt prefix" []: nothing -> string {
+def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(task\)"
 }
 
@@ -139,7 +139,7 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-def --env help []: nothing -> nothing {
+def help []: nothing -> nothing {
     print [[group cmd desc];                                                    
         [common "status, s" "Show form status."]                                
         [null "next, n" "Fill in next unfilled field."]                         
@@ -163,7 +163,7 @@ def --env help []: nothing -> nothing {
 
 
 if $p.state.payload.task? != null {
-	$env.state = state read task $p.state.payload.task | get state
+	$env.state = {id: $p.state.payload.task} | api.gen API ReadTask | get state
 	$env.id = $p.state.payload.task
 } else {
 	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = {
@@ -199,7 +199,7 @@ if $p.state.payload.task? != null {
         }
         children_cfgs: []
 	}
-	let id = state save task $p.state.profile $state | get id
+	let id = {profile_id: $p.state.profile, state: $state} | api.gen API SaveTask | get id
 	$env.state = $state
 	$env.id = $id
 }

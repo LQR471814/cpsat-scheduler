@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cpsat-scheduler/internal/nugen"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,12 +41,12 @@ func (p Project) generateFormIndex() (err error) {
 	fmt.Fprintln(f, "use ../../lib/util.nu")
 	for _, fsrc := range p.Forms {
 		fmt.Fprintf(f, `export def "form %s" []: `, fsrc.Form.Name)
-		inp := TypeDef{
+		inp := nugen.TypeDef{
 			Type: "record",
-			Fields: []KeyValue[TypeDef]{
+			Fields: []nugen.KeyValue[nugen.TypeDef]{
 				{
 					Key:   "prompt_prefix",
-					Value: stringType,
+					Value: nugen.StringType,
 				},
 				{
 					Key:   "state",

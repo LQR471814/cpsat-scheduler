@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/state.nu'
+use '../../lib/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<string, nothing>, end: oneof<string, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>> = util get form params
@@ -22,7 +22,7 @@ def --env "returns post process" []: any -> record<id: oneof<int, nothing>, pare
         | update end { util to proto time }
 }
 
-def --env "prompt prefix" []: nothing -> string {
+def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(optional-fields\)"
 }
 
@@ -35,7 +35,10 @@ def --env "set parent" []: oneof<record<id: int, name: string>, nothing> -> noth
 }
 
 def --env parent []: nothing -> nothing {
-    $env.state.parent = state list possible relatives PARENT $p.state.id | util choose table --header 'Choose parent'
+    $env.state.parent = {                                                                           
+        type: PARENT                                                                                
+        task_id: $p.state.id                                                                        
+    } | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Choose parent'
 }
 
 def --env "unset parent" []: nothing -> nothing {
@@ -111,9 +114,9 @@ def --env "remove prereqs" []: nothing -> nothing {
 }
 
 def --env prereqs []: nothing -> nothing {
-    let chosen = state list possible relatives PREREQ $p.state.id | util choose table --header 'Add a task as a prerequisite:'
-    if $chosen == null { return }                                                                                             
-    $env.state.prereqs ++= $chosen                                                                                            
+    let chosen = {type: PREREQ, task_id: $p.state.id} | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Add a task as a prerequisite:'
+    if $chosen == null { return }                                                                                                                                   
+    $env.state.prereqs ++= $chosen                                                                                                                                  
 }
 
 def --env "get postreqs" []: nothing -> table<id: int, name: string> {
@@ -141,9 +144,9 @@ def --env "remove postreqs" []: nothing -> nothing {
 }
 
 def --env postreqs []: nothing -> nothing {
-    let chosen = state list possible relatives POSTREQ $p.state.id | util choose table --header 'Add a task as a postrequisite:'
-    if $chosen == null { return }                                                                                               
-    $env.state.postreqs ++= $chosen                                                                                             
+    let chosen = {type: POSTREQ, task_id: $p.state.id} | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Add a task as a postrequisite:'
+    if $chosen == null { return }                                                                                                                                     
+    $env.state.postreqs ++= $chosen                                                                                                                                   
 }
 
 def --env status []: nothing -> nothing {
@@ -193,7 +196,7 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-def --env help []: nothing -> nothing {
+def help []: nothing -> nothing {
     print [[group cmd desc];                                             
         [common "status, s" "Show form status."]                         
         [null "next, n" "Fill in next unfilled field."]                  

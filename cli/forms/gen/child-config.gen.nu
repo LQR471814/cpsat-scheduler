@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/state.nu'
+use '../../lib/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<string, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
@@ -14,7 +14,7 @@ def --env "returns post process" []: any -> record<task: int, desc: oneof<string
     reject task
 }
 
-def --env "prompt prefix" []: nothing -> string {
+def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(child-config\)"
 }
 
@@ -54,15 +54,15 @@ def --env "unset exp_cost" []: nothing -> nothing {
     null | set exp_cost
 }
 
-def --env "get deadline" []: nothing -> string {
+def --env "get deadline" []: nothing -> datetime {
     $env.state.deadline
 }
 
-def --env "set deadline" []: oneof<string, nothing> -> nothing {
+def --env "set deadline" []: oneof<datetime, nothing> -> nothing {
     $env.state.deadline = $in
 }
 
-def --env "validate deadline" []: oneof<string, nothing> -> bool {
+def --env "validate deadline" []: oneof<datetime, nothing> -> bool {
     $env.state.deadline != null
 }
 
@@ -99,9 +99,12 @@ def --env "remove children" []: nothing -> nothing {
 }
 
 def --env children []: nothing -> nothing {
-    let child = state list possible relatives CHILD $p.state.task | util choose table --header 'Choose child to add:'
-    if $child == null { return }                                                                                     
-    $env.state.children ++= $child                                                                                   
+    let child = {                                                                                          
+        type: CHILD                                                                                        
+        task_id: $p.state.task                                                                             
+    } | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Choose child to add:'
+    if $child == null { return }                                                                           
+    $env.state.children ++= $child                                                                         
 }
 
 def --env status []: nothing -> nothing {
@@ -113,7 +116,7 @@ def --env status []: nothing -> nothing {
     print ($env.state.exp_cost)                  
     print ""                                     
     util print label 'Deadline'                  
-    print ($env.state.deadline)                  
+    util print date ($env.state.deadline)        
     print ""                                     
     util print label 'Children'                  
     print ($env.state.children)                  
@@ -153,7 +156,7 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-def --env help []: nothing -> nothing {
+def help []: nothing -> nothing {
     print [[group cmd desc];                                          
         [common "status, s" "Show form status."]                      
         [null "next, n" "Fill in next unfilled field."]               

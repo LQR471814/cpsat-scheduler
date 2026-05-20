@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/state.nu'
+use '../../lib/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: string, exp: string, pes: string>, deadline: oneof<string, nothing>, total_cost: int>, nothing>, >> = util get form params
@@ -35,7 +35,7 @@ def --env "returns post process" []: any -> oneof<record<pert: record<opt: strin
     | get cfg                                    
 }
 
-def --env "prompt prefix" []: nothing -> string {
+def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(duration-config\)"
 }
 
@@ -137,7 +137,7 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-def --env help []: nothing -> nothing {
+def help []: nothing -> nothing {
     print [[group cmd desc];                                                                    
         [common "status, s" "Show form status."]                                                
         [null "next, n" "Fill in next unfilled field."]                                         

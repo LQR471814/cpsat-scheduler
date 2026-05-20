@@ -9,5 +9,7 @@ plugins:
     out: .
   - local: protoc-gen-go-grpc
     out: .
+  - local: protoc-gen-nu
+    out: .
 inputs:
   - directory: proto

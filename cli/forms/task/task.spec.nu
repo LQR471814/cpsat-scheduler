@@ -1,33 +1,5 @@
 use ../lib.nu
 
-let state = {
-	type: record,
-	fields: [[key value];
-		[profile {type: int}]
-
-		[payload {
-			type: oneof
-			positional: [
-				{
-					type: record
-					fields: [[key value];
-						[task {type: int}]
-					]
-				}
-				{
-					type: record
-					fields: [[key value];
-						[parent  ({type: int} | lib type optional)]
-						[prereq  ({type: int} | lib type optional)]
-						[postreq ({type: int} | lib type optional)]
-						[child   ({type: int} | lib type optional)]
-					]
-				}
-			]
-		}]
-	]
-}
-
 let parent_type = lib type entry record
 let ts_type = lib type proto timestamp
 let req_type = lib type entry table
@@ -60,14 +32,41 @@ let dur_cfg_fields = [[key value];
 	[total_cost {type: int}]
 ]
 
+let payload = {
+	type: oneof
+	positional: [
+		{
+			type: record
+			fields: [[key value];
+				[task {type: int}]
+			]
+		}
+		{
+			type: record
+			fields: [[key value];
+				[parent  ({type: int} | lib type optional)]
+				[prereq  ({type: int} | lib type optional)]
+				[postreq ({type: int} | lib type optional)]
+				[child   ({type: int} | lib type optional)]
+			]
+		}
+	]
+}
+
 let form = {
 	name: task
 	use: (lib form imports)
-	params: $state
-	returns: $state
+	params: {
+		type: record,
+		fields: [[key value];
+			[profile {type: int}]
+			[payload $payload]
+		]
+	}
+	returns: $payload
 	closures: {
-		returns_post_process: "let input = $in
-state save task $p.state.profile $input
+		returns_post_process: "let input = $in | get payload
+{profile_id: $p.state.profile, state: $input} | api.gen API SaveTask
 $input"
 	}
 	fields: [
@@ -160,7 +159,7 @@ if $results != null { $results | set children_cfgs }"
 	]
 	backmatter: "
 if $p.state.payload.task? != null {
-	$env.state = state read task $p.state.payload.task | get state
+	$env.state = {id: $p.state.payload.task} | api.gen API ReadTask | get state
 	$env.id = $p.state.payload.task
 } else {
 	let results: record<name: string, desc: oneof<string, nothing>, timescale: int> = {
@@ -196,7 +195,7 @@ if $p.state.payload.task? != null {
         }
         children_cfgs: []
 	}
-	let id = state save task $p.state.profile $state | get id
+	let id = {profile_id: $p.state.profile, state: $state} | api.gen API SaveTask | get id
 	$env.state = $state
 	$env.id = $id
 }

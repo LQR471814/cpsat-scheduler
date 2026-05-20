@@ -1,24 +1,25 @@
 package main
 
 import (
+	"cpsat-scheduler/internal/nugen"
 	"fmt"
 	"io"
 	"strings"
 )
 
-func (f Form) promptPrefixFn() Closure {
-	var body Block
+func (f Form) promptPrefixFn() nugen.Closure {
+	var body nugen.Block
 	if f.Closures.PromptPrefix != nil {
 		body = *f.Closures.PromptPrefix
 	} else {
-		body = Block(fmt.Sprintf(`$"($p.prompt_prefix) \(%s\)"`, f.Name))
+		body = nugen.Block(fmt.Sprintf(`$"($p.prompt_prefix) \(%s\)"`, f.Name))
 	}
-	return Closure{
+	return nugen.Closure{
 		Name:   cmd_prompt_prefix,
 		Params: nil,
-		In:     nullType,
-		Out:    stringType,
-		Body:   Block(body),
+		In:     nugen.NullType,
+		Out:    nugen.StringType,
+		Body:   nugen.Block(body),
 	}
 }
 
@@ -45,7 +46,7 @@ $env.state = $p.state`, cmd_prompt_prefix)
 
 }
 
-func (f Form) statusFn() Closure {
+func (f Form) statusFn() nugen.Closure {
 	var body strings.Builder
 	fmt.Fprintf(&body, "util print section title 'Form: %s'\n", f.Name)
 	for _, field := range f.Fields {
@@ -78,16 +79,17 @@ func (f Form) statusFn() Closure {
 		}
 		fmt.Fprint(&body, "print \"\"\n")
 	}
-	return Closure{
+	return nugen.Closure{
+		Env:    true,
 		Name:   "status",
 		Params: nil,
-		In:     nullType,
-		Out:    nullType,
-		Body:   Block(body.String()),
+		In:     nugen.NullType,
+		Out:    nugen.NullType,
+		Body:   nugen.Block(body.String()),
 	}
 }
 
-func (f Form) nextFn() Closure {
+func (f Form) nextFn() nugen.Closure {
 	var body strings.Builder
 	fmt.Fprintln(&body, "# nu-lint-ignore: print_and_return_data")
 	for _, field := range f.Fields {
@@ -127,16 +129,17 @@ func (f Form) nextFn() Closure {
 		}
 	}
 	fmt.Fprint(&body, "true")
-	return Closure{
+	return nugen.Closure{
+		Env:    true,
 		Name:   cmd_next,
 		Params: nil,
-		Body:   Block(body.String()),
-		In:     nullType,
-		Out:    boolType,
+		Body:   nugen.Block(body.String()),
+		In:     nugen.NullType,
+		Out:    nugen.BoolType,
 	}
 }
 
-func (f Form) submitFn() Closure {
+func (f Form) submitFn() nugen.Closure {
 	var body strings.Builder
 	fmt.Fprintf(&body, `next
 $env.state`)
@@ -145,51 +148,55 @@ $env.state`)
 	}
 	fmt.Fprint(&body, ` | util save form output
 exit # nu-lint-ignore: exit_only_in_main`)
-	return Closure{
+	return nugen.Closure{
+		Env:    true,
 		Name:   cmd_submit,
 		Params: nil,
-		Body:   Block(body.String()),
-		In:     nullType,
-		Out:    nullType,
+		Body:   nugen.Block(body.String()),
+		In:     nugen.NullType,
+		Out:    nugen.NullType,
 	}
 }
 
-func (f Form) cancelFn() Closure {
+func (f Form) cancelFn() nugen.Closure {
 	var body strings.Builder
 	fmt.Fprintln(&body, `if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }`)
 	fmt.Fprint(&body, `null`)
 	fmt.Fprint(&body, ` | util save form output
 exit # nu-lint-ignore: exit_only_in_main`)
-	return Closure{
+	return nugen.Closure{
+		Env:    true,
 		Name:   cmd_cancel,
 		Params: nil,
-		Body:   Block(body.String()),
-		In:     nullType,
-		Out:    nullType,
+		Body:   nugen.Block(body.String()),
+		In:     nugen.NullType,
+		Out:    nugen.NullType,
 	}
 }
 
-func (f Form) paramsPostProcessFn() Closure {
-	return Closure{
+func (f Form) paramsPostProcessFn() nugen.Closure {
+	return nugen.Closure{
+		Env:    true,
 		Name:   cmd_params_postprocess,
 		Params: nil,
 		In:     f.Params,
-		Out:    anyType,
+		Out:    nugen.AnyType,
 		Body:   *f.Closures.ParamPostProcess,
 	}
 }
 
-func (f Form) returnsPostProcessFn() Closure {
-	return Closure{
+func (f Form) returnsPostProcessFn() nugen.Closure {
+	return nugen.Closure{
+		Env:    true,
 		Name:   cmd_returns_postprocess,
 		Params: nil,
-		In:     anyType,
+		In:     nugen.AnyType,
 		Out:    f.Returns,
 		Body:   *f.Closures.ReturnsPostProcess,
 	}
 }
 
-func (f Form) helpFn() Closure {
+func (f Form) helpFn() nugen.Closure {
 	var body strings.Builder
 	fmt.Fprint(&body, `print [[group cmd desc];
 	[common "status, s" "Show form status."]
@@ -299,12 +306,12 @@ func (f Form) helpFn() Closure {
 		}
 	}
 	fmt.Fprintln(&body, "]")
-	return Closure{
+	return nugen.Closure{
 		Name:   cmd_help,
 		Params: nil,
-		Body:   Block(body.String()),
-		In:     nullType,
-		Out:    nullType,
+		Body:   nugen.Block(body.String()),
+		In:     nugen.NullType,
+		Out:    nugen.NullType,
 	}
 }
 
@@ -321,48 +328,48 @@ help`)
 
 func (f Form) Render(w io.Writer) {
 	f.renderSetupBlock(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	if f.Frontmatter != nil {
 		fmt.Fprint(w, *f.Frontmatter)
-		renderMargin(w)
+		nugen.RenderMargin(w)
 	}
 	if f.Closures.ParamPostProcess != nil {
 		f.paramsPostProcessFn().Render(w)
-		renderMargin(w)
+		nugen.RenderMargin(w)
 	}
 	if f.Closures.ReturnsPostProcess != nil {
 		f.returnsPostProcessFn().Render(w)
-		renderMargin(w)
+		nugen.RenderMargin(w)
 	}
 
 	f.promptPrefixFn().Render(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	for _, field := range f.Fields {
 		field.Render(w)
 	}
 
 	f.statusFn().Render(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	f.nextFn().Render(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	f.submitFn().Render(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	f.cancelFn().Render(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	f.helpFn().Render(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 
 	if f.Backmatter != nil {
 		fmt.Fprint(w, *f.Backmatter)
-		renderMargin(w)
+		nugen.RenderMargin(w)
 	}
 
 	f.renderAliasBlock(w)
-	renderMargin(w)
+	nugen.RenderMargin(w)
 }

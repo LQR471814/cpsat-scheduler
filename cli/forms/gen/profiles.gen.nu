@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/state.nu'
+use '../../lib/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: nothing> = util get form params
@@ -10,7 +10,7 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-def --env "prompt prefix" []: nothing -> string {
+def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(profiles\)"
 }
 
@@ -22,20 +22,25 @@ def --env "set profiles" []: oneof<table<id: int, name: string, atomic_timescale
     $env.state = $in
 }
 
-def --env "remove profile" []: nothing -> nothing {
+def "remove profile" []: nothing -> nothing {
     let element = get profiles                                    
         | select id name                                          
         | util choose table --header 'Choose a profile to remove:'
     if $element == null {                                         
         return false                                              
     }                                                             
-    state remove profile $element.id                              
-    $env.state = state list profiles                              
+    {id: $element.id} | api.gen API RemoveProfile                 
+    $env.state = api.gen API ListProfiles                         
 }
 
 def --env "add profile" [name: string, atomic_timescale: duration, universe_start: datetime, --pert_choices: int]: nothing -> nothing {
-    state create profile $name ($atomic_timescale | util to proto dur) ($universe_start | util to proto time) ($pert_choices | default 4) | complete
-    $env.state = state list profiles                                                                                                                
+    {                                                
+        name: $name                                  
+        atomic_timescale: $atomic_timescale          
+        universe_start: $universe_start              
+        gen_pert_choices: ($pert_choices | default 4)
+    } | api.gen API CreateProfile | complete         
+    $env.state = api.gen API ListProfiles            
 }
 
 def --env status []: nothing -> nothing {
@@ -63,7 +68,7 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-def --env help []: nothing -> nothing {
+def help []: nothing -> nothing {
     print [[group cmd desc];                                            
         [common "status, s" "Show form status."]                        
         [null "next, n" "Fill in next unfilled field."]                 
@@ -75,7 +80,7 @@ def --env help []: nothing -> nothing {
                                                                         
 }
 
-$env.state = state list profiles
+$env.state = api.gen API ListProfiles
 
 alias s = status
 alias n = next

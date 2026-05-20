@@ -1,4 +1,4 @@
-use lib/state.nu
+use lib/api.gen.nu
 use lib/util.nu
 use forms/gen/index.nu
 
@@ -18,7 +18,7 @@ def profiles []: nothing -> nothing {
 }
 
 def --env "switch profile" []: nothing -> bool {
-	let profile_list = state list profiles
+	let profile_list = api.gen API ListProfiles | get entries
 	if ($profile_list | is-empty) {
 		profiles
 		return true
@@ -34,14 +34,13 @@ def --env "switch profile" []: nothing -> bool {
 }
 
 def --env "new task" []: nothing -> nothing {
-
-	util exec form ./forms/gen/task.gen.nu {
+	{
 		prompt_prefix: (prompt prefix)
 		state: {
 			profile: $env.profile
 			payload: {}
 		}
-	}
+	} | index form task
 	null
 }
 

@@ -12,6 +12,10 @@
       devShells.${system}.default =
         let
           libs = with pkgs; [ ];
+          protoc-gen-nu = pkgs.writeShellScriptBin "protoc-gen-nu" ''
+            project_root="$(git rev-parse --show-toplevel)"
+            go run ''${project_root}/cmd/gen/protoc-gen-nu
+          '';
         in
         pkgs.mkShell {
           name = "devenv";
@@ -27,6 +31,8 @@
               protoc-gen-go-grpc
               python313Packages.grpcio-tools
               buf
+
+              protoc-gen-nu
             ]
           );
 

@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/state.nu'
+use '../../lib/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>, >> = util get form params
@@ -25,7 +25,7 @@ let timescales: table<id: int, name: string> = [[id, name];
     [4128768, "128 year"]
 ]
 
-def --env "prompt prefix" []: nothing -> string {
+def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(required-fields\)"
 }
 
@@ -135,7 +135,7 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-def --env help []: nothing -> nothing {
+def help []: nothing -> nothing {
     print [[group cmd desc];                                                                 
         [common "status, s" "Show form status."]                                             
         [null "next, n" "Fill in next unfilled field."]                                      

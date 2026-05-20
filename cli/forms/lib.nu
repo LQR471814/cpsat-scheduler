@@ -40,7 +40,7 @@ export def "type entry table" []: nothing -> any {
 export def "form imports" []: nothing -> list<string> {
 	return [
 		../../lib/util.nu
-		../../lib/state.nu
+		../../lib/api.gen.nu
 	]
 }
 
