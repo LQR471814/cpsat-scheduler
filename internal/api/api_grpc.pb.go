@@ -28,6 +28,8 @@ const (
 	API_ListPossibleRelatives_FullMethodName = "/API/ListPossibleRelatives"
 	API_RecomputeSchedule_FullMethodName     = "/API/RecomputeSchedule"
 	API_ListScheduledTasks_FullMethodName    = "/API/ListScheduledTasks"
+	API_ListProgressUpdates_FullMethodName   = "/API/ListProgressUpdates"
+	API_ProgressUpdate_FullMethodName        = "/API/ProgressUpdate"
 )
 
 // APIClient is the client API for API service.
@@ -43,6 +45,8 @@ type APIClient interface {
 	ListPossibleRelatives(ctx context.Context, in *ListPossibleRelativesRequest, opts ...grpc.CallOption) (*ListPossibleRelativesResponse, error)
 	RecomputeSchedule(ctx context.Context, in *RecomputeScheduleRequest, opts ...grpc.CallOption) (*RecomputeScheduleResponse, error)
 	ListScheduledTasks(ctx context.Context, in *ListScheduledTasksRequest, opts ...grpc.CallOption) (*ListScheduledTasksResponse, error)
+	ListProgressUpdates(ctx context.Context, in *ListProgressUpdatesRequest, opts ...grpc.CallOption) (*ListProgressUpdatesResponse, error)
+	ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error)
 }
 
 type aPIClient struct {
@@ -143,6 +147,26 @@ func (c *aPIClient) ListScheduledTasks(ctx context.Context, in *ListScheduledTas
 	return out, nil
 }
 
+func (c *aPIClient) ListProgressUpdates(ctx context.Context, in *ListProgressUpdatesRequest, opts ...grpc.CallOption) (*ListProgressUpdatesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListProgressUpdatesResponse)
+	err := c.cc.Invoke(ctx, API_ListProgressUpdates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProgressUpdateResponse)
+	err := c.cc.Invoke(ctx, API_ProgressUpdate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations must embed UnimplementedAPIServer
 // for forward compatibility.
@@ -156,6 +180,8 @@ type APIServer interface {
 	ListPossibleRelatives(context.Context, *ListPossibleRelativesRequest) (*ListPossibleRelativesResponse, error)
 	RecomputeSchedule(context.Context, *RecomputeScheduleRequest) (*RecomputeScheduleResponse, error)
 	ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error)
+	ListProgressUpdates(context.Context, *ListProgressUpdatesRequest) (*ListProgressUpdatesResponse, error)
+	ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error)
 	mustEmbedUnimplementedAPIServer()
 }
 
@@ -192,6 +218,12 @@ func (UnimplementedAPIServer) RecomputeSchedule(context.Context, *RecomputeSched
 }
 func (UnimplementedAPIServer) ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListScheduledTasks not implemented")
+}
+func (UnimplementedAPIServer) ListProgressUpdates(context.Context, *ListProgressUpdatesRequest) (*ListProgressUpdatesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListProgressUpdates not implemented")
+}
+func (UnimplementedAPIServer) ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProgressUpdate not implemented")
 }
 func (UnimplementedAPIServer) mustEmbedUnimplementedAPIServer() {}
 func (UnimplementedAPIServer) testEmbeddedByValue()             {}
@@ -376,6 +408,42 @@ func _API_ListScheduledTasks_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_ListProgressUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProgressUpdatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListProgressUpdates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListProgressUpdates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListProgressUpdates(ctx, req.(*ListProgressUpdatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ProgressUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProgressUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ProgressUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ProgressUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ProgressUpdate(ctx, req.(*ProgressUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -418,6 +486,14 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListScheduledTasks",
 			Handler:    _API_ListScheduledTasks_Handler,
+		},
+		{
+			MethodName: "ListProgressUpdates",
+			Handler:    _API_ListProgressUpdates_Handler,
+		},
+		{
+			MethodName: "ProgressUpdate",
+			Handler:    _API_ProgressUpdate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

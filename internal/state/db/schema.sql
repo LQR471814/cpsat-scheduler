@@ -93,3 +93,23 @@ create table scheduled_task (
 
 create index idx_scheduled_profile
 on scheduled_task (profile, task);
+
+-- Progress log
+create table progress_log (
+	id integer primary key autoincrement,
+	profile integer not null references profile (id),
+	time timestamp not null,
+	desc text not null
+);
+
+create index idx_progress_log
+on progress_log (profile, id);
+
+-- Updated task
+create table updated_task (
+	progress_log integer not null references progress_log (id),
+	task integer not null references task (id),
+	desc text not null,
+	primary key (progress, task)
+);
+

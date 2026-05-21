@@ -51,6 +51,13 @@ type Profile struct {
 	PertGenChoices          sql.NullInt64
 }
 
+type ProgressLog struct {
+	ID      int64
+	Profile int64
+	Time    time.Time
+	Desc    string
+}
+
 type ScheduledTask struct {
 	Task    int64
 	Profile int64
@@ -72,4 +79,10 @@ type TimescaleUnit struct {
 	Size    int64
 	Profile int64
 	Name    string
+}
+
+type UpdatedTask struct {
+	ProgressLog int64
+	Task        int64
+	Desc        string
 }

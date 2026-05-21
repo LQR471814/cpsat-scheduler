@@ -130,6 +130,35 @@ message ListPossibleRelativesResponse {
   repeated Entry entries = 1;
 }
 
+message ProgressLog {
+  message UpdatedTask {
+    Entry task = 1;
+    string desc = 2;
+  }
+  int64 profile = 1;
+  google.protobuf.Timestamp time = 2;
+  string desc = 3;
+  repeated UpdatedTask updates = 4;
+}
+
+// ListProgressUpdates
+message ListProgressUpdatesRequest {
+  int64 profile = 1;
+  google.protobuf.Timestamp start = 2;
+  google.protobuf.Timestamp end = 3;
+}
+message ListProgressUpdatesResponse {
+  repeated ProgressLog logs = 1;
+}
+
+// ProgressUpdate
+message ProgressUpdateRequest {
+  ProgressLog log = 1;
+}
+message ProgressUpdateResponse {
+  int64 id = 1;
+}
+
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
@@ -142,5 +171,7 @@ service API {
 
   rpc RecomputeSchedule(RecomputeScheduleRequest) returns (RecomputeScheduleResponse);
   rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
+  rpc ListProgressUpdates(ListProgressUpdatesRequest) returns (ListProgressUpdatesResponse);
+  rpc ProgressUpdate(ProgressUpdateRequest) returns (ProgressUpdateResponse);
 }
 

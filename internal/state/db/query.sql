@@ -118,3 +118,23 @@ values (?, ?, ?, ?) on conflict do update set
 delete from scheduled_task
 where profile = ?;
 
+
+-- name: ListProgressLog :many
+select * from progress_log
+where time >= sqlc.arg('start') and time < sqlc.arg('end');
+
+-- name: CreateProgressLog :one
+insert into progress_log (profile, time, desc)
+values (?, ?, ?)
+returning id;
+
+-- name: CreateUpdatedTask :exec
+insert into updated_task (progress_log, task, desc)
+values (?, ?, ?);
+
+-- name: ListUpdatedTask :many
+select u.task, u.desc, t.name as task_name from updated_task u
+inner join task t
+	on u.task = t.id
+where progress_log = ?;
+
