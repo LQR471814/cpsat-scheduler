@@ -102,10 +102,6 @@ insert into child (parent, child)
 values (?, ?) on conflict do nothing;
 
 
--- name: CreateAlloc :exec
-insert into allocation (task, desc, start, end)
-values (?, ?, ?, ?) on conflict do nothing;
-
 -- name: ListScheduledTasks :many
 select st.*, t.name from scheduled_task st
 inner join task t on st.task = t.id

@@ -83,19 +83,6 @@ create table child (
 	primary key (parent, child)
 );
 
--- Time allocation towards a task at a particular timestamp
-create table allocation (
-	id integer primary key autoincrement,
-	task integer not null references task (id) on update cascade on delete cascade,
-	desc text not null,
-
-	start timestamp not null,
-	end timestamp not null
-);
-
-create index idx_allocation_task
-on allocation (task, id);
-
 -- Scheduled task
 create table scheduled_task (
 	task integer primary key references task (id) on update cascade on delete cascade,
