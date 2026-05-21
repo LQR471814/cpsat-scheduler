@@ -26,3 +26,9 @@ func NewContext(
 		driver: driver,
 	}
 }
+
+// Ctx returns the underlying context.Context.
+func (c Context) Ctx() context.Context {
+	return c.ctx
+}
+

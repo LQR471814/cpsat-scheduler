@@ -65,12 +65,18 @@ func OpenDB(ctx context.Context, logger *slog.Logger, file string) (driver *sql.
 	if err != nil {
 		return
 	}
-	link := &url.URL{
-		Scheme:   "file",
-		Path:     abspath,
-		RawQuery: sqlite_options.Encode(),
+	var openUrl string
+	if file == ":memory:" {
+		openUrl = file
+	} else {
+		link := &url.URL{
+			Scheme:   "file",
+			Path:     abspath,
+			RawQuery: sqlite_options.Encode(),
+		}
+		openUrl = link.String()
 	}
-	driver, err = sql.Open("sqlite", link.String())
+	driver, err = sql.Open("sqlite", openUrl)
 	if err != nil {
 		return
 	}

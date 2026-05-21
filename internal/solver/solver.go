@@ -3,6 +3,7 @@ package solver
 import (
 	"context"
 	"cpsat-scheduler/internal/solver/solverpb"
+	"cpsat-scheduler/internal/state"
 	"net"
 	"net/url"
 	"os/exec"
@@ -46,6 +47,18 @@ func NewSolver(daemonPath string) (solver Solver, err error) {
 	return
 }
 
-func (s Solver) Close() {
-	s.Close()
+func (s Solver) Close() error {
+	return s.conn.Close()
 }
+
+// SolveProfile loads the task state of a profile from the database, runs scheduling, and returns the result.
+func (s Solver) SolveProfile(c state.Context, profileID int64) (*solverpb.SolveResponse, error) {
+	tasks, err := state.LookupProfileState(c, profileID)
+	if err != nil {
+		return nil, err
+	}
+	return s.Solve(c.Ctx(), &solverpb.SolveRequest{
+		Tasks: tasks,
+	})
+}
+
