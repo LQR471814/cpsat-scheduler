@@ -68,12 +68,26 @@ Parameters:
 
 # Progress update
 
-1. Ask: Which gap in time to fill in. (if any), can skip
-    1. For a given gap $g$.
-    2. Select a region of $g$ to allocate to a particular task
-       $t$ or to create a new task which will redirect to
-       [[#Create / edit task]].
-    4. Repeat until -> "done" or "cancel".
+1. Action:
+    - leaf tasks:
+        - [[#Range manip ops]]
+    - non-leaf tasks:
+        - add/sub. dur.
+            - prompt: pick leaf task to add/sub dur. to
+        - [[#Range manip ops]]
+    - edit task currently active
+2. Recompute schedule
+
+## Range manip ops
+
+- Set: Redefine OEP
+- Translation:
+    - Add all values by an amount
+    - Scale all values by an increased % (scale by 100 + %)
+    - Scale all values by a factor
+- Scale:
+    - Scale by added % (scale by 100 + %)
+    - Scale by factor
 
 # Today
 

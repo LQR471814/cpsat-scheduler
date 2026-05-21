@@ -1,8 +1,11 @@
 # Code Generation (Codegen) Overview
 
-This project heavily leverages code generation (codegen) to maintain type safety, reduce boilerplates, and build bridges between Go, Python, Nushell (CLI), and SQLite.
+This project heavily leverages code generation (codegen) to
+maintain type safety, reduce boilerplates, and build bridges
+between Go, Python, Nushell (CLI), and SQLite.
 
-Three main codegen processes are configured via Nushell scripts (`gen_*.nu`) at the project root:
+Three main codegen processes are configured via Nushell scripts
+(`gen_*.nu`) at the project root:
 
 ---
 
