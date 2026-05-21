@@ -4,6 +4,7 @@ import (
 	"context"
 	"cpsat-scheduler/internal/api"
 	"cpsat-scheduler/internal/state/db"
+	"flag"
 	"log/slog"
 	"net"
 	"os"
@@ -37,6 +38,9 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
+	solverPath := flag.String("solver", "", "path to solver binary")
+	flag.Parse()
+
 	tintHandle := tint.NewHandler(os.Stderr, &tint.Options{Level: slog.LevelInfo})
 	logger := slog.New(tintHandle)
 	logger = logger.WithGroup("main")
@@ -48,7 +52,11 @@ func main() {
 	}
 	defer driver.Close()
 
-	impl := newServer(ctx, logger, driver)
+	impl, err := newServer(ctx, logger, driver, *solverPath)
+	if err != nil {
+		slog.Error("init server", "err", err)
+		return
+	}
 	server := grpc.NewServer()
 	api.RegisterAPIServer(server, impl)
 

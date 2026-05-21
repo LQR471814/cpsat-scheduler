@@ -1054,6 +1054,7 @@ func (*DeleteTaskResponse) Descriptor() ([]byte, []int) {
 // RecomputeSchedule
 type RecomputeScheduleRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       int64                  `protobuf:"varint,1,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1086,6 +1087,13 @@ func (x *RecomputeScheduleRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RecomputeScheduleRequest.ProtoReflect.Descriptor instead.
 func (*RecomputeScheduleRequest) Descriptor() ([]byte, []int) {
 	return file_api_api_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *RecomputeScheduleRequest) GetProfile() int64 {
+	if x != nil {
+		return x.Profile
+	}
+	return 0
 }
 
 type RecomputeScheduleResponse struct {
@@ -1409,8 +1417,9 @@ const file_api_api_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"#\n" +
 	"\x11DeleteTaskRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x14\n" +
-	"\x12DeleteTaskResponse\"\x1a\n" +
-	"\x18RecomputeScheduleRequest\"\x1b\n" +
+	"\x12DeleteTaskResponse\"4\n" +
+	"\x18RecomputeScheduleRequest\x12\x18\n" +
+	"\aprofile\x18\x01 \x01(\x03R\aprofile\"\x1b\n" +
 	"\x19RecomputeScheduleResponse\"\xb8\x01\n" +
 	"\x19ListScheduledTasksRequest\x12\x1d\n" +
 	"\n" +

@@ -99,7 +99,9 @@ message DeleteTaskRequest {
 message DeleteTaskResponse {}
 
 // RecomputeSchedule
-message RecomputeScheduleRequest {}
+message RecomputeScheduleRequest {
+  int64 profile = 1;
+}
 message RecomputeScheduleResponse {}
 
 // ListScheduledTasks

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/solver"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"log/slog"
@@ -15,17 +16,25 @@ type server struct {
 	logger *slog.Logger
 	db     *db.Queries
 	driver *sql.DB
+	solver solver.Solver
 }
 
 func newServer(
 	ctx context.Context,
 	logger *slog.Logger,
 	driver *sql.DB,
-) server {
-	return server{
+	solverPath string,
+) (serv server, err error) {
+	solv, err := solver.NewSolver(solverPath)
+	if err != nil {
+		return
+	}
+	serv = server{
 		ctx:    ctx,
 		logger: logger,
 		db:     db.New(driver),
 		driver: driver,
+		solver: solv,
 	}
+	return
 }
