@@ -23,6 +23,7 @@ def --env "switch profile" []: nothing -> bool {
 		profiles
 		return true
 	}
+
 	let profile = $profile_list
 		| select id name
 		| util choose table --header "Choose profile"
@@ -34,13 +35,20 @@ def --env "switch profile" []: nothing -> bool {
 }
 
 def --env "new task" []: nothing -> nothing {
-	{
+	let task_state = {
 		prompt_prefix: (prompt prefix)
 		state: {
 			profile: $env.profile
 			payload: null
 		}
 	} | index form task
+
+	{
+		id: null
+		profile_id: $env.profile
+		state: $task_state
+	} | api.gen API SaveTask
+
 	null
 }
 

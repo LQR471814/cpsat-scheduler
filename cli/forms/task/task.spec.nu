@@ -64,15 +64,8 @@ let form = {
 			[payload $payload]
 		]
 	}
-	returns: {
-		type: record,
-		fields: [[key value];
-			[id {type: int}]]
-	}
-	closures: {
-		returns_post_process: "let input = $in
-{id: $p.state.payload.task?, profile_id: $p.state.profile, state: $input} | api.gen API SaveTask"
-	}
+	returns: {type: record}
+	closures: {}
 	fields: [
 		{
 			name: req
