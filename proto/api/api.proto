@@ -98,6 +98,10 @@ message DeleteTaskRequest {
 }
 message DeleteTaskResponse {}
 
+// RecomputeSchedule
+message RecomputeScheduleRequest {}
+message RecomputeScheduleResponse {}
+
 // ListScheduledTasks
 message ListScheduledTasksRequest {
   int64 profile_id = 1;
@@ -124,14 +128,6 @@ message ListPossibleRelativesResponse {
   repeated Entry entries = 1;
 }
 
-// ProgressUpdate
-message ProgressUpdateRequest {
-  int64 target_task_id = 1;
-  google.protobuf.Timestamp start = 2;
-  google.protobuf.Timestamp end = 3;
-}
-message ProgressUpdateResponse {}
-
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
@@ -140,9 +136,9 @@ service API {
   rpc ReadTask(ReadTaskRequest) returns (ReadTaskResponse);
   rpc SaveTask(SaveTaskRequest) returns (SaveTaskResponse);
   rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
-
-  rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
   rpc ListPossibleRelatives(ListPossibleRelativesRequest) returns (ListPossibleRelativesResponse);
-  rpc ProgressUpdate(ProgressUpdateRequest) returns (ProgressUpdateResponse);
+
+  rpc RecomputeSchedule(RecomputeScheduleRequest) returns (RecomputeScheduleResponse);
+  rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
 }
 

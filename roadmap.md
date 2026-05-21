@@ -3,8 +3,8 @@
 - [x] ! Fix bugs
 - [ ] Impl. event input
 - [ ] Impl. progress update
-    - [ ] Figure out logic + backend (unknown)
-    - [ ] UI
+    - [ ] Backend
+    - [ ] CLI
 - [ ] Impl. scheduling
     - [ ] Backend
     - [ ] CLI
