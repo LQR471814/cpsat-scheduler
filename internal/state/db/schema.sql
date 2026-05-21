@@ -97,7 +97,7 @@ on scheduled_task (profile, task);
 -- Progress log
 create table progress_log (
 	id integer primary key autoincrement,
-	profile integer not null references profile (id),
+	profile integer not null references profile (id) on update cascade on delete cascade,
 	time timestamp not null,
 	desc text not null
 );
@@ -107,8 +107,8 @@ on progress_log (profile, id);
 
 -- Updated task
 create table updated_task (
-	progress_log integer not null references progress_log (id),
-	task integer not null references task (id),
+	progress_log integer not null references progress_log (id) on update cascade on delete cascade,
+	task integer not null references task (id) on update cascade on delete cascade,
 	desc text not null,
 	primary key (progress, task)
 );

@@ -5,6 +5,8 @@ import (
 	"cpsat-scheduler/internal/api"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -27,7 +29,7 @@ func (s server) ListProgressUpdates(ctx context.Context, req *api.ListProgressUp
 		return
 	}
 	res = &api.ListProgressUpdatesResponse{
-		Logs: make([]*api.ProgressLog, len(logs)),
+		Logs: make([]*api.ListProgressUpdatesResponse_ProgressLog, len(logs)),
 	}
 	for i, l := range logs {
 		var updated []db.ListUpdatedTaskRow
@@ -35,14 +37,13 @@ func (s server) ListProgressUpdates(ctx context.Context, req *api.ListProgressUp
 		if err != nil {
 			return
 		}
-		res.Logs[i] = &api.ProgressLog{
+		res.Logs[i] = &api.ListProgressUpdatesResponse_ProgressLog{
 			Desc:    l.Desc,
-			Profile: l.Profile,
 			Time:    timestamppb.New(l.Time),
-			Updates: make([]*api.ProgressLog_UpdatedTask, len(updated)),
+			Updates: make([]*api.ListProgressUpdatesResponse_ProgressLog_UpdatedTask, len(updated)),
 		}
 		for j, u := range updated {
-			res.Logs[j].Updates[j] = &api.ProgressLog_UpdatedTask{
+			res.Logs[j].Updates[j] = &api.ListProgressUpdatesResponse_ProgressLog_UpdatedTask{
 				Desc: u.Desc,
 				Task: &api.Entry{
 					Id:   u.Task,
@@ -63,18 +64,17 @@ func (s server) ProgressUpdate(ctx context.Context, req *api.ProgressUpdateReque
 	txqry := s.db.WithTx(tx)
 
 	id, err := txqry.CreateProgressLog(ctx, db.CreateProgressLogParams{
-		Profile: req.GetLog().GetProfile(),
-		Time:    req.GetLog().GetTime().AsTime(),
-		Desc:    req.GetLog().GetDesc(),
+		Profile: req.GetProfile(),
+		Time:    req.GetTime().AsTime(),
+		Desc:    req.GetDesc(),
 	})
 	if err != nil {
 		return
 	}
-
-	for _, update := range req.GetLog().GetUpdates() {
+	for _, update := range req.GetUpdates() {
 		err = txqry.CreateUpdatedTask(ctx, db.CreateUpdatedTaskParams{
 			ProgressLog: id,
-			Task:        update.GetTask().GetId(),
+			Task:        update.GetTask(),
 			Desc:        update.GetDesc(),
 		})
 		if err != nil {
@@ -87,5 +87,59 @@ func (s server) ProgressUpdate(ctx context.Context, req *api.ProgressUpdateReque
 		return
 	}
 	res = &api.ProgressUpdateResponse{Id: id}
+	return
+}
+
+func (s server) EditProgressLog(ctx context.Context, req *api.EditProgressLogRequest) (res *api.EditProgressLogResponse, err error) {
+	tx, err := s.driver.BeginTx(ctx, nil)
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
+	txqry := s.db.WithTx(tx)
+
+	profile, err := txqry.GetProgressLog(ctx, req.GetId())
+	if errors.Is(err, sql.ErrNoRows) {
+		err = fmt.Errorf("edit progress: progress log of id '%d' does not exist", req.GetId())
+		return
+	}
+	if err != nil {
+		return
+	}
+
+	err = txqry.DeleteProgressLog(ctx, req.GetId())
+	if err != nil {
+		return
+	}
+
+	id, err := txqry.CreateProgressLog(ctx, db.CreateProgressLogParams{
+		Profile: profile,
+		Time:    req.GetTime().AsTime(),
+		Desc:    req.GetDesc(),
+	})
+	if err != nil {
+		return
+	}
+	for _, update := range req.GetUpdates() {
+		err = txqry.CreateUpdatedTask(ctx, db.CreateUpdatedTaskParams{
+			ProgressLog: id,
+			Task:        update.GetTask(),
+			Desc:        update.GetDesc(),
+		})
+		if err != nil {
+			return
+		}
+	}
+
+	res = &api.EditProgressLogResponse{}
+	return
+}
+
+func (s server) DeleteProgressLog(ctx context.Context, req *api.DeleteProgressLogRequest) (res *api.DeleteProgressLogResponse, err error) {
+	err = s.db.DeleteProgressLog(ctx, req.GetId())
+	if err != nil {
+		return
+	}
+	res = &api.DeleteProgressLogResponse{}
 	return
 }

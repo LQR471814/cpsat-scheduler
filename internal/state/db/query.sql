@@ -119,6 +119,9 @@ delete from scheduled_task
 where profile = ?;
 
 
+-- name: GetProgressLog :one
+select profile from progress_log where id = ?;
+
 -- name: ListProgressLog :many
 select * from progress_log
 where time >= sqlc.arg('start') and time < sqlc.arg('end');
@@ -127,6 +130,9 @@ where time >= sqlc.arg('start') and time < sqlc.arg('end');
 insert into progress_log (profile, time, desc)
 values (?, ?, ?)
 returning id;
+
+-- name: DeleteProgressLog :exec
+delete from progress_log where id = ?;
 
 -- name: CreateUpdatedTask :exec
 insert into updated_task (progress_log, task, desc)

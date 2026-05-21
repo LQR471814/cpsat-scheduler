@@ -194,6 +194,15 @@ func (q *Queries) DeleteProfile(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteProgressLog = `-- name: DeleteProgressLog :exec
+delete from progress_log where id = ?
+`
+
+func (q *Queries) DeleteProgressLog(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteProgressLog, id)
+	return err
+}
+
 const deleteSchedule = `-- name: DeleteSchedule :exec
 delete from scheduled_task
 where profile = ?
@@ -263,6 +272,17 @@ func (q *Queries) GetProfile(ctx context.Context, id int64) (Profile, error) {
 		&i.PertGenChoices,
 	)
 	return i, err
+}
+
+const getProgressLog = `-- name: GetProgressLog :one
+select profile from progress_log where id = ?
+`
+
+func (q *Queries) GetProgressLog(ctx context.Context, id int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getProgressLog, id)
+	var profile int64
+	err := row.Scan(&profile)
+	return profile, err
 }
 
 const getTask = `-- name: GetTask :one

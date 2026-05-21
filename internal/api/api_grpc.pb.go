@@ -30,6 +30,8 @@ const (
 	API_ListScheduledTasks_FullMethodName    = "/API/ListScheduledTasks"
 	API_ListProgressUpdates_FullMethodName   = "/API/ListProgressUpdates"
 	API_ProgressUpdate_FullMethodName        = "/API/ProgressUpdate"
+	API_EditProgressLog_FullMethodName       = "/API/EditProgressLog"
+	API_DeleteProgressLog_FullMethodName     = "/API/DeleteProgressLog"
 )
 
 // APIClient is the client API for API service.
@@ -47,6 +49,8 @@ type APIClient interface {
 	ListScheduledTasks(ctx context.Context, in *ListScheduledTasksRequest, opts ...grpc.CallOption) (*ListScheduledTasksResponse, error)
 	ListProgressUpdates(ctx context.Context, in *ListProgressUpdatesRequest, opts ...grpc.CallOption) (*ListProgressUpdatesResponse, error)
 	ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error)
+	EditProgressLog(ctx context.Context, in *EditProgressLogRequest, opts ...grpc.CallOption) (*EditProgressLogResponse, error)
+	DeleteProgressLog(ctx context.Context, in *DeleteProgressLogRequest, opts ...grpc.CallOption) (*DeleteProgressLogResponse, error)
 }
 
 type aPIClient struct {
@@ -167,6 +171,26 @@ func (c *aPIClient) ProgressUpdate(ctx context.Context, in *ProgressUpdateReques
 	return out, nil
 }
 
+func (c *aPIClient) EditProgressLog(ctx context.Context, in *EditProgressLogRequest, opts ...grpc.CallOption) (*EditProgressLogResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EditProgressLogResponse)
+	err := c.cc.Invoke(ctx, API_EditProgressLog_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) DeleteProgressLog(ctx context.Context, in *DeleteProgressLogRequest, opts ...grpc.CallOption) (*DeleteProgressLogResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteProgressLogResponse)
+	err := c.cc.Invoke(ctx, API_DeleteProgressLog_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations must embed UnimplementedAPIServer
 // for forward compatibility.
@@ -182,6 +206,8 @@ type APIServer interface {
 	ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error)
 	ListProgressUpdates(context.Context, *ListProgressUpdatesRequest) (*ListProgressUpdatesResponse, error)
 	ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error)
+	EditProgressLog(context.Context, *EditProgressLogRequest) (*EditProgressLogResponse, error)
+	DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error)
 	mustEmbedUnimplementedAPIServer()
 }
 
@@ -224,6 +250,12 @@ func (UnimplementedAPIServer) ListProgressUpdates(context.Context, *ListProgress
 }
 func (UnimplementedAPIServer) ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ProgressUpdate not implemented")
+}
+func (UnimplementedAPIServer) EditProgressLog(context.Context, *EditProgressLogRequest) (*EditProgressLogResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method EditProgressLog not implemented")
+}
+func (UnimplementedAPIServer) DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteProgressLog not implemented")
 }
 func (UnimplementedAPIServer) mustEmbedUnimplementedAPIServer() {}
 func (UnimplementedAPIServer) testEmbeddedByValue()             {}
@@ -444,6 +476,42 @@ func _API_ProgressUpdate_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_EditProgressLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EditProgressLogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).EditProgressLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_EditProgressLog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).EditProgressLog(ctx, req.(*EditProgressLogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_DeleteProgressLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProgressLogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).DeleteProgressLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_DeleteProgressLog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).DeleteProgressLog(ctx, req.(*DeleteProgressLogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -494,6 +562,14 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ProgressUpdate",
 			Handler:    _API_ProgressUpdate_Handler,
+		},
+		{
+			MethodName: "EditProgressLog",
+			Handler:    _API_EditProgressLog_Handler,
+		},
+		{
+			MethodName: "DeleteProgressLog",
+			Handler:    _API_DeleteProgressLog_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
