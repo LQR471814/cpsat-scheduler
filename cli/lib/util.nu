@@ -135,3 +135,36 @@ export def "save form output" []: any -> nothing {
 }
 
 
+# range shift amount translates the range by a given amount
+export def "range shift amount" [value: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+    {
+        opt: ($in.opt + $value)
+        exp: ($in.exp + $value)
+        pes: ($in.pes + $value)
+    }
+}
+
+# range shift amount translates the range by a given % of the expected value
+export def "range shift percent" [percent: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+    range shift amount ($in.exp * ($percent / 100.0))
+}
+
+# range widen increases the width of a range by a given %, this is the
+# equivalent of scaling by (100 + %) / 100 times
+export def "range widen" [percentage_delta: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+    let range = $in
+    let factor = (100.0 + $percentage_delta) / 100.0
+    $range | range scale $factor
+}
+
+# range scale scales a range by a given factor (ex. 2x)
+export def "range scale" [factor: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+    let opt_rel = $in.opt - $in.exp
+    let pes_rel = $in.pes - $in.exp
+    {
+        opt: ($in.exp + ($opt_rel * $factor))
+        exp: $in.exp
+        pes: ($in.exp + ($pes_rel * $factor))
+    }
+}
+
