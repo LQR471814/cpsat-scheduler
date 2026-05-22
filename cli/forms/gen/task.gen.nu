@@ -178,6 +178,10 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
+alias done = submit
+alias d = submit
+alias c = cancel
+
 
 if $p.state.payload.task? != null {
 	$env.state = {id: $p.state.payload.task} | api.gen API ReadTask | get state
@@ -221,11 +225,4 @@ if $p.state.payload.task? != null {
 	$env.id = $id
 }
 	
-
-alias done = submit
-alias d = submit
-alias c = cancel
-
-status
-help
 

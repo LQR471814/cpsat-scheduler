@@ -21,27 +21,23 @@ let time = date now | date to-timezone local
 $env.state = []
 
 def --env desc [] {
-	$env.desc = util input multiline Description...
+	$env.desc = util input multiline Description... | default ''
 }
 
 def --env 'add task' [] {
 	let updated: record<task_id: int, task_state: record, progress_log: string> = {
 		prompt_prefix: (prompt prefix)
-		state: null
+		state: {
+			profile: $p.state.profile
+		}
 	} | index form task-update
+	if $updated == null { return }
 	$env.state ++= $updated
 }
 
-def --env next []: nothing -> bool {
-	if $env.desc? == null {
-		desc
-		if not (next) { return false }
-	}
-	add task
-	if not (next) { return false }
-}
-
 def --env 'run updates' []: nothing -> nothing {
+	if ($env.state | is-empty) { return }
+
 	let desc = $env.desc? | default ''
 
 	let updates = $env.state
@@ -76,6 +72,9 @@ def --env 'run updates' []: nothing -> nothing {
 
 	null
 }
+
+desc
+add task
 "
 }
 

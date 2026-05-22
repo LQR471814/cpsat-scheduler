@@ -110,6 +110,6 @@ create table updated_task (
 	progress_log integer not null references progress_log (id) on update cascade on delete cascade,
 	task integer not null references task (id) on update cascade on delete cascade,
 	desc text not null,
-	primary key (progress, task)
+	primary key (progress_log, task)
 );
 

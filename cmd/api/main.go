@@ -41,6 +41,11 @@ func main() {
 	solverPath := flag.String("solver", "", "path to solver binary")
 	flag.Parse()
 
+	if *solverPath == "" {
+		slog.Error("missing -solver flag to solver binary path")
+		os.Exit(1)
+	}
+
 	tintHandle := tint.NewHandler(os.Stderr, &tint.Options{Level: slog.LevelInfo})
 	logger := slog.New(tintHandle)
 	logger = logger.WithGroup("main")
@@ -48,14 +53,14 @@ func main() {
 	driver, err := db.OpenDB(ctx, logger, "state.db")
 	if err != nil {
 		slog.Error("open db", "err", err)
-		return
+		os.Exit(1)
 	}
 	defer driver.Close()
 
 	impl, err := newServer(ctx, logger, driver, *solverPath)
 	if err != nil {
 		slog.Error("init server", "err", err)
-		return
+		os.Exit(1)
 	}
 	server := grpc.NewServer()
 	api.RegisterAPIServer(server, impl)
@@ -64,6 +69,6 @@ func main() {
 	err = listenServer(ctx, server)
 	if err != nil {
 		slog.Error("listen", "err", err)
-		return
+		os.Exit(1)
 	}
 }

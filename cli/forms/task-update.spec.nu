@@ -3,13 +3,24 @@ use ./lib.nu
 let form = {
 	name: task-update
 	use: (lib form imports)
-	params: {type: 'nothing'}
-	returns: {
-		type: 'record'
+	params: {
+		type: record
 		fields: [[key value];
-			[task_id {type: int}]
-			[task_state {type: record}]
-			[progress_log {type: string}]
+			[profile {type: int}]
+		]
+	}
+	returns: {
+		type: oneof
+		positional: [
+			{type: 'nothing'}
+			{
+				type: record
+				fields: [[key value];
+					[task_id {type: int}]
+					[task_state {type: record}]
+					[progress_log {type: string}]
+				]
+			}
 		]
 	}
 	closures: {
@@ -21,8 +32,22 @@ let form = {
 	}
 	fields: []
 	backmatter: "
+def 'fetch last checkpoint' []: nothing -> oneof<datetime, nothing> {
+	{profile: $p.state.profile} | api.gen API GetLastCheckpoint | get time?
+}
+
+def 'fetch scheduled' []: record -> table {
+	api.gen API ListScheduledTasks | get entries
+}
+
+def --env 'fetch state' [] {
+	if $env.task != null {
+		$env.state = {id: $env.task} | api.gen API ReadTask | get state
+	}
+}
+
 def --env 'pick scheduled' [--timescale(-u): int] {
-	let last_ckpt: oneof<datetime, nothing> = api.gen API GetLastCheckpoint | get time?
+	let last_ckpt = fetch last checkpoint
 	if $last_ckpt == null {
 		error make {msg: 'last checkpoint does not exist'}
 	}
@@ -31,7 +56,8 @@ def --env 'pick scheduled' [--timescale(-u): int] {
 		timescale: $timescale
 		start: $last_ckpt
 		end: (date now | date to-timezone local)
-	} | api.gen API ListScheduled | get entries | util choose table --header 'Choose a task (scheduled since last checkpoint):' | get id
+	} | fetch scheduled | util choose table --header 'Choose a task (scheduled since last checkpoint):' | get id?
+	fetch state
 }
 
 def --env 'pick task' [--timescale(-u): int, --start(-s): datetime, --end(-e): datetime] {
@@ -42,21 +68,11 @@ def --env 'pick task' [--timescale(-u): int, --start(-s): datetime, --end(-e): d
 		timescale: $timescale
 		start: ($now - 1wk)
 		end: ($now + 1wk)
-	} | api.gen API ListScheduled | get entries | util choose table --header 'Choose a task:' | get id
+	} | fetch scheduled | util choose table --header 'Choose a task:' | get id?
+	fetch state
 }
 
-def --env next []: nothing -> bool {
-	if $env.task? == null {
-		let last_ckpt: oneof<datetime, nothing> = api.gen API GetLastCheckpoint | get time?
-		if $last_ckpt != null {
-			pick scheduled
-			if not (next) { return false }
-		} else {
-			print 'run `pick task` to pick a task, you may add additional filters with flags'
-			return false
-		}
-	}
-	$env.state = {id: $env.task} | api.gen API ReadTaskRequest | get state
+def help [] {
 	print [[cmd desc];
 		['get dur,gd' 'get task duration']
 		['set dur,sd' 'set task duration']
@@ -64,7 +80,6 @@ def --env next []: nothing -> bool {
 		['done,d' 'submit']
 		['util range *' 'PERT manipulation commands']
 	]
-	true
 }
 
 def 'get children entries' [] {
@@ -157,7 +172,15 @@ alias gd = get dur
 alias sd = set dur
 alias e = edit
 
-next
+if $env.task? == null {
+	let last_ckpt = fetch last checkpoint
+	if $last_ckpt != null {
+		pick scheduled
+	} else {
+		print 'run `pick task` to pick a task, you may add additional filters with flags'
+		return false
+	}
+}
 "
 }
 

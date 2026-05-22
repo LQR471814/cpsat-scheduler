@@ -41,8 +41,8 @@ let form = {
 	atomic_timescale: $atomic_timescale
 	universe_start: $universe_start
 	gen_pert_choices: ($pert_choices | default 4)
-} | api.gen API CreateProfile | complete
-$env.state = {} | api.gen API ListProfiles"
+} | api.gen API CreateProfile
+$env.state = {} | api.gen API ListProfiles | get entries"
 					}
 					remove: {
 						name: "remove profile"
@@ -56,13 +56,13 @@ if $element == null {
 	return false
 }
 {id: $element.id} | api.gen API RemoveProfile
-$env.state = {} | api.gen API ListProfiles"
+$env.state = {} | api.gen API ListProfiles | get entries"
 					}
 				}
 			}
 		}
 	]
-	backmatter: "$env.state = {} | api.gen API ListProfiles"
+	backmatter: "$env.state = {} | api.gen API ListProfiles | get entries"
 }
 
 $form | to json --raw

@@ -42,6 +42,7 @@ def --env "new task" []: nothing -> nothing {
 			payload: null
 		}
 	} | index form task
+	if $task_state == null { return }
 
 	{
 		id: null
@@ -62,9 +63,9 @@ def --env "progress update" []: nothing -> nothing {
 def help []: nothing -> nothing {
 	print [[cmd help];
 		[profiles             "Manage profiles"]
-		['switch profile,sp'  "Switch to a different profile"]
-		['new task,nt'        "Create a task"]
-		['progress update,pu' "Update task progress"]]
+		['switch profile, sp'  "Switch to a different profile"]
+		['new task, nt'        "Create a task"]
+		['progress update, pu' "Update task progress"]]
 }
 
 if not (switch profile) {

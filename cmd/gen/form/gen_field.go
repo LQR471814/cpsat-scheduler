@@ -86,7 +86,7 @@ func (d FieldDef) addFn() nugen.Closure {
 		Params: nil,
 		In:     nugen.NullType,
 		Out:    nugen.NullType,
-		Body:   *d.List.ClosuresBodies.Add,
+		Body:   *d.List.ClosureBodies.Add,
 	}
 }
 
@@ -115,7 +115,7 @@ try {
 		`,
 		d.Name,
 		displayValueCmd,
-		*d.List.ClosuresBodies.Edit,
+		*d.List.ClosureBodies.Edit,
 	))
 	return nugen.Closure{
 		Env:    true,
@@ -128,8 +128,8 @@ try {
 }
 
 func (d FieldDef) removeFn() nugen.Closure {
-	if d.List.ClosuresBodies.Remove != nil {
-		return *d.List.ClosuresBodies.Remove
+	if d.List.ClosureBodies.Remove != nil {
+		return *d.List.ClosureBodies.Remove
 	}
 	displayValueCmd := fmt.Sprintf("to json -r")
 	if d.ClosureBodies.DisplayValue != nil {
@@ -162,25 +162,25 @@ func (d FieldDef) renderListField(w io.Writer) {
 	d.removeFn().Render(w)
 	nugen.RenderMargin(w)
 
-	if d.List.ClosuresBodies.Add != nil {
+	if d.List.ClosureBodies.Add != nil {
 		d.addFn().Render(w)
 		nugen.RenderMargin(w)
 	}
 
-	if d.List.ClosuresBodies.Edit != nil {
+	if d.List.ClosureBodies.Edit != nil {
 		d.editFn().Render(w)
 		nugen.RenderMargin(w)
 	}
 
-	if d.List.ClosuresBodies.AddStatic != nil {
-		d.List.ClosuresBodies.AddStatic.Env = true
-		d.List.ClosuresBodies.AddStatic.Render(w)
+	if d.List.ClosureBodies.AddStatic != nil {
+		d.List.ClosureBodies.AddStatic.Env = true
+		d.List.ClosureBodies.AddStatic.Render(w)
 		nugen.RenderMargin(w)
 	}
 
-	if d.List.ClosuresBodies.List != nil {
-		d.List.ClosuresBodies.List.Env = true
-		d.List.ClosuresBodies.List.Render(w)
+	if d.List.ClosureBodies.List != nil {
+		d.List.ClosureBodies.List.Env = true
+		d.List.ClosureBodies.List.Render(w)
 		nugen.RenderMargin(w)
 	}
 }
@@ -207,7 +207,31 @@ func (d FieldDef) validateFn() nugen.Closure {
 	}
 }
 
+func (d *FieldDef) envTrueOnAllClosure() {
+	if d.Atomic != nil {
+		if d.Atomic.ClosureBodies.GetStatic != nil {
+			d.Atomic.ClosureBodies.GetStatic.Env = true
+		}
+		if d.Atomic.ClosureBodies.SetStatic != nil {
+			d.Atomic.ClosureBodies.SetStatic.Env = true
+		}
+	}
+	if d.List != nil {
+		if d.List.ClosureBodies.AddStatic != nil {
+			d.List.ClosureBodies.AddStatic.Env = true
+		}
+		if d.List.ClosureBodies.List != nil {
+			d.List.ClosureBodies.List.Env = true
+		}
+		if d.List.ClosureBodies.Remove != nil {
+			d.List.ClosureBodies.Remove.Env = true
+		}
+	}
+}
+
 func (d FieldDef) Render(w io.Writer) {
+	d.envTrueOnAllClosure()
+
 	if d.ClosureBodies.Getter == "" {
 		panic("assert failed: getter should not be empty")
 	}

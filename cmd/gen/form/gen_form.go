@@ -112,7 +112,7 @@ func (f Form) nextFn() nugen.Closure {
 `, field.ClosureBodies.Getter, field.Name)
 			}
 		} else if field.List != nil {
-			if field.List.ClosuresBodies.Add != nil {
+			if field.List.ClosureBodies.Add != nil {
 				fmt.Fprintf(&body, `if not (%[1]s | validate %[2]s) {
 	%[2]s
 	if not (%[1]s | validate %[2]s) { return false }
@@ -259,7 +259,7 @@ func (f Form) helpFn() nugen.Closure {
 				)
 			}
 		} else if f.List != nil {
-			if f.List.ClosuresBodies.Add != nil {
+			if f.List.ClosureBodies.Add != nil {
 				writePrefix(f)
 				fmt.Fprintf(
 					&body,
@@ -268,12 +268,12 @@ func (f Form) helpFn() nugen.Closure {
 					f.DisplayName,
 				)
 			}
-			if f.List.ClosuresBodies.AddStatic != nil {
+			if f.List.ClosureBodies.AddStatic != nil {
 				writePrefix(f)
 				fmt.Fprintf(
 					&body,
 					"'%s' 'Add a %s via nushell command.']\n",
-					f.List.ClosuresBodies.AddStatic.Name,
+					f.List.ClosureBodies.AddStatic.Name,
 					f.DisplayName,
 				)
 			} else {
@@ -285,7 +285,7 @@ func (f Form) helpFn() nugen.Closure {
 					f.DisplayName,
 				)
 			}
-			if f.List.ClosuresBodies.Edit != nil {
+			if f.List.ClosureBodies.Edit != nil {
 				writePrefix(f)
 				fmt.Fprintf(
 					&body,
@@ -294,12 +294,12 @@ func (f Form) helpFn() nugen.Closure {
 					f.DisplayName,
 				)
 			}
-			if f.List.ClosuresBodies.Remove != nil {
+			if f.List.ClosureBodies.Remove != nil {
 				writePrefix(f)
 				fmt.Fprintf(
 					&body,
 					"'%s' 'Remove a %s']\n",
-					f.List.ClosuresBodies.Remove.Name,
+					f.List.ClosureBodies.Remove.Name,
 					f.DisplayName,
 				)
 			}
@@ -318,10 +318,7 @@ func (f Form) helpFn() nugen.Closure {
 func (f Form) renderAliasBlock(w io.Writer) {
 	fmt.Fprint(w, `alias done = submit
 alias d = submit
-alias c = cancel
-
-status
-help`)
+alias c = cancel`)
 }
 
 func (f Form) Render(w io.Writer) {
@@ -351,7 +348,7 @@ func (f Form) Render(w io.Writer) {
 	if len(f.Fields) > 0 {
 		f.statusFn().Render(w)
 		nugen.RenderMargin(w)
-		fmt.Fprintln(w, "alias s = status")
+		fmt.Fprintln(w, `alias s = status`)
 
 		f.nextFn().Render(w)
 		nugen.RenderMargin(w)
@@ -359,7 +356,7 @@ func (f Form) Render(w io.Writer) {
 
 		f.helpFn().Render(w)
 		nugen.RenderMargin(w)
-		fmt.Fprintln(w, "alias h = help")
+		fmt.Fprintln(w, `alias h = help`)
 	}
 
 	f.submitFn().Render(w)
@@ -368,11 +365,14 @@ func (f Form) Render(w io.Writer) {
 	f.cancelFn().Render(w)
 	nugen.RenderMargin(w)
 
+	f.renderAliasBlock(w)
+	nugen.RenderMargin(w)
+
 	if f.Backmatter != nil {
 		fmt.Fprint(w, *f.Backmatter)
 		nugen.RenderMargin(w)
+	} else {
+		fmt.Fprint(w, `status
+help`)
 	}
-
-	f.renderAliasBlock(w)
-	nugen.RenderMargin(w)
 }

@@ -22,7 +22,7 @@ def --env "set profiles" []: oneof<table<id: int, name: string, atomic_timescale
     $env.state = $in
 }
 
-def "remove profile" []: nothing -> nothing {
+def --env "remove profile" []: nothing -> nothing {
     let element = get profiles                                    
         | select id name                                          
         | util choose table --header 'Choose a profile to remove:'
@@ -30,17 +30,17 @@ def "remove profile" []: nothing -> nothing {
         return false                                              
     }                                                             
     {id: $element.id} | api.gen API RemoveProfile                 
-    $env.state = {} | api.gen API ListProfiles                    
+    $env.state = {} | api.gen API ListProfiles | get entries      
 }
 
 def --env "add profile" [name: string, atomic_timescale: duration, universe_start: datetime, --pert_choices: int]: nothing -> nothing {
-    {                                                
-        name: $name                                  
-        atomic_timescale: $atomic_timescale          
-        universe_start: $universe_start              
-        gen_pert_choices: ($pert_choices | default 4)
-    } | api.gen API CreateProfile | complete         
-    $env.state = {} | api.gen API ListProfiles       
+    {                                                       
+        name: $name                                         
+        atomic_timescale: $atomic_timescale                 
+        universe_start: $universe_start                     
+        gen_pert_choices: ($pert_choices | default 4)       
+    } | api.gen API CreateProfile                           
+    $env.state = {} | api.gen API ListProfiles | get entries
 }
 
 def --env status []: nothing -> nothing {
@@ -83,12 +83,9 @@ def --env cancel []: nothing -> nothing {
     exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
-$env.state = {} | api.gen API ListProfiles
-
 alias done = submit
 alias d = submit
 alias c = cancel
 
-status
-help
+$env.state = {} | api.gen API ListProfiles | get entries
 

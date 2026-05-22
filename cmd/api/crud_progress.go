@@ -152,6 +152,7 @@ func (s server) GetLastCheckpoint(ctx context.Context, req *api.GetLastCheckpoin
 		}
 	} else if errors.Is(err, sql.ErrNoRows) {
 		res = &api.GetLastCheckpointResponse{Time: nil}
+		err = nil
 	}
 	return
 }

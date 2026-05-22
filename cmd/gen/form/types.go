@@ -137,7 +137,7 @@ type FieldListClosuresBodies struct {
 // FieldList represents the configuration for a list-based field, housing the
 // closure bodies that define list actions.
 type FieldList struct {
-	ClosuresBodies FieldListClosuresBodies `json:"closure_bodies"`
+	ClosureBodies FieldListClosuresBodies `json:"closure_bodies"`
 }
 
 // FieldDef defines the complete configuration for a form field, including its

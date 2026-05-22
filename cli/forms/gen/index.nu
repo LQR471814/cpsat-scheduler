@@ -20,9 +20,9 @@ export def "form optional-fields" []: record<prompt_prefix: string, state: recor
 export def "form required-fields" []: record<prompt_prefix: string, state: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>, >> -> record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>, > {
 	util exec form "./forms/gen/required-fields.gen.nu" $in
 }
-export def "form task" []: record<prompt_prefix: string, state: record<profile: int, payload: oneof<nothing, record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> -> record {
+export def "form task" []: record<prompt_prefix: string, state: record<profile: int, payload: oneof<nothing, record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> -> oneof<nothing, record> {
 	util exec form "./forms/gen/task.gen.nu" $in
 }
-export def "form task-update" []: record<prompt_prefix: string, state: nothing> -> record<task_id: int, task_state: record, progress_log: string> {
+export def "form task-update" []: record<prompt_prefix: string, state: record<profile: int>> -> oneof<nothing, record<task_id: int, task_state: record, progress_log: string>> {
 	util exec form "./forms/gen/task-update.gen.nu" $in
 }

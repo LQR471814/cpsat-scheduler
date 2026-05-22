@@ -64,7 +64,13 @@ let form = {
 			[payload $payload]
 		]
 	}
-	returns: {type: record}
+	returns: {
+		type: oneof,
+		positional: [
+			{type: 'nothing'}
+			{type: record}
+		]
+	}
 	closures: {}
 	fields: [
 		{
