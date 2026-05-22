@@ -136,7 +136,7 @@ export def "save form output" []: any -> nothing {
 
 
 # range shift amount translates the range by a given amount
-export def "range shift amount" [value: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+export def "range shift amount" [value: duration]: record<opt: duration, exp: duration, opt: duration> -> record<opt: duration, exp: duration, opt: duration> {
     {
         opt: ($in.opt + $value)
         exp: ($in.exp + $value)
@@ -145,20 +145,20 @@ export def "range shift amount" [value: float]: record<opt: float, exp: float, o
 }
 
 # range shift amount translates the range by a given % of the expected value
-export def "range shift percent" [percent: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+export def "range shift percent" [percent: float]: record<opt: duration, exp: duration, opt: duration> -> record<opt: duration, exp: duration, opt: duration> {
     range shift amount ($in.exp * ($percent / 100.0))
 }
 
 # range widen increases the width of a range by a given %, this is the
 # equivalent of scaling by (100 + %) / 100 times
-export def "range widen" [percentage_delta: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+export def "range widen" [percentage_delta: float]: record<opt: duration, exp: duration, opt: duration> -> record<opt: duration, exp: duration, opt: duration> {
     let range = $in
     let factor = (100.0 + $percentage_delta) / 100.0
     $range | range scale $factor
 }
 
 # range scale scales a range by a given factor (ex. 2x)
-export def "range scale" [factor: float]: record<opt: float, exp: float, opt: float> -> record<opt: float, exp: float, opt: float> {
+export def "range scale" [factor: float]: record<opt: duration, exp: duration, opt: duration> -> record<opt: duration, exp: duration, opt: duration> {
     let opt_rel = $in.opt - $in.exp
     let pes_rel = $in.pes - $in.exp
     {
@@ -166,5 +166,10 @@ export def "range scale" [factor: float]: record<opt: float, exp: float, opt: fl
         exp: $in.exp
         pes: ($in.exp + ($pes_rel * $factor))
     }
+}
+
+# format pert converts a PERT into a string
+export def "range format" []: record<opt: duration, exp: duration, opt: duration> -> string {
+    $"\(($in.opt), ($in.exp), ($in.pes)\)"
 }
 

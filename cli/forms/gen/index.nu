@@ -2,7 +2,7 @@ use ../../lib/util.nu
 export def "form profiles" []: record<prompt_prefix: string, state: nothing> -> nothing {
 	util exec form "./forms/gen/profiles.gen.nu" $in
 }
-export def "form progress" []: record<prompt_prefix: string, state: nothing> -> nothing {
+export def "form progress" []: record<prompt_prefix: string, state: record<profile: int>> -> nothing {
 	util exec form "./forms/gen/progress.gen.nu" $in
 }
 export def "form child-config" []: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<datetime, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> -> record<task: int, desc: oneof<string, nothing>, deadline: oneof<datetime, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>> {
@@ -22,4 +22,7 @@ export def "form required-fields" []: record<prompt_prefix: string, state: recor
 }
 export def "form task" []: record<prompt_prefix: string, state: record<profile: int, payload: oneof<nothing, record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> -> record {
 	util exec form "./forms/gen/task.gen.nu" $in
+}
+export def "form task-update" []: record<prompt_prefix: string, state: nothing> -> record<task_id: int, task_state: record, progress_log: string> {
+	util exec form "./forms/gen/task-update.gen.nu" $in
 }

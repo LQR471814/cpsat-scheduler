@@ -126,7 +126,11 @@ if $results != null { $results | set opt }"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "let results = {
+					set: "if ($env.state.children | is-not-empty) {
+	print 'Cannot set duration configurations when children config is set.'
+	return
+}
+let results = {
 	prompt_prefix: (prompt prefix)
 	state: { task: $env.id, cfg: (get dur) }
 } | index form duration-config
@@ -145,7 +149,11 @@ if $results != null { $results | set dur }"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "let results = {
+					set: "if $env.state.duration_cfg? != null {
+	print 'Cannot set children configurations when duration config is set.'
+	return
+}
+let results = {
 	prompt_prefix: (prompt prefix)
 	state: {
 		task: $env.id

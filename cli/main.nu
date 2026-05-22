@@ -52,11 +52,19 @@ def --env "new task" []: nothing -> nothing {
 	null
 }
 
+def --env "progress update" []: nothing -> nothing {
+	{
+		prompt_prefix: (prompt prefix)
+		state: {profile: $env.profile}
+	} | index form progress
+}
+
 def help []: nothing -> nothing {
 	print [[cmd help];
-		[profiles "Manage profiles"]
-		['switch profile' "Switch to a different profile"]
-		['new task' "Create a task"]]
+		[profiles             "Manage profiles"]
+		['switch profile,sp'  "Switch to a different profile"]
+		['new task,nt'        "Create a task"]
+		['progress update,pu' "Update task progress"]]
 }
 
 if not (switch profile) {
@@ -65,6 +73,9 @@ if not (switch profile) {
 }
 
 alias c = exit
+alias sp = switch profile
+alias nt = new task
+alias pu = progress update
 
 help
 

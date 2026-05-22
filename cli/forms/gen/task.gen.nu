@@ -73,11 +73,15 @@ def --env "display dur" []: oneof<record<pert: record<opt: duration, exp: durati
 }
 
 def --env dur []: nothing -> nothing {
-    let results = {                             
-        prompt_prefix: (prompt prefix)          
-        state: { task: $env.id, cfg: (get dur) }
-    } | index form duration-config              
-    if $results != null { $results | set dur }  
+    if ($env.state.children | is-not-empty) {                                  
+        print 'Cannot set duration configurations when children config is set.'
+        return                                                                 
+    }                                                                          
+    let results = {                                                            
+        prompt_prefix: (prompt prefix)                                         
+        state: { task: $env.id, cfg: (get dur) }                               
+    } | index form duration-config                                             
+    if $results != null { $results | set dur }                                 
 }
 
 def --env "unset dur" []: nothing -> nothing {
@@ -97,14 +101,18 @@ def --env "display children" []: table -> string {
 }
 
 def --env children []: nothing -> nothing {
-    let results = {                                
-        prompt_prefix: (prompt prefix)             
-        state: {                                   
-            task: $env.id                          
-            children_cfgs: (get children)          
-        }                                          
-    } | index form children-config                 
-    if $results != null { $results | set children }
+    if $env.state.duration_cfg? != null {                                      
+        print 'Cannot set children configurations when duration config is set.'
+        return                                                                 
+    }                                                                          
+    let results = {                                                            
+        prompt_prefix: (prompt prefix)                                         
+        state: {                                                               
+            task: $env.id                                                      
+            children_cfgs: (get children)                                      
+        }                                                                      
+    } | index form children-config                                             
+    if $results != null { $results | set children }                            
 }
 
 def --env "unset children" []: nothing -> nothing {
@@ -128,23 +136,13 @@ def --env status []: nothing -> nothing {
                                                                                
 }
 
+alias s = status
 def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data
     true                                   
 }
 
-def --env submit []: nothing -> nothing {
-    next                                    
-    $env.state | util save form output      
-    exit # nu-lint-ignore: exit_only_in_main
-}
-
-def --env cancel []: nothing -> nothing {
-    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
-    null | util save form output                                                                           
-    exit # nu-lint-ignore: exit_only_in_main                                                               
-}
-
+alias n = next
 def help []: nothing -> nothing {
     print [[group cmd desc];                                                    
         [common "status, s" "Show form status."]                                
@@ -165,6 +163,19 @@ def help []: nothing -> nothing {
         [null 'get children' 'Get Children configurations via nushell command.']
     ]                                                                           
                                                                                 
+}
+
+alias h = help
+def --env submit []: nothing -> nothing {
+    next                                    
+    $env.state | util save form output      
+    exit # nu-lint-ignore: exit_only_in_main
+}
+
+def --env cancel []: nothing -> nothing {
+    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+    null | util save form output                                                                           
+    exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
 
@@ -211,8 +222,6 @@ if $p.state.payload.task? != null {
 }
 	
 
-alias s = status
-alias n = next
 alias done = submit
 alias d = submit
 alias c = cancel

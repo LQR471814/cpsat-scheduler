@@ -103,6 +103,7 @@ def --env status []: nothing -> nothing {
                                                                   
 }
 
+alias s = status
 def --env next []: nothing -> bool {
     # nu-lint-ignore: print_and_return_data                                
     if not ($env.state.cfg.pert | validate pert) {                         
@@ -117,18 +118,7 @@ def --env next []: nothing -> bool {
     true                                                                   
 }
 
-def --env submit []: nothing -> nothing {
-    next                                                     
-    $env.state | returns post process | util save form output
-    exit # nu-lint-ignore: exit_only_in_main                 
-}
-
-def --env cancel []: nothing -> nothing {
-    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
-    null | util save form output                                                                           
-    exit # nu-lint-ignore: exit_only_in_main                                                               
-}
-
+alias n = next
 def help []: nothing -> nothing {
     print [[group cmd desc];                                                                    
         [common "status, s" "Show form status."]                                                
@@ -147,8 +137,19 @@ def help []: nothing -> nothing {
                                                                                                 
 }
 
-alias s = status
-alias n = next
+alias h = help
+def --env submit []: nothing -> nothing {
+    next                                                     
+    $env.state | returns post process | util save form output
+    exit # nu-lint-ignore: exit_only_in_main                 
+}
+
+def --env cancel []: nothing -> nothing {
+    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+    null | util save form output                                                                           
+    exit # nu-lint-ignore: exit_only_in_main                                                               
+}
+
 alias done = submit
 alias d = submit
 alias c = cancel

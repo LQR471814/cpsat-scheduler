@@ -68,6 +68,13 @@ Parameters:
 
 # Progress update
 
+1. Allow for update of multiple tasks.
+2. See updated tasks.
+3. Push progress log of update lines
+4. Recompute schedule
+
+## Update task
+
 1. Prompt: pick task to edit
     - default from scheduled:
         - within time since last checkpoint
@@ -80,12 +87,11 @@ Parameters:
     - leaf tasks:
         - [[#Range manip]]
     - non-leaf tasks:
-        - add/sub. dur.
-            - prompt: option to edit selected task
-                - direct edit via form cmd
-                - [[#Range manip]] commands
+        - prompt: option to edit selected task
+            - direct edit via form cmd
+            - [[#Range manip]] commands
     - edit task currently active
-3. Recompute schedule
+3. Return updated task & progress log line
 
 ## Range manip
 
