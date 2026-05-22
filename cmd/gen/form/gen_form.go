@@ -316,9 +316,7 @@ func (f Form) helpFn() nugen.Closure {
 }
 
 func (f Form) renderAliasBlock(w io.Writer) {
-	fmt.Fprint(w, `alias s = status
-alias n = next
-alias done = submit
+	fmt.Fprint(w, `alias done = submit
 alias d = submit
 alias c = cancel
 
@@ -350,19 +348,24 @@ func (f Form) Render(w io.Writer) {
 		field.Render(w)
 	}
 
-	f.statusFn().Render(w)
-	nugen.RenderMargin(w)
+	if len(f.Fields) > 0 {
+		f.statusFn().Render(w)
+		nugen.RenderMargin(w)
+		fmt.Fprintln(w, "alias s = status")
 
-	f.nextFn().Render(w)
-	nugen.RenderMargin(w)
+		f.nextFn().Render(w)
+		nugen.RenderMargin(w)
+		fmt.Fprintln(w, "alias n = next")
+
+		f.helpFn().Render(w)
+		nugen.RenderMargin(w)
+		fmt.Fprintln(w, "alias h = help")
+	}
 
 	f.submitFn().Render(w)
 	nugen.RenderMargin(w)
 
 	f.cancelFn().Render(w)
-	nugen.RenderMargin(w)
-
-	f.helpFn().Render(w)
 	nugen.RenderMargin(w)
 
 	if f.Backmatter != nil {
