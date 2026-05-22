@@ -107,7 +107,7 @@ message RecomputeScheduleResponse {}
 // ListScheduledTasks
 message ListScheduledTasksRequest {
   int64 profile_id = 1;
-  int64 timescale = 2;
+  optional int64 timescale = 2;
   google.protobuf.Timestamp start = 3;
   google.protobuf.Timestamp end = 4;
 }
@@ -184,6 +184,14 @@ message DeleteProgressLogRequest {
 }
 message DeleteProgressLogResponse {}
 
+// GetLastCheckpoint
+message GetLastCheckpointRequest {
+  int64 profile = 1;
+}
+message GetLastCheckpointResponse {
+  optional google.protobuf.Timestamp time = 1;
+}
+
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
@@ -201,5 +209,6 @@ service API {
   rpc ProgressUpdate(ProgressUpdateRequest) returns (ProgressUpdateResponse);
   rpc EditProgressLog(EditProgressLogRequest) returns (EditProgressLogResponse);
   rpc DeleteProgressLog(DeleteProgressLogRequest) returns (DeleteProgressLogResponse);
+  rpc GetLastCheckpoint(GetLastCheckpointRequest) returns (GetLastCheckpointResponse);
 }
 

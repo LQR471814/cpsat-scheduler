@@ -232,6 +232,20 @@ func (q *Queries) GetDurConfig(ctx context.Context, task int64) (DurConfig, erro
 	return i, err
 }
 
+const getLastCheckpoint = `-- name: GetLastCheckpoint :one
+select time from progress_log
+where profile = ?
+order by time desc
+limit 1
+`
+
+func (q *Queries) GetLastCheckpoint(ctx context.Context, profile int64) (time.Time, error) {
+	row := q.db.QueryRowContext(ctx, getLastCheckpoint, profile)
+	var time time.Time
+	err := row.Scan(&time)
+	return time, err
+}
+
 const getParent = `-- name: GetParent :one
 select t.id, t.profile, t.unit, t.name, t."desc", t.start, t."end" from task as t
 inner join children_config as c on
@@ -478,16 +492,17 @@ func (q *Queries) ListProfiles(ctx context.Context) ([]Profile, error) {
 
 const listProgressLog = `-- name: ListProgressLog :many
 select id, profile, time, "desc" from progress_log
-where time >= ?1 and time < ?2
+where profile = ? and time >= ?2 and time < ?3
 `
 
 type ListProgressLogParams struct {
-	Start time.Time
-	End   time.Time
+	Profile int64
+	Start   time.Time
+	End     time.Time
 }
 
 func (q *Queries) ListProgressLog(ctx context.Context, arg ListProgressLogParams) ([]ProgressLog, error) {
-	rows, err := q.db.QueryContext(ctx, listProgressLog, arg.Start, arg.End)
+	rows, err := q.db.QueryContext(ctx, listProgressLog, arg.Profile, arg.Start, arg.End)
 	if err != nil {
 		return nil, err
 	}
@@ -543,6 +558,61 @@ func (q *Queries) ListScheduledTasks(ctx context.Context, arg ListScheduledTasks
 	var items []ListScheduledTasksRow
 	for rows.Next() {
 		var i ListScheduledTasksRow
+		if err := rows.Scan(
+			&i.Task,
+			&i.Profile,
+			&i.Start,
+			&i.End,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listScheduledTasksInTimescale = `-- name: ListScheduledTasksInTimescale :many
+select st.task, st.profile, st.start, st."end", t.name from scheduled_task st
+inner join task t on st.task = t.id
+where st.start >= ? and st.end <= ? and st.profile = ? and t.unit = ?
+`
+
+type ListScheduledTasksInTimescaleParams struct {
+	Start   time.Time
+	End     time.Time
+	Profile int64
+	Unit    int64
+}
+
+type ListScheduledTasksInTimescaleRow struct {
+	Task    int64
+	Profile int64
+	Start   time.Time
+	End     time.Time
+	Name    string
+}
+
+func (q *Queries) ListScheduledTasksInTimescale(ctx context.Context, arg ListScheduledTasksInTimescaleParams) ([]ListScheduledTasksInTimescaleRow, error) {
+	rows, err := q.db.QueryContext(ctx, listScheduledTasksInTimescale,
+		arg.Start,
+		arg.End,
+		arg.Profile,
+		arg.Unit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListScheduledTasksInTimescaleRow
+	for rows.Next() {
+		var i ListScheduledTasksInTimescaleRow
 		if err := rows.Scan(
 			&i.Task,
 			&i.Profile,

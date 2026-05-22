@@ -5,9 +5,11 @@
 - [ ] Impl. progress update
     - [ ] Backend
     - [ ] CLI
-- [ ] Impl. scheduling
-    - [ ] Backend
+    - [ ] Debug
+- [o] Impl. scheduling
+    - [x] Backend
     - [ ] CLI
+    - [ ] Debug
 - [ ] Improve validation & form errors
 - [ ] Impl. proper form for profiles.
 - [ ] Add delete fn. for forms

@@ -143,3 +143,15 @@ func (s server) DeleteProgressLog(ctx context.Context, req *api.DeleteProgressLo
 	res = &api.DeleteProgressLogResponse{}
 	return
 }
+
+func (s server) GetLastCheckpoint(ctx context.Context, req *api.GetLastCheckpointRequest) (res *api.GetLastCheckpointResponse, err error) {
+	t, err := s.db.GetLastCheckpoint(ctx, req.GetProfile())
+	if err == nil {
+		res = &api.GetLastCheckpointResponse{
+			Time: timestamppb.New(t),
+		}
+	} else if errors.Is(err, sql.ErrNoRows) {
+		res = &api.GetLastCheckpointResponse{Time: nil}
+	}
+	return
+}

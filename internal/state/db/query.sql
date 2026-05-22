@@ -107,6 +107,11 @@ select st.*, t.name from scheduled_task st
 inner join task t on st.task = t.id
 where st.start >= ? and st.end <= ? and st.profile = ?;
 
+-- name: ListScheduledTasksInTimescale :many
+select st.*, t.name from scheduled_task st
+inner join task t on st.task = t.id
+where st.start >= ? and st.end <= ? and st.profile = ? and t.unit = ?;
+
 -- name: SaveScheduledTask :exec
 insert into scheduled_task (task, profile, start, end)
 values (?, ?, ?, ?) on conflict do update set
@@ -124,7 +129,7 @@ select profile from progress_log where id = ?;
 
 -- name: ListProgressLog :many
 select * from progress_log
-where time >= sqlc.arg('start') and time < sqlc.arg('end');
+where profile = ? and time >= sqlc.arg('start') and time < sqlc.arg('end');
 
 -- name: CreateProgressLog :one
 insert into progress_log (profile, time, desc)
@@ -144,3 +149,8 @@ inner join task t
 	on u.task = t.id
 where progress_log = ?;
 
+-- name: GetLastCheckpoint :one
+select time from progress_log
+where profile = ?
+order by time desc
+limit 1;

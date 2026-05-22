@@ -32,6 +32,7 @@ const (
 	API_ProgressUpdate_FullMethodName        = "/API/ProgressUpdate"
 	API_EditProgressLog_FullMethodName       = "/API/EditProgressLog"
 	API_DeleteProgressLog_FullMethodName     = "/API/DeleteProgressLog"
+	API_GetLastCheckpoint_FullMethodName     = "/API/GetLastCheckpoint"
 )
 
 // APIClient is the client API for API service.
@@ -51,6 +52,7 @@ type APIClient interface {
 	ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error)
 	EditProgressLog(ctx context.Context, in *EditProgressLogRequest, opts ...grpc.CallOption) (*EditProgressLogResponse, error)
 	DeleteProgressLog(ctx context.Context, in *DeleteProgressLogRequest, opts ...grpc.CallOption) (*DeleteProgressLogResponse, error)
+	GetLastCheckpoint(ctx context.Context, in *GetLastCheckpointRequest, opts ...grpc.CallOption) (*GetLastCheckpointResponse, error)
 }
 
 type aPIClient struct {
@@ -191,6 +193,16 @@ func (c *aPIClient) DeleteProgressLog(ctx context.Context, in *DeleteProgressLog
 	return out, nil
 }
 
+func (c *aPIClient) GetLastCheckpoint(ctx context.Context, in *GetLastCheckpointRequest, opts ...grpc.CallOption) (*GetLastCheckpointResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLastCheckpointResponse)
+	err := c.cc.Invoke(ctx, API_GetLastCheckpoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations must embed UnimplementedAPIServer
 // for forward compatibility.
@@ -208,6 +220,7 @@ type APIServer interface {
 	ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error)
 	EditProgressLog(context.Context, *EditProgressLogRequest) (*EditProgressLogResponse, error)
 	DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error)
+	GetLastCheckpoint(context.Context, *GetLastCheckpointRequest) (*GetLastCheckpointResponse, error)
 	mustEmbedUnimplementedAPIServer()
 }
 
@@ -256,6 +269,9 @@ func (UnimplementedAPIServer) EditProgressLog(context.Context, *EditProgressLogR
 }
 func (UnimplementedAPIServer) DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteProgressLog not implemented")
+}
+func (UnimplementedAPIServer) GetLastCheckpoint(context.Context, *GetLastCheckpointRequest) (*GetLastCheckpointResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLastCheckpoint not implemented")
 }
 func (UnimplementedAPIServer) mustEmbedUnimplementedAPIServer() {}
 func (UnimplementedAPIServer) testEmbeddedByValue()             {}
@@ -512,6 +528,24 @@ func _API_DeleteProgressLog_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_GetLastCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLastCheckpointRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).GetLastCheckpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_GetLastCheckpoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).GetLastCheckpoint(ctx, req.(*GetLastCheckpointRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -570,6 +604,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteProgressLog",
 			Handler:    _API_DeleteProgressLog_Handler,
+		},
+		{
+			MethodName: "GetLastCheckpoint",
+			Handler:    _API_GetLastCheckpoint_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

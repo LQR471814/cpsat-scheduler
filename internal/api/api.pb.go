@@ -1136,7 +1136,7 @@ func (*RecomputeScheduleResponse) Descriptor() ([]byte, []int) {
 type ListScheduledTasksRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProfileId     int64                  `protobuf:"varint,1,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
-	Timescale     int64                  `protobuf:"varint,2,opt,name=timescale,proto3" json:"timescale,omitempty"`
+	Timescale     *int64                 `protobuf:"varint,2,opt,name=timescale,proto3,oneof" json:"timescale,omitempty"`
 	Start         *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=start,proto3" json:"start,omitempty"`
 	End           *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=end,proto3" json:"end,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1181,8 +1181,8 @@ func (x *ListScheduledTasksRequest) GetProfileId() int64 {
 }
 
 func (x *ListScheduledTasksRequest) GetTimescale() int64 {
-	if x != nil {
-		return x.Timescale
+	if x != nil && x.Timescale != nil {
+		return *x.Timescale
 	}
 	return 0
 }
@@ -1746,6 +1746,95 @@ func (*DeleteProgressLogResponse) Descriptor() ([]byte, []int) {
 	return file_api_api_proto_rawDescGZIP(), []int{31}
 }
 
+// GetLastCheckpoint
+type GetLastCheckpointRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       int64                  `protobuf:"varint,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetLastCheckpointRequest) Reset() {
+	*x = GetLastCheckpointRequest{}
+	mi := &file_api_api_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetLastCheckpointRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLastCheckpointRequest) ProtoMessage() {}
+
+func (x *GetLastCheckpointRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_api_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLastCheckpointRequest.ProtoReflect.Descriptor instead.
+func (*GetLastCheckpointRequest) Descriptor() ([]byte, []int) {
+	return file_api_api_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *GetLastCheckpointRequest) GetProfile() int64 {
+	if x != nil {
+		return x.Profile
+	}
+	return 0
+}
+
+type GetLastCheckpointResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=time,proto3,oneof" json:"time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetLastCheckpointResponse) Reset() {
+	*x = GetLastCheckpointResponse{}
+	mi := &file_api_api_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetLastCheckpointResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLastCheckpointResponse) ProtoMessage() {}
+
+func (x *GetLastCheckpointResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_api_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLastCheckpointResponse.ProtoReflect.Descriptor instead.
+func (*GetLastCheckpointResponse) Descriptor() ([]byte, []int) {
+	return file_api_api_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *GetLastCheckpointResponse) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
 type ListProgressUpdatesResponse_ProgressLog struct {
 	state         protoimpl.MessageState                                 `protogen:"open.v1"`
 	Id            int64                                                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1758,7 +1847,7 @@ type ListProgressUpdatesResponse_ProgressLog struct {
 
 func (x *ListProgressUpdatesResponse_ProgressLog) Reset() {
 	*x = ListProgressUpdatesResponse_ProgressLog{}
-	mi := &file_api_api_proto_msgTypes[32]
+	mi := &file_api_api_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1770,7 +1859,7 @@ func (x *ListProgressUpdatesResponse_ProgressLog) String() string {
 func (*ListProgressUpdatesResponse_ProgressLog) ProtoMessage() {}
 
 func (x *ListProgressUpdatesResponse_ProgressLog) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[32]
+	mi := &file_api_api_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1824,7 +1913,7 @@ type ListProgressUpdatesResponse_ProgressLog_UpdatedTask struct {
 
 func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) Reset() {
 	*x = ListProgressUpdatesResponse_ProgressLog_UpdatedTask{}
-	mi := &file_api_api_proto_msgTypes[33]
+	mi := &file_api_api_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1836,7 +1925,7 @@ func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) String() string {
 func (*ListProgressUpdatesResponse_ProgressLog_UpdatedTask) ProtoMessage() {}
 
 func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[33]
+	mi := &file_api_api_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1876,7 +1965,7 @@ type ProgressUpdateRequest_UpdatedTask struct {
 
 func (x *ProgressUpdateRequest_UpdatedTask) Reset() {
 	*x = ProgressUpdateRequest_UpdatedTask{}
-	mi := &file_api_api_proto_msgTypes[34]
+	mi := &file_api_api_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1888,7 +1977,7 @@ func (x *ProgressUpdateRequest_UpdatedTask) String() string {
 func (*ProgressUpdateRequest_UpdatedTask) ProtoMessage() {}
 
 func (x *ProgressUpdateRequest_UpdatedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[34]
+	mi := &file_api_api_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1928,7 +2017,7 @@ type EditProgressLogRequest_UpdatedTask struct {
 
 func (x *EditProgressLogRequest_UpdatedTask) Reset() {
 	*x = EditProgressLogRequest_UpdatedTask{}
-	mi := &file_api_api_proto_msgTypes[35]
+	mi := &file_api_api_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1940,7 +2029,7 @@ func (x *EditProgressLogRequest_UpdatedTask) String() string {
 func (*EditProgressLogRequest_UpdatedTask) ProtoMessage() {}
 
 func (x *EditProgressLogRequest_UpdatedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[35]
+	mi := &file_api_api_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2048,13 +2137,15 @@ const file_api_api_proto_rawDesc = "" +
 	"\x12DeleteTaskResponse\"4\n" +
 	"\x18RecomputeScheduleRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\x03R\aprofile\"\x1b\n" +
-	"\x19RecomputeScheduleResponse\"\xb8\x01\n" +
+	"\x19RecomputeScheduleResponse\"\xcb\x01\n" +
 	"\x19ListScheduledTasksRequest\x12\x1d\n" +
 	"\n" +
-	"profile_id\x18\x01 \x01(\x03R\tprofileId\x12\x1c\n" +
-	"\ttimescale\x18\x02 \x01(\x03R\ttimescale\x120\n" +
+	"profile_id\x18\x01 \x01(\x03R\tprofileId\x12!\n" +
+	"\ttimescale\x18\x02 \x01(\x03H\x00R\ttimescale\x88\x01\x01\x120\n" +
 	"\x05start\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
-	"\x03end\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\">\n" +
+	"\x03end\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x03endB\f\n" +
+	"\n" +
+	"_timescale\">\n" +
 	"\x1aListScheduledTasksResponse\x12 \n" +
 	"\aentries\x18\x01 \x03(\v2\x06.EntryR\aentries\"\xb7\x01\n" +
 	"\x1cListPossibleRelativesRequest\x12>\n" +
@@ -2104,7 +2195,12 @@ const file_api_api_proto_rawDesc = "" +
 	"\x17EditProgressLogResponse\"*\n" +
 	"\x18DeleteProgressLogRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1b\n" +
-	"\x19DeleteProgressLogResponse2\xf5\x06\n" +
+	"\x19DeleteProgressLogResponse\"4\n" +
+	"\x18GetLastCheckpointRequest\x12\x18\n" +
+	"\aprofile\x18\x01 \x01(\x03R\aprofile\"Y\n" +
+	"\x19GetLastCheckpointResponse\x123\n" +
+	"\x04time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x04time\x88\x01\x01B\a\n" +
+	"\x05_time2\xc1\a\n" +
 	"\x03API\x12;\n" +
 	"\fListProfiles\x12\x14.ListProfilesRequest\x1a\x15.ListProfilesResponse\x12>\n" +
 	"\rCreateProfile\x12\x15.CreateProfileRequest\x1a\x16.CreateProfileResponse\x12>\n" +
@@ -2119,7 +2215,8 @@ const file_api_api_proto_rawDesc = "" +
 	"\x13ListProgressUpdates\x12\x1b.ListProgressUpdatesRequest\x1a\x1c.ListProgressUpdatesResponse\x12A\n" +
 	"\x0eProgressUpdate\x12\x16.ProgressUpdateRequest\x1a\x17.ProgressUpdateResponse\x12D\n" +
 	"\x0fEditProgressLog\x12\x17.EditProgressLogRequest\x1a\x18.EditProgressLogResponse\x12J\n" +
-	"\x11DeleteProgressLog\x12\x19.DeleteProgressLogRequest\x1a\x1a.DeleteProgressLogResponseB\x1aB\bApiProtoP\x01Z\finternal/apib\x06proto3"
+	"\x11DeleteProgressLog\x12\x19.DeleteProgressLogRequest\x1a\x1a.DeleteProgressLogResponse\x12J\n" +
+	"\x11GetLastCheckpoint\x12\x19.GetLastCheckpointRequest\x1a\x1a.GetLastCheckpointResponseB\x1aB\bApiProtoP\x01Z\finternal/apib\x06proto3"
 
 var (
 	file_api_api_proto_rawDescOnce sync.Once
@@ -2134,7 +2231,7 @@ func file_api_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_api_api_proto_goTypes = []any{
 	(ListPossibleRelativesRequest_RelativeType)(0), // 0: ListPossibleRelativesRequest.RelativeType
 	(*Entry)(nil),                                               // 1: Entry
@@ -2169,81 +2266,86 @@ var file_api_api_proto_goTypes = []any{
 	(*EditProgressLogResponse)(nil),                             // 30: EditProgressLogResponse
 	(*DeleteProgressLogRequest)(nil),                            // 31: DeleteProgressLogRequest
 	(*DeleteProgressLogResponse)(nil),                           // 32: DeleteProgressLogResponse
-	(*ListProgressUpdatesResponse_ProgressLog)(nil),             // 33: ListProgressUpdatesResponse.ProgressLog
-	(*ListProgressUpdatesResponse_ProgressLog_UpdatedTask)(nil), // 34: ListProgressUpdatesResponse.ProgressLog.UpdatedTask
-	(*ProgressUpdateRequest_UpdatedTask)(nil),                   // 35: ProgressUpdateRequest.UpdatedTask
-	(*EditProgressLogRequest_UpdatedTask)(nil),                  // 36: EditProgressLogRequest.UpdatedTask
-	(*durationpb.Duration)(nil),                                 // 37: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),                               // 38: google.protobuf.Timestamp
+	(*GetLastCheckpointRequest)(nil),                            // 33: GetLastCheckpointRequest
+	(*GetLastCheckpointResponse)(nil),                           // 34: GetLastCheckpointResponse
+	(*ListProgressUpdatesResponse_ProgressLog)(nil),             // 35: ListProgressUpdatesResponse.ProgressLog
+	(*ListProgressUpdatesResponse_ProgressLog_UpdatedTask)(nil), // 36: ListProgressUpdatesResponse.ProgressLog.UpdatedTask
+	(*ProgressUpdateRequest_UpdatedTask)(nil),                   // 37: ProgressUpdateRequest.UpdatedTask
+	(*EditProgressLogRequest_UpdatedTask)(nil),                  // 38: EditProgressLogRequest.UpdatedTask
+	(*durationpb.Duration)(nil),                                 // 39: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),                               // 40: google.protobuf.Timestamp
 }
 var file_api_api_proto_depIdxs = []int32{
-	37, // 0: PERT.pes:type_name -> google.protobuf.Duration
-	37, // 1: PERT.exp:type_name -> google.protobuf.Duration
-	37, // 2: PERT.opt:type_name -> google.protobuf.Duration
+	39, // 0: PERT.pes:type_name -> google.protobuf.Duration
+	39, // 1: PERT.exp:type_name -> google.protobuf.Duration
+	39, // 2: PERT.opt:type_name -> google.protobuf.Duration
 	2,  // 3: DurState.pert:type_name -> PERT
-	38, // 4: DurState.deadline:type_name -> google.protobuf.Timestamp
-	38, // 5: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
+	40, // 4: DurState.deadline:type_name -> google.protobuf.Timestamp
+	40, // 5: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
 	1,  // 6: ChildrenConfigState.children:type_name -> Entry
 	3,  // 7: TaskState.duration_cfg:type_name -> DurState
 	4,  // 8: TaskState.children_cfgs:type_name -> ChildrenConfigState
 	1,  // 9: TaskState.prereqs:type_name -> Entry
 	1,  // 10: TaskState.postreqs:type_name -> Entry
 	1,  // 11: TaskState.parent:type_name -> Entry
-	38, // 12: TaskState.start:type_name -> google.protobuf.Timestamp
-	38, // 13: TaskState.end:type_name -> google.protobuf.Timestamp
-	37, // 14: CreateProfileRequest.atomic_timescale:type_name -> google.protobuf.Duration
-	38, // 15: CreateProfileRequest.universe_start:type_name -> google.protobuf.Timestamp
-	37, // 16: Profile.atomic_timescale:type_name -> google.protobuf.Duration
-	38, // 17: Profile.universe_start:type_name -> google.protobuf.Timestamp
+	40, // 12: TaskState.start:type_name -> google.protobuf.Timestamp
+	40, // 13: TaskState.end:type_name -> google.protobuf.Timestamp
+	39, // 14: CreateProfileRequest.atomic_timescale:type_name -> google.protobuf.Duration
+	40, // 15: CreateProfileRequest.universe_start:type_name -> google.protobuf.Timestamp
+	39, // 16: Profile.atomic_timescale:type_name -> google.protobuf.Duration
+	40, // 17: Profile.universe_start:type_name -> google.protobuf.Timestamp
 	8,  // 18: ListProfilesResponse.entries:type_name -> Profile
 	5,  // 19: ReadTaskResponse.state:type_name -> TaskState
 	5,  // 20: SaveTaskRequest.state:type_name -> TaskState
-	38, // 21: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
-	38, // 22: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
+	40, // 21: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
+	40, // 22: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
 	1,  // 23: ListScheduledTasksResponse.entries:type_name -> Entry
 	0,  // 24: ListPossibleRelativesRequest.type:type_name -> ListPossibleRelativesRequest.RelativeType
 	1,  // 25: ListPossibleRelativesResponse.entries:type_name -> Entry
-	38, // 26: ListProgressUpdatesRequest.start:type_name -> google.protobuf.Timestamp
-	38, // 27: ListProgressUpdatesRequest.end:type_name -> google.protobuf.Timestamp
-	33, // 28: ListProgressUpdatesResponse.logs:type_name -> ListProgressUpdatesResponse.ProgressLog
-	38, // 29: ProgressUpdateRequest.time:type_name -> google.protobuf.Timestamp
-	35, // 30: ProgressUpdateRequest.updates:type_name -> ProgressUpdateRequest.UpdatedTask
-	38, // 31: EditProgressLogRequest.time:type_name -> google.protobuf.Timestamp
-	36, // 32: EditProgressLogRequest.updates:type_name -> EditProgressLogRequest.UpdatedTask
-	38, // 33: ListProgressUpdatesResponse.ProgressLog.time:type_name -> google.protobuf.Timestamp
-	34, // 34: ListProgressUpdatesResponse.ProgressLog.updates:type_name -> ListProgressUpdatesResponse.ProgressLog.UpdatedTask
-	1,  // 35: ListProgressUpdatesResponse.ProgressLog.UpdatedTask.task:type_name -> Entry
-	9,  // 36: API.ListProfiles:input_type -> ListProfilesRequest
-	6,  // 37: API.CreateProfile:input_type -> CreateProfileRequest
-	11, // 38: API.RemoveProfile:input_type -> RemoveProfileRequest
-	13, // 39: API.ReadTask:input_type -> ReadTaskRequest
-	15, // 40: API.SaveTask:input_type -> SaveTaskRequest
-	17, // 41: API.DeleteTask:input_type -> DeleteTaskRequest
-	23, // 42: API.ListPossibleRelatives:input_type -> ListPossibleRelativesRequest
-	19, // 43: API.RecomputeSchedule:input_type -> RecomputeScheduleRequest
-	21, // 44: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
-	25, // 45: API.ListProgressUpdates:input_type -> ListProgressUpdatesRequest
-	27, // 46: API.ProgressUpdate:input_type -> ProgressUpdateRequest
-	29, // 47: API.EditProgressLog:input_type -> EditProgressLogRequest
-	31, // 48: API.DeleteProgressLog:input_type -> DeleteProgressLogRequest
-	10, // 49: API.ListProfiles:output_type -> ListProfilesResponse
-	7,  // 50: API.CreateProfile:output_type -> CreateProfileResponse
-	12, // 51: API.RemoveProfile:output_type -> RemoveProfileResponse
-	14, // 52: API.ReadTask:output_type -> ReadTaskResponse
-	16, // 53: API.SaveTask:output_type -> SaveTaskResponse
-	18, // 54: API.DeleteTask:output_type -> DeleteTaskResponse
-	24, // 55: API.ListPossibleRelatives:output_type -> ListPossibleRelativesResponse
-	20, // 56: API.RecomputeSchedule:output_type -> RecomputeScheduleResponse
-	22, // 57: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
-	26, // 58: API.ListProgressUpdates:output_type -> ListProgressUpdatesResponse
-	28, // 59: API.ProgressUpdate:output_type -> ProgressUpdateResponse
-	30, // 60: API.EditProgressLog:output_type -> EditProgressLogResponse
-	32, // 61: API.DeleteProgressLog:output_type -> DeleteProgressLogResponse
-	49, // [49:62] is the sub-list for method output_type
-	36, // [36:49] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	40, // 26: ListProgressUpdatesRequest.start:type_name -> google.protobuf.Timestamp
+	40, // 27: ListProgressUpdatesRequest.end:type_name -> google.protobuf.Timestamp
+	35, // 28: ListProgressUpdatesResponse.logs:type_name -> ListProgressUpdatesResponse.ProgressLog
+	40, // 29: ProgressUpdateRequest.time:type_name -> google.protobuf.Timestamp
+	37, // 30: ProgressUpdateRequest.updates:type_name -> ProgressUpdateRequest.UpdatedTask
+	40, // 31: EditProgressLogRequest.time:type_name -> google.protobuf.Timestamp
+	38, // 32: EditProgressLogRequest.updates:type_name -> EditProgressLogRequest.UpdatedTask
+	40, // 33: GetLastCheckpointResponse.time:type_name -> google.protobuf.Timestamp
+	40, // 34: ListProgressUpdatesResponse.ProgressLog.time:type_name -> google.protobuf.Timestamp
+	36, // 35: ListProgressUpdatesResponse.ProgressLog.updates:type_name -> ListProgressUpdatesResponse.ProgressLog.UpdatedTask
+	1,  // 36: ListProgressUpdatesResponse.ProgressLog.UpdatedTask.task:type_name -> Entry
+	9,  // 37: API.ListProfiles:input_type -> ListProfilesRequest
+	6,  // 38: API.CreateProfile:input_type -> CreateProfileRequest
+	11, // 39: API.RemoveProfile:input_type -> RemoveProfileRequest
+	13, // 40: API.ReadTask:input_type -> ReadTaskRequest
+	15, // 41: API.SaveTask:input_type -> SaveTaskRequest
+	17, // 42: API.DeleteTask:input_type -> DeleteTaskRequest
+	23, // 43: API.ListPossibleRelatives:input_type -> ListPossibleRelativesRequest
+	19, // 44: API.RecomputeSchedule:input_type -> RecomputeScheduleRequest
+	21, // 45: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
+	25, // 46: API.ListProgressUpdates:input_type -> ListProgressUpdatesRequest
+	27, // 47: API.ProgressUpdate:input_type -> ProgressUpdateRequest
+	29, // 48: API.EditProgressLog:input_type -> EditProgressLogRequest
+	31, // 49: API.DeleteProgressLog:input_type -> DeleteProgressLogRequest
+	33, // 50: API.GetLastCheckpoint:input_type -> GetLastCheckpointRequest
+	10, // 51: API.ListProfiles:output_type -> ListProfilesResponse
+	7,  // 52: API.CreateProfile:output_type -> CreateProfileResponse
+	12, // 53: API.RemoveProfile:output_type -> RemoveProfileResponse
+	14, // 54: API.ReadTask:output_type -> ReadTaskResponse
+	16, // 55: API.SaveTask:output_type -> SaveTaskResponse
+	18, // 56: API.DeleteTask:output_type -> DeleteTaskResponse
+	24, // 57: API.ListPossibleRelatives:output_type -> ListPossibleRelativesResponse
+	20, // 58: API.RecomputeSchedule:output_type -> RecomputeScheduleResponse
+	22, // 59: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
+	26, // 60: API.ListProgressUpdates:output_type -> ListProgressUpdatesResponse
+	28, // 61: API.ProgressUpdate:output_type -> ProgressUpdateResponse
+	30, // 62: API.EditProgressLog:output_type -> EditProgressLogResponse
+	32, // 63: API.DeleteProgressLog:output_type -> DeleteProgressLogResponse
+	34, // 64: API.GetLastCheckpoint:output_type -> GetLastCheckpointResponse
+	51, // [51:65] is the sub-list for method output_type
+	37, // [37:51] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_api_api_proto_init() }
@@ -2256,13 +2358,15 @@ func file_api_api_proto_init() {
 	file_api_api_proto_msgTypes[4].OneofWrappers = []any{}
 	file_api_api_proto_msgTypes[7].OneofWrappers = []any{}
 	file_api_api_proto_msgTypes[14].OneofWrappers = []any{}
+	file_api_api_proto_msgTypes[20].OneofWrappers = []any{}
+	file_api_api_proto_msgTypes[33].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_api_proto_rawDesc), len(file_api_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   36,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
