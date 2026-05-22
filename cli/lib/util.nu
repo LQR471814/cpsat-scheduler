@@ -14,9 +14,9 @@ export def "choose table" [--header: string]: table<id: int, name: string> -> on
         | str join "\n"
         | try {
             if $header != null {
-                gum filter --header $header
+                gum filter --header $header err> /dev/null
             } else {
-                gum filter
+                gum filter err> /dev/null
             }
         } catch { null }
     if ($answer | is-empty) {
@@ -60,7 +60,7 @@ export def "choose date" []: nothing -> oneof<datetime, nothing> {
 
 # input text provides a nice single-line text input, returns null if aborted
 export def "input text" [placeholder: string]: nothing -> oneof<string, nothing> {
-    let result = try { gum input --placeholder $placeholder --prompt "" } catch { null }
+    let result = try { gum input --placeholder $placeholder --prompt "" err> /dev/null } catch { null }
     if $result == null {
         return null
     }
@@ -71,7 +71,7 @@ export def "input text" [placeholder: string]: nothing -> oneof<string, nothing>
 # input multiline provides a nice multi-line text input with ability
 # to use editor to input, returns null if aborted
 export def "input multiline" [placeholder: string]: nothing -> oneof<string, nothing> {
-    let result = try { gum write --placeholder $placeholder --prompt "" } catch { null }
+    let result = try { gum write --placeholder $placeholder --prompt "" err> /dev/null } catch { null }
     if $result == null {
         return null
     }

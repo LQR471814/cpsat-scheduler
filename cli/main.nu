@@ -105,6 +105,9 @@ alias c = exit
 alias sp = switch profile
 alias nt = new task
 alias pu = progress update
+alias td = today
+alias tm = tomorrow
+alias ys = yesterday
 
 help
 
