@@ -173,3 +173,35 @@ export def "range format" []: record<opt: duration, exp: duration, opt: duration
     $"\(($in.opt), ($in.exp), ($in.pes)\)"
 }
 
+def "spin pipe" []: string -> string {
+    $"/tmp/cpsat-cli.spinner.($in)"
+}
+
+def "spin waiter script" []: string -> string {
+    $"#!/bin/sh
+cat '(spin pipe)' > /dev/null"
+}
+
+# spin start starts a spinner asynchronously and returns its id
+export def "spin start" []: nothing -> string {
+    let id = random chars --length 8
+    let path = $id | spin pipe
+    mkfifo $path
+    $id | spin waiter script | save --force $"($path).sh"
+    $id
+}
+
+# spin stop stops a spinner of the given input id
+export def "spin stop" []: string -> nothing {
+    let id = $in
+    let path = $id | spin pipe
+    "" | save --raw --force $path
+    rm --force $"($path).sh" $path
+}
+
+# spin show synchronously waits for `spin stop` while displaying a spinner animation
+export def "spin show" [title: string]: string -> nothing {
+    let path = $in | spin pipe
+    gum spin --spinner dot --title $title -- $"($path).sh"
+}
+
