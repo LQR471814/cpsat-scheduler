@@ -68,23 +68,32 @@ Parameters:
 
 # Progress update
 
-1. Action:
+1. Prompt: pick task to edit
+    - default from scheduled:
+        - within time since last checkpoint
+    - select from all tasks:
+        - optional filtering:
+            - specific timescale
+            - explicit interval
+        - done via nushell cmd
+2. Action:
     - leaf tasks:
-        - [[#Range manip ops]]
+        - [[#Range manip]]
     - non-leaf tasks:
         - add/sub. dur.
-            - prompt: pick leaf task to add/sub dur. to
-        - [[#Range manip ops]]
+            - prompt: option to edit selected task
+                - direct edit via form cmd
+                - [[#Range manip]] commands
     - edit task currently active
-2. Recompute schedule
+3. Recompute schedule
 
-## Range manip ops
+## Range manip
 
 - Set: Redefine OEP
 - Translation:
     - Add all values by an amount
-    - Scale all values by an increased % (scale by 100 + %)
-    - Scale all values by a factor
+    - Add all values by an increased % (scale by 100 + %)
+    - Add all values by a factor
 - Scale:
     - Scale by added % (scale by 100 + %)
     - Scale by factor
