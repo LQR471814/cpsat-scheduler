@@ -36,7 +36,7 @@ alias c = cancel
 
 
 let profile = $p.state.profile
-let time = date now | date to-timezone local
+let time = date now
 
 $env.state = []
 

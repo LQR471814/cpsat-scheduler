@@ -60,12 +60,40 @@ def --env "progress update" []: nothing -> nothing {
 	} | index form progress
 }
 
+def --env "print date tasks" []: datetime -> nothing {
+	let start_of_day = $in | format date %Y-%m-%d | into datetime
+	let end_of_day = $in + 1day | format date %Y-%m-%d | into datetime
+	util print label "Today's tasks"
+	{
+		profile_id: $env.profile
+		timescale: 96
+		start: $start_of_day
+		end: $end_of_day
+	} | api.gen API ListScheduledTasks | get entries
+}
+
+def --env today [] {
+	date now | print date tasks
+}
+
+def --env tomorrow [] {
+	(date now) + 1day | print date tasks
+}
+
+def --env yesterday [] {
+	(date now) - 1day | print date tasks
+}
+
 def help []: nothing -> nothing {
 	print [[cmd help];
-		[profiles             "Manage profiles"]
+		[profiles              "Manage profiles"]
 		['switch profile, sp'  "Switch to a different profile"]
 		['new task, nt'        "Create a task"]
-		['progress update, pu' "Update task progress"]]
+		['progress update, pu' "Update task progress"]
+		['today, td'           "Show today's tasks"]
+		['tomorrow, tm'        "Show tomorrow's tasks"]
+		['yesterday, ys'       "Show yesterday's tasks"]
+	]
 }
 
 if not (switch profile) {

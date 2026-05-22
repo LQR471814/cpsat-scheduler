@@ -2,15 +2,15 @@
 - [x] ! Impl. editing of list elem. (large ref.)
 - [x] ! Fix bugs
 - [ ] Impl. event input
-- [ ] Impl. progress update
-    - [ ] Backend
-    - [ ] CLI
+- [o] Impl. progress update
+    - [x] Backend
+    - [x] CLI
     - [ ] Debug
 - [o] Impl. scheduling
     - [x] Backend
-    - [ ] CLI
+    - [x] CLI
     - [ ] Debug
 - [ ] Improve validation & form errors
 - [ ] Impl. proper form for profiles.
-- [ ] Add delete fn. for forms
+- [x] Add delete fn. for forms
 

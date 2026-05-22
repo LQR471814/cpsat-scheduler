@@ -55,14 +55,14 @@ def --env 'pick scheduled' [--timescale(-u): int] {
 		profile_id: $p.state.profile
 		timescale: $timescale
 		start: $last_ckpt
-		end: (date now | date to-timezone local)
+		end: (date now)
 	} | fetch scheduled | util choose table --header 'Choose a task (scheduled since last checkpoint):' | get id?
 	fetch state
 }
 
 def --env 'pick task' [--timescale(-u): int, --start(-s): datetime, --end(-e): datetime] {
 	# defaults to all task scheduled within 1 wk window of now
-	let now = date now | date to-timezone local
+	let now = date now
 	$env.task = {
 		profile_id: $p.state.profile
 		timescale: $timescale
