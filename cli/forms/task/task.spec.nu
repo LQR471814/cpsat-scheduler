@@ -132,7 +132,7 @@ if $results != null { $results | set opt }"
 			}
 			atomic: {
 				closure_bodies: {
-					set: "if ($env.state.children | is-not-empty) {
+					set: "if ($env.state.children_cfgs | is-not-empty) {
 	print 'Cannot set duration configurations when children config is set.'
 	return
 }

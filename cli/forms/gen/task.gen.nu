@@ -73,7 +73,7 @@ def --env "display dur" []: oneof<record<pert: record<opt: duration, exp: durati
 }
 
 def --env dur []: nothing -> nothing {
-    if ($env.state.children | is-not-empty) {                                  
+    if ($env.state.children_cfgs | is-not-empty) {                             
         print 'Cannot set duration configurations when children config is set.'
         return                                                                 
     }                                                                          
