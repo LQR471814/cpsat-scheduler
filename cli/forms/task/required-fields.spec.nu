@@ -9,6 +9,7 @@ let state = [[key, value];
 ]
 
 let frontmatter = 'let timescales: table<id: int, name: string> = [[id, name];
+	[16, "4 hour"]
     [96, "day"]
     [672, "week"]
     [2688, "month"]

@@ -9,19 +9,12 @@ create table profile (
 	pert_gen_choices int
 );
 
--- Timescale unit
-create table timescale_unit (
-	size integer primary key autoincrement,
-	profile integer not null references profile (id) on update cascade on delete cascade,
-	name text not null
-);
-
 -- Task
 create table task (
 	id integer primary key autoincrement,
 	profile integer not null references profile (id) on update cascade on delete cascade,
 
-	unit integer not null references timescale_unit (size) on update cascade on delete cascade,
+	unit integer not null,
 
 	name text not null,
 	desc text not null,

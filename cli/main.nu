@@ -60,6 +60,17 @@ def --env "progress update" []: nothing -> nothing {
 	} | index form progress
 }
 
+def --env "print segment tasks" []: datetime -> nothing {
+	let time = $in
+	util print label "Current segment (±4 hour period)"
+	{
+		profile_id: $env.profile
+		timescale: 16
+		start: ($time - 4hr)
+		end: ($time + 4hr)
+	} | api.gen API ListScheduledTasks | get entries
+}
+
 def --env "print date tasks" []: datetime -> nothing {
 	let start_of_day = $in | format date %Y-%m-%d | into datetime
 	let end_of_day = $in + 1day | format date %Y-%m-%d | into datetime
@@ -70,6 +81,10 @@ def --env "print date tasks" []: datetime -> nothing {
 		start: $start_of_day
 		end: $end_of_day
 	} | api.gen API ListScheduledTasks | get entries
+}
+
+def --env now [] {
+	date now | print segment tasks
 }
 
 def --env today [] {
@@ -102,6 +117,7 @@ if not (switch profile) {
 }
 
 alias c = exit
+alias d = exit
 alias sp = switch profile
 alias nt = new task
 alias pu = progress update

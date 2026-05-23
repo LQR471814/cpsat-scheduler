@@ -75,12 +75,6 @@ type Task struct {
 	End     sql.NullInt64
 }
 
-type TimescaleUnit struct {
-	Size    int64
-	Profile int64
-	Name    string
-}
-
 type UpdatedTask struct {
 	ProgressLog int64
 	Task        int64

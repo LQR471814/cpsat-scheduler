@@ -668,39 +668,6 @@ func (q *Queries) ListTasks(ctx context.Context, profile int64) ([]Task, error) 
 	return items, nil
 }
 
-const listTimescales = `-- name: ListTimescales :many
-select name, size from timescale_unit where profile = ?
-order by size asc
-`
-
-type ListTimescalesRow struct {
-	Name string
-	Size int64
-}
-
-func (q *Queries) ListTimescales(ctx context.Context, profile int64) ([]ListTimescalesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listTimescales, profile)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListTimescalesRow
-	for rows.Next() {
-		var i ListTimescalesRow
-		if err := rows.Scan(&i.Name, &i.Size); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUpdatedTask = `-- name: ListUpdatedTask :many
 select u.task, u.desc, t.name as task_name from updated_task u
 inner join task t
