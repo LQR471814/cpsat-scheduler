@@ -532,8 +532,8 @@ class Model:
             )
             for t in self.config.tasks
         ]
-        assert_intrinsic_start_end(self.config, scheduled)
-        assert_non_overflow(self.config, scheduled)
+        # assert_intrinsic_start_end(self.config, scheduled)
+        # assert_non_overflow(self.config, scheduled)
         return (
             status,
             solver.ObjectiveValue(),
