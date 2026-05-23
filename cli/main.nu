@@ -10,6 +10,16 @@ def "prompt prefix" []: nothing -> string {
 	"(scheduler)"
 }
 
+def reschedule []: nothing -> nothing {
+	# recompute schedule
+	let spinner = util spin start
+	job spawn {
+		{profile: $env.profile} | api.gen API RecomputeSchedule
+		$spinner | util spin stop
+	}
+	$spinner | util spin show 'Recomputing schedule...'
+}
+
 def profiles []: nothing -> nothing {
 	{
 		prompt_prefix: (prompt prefix)
@@ -50,6 +60,7 @@ def --env "new task" []: nothing -> nothing {
 		state: $task_state
 	} | api.gen API SaveTask
 
+	reschedule
 	null
 }
 
@@ -58,6 +69,7 @@ def --env "progress update" []: nothing -> nothing {
 		prompt_prefix: (prompt prefix)
 		state: {profile: $env.profile}
 	} | index form progress
+	reschedule
 }
 
 def --env "print segment tasks" []: datetime -> nothing {
@@ -108,6 +120,7 @@ def help []: nothing -> nothing {
 		['today, td'           "Show today's tasks"]
 		['tomorrow, tm'        "Show tomorrow's tasks"]
 		['yesterday, ys'       "Show yesterday's tasks"]
+		['reschedule, re'      "Reschedule tasks"]
 	]
 }
 
@@ -124,6 +137,7 @@ alias pu = progress update
 alias td = today
 alias tm = tomorrow
 alias ys = yesterday
+alias re = reschedule
 
 help
 

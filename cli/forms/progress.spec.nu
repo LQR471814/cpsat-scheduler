@@ -62,14 +62,6 @@ def --env 'run updates' []: nothing -> nothing {
 			} | api.gen API SaveTask
 		}
 
-	# recompute schedule
-	let spinner = util spin start
-	job spawn {
-		{profile: $profile} | api.gen API RecomputeSchedule
-		$spinner | util spin stop
-	}
-	$spinner | util spin show 'Recomputing schedule...'
-
 	null
 }
 

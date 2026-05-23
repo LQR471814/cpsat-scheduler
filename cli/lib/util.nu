@@ -179,7 +179,7 @@ def "spin pipe" []: string -> string {
 
 def "spin waiter script" []: string -> string {
     $"#!/bin/sh
-cat '(spin pipe)' > /dev/null"
+cat '($in | spin pipe)' > /dev/null"
 }
 
 # spin start starts a spinner asynchronously and returns its id
@@ -188,6 +188,7 @@ export def "spin start" []: nothing -> string {
     let path = $id | spin pipe
     mkfifo $path
     $id | spin waiter script | save --force $"($path).sh"
+    chmod 0700 $"($path).sh"
     $id
 }
 
