@@ -149,3 +149,25 @@ select time from progress_log
 where profile = ?
 order by time desc
 limit 1;
+
+-- name: CreateEvent :one
+insert into event (profile, name, desc, start, end)
+values (?, ?, ?, ?, ?)
+returning id;
+
+-- name: ReadEvent :one
+select * from event where id = ?;
+
+-- name: UpdateEvent :exec
+update event set
+	profile = ?,
+	name = ?,
+	desc = ?,
+	start = ?
+where id = ?;
+
+-- name: ListEvent :many
+select * from event where profile = ?;
+
+-- name: DeleteEvent :exec
+delete from event where id = ?;

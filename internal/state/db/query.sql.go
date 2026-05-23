@@ -79,6 +79,33 @@ func (q *Queries) CreateDurConfig(ctx context.Context, arg CreateDurConfigParams
 	return err
 }
 
+const createEvent = `-- name: CreateEvent :one
+insert into event (profile, name, desc, start, end)
+values (?, ?, ?, ?, ?)
+returning id
+`
+
+type CreateEventParams struct {
+	Profile int64
+	Name    string
+	Desc    string
+	Start   time.Time
+	End     time.Time
+}
+
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createEvent,
+		arg.Profile,
+		arg.Name,
+		arg.Desc,
+		arg.Start,
+		arg.End,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createProfile = `-- name: CreateProfile :one
 insert into profile (name, atomic_timescale_duration, universe_start, pert_gen_choices)
 values (?, ?, ?, ?)
@@ -182,6 +209,15 @@ delete from dur_config where task = ?
 
 func (q *Queries) DeleteDurConfig(ctx context.Context, task int64) error {
 	_, err := q.db.ExecContext(ctx, deleteDurConfig, task)
+	return err
+}
+
+const deleteEvent = `-- name: DeleteEvent :exec
+delete from event where id = ?
+`
+
+func (q *Queries) DeleteEvent(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteEvent, id)
 	return err
 }
 
@@ -373,6 +409,40 @@ func (q *Queries) ListChildrenConfigs(ctx context.Context, task int64) ([]Childr
 			&i.Deadline,
 			&i.ExpCost,
 			&i.TotalCost,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEvent = `-- name: ListEvent :many
+select id, profile, name, "desc", start, "end" from event where profile = ?
+`
+
+func (q *Queries) ListEvent(ctx context.Context, profile int64) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, listEvent, profile)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.Profile,
+			&i.Name,
+			&i.Desc,
+			&i.Start,
+			&i.End,
 		); err != nil {
 			return nil, err
 		}
@@ -704,6 +774,24 @@ func (q *Queries) ListUpdatedTask(ctx context.Context, progressLog int64) ([]Lis
 	return items, nil
 }
 
+const readEvent = `-- name: ReadEvent :one
+select id, profile, name, "desc", start, "end" from event where id = ?
+`
+
+func (q *Queries) ReadEvent(ctx context.Context, id int64) (Event, error) {
+	row := q.db.QueryRowContext(ctx, readEvent, id)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.Profile,
+		&i.Name,
+		&i.Desc,
+		&i.Start,
+		&i.End,
+	)
+	return i, err
+}
+
 const saveScheduledTask = `-- name: SaveScheduledTask :exec
 insert into scheduled_task (task, profile, start, end)
 values (?, ?, ?, ?) on conflict do update set
@@ -756,6 +844,34 @@ type SetPrereqParams struct {
 
 func (q *Queries) SetPrereq(ctx context.Context, arg SetPrereqParams) error {
 	_, err := q.db.ExecContext(ctx, setPrereq, arg.Prereq, arg.Postreq)
+	return err
+}
+
+const updateEvent = `-- name: UpdateEvent :exec
+update event set
+	profile = ?,
+	name = ?,
+	desc = ?,
+	start = ?
+where id = ?
+`
+
+type UpdateEventParams struct {
+	Profile int64
+	Name    string
+	Desc    string
+	Start   time.Time
+	ID      int64
+}
+
+func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) error {
+	_, err := q.db.ExecContext(ctx, updateEvent,
+		arg.Profile,
+		arg.Name,
+		arg.Desc,
+		arg.Start,
+		arg.ID,
+	)
 	return err
 }
 

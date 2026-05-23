@@ -33,6 +33,11 @@ const (
 	API_EditProgressLog_FullMethodName       = "/API/EditProgressLog"
 	API_DeleteProgressLog_FullMethodName     = "/API/DeleteProgressLog"
 	API_GetLastCheckpoint_FullMethodName     = "/API/GetLastCheckpoint"
+	API_CreateEvent_FullMethodName           = "/API/CreateEvent"
+	API_ReadEvent_FullMethodName             = "/API/ReadEvent"
+	API_UpdateEvent_FullMethodName           = "/API/UpdateEvent"
+	API_ListEvent_FullMethodName             = "/API/ListEvent"
+	API_RemoveEvent_FullMethodName           = "/API/RemoveEvent"
 )
 
 // APIClient is the client API for API service.
@@ -53,6 +58,11 @@ type APIClient interface {
 	EditProgressLog(ctx context.Context, in *EditProgressLogRequest, opts ...grpc.CallOption) (*EditProgressLogResponse, error)
 	DeleteProgressLog(ctx context.Context, in *DeleteProgressLogRequest, opts ...grpc.CallOption) (*DeleteProgressLogResponse, error)
 	GetLastCheckpoint(ctx context.Context, in *GetLastCheckpointRequest, opts ...grpc.CallOption) (*GetLastCheckpointResponse, error)
+	CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*CreateEventResponse, error)
+	ReadEvent(ctx context.Context, in *ReadEventRequest, opts ...grpc.CallOption) (*ReadEventResponse, error)
+	UpdateEvent(ctx context.Context, in *UpdateEventRequest, opts ...grpc.CallOption) (*UpdateEventResponse, error)
+	ListEvent(ctx context.Context, in *ListEventRequest, opts ...grpc.CallOption) (*ListEventResponse, error)
+	RemoveEvent(ctx context.Context, in *RemoveEventRequest, opts ...grpc.CallOption) (*RemoveEventResponse, error)
 }
 
 type aPIClient struct {
@@ -203,6 +213,56 @@ func (c *aPIClient) GetLastCheckpoint(ctx context.Context, in *GetLastCheckpoint
 	return out, nil
 }
 
+func (c *aPIClient) CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*CreateEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateEventResponse)
+	err := c.cc.Invoke(ctx, API_CreateEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ReadEvent(ctx context.Context, in *ReadEventRequest, opts ...grpc.CallOption) (*ReadEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadEventResponse)
+	err := c.cc.Invoke(ctx, API_ReadEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) UpdateEvent(ctx context.Context, in *UpdateEventRequest, opts ...grpc.CallOption) (*UpdateEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateEventResponse)
+	err := c.cc.Invoke(ctx, API_UpdateEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListEvent(ctx context.Context, in *ListEventRequest, opts ...grpc.CallOption) (*ListEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEventResponse)
+	err := c.cc.Invoke(ctx, API_ListEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) RemoveEvent(ctx context.Context, in *RemoveEventRequest, opts ...grpc.CallOption) (*RemoveEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveEventResponse)
+	err := c.cc.Invoke(ctx, API_RemoveEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations must embed UnimplementedAPIServer
 // for forward compatibility.
@@ -221,6 +281,11 @@ type APIServer interface {
 	EditProgressLog(context.Context, *EditProgressLogRequest) (*EditProgressLogResponse, error)
 	DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error)
 	GetLastCheckpoint(context.Context, *GetLastCheckpointRequest) (*GetLastCheckpointResponse, error)
+	CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error)
+	ReadEvent(context.Context, *ReadEventRequest) (*ReadEventResponse, error)
+	UpdateEvent(context.Context, *UpdateEventRequest) (*UpdateEventResponse, error)
+	ListEvent(context.Context, *ListEventRequest) (*ListEventResponse, error)
+	RemoveEvent(context.Context, *RemoveEventRequest) (*RemoveEventResponse, error)
 	mustEmbedUnimplementedAPIServer()
 }
 
@@ -272,6 +337,21 @@ func (UnimplementedAPIServer) DeleteProgressLog(context.Context, *DeleteProgress
 }
 func (UnimplementedAPIServer) GetLastCheckpoint(context.Context, *GetLastCheckpointRequest) (*GetLastCheckpointResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLastCheckpoint not implemented")
+}
+func (UnimplementedAPIServer) CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateEvent not implemented")
+}
+func (UnimplementedAPIServer) ReadEvent(context.Context, *ReadEventRequest) (*ReadEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReadEvent not implemented")
+}
+func (UnimplementedAPIServer) UpdateEvent(context.Context, *UpdateEventRequest) (*UpdateEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateEvent not implemented")
+}
+func (UnimplementedAPIServer) ListEvent(context.Context, *ListEventRequest) (*ListEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListEvent not implemented")
+}
+func (UnimplementedAPIServer) RemoveEvent(context.Context, *RemoveEventRequest) (*RemoveEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveEvent not implemented")
 }
 func (UnimplementedAPIServer) mustEmbedUnimplementedAPIServer() {}
 func (UnimplementedAPIServer) testEmbeddedByValue()             {}
@@ -546,6 +626,96 @@ func _API_GetLastCheckpoint_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_CreateEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).CreateEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_CreateEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).CreateEvent(ctx, req.(*CreateEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ReadEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ReadEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ReadEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ReadEvent(ctx, req.(*ReadEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_UpdateEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).UpdateEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_UpdateEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).UpdateEvent(ctx, req.(*UpdateEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListEvent(ctx, req.(*ListEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_RemoveEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).RemoveEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_RemoveEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).RemoveEvent(ctx, req.(*RemoveEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -608,6 +778,26 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLastCheckpoint",
 			Handler:    _API_GetLastCheckpoint_Handler,
+		},
+		{
+			MethodName: "CreateEvent",
+			Handler:    _API_CreateEvent_Handler,
+		},
+		{
+			MethodName: "ReadEvent",
+			Handler:    _API_ReadEvent_Handler,
+		},
+		{
+			MethodName: "UpdateEvent",
+			Handler:    _API_UpdateEvent_Handler,
+		},
+		{
+			MethodName: "ListEvent",
+			Handler:    _API_ListEvent_Handler,
+		},
+		{
+			MethodName: "RemoveEvent",
+			Handler:    _API_RemoveEvent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

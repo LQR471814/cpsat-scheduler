@@ -106,3 +106,13 @@ create table updated_task (
 	primary key (progress_log, task)
 );
 
+-- Event
+create table event (
+	id integer primary key autoincrement,
+	profile integer not null references profile (id) on update cascade on delete cascade,
+	name text not null,
+	desc text not null,
+	start timestamp not null,
+	end timestamp not null
+);
+

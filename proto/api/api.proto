@@ -192,6 +192,49 @@ message GetLastCheckpointResponse {
   optional google.protobuf.Timestamp time = 1;
 }
 
+message Event {
+  int64 profile = 1;
+  string name = 2;
+  string desc = 3;
+  google.protobuf.Timestamp start = 4;
+  google.protobuf.Timestamp end = 5;
+}
+
+// CreateEvent
+message CreateEventRequest {
+  Event event = 1;
+}
+message CreateEventResponse {}
+
+// ReadEvent
+message ReadEventRequest {
+  int64 id = 1;
+}
+message ReadEventResponse {
+  Event event = 1;
+}
+
+// UpdateEvent
+message UpdateEventRequest {
+  int64 id = 1;
+  Event event = 2;
+}
+message UpdateEventResponse {}
+
+// ListEvent
+message ListEventRequest {
+  int64 profile = 1;
+}
+message ListEventResponse {
+  repeated Entry entries = 1;
+}
+
+// RemoveEvent
+message RemoveEventRequest {
+  int64 id = 1;
+}
+message RemoveEventResponse {}
+
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
@@ -210,5 +253,11 @@ service API {
   rpc EditProgressLog(EditProgressLogRequest) returns (EditProgressLogResponse);
   rpc DeleteProgressLog(DeleteProgressLogRequest) returns (DeleteProgressLogResponse);
   rpc GetLastCheckpoint(GetLastCheckpointRequest) returns (GetLastCheckpointResponse);
+
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
+  rpc ReadEvent(ReadEventRequest) returns (ReadEventResponse);
+  rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
+  rpc ListEvent(ListEventRequest) returns (ListEventResponse);
+  rpc RemoveEvent(RemoveEventRequest) returns (RemoveEventResponse);
 }
 

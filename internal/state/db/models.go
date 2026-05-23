@@ -38,6 +38,15 @@ type DurConfig struct {
 	TotalCost sql.NullInt64
 }
 
+type Event struct {
+	ID      int64
+	Profile int64
+	Name    string
+	Desc    string
+	Start   time.Time
+	End     time.Time
+}
+
 type Prereq struct {
 	Prereq  int64
 	Postreq int64
