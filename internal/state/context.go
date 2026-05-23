@@ -10,25 +10,38 @@ import (
 type Context struct {
 	ctx    context.Context
 	logger *slog.Logger
+	tx     *sql.Tx
 	db     *db.Queries
-	driver *sql.DB
 }
 
 func NewContext(
 	ctx context.Context,
 	logger *slog.Logger,
 	driver *sql.DB,
-) Context {
-	return Context{
+	opts *sql.TxOptions,
+) (c Context, err error) {
+	tx, err := driver.BeginTx(ctx, opts)
+	if err != nil {
+		return
+	}
+	c = Context{
 		ctx:    ctx,
 		logger: logger,
-		db:     db.New(driver),
-		driver: driver,
+		tx:     tx,
+		db:     db.New(tx),
 	}
+	return
+}
+
+func (c Context) Queries() *db.Queries {
+	return c.db
+}
+
+func (c Context) Tx() *sql.Tx {
+	return c.tx
 }
 
 // Ctx returns the underlying context.Context.
 func (c Context) Ctx() context.Context {
 	return c.ctx
 }
-

@@ -61,12 +61,14 @@ func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTa
 
 // RecomputeSchedule lists all profiles, runs scheduling for each profile, and persists the generated schedules.
 func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeScheduleRequest) (res *api.RecomputeScheduleResponse, err error) {
-	tx, err := s.driver.BeginTx(ctx, nil)
+	statectx, err := state.NewContext(ctx, s.logger, s.driver, &sql.TxOptions{
+		ReadOnly: true,
+	})
 	if err != nil {
-		return nil, err
+		return
 	}
-	defer tx.Rollback()
-	txqry := s.db.WithTx(tx)
+	defer statectx.Tx().Rollback()
+	txqry := statectx.Queries()
 
 	profileID := req.GetProfile()
 	profile, err := txqry.GetProfile(ctx, profileID)
@@ -74,8 +76,7 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 		return
 	}
 
-	statectx := state.NewContext(ctx, s.logger, s.driver)
-	solveRes, err := s.solver.SolveProfile(statectx, profileID)
+	solveRes, err := s.solver.SolveProfile(statectx, profile)
 	if err != nil {
 		return
 	}
@@ -116,7 +117,7 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 		}
 	}
 
-	err = tx.Commit()
+	err = statectx.Tx().Commit()
 	if err != nil {
 		return
 	}

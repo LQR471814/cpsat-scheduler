@@ -4,6 +4,7 @@ import (
 	"context"
 	"cpsat-scheduler/internal/solver/solverpb"
 	"cpsat-scheduler/internal/state"
+	"cpsat-scheduler/internal/state/db"
 	"net"
 	"net/url"
 	"os/exec"
@@ -51,14 +52,54 @@ func (s Solver) Close() error {
 	return s.conn.Close()
 }
 
-// SolveProfile loads the task state of a profile from the database, runs scheduling, and returns the result.
-func (s Solver) SolveProfile(c state.Context, profileID int64) (*solverpb.SolveResponse, error) {
-	tasks, err := state.LookupProfileState(c, profileID)
+// SolveProfile loads the task state of a profile from the database, runs
+// scheduling, and returns the result. (note: it will prune scheduled events)
+func (s Solver) SolveProfile(c state.Context, profile db.Profile) (res *solverpb.SolveResponse, err error) {
+	var tasks []*solverpb.Task
+
+	err = state.LookupProfileState(c, profile, &tasks)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return s.Solve(c.Ctx(), &solverpb.SolveRequest{
+	events, err := state.GenerateEventTasks(c, profile, &tasks)
+	if err != nil {
+		return
+	}
+
+	res, err = s.Solve(c.Ctx(), &solverpb.SolveRequest{
 		Tasks: tasks,
 	})
-}
+	if err != nil {
+		return
+	}
 
+	// filter event segments out of solution
+	var solution []*solverpb.SolvedTask
+	for _, scheduled := range res.Solution {
+		if scheduled.Id < 0 {
+			continue
+		}
+		solution = append(solution, scheduled)
+	}
+
+	// add (full) events back into solution
+	id := int64(-1)
+	for _, ev := range events {
+		start := int64(ev.Start.Sub(profile.UniverseStart)) / int64(profile.AtomicTimescaleDuration)
+		end := int64(ev.End.Sub(profile.UniverseStart)) / int64(profile.AtomicTimescaleDuration)
+		solution = append(solution, &solverpb.SolvedTask{
+			Id:       id,
+			Start:    start,
+			End:      end,
+			Cost:     0,
+			Duration: end - start,
+			Config: &solverpb.SolvedTask_DurIdx{
+				DurIdx: 0,
+			},
+		})
+		id--
+	}
+	res.Solution = solution
+
+	return
+}
