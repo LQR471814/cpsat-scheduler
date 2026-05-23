@@ -46,7 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	tintHandle := tint.NewHandler(os.Stderr, &tint.Options{Level: slog.LevelInfo})
+	tintHandle := tint.NewHandler(os.Stderr, &tint.Options{Level: slog.LevelDebug})
 	logger := slog.New(tintHandle)
 	logger = logger.WithGroup("main")
 

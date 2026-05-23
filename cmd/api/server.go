@@ -25,7 +25,7 @@ func newServer(
 	driver *sql.DB,
 	solverPath string,
 ) (serv server, err error) {
-	solv, err := solver.NewSolver(solverPath)
+	solv, err := solver.NewSolver(logger, solverPath)
 	if err != nil {
 		return
 	}
