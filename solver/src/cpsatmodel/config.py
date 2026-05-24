@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Callable
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsatmodel.print import print_vars
+from functools import cache
+import sys
 
 
 def guard_bool(
@@ -60,11 +65,14 @@ class TaskConfig:
     prerequisites: list[int]
     start: int | None
     end: int | None
-    parent_conditions: list[ParentCond]
+    parent: int | None
+    parent_configs: list[int]
 
 
 @dataclass
 class Config:
+    # in terms of the atomic timescale
+    horizon: tuple[int, int]
     timescales: list[int]
     # margin will not be auto-created, the user is in charge of specifying magin
     tasks: dict[int, TaskConfig]
@@ -72,45 +80,12 @@ class Config:
 
 @dataclass
 class ModelProps:
-    max_start_time: int
-    max_end_time: int
-    min_cost: int
-    max_cost: int
+    max_timescale: int
     max_scaling_factor: int
-    timescales_or_null_domain: cp_model.Domain
 
     def __init__(self, cfg: Config) -> None:
-        self.max_start_time, self.max_end_time = self.__get_max_range(cfg)
-        self.min_cost, self.max_cost = self.__get_cost_range(cfg)
+        self.max_timescale = max(cfg.timescales)
         self.max_scaling_factor = self.__get_max_scaling_factor(cfg)
-        self.timescales_or_null_domain = cp_model.Domain.from_values(
-            [*cfg.timescales, 0, -1]
-        )
-
-    def __get_max_range(self, config: Config):
-        max_timescale = 0
-        for t in config.tasks.values():
-            if t.timescale_unit > max_timescale:
-                max_timescale = t.timescale_unit
-        max_timescale_count = 0
-        for t in config.tasks.values():
-            if t.timescale_unit == max_timescale:
-                max_timescale_count += 1
-        max_start_time = max_timescale * (max_timescale_count - 1)
-        max_end_time = max_timescale * max_timescale_count
-        return max_start_time, max_end_time
-
-    def __get_cost_range(self, config: Config):
-        min_cost = 0
-        max_cost = 0
-        for t in config.tasks.values():
-            for cfg in t.cost_configs:
-                for intv in cfg.costs:
-                    if intv.cost > max_cost:
-                        max_cost = intv.cost
-                    if intv.cost < min_cost:
-                        min_cost = intv.cost
-        return min_cost, max_cost
 
     def __get_max_scaling_factor(self, config: Config):
         max_scaling_factor = 1
@@ -123,22 +98,181 @@ class ModelProps:
         return max_scaling_factor
 
 
+class TaskProps:
+    __props: Props
+
+    def __init__(self, props: Props) -> None:
+        self.__props = props
+
+        self.resolve_scaling_factor: Callable[[int], int | None] = cache(
+            self.__get_scaling_factor
+        )
+        self.resolve_start_bounds: Callable[[int], tuple[int, int]] = cache(
+            self.__compute_start_bounds
+        )
+        self.resolve_cost_bounds: Callable[[int], tuple[int, int]] = cache(
+            self.__compute_cost_bounds
+        )
+        self.resolve_dur_bounds: Callable[[int], tuple[int, int]] = cache(
+            self.__compute_dur_bounds
+        )
+        self.resolve_end_bounds: Callable[[int], tuple[int, int]] = cache(
+            self.__compute_end_bounds
+        )
+        self.resolve_parent_cfg: Callable[[int], TaskConfig | None] = cache(
+            self.__get_parent_cfg
+        )
+
+    def __get_task_cfg(self, task_id: int) -> TaskConfig:
+        return self.__props.__config.tasks[task_id]
+
+    def __get_scaling_factor(self, task_id: int) -> int | None:
+        parent = self.resolve_parent_cfg(task_id)
+        if parent is None:
+            return None
+        t = self.__get_task_cfg(task_id)
+        return parent.timescale_unit // t.timescale_unit
+
+    def __get_parent_cfg(self, task_id: int) -> TaskConfig | None:
+        t = self.__get_task_cfg(task_id)
+        if t.parent is None:
+            return None
+        return self.__props.__config.tasks[t.parent]
+
+    def __compute_start_bounds(self, task_id: int) -> tuple[int, int]:
+        t = self.__get_task_cfg(task_id)
+
+        parent_bound: tuple[int, int]
+        if t.timescale_unit == self.__props.model.max_timescale:
+            horizon_lb, horizon_ub = self.__props.__config.horizon
+            parent_bound = (
+                horizon_lb // t.timescale_unit,
+                horizon_ub // t.timescale_unit,
+            )
+        else:
+            parent = self.resolve_parent_cfg(task_id)
+            # we assume there is always a parent condition (because synthetic
+            # tasks exist)
+            assert parent is not None
+            parent_lb, parent_ub = self.resolve_start_bounds(parent.id)
+            parent_unit = self.__props.__config.tasks[parent.id].timescale_unit
+            parent_bound = (
+                parent_lb * parent_unit // t.timescale_unit,
+                parent_ub * parent_unit // t.timescale_unit,
+            )
+
+        if t.start is not None:
+            # explicit start cannot go outside parent bounds
+            assert t.start >= parent_bound[0]
+
+        if t.end is not None:
+            # explicit end cannot go outside parent bounds
+            assert t.end <= parent_bound[1]
+
+        return (
+            t.start if t.start is not None else parent_bound[0],
+            t.end if t.end is not None else parent_bound[1],
+        )
+
+    def __compute_end_bounds(self, task_id: int) -> tuple[int, int]:
+        t = self.__get_task_cfg(task_id)
+
+        start_lb, start_ub = self.resolve_start_bounds(task_id)
+
+        min_end = sys.maxsize
+        max_end = 0
+        for cfg in t.cost_configs:
+            if len(cfg.children) == 0:
+                assert cfg.duration is not None
+
+                end_lb = start_lb + cfg.duration
+                if end_lb < min_end:
+                    min_end = end_lb
+
+                end_ub = start_ub + cfg.duration
+                if end_ub > max_end:
+                    max_end = end_ub
+
+                continue
+
+            for child in cfg.children:
+                end_lb, end_ub = self.resolve_end_bounds(child)
+                if end_lb < min_end:
+                    min_end = end_lb
+                if end_ub > max_end:
+                    max_end = end_ub
+
+        return (min_end, max_end)
+
+    def __compute_cost_bounds(self, task_id: int) -> tuple[int, int]:
+        t = self.__get_task_cfg(task_id)
+
+        min_cost = -sys.maxsize
+        max_cost = sys.maxsize
+        for cfg in t.cost_configs:
+            for intv in cfg.costs:
+                if intv.cost > min_cost:
+                    min_cost = intv.cost
+                if intv.cost < max_cost:
+                    max_cost = intv.cost
+
+        return (min_cost, max_cost)
+
+    def __compute_dur_bounds(self, task_id: int) -> tuple[int, int]:
+        # non-leaf task: real duration = sum{children durations}
+        # leaf task: real duration = chosen duration
+        #
+        # therefore:
+        #
+        # non-leaf task: max(real duration) = sum{max for each child duration}
+        # leaf task: max(duration)
+
+        t = self.__get_task_cfg(task_id)
+
+        min_dur = sys.maxsize
+        max_dur = 0
+        for cfg in t.cost_configs:
+            if cfg.duration is not None:
+                if cfg.duration > max_dur:
+                    max_dur = cfg.duration
+                if cfg.duration < min_dur:
+                    min_dur = cfg.duration
+                continue
+
+            min_dur_sum = 0
+            max_dur_sum = 0
+            for child in cfg.children:
+                lb, ub = self.resolve_dur_bounds(child)
+                min_dur_sum += lb
+                max_dur_sum += ub
+
+            if min_dur_sum < min_dur:
+                min_dur = min_dur_sum
+            if max_dur_sum > max_dur:
+                max_dur = max_dur_sum
+
+        return (min_dur, max_dur)
+
+
+# Props computes static properties of the config and tasks
+class Props:
+    __config: Config
+
+    model: ModelProps
+    task: TaskProps
+
+    def __init__(self, config: Config) -> None:
+        self.__config = config
+        self.model = ModelProps(config)
+        self.task = TaskProps(self)
+
+
 class DecisionState:
     start: cmh.IntVar
     config_select: cmh.IntVar
 
-    def __init__(
-        self,
-        model: cp_model.CpModel,
-        props: ModelProps,
-        t: TaskConfig,
-    ) -> None:
-        start_lb = 0
-        start_ub = props.max_start_time // t.timescale_unit
-        if t.start is not None:
-            start_lb = t.start
-        if t.end is not None:
-            start_ub = t.end - 1
+    def __init__(self, model: cp_model.CpModel, props: Props, t: TaskConfig) -> None:
+        start_lb, start_ub = props.task.resolve_start_bounds(t.id)
         self.start = model.new_int_var(start_lb, start_ub, f"t{t.id}_st")
         self.config_select = model.new_int_var(
             0, len(t.cost_configs) - 1, f"t{t.id}_cfg"
@@ -147,42 +281,167 @@ class DecisionState:
 
 class ComputedState:
     real_end: cmh.IntVar
+    # the actual duration chosen out of the possible cost configurations
     real_duration: cmh.IntVar
+    # the actual cost chosen out of the possible cost configurations and 0 if
+    # the task can possibly be deactivated
     real_cost: cmh.IntVar
     # this should be a one hot
     configs_active: list[cmh.IntVar]
-    parent_start: cmh.IntVar
-    parent_unit: cmh.IntVar
+    parent_start: cmh.IntVar | int
+    parent_active: cmh.IntVar | None
 
     def __init__(
         self,
-        state: DecisionState,
-        model: cp_model.CpModel,
-        props: ModelProps,
+        m: Model,
         t: TaskConfig,
     ) -> None:
-        self.real_duration = model.new_int_var(
-            0, props.max_end_time, f"t{t.id}_real_dur"
-        )
-        self.real_end = model.new_int_var(0, props.max_end_time, f"t{t.id}_real_end")
-        self.real_cost = model.new_int_var(
-            props.min_cost, props.max_cost, f"t{t.id}_real_cost"
-        )
-        self.parent_start = model.new_int_var(
-            0, props.max_start_time, f"t{t.id}_parent_start"
-        )
-        self.parent_unit = model.new_int_var_from_domain(
-            props.timescales_or_null_domain, f"t{t.id}_parent_unit"
-        )
+        self.__setup_vars(m, t)
+        self.__setup_par_constrain(m, t)
+        self.__setup_real_dur(m, t)
+        self.__setup_real_end(m, t)
+
+    def __setup_vars(self, m: Model, t: TaskConfig):
+        props = m.props
+        model = m.model
+        state = m.decision_vars[t.id]
+
+        dur_lb, dur_ub = props.task.resolve_dur_bounds(t.id)
+        self.real_duration = model.new_int_var(dur_lb, dur_ub, f"t{t.id}_real_dur")
+
+        # non-leaf task: real end = max{child end times}
+        # leaf task: real end = next unit after start
+        end_lb, end_ub = props.task.resolve_end_bounds(t.id)
+        self.real_end = model.new_int_var(end_lb, end_ub, f"t{t.id}_real_end")
+
+        # should compute min/max per task
+        cost_lb, cost_ub = props.task.resolve_cost_bounds(t.id)
+        self.real_cost = model.new_int_var(cost_lb, cost_ub, f"t{t.id}_real_cost")
+
+        if t.parent is not None:
+            # we assume all tasks have parent (except those of max timescale)
+            parent_start_lb: int
+            parent_start_ub: int
+            if t.timescale_unit < props.model.max_timescale:
+                parent = props.task.resolve_parent_cfg(t.id)
+                assert parent is not None
+                parent_start_lb, parent_start_ub = props.task.resolve_start_bounds(
+                    parent.id
+                )
+            else:
+                parent_start_lb = 0
+                parent_start_ub = 0
+
+            self.parent_active = model.new_bool_var(f"t{t.id}_parent_active")
+            self.parent_start = model.new_int_var(
+                parent_start_lb, parent_start_ub, f"t{t.id}_parent_start"
+            )
+        else:
+            self.parent_active = None
+            self.parent_start = 0
+
+        # we do not self.parent_active because it involves a lot of extra bools
+        # that need to be constructed (you cannot use linear expressions like
+        # == inside of a add_bool_or)
         self.configs_active = [
             guard_bool(
                 model,
-                f"t{t.id}_cfg{i}_active",
-                state.config_select == i,
-                state.config_select != i,
+                f"t{t.id}_cfg{idx}_active",
+                state.config_select == idx,
+                state.config_select != idx,
             )
-            for i in range(len(t.cost_configs))
+            for idx in t.cost_configs
         ]
+
+    def __setup_par_constrain(self, m: Model, t: TaskConfig):
+        # both parent_active and parent_start will be constants if parent is null
+        parent = m.props.task.resolve_parent_cfg(t.id)
+        if parent is None:
+            return
+
+        assert isinstance(self.parent_active, cmh.IntVar)
+        assert isinstance(self.parent_start, cmh.IntVar)
+
+        parent_state = m.__resolve_computed_state(parent.id)
+
+        # parent active is true when at least one (and in this case, exactly
+        # one) of parent_configs is active
+        par_active_cfgs: list[cmh.Literal] = [
+            parent_state.configs_active[c] for c in t.parent_configs
+        ]
+        m.model.add_bool_or(*par_active_cfgs).with_name(
+            f"t{t.id}_parent_active"
+        ).only_enforce_if(self.parent_active)
+        m.model.add_bool_and(*[v.Not() for v in par_active_cfgs]).only_enforce_if(
+            self.parent_active.Not()
+        ).with_name(f"t{t.id}_parent_inactive")
+
+        # parent_start is computed from the parent's decision variable and a
+        # constant scaling factor
+        scaling_factor = m.props.task.resolve_scaling_factor(t.id)
+        assert scaling_factor is not None  # parent is not None
+        parent_start_var = m.decision_vars[parent.id].start
+        m.model.add(self.parent_start == parent_start_var * scaling_factor).with_name(
+            f"t{t.id}_parent_start"
+        )
+
+    def __setup_real_end(self, m: Model, t: TaskConfig):
+        unit = t.timescale_unit
+        decision = m.decision_vars[t.id]
+        start_time = decision.start
+
+        for i, cfg in enumerate(t.cost_configs):
+            children = cfg.children
+            config_active = self.configs_active[i]
+
+            if len(children) > 0:  # O(task)
+                # define real end time as max of children end times
+                child_end_times = [
+                    m.__resolve_computed_state(c).real_end for c in children
+                ]
+                m.model.add_max_equality(
+                    self.real_end, child_end_times
+                ).only_enforce_if(config_active).with_name(
+                    f"t{t.id}_real_end_cfg{i}_child"
+                )
+                continue
+
+            # O(cost config * task)
+
+            # define real end time end of scheduled time slot for leaf
+            # tasks (assume worst case)
+            m.model.add(self.real_end == unit * (start_time + 1)).only_enforce_if(
+                config_active
+            ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
+
+    def __setup_real_dur(self, m: Model, t: TaskConfig):
+        for i, cfg in enumerate(t.cost_configs):
+            config_active = self.configs_active[i]
+
+            if len(cfg.children) > 0:  # O(task)
+                # define real duration as sum of children
+                sum_child_dur_expr = 0
+                for c in cfg.children:
+                    sum_child_dur_expr += m.__resolve_computed_state(c).real_duration
+                m.model.add(self.real_duration == sum_child_dur_expr).with_name(
+                    f"t{t.id}_real_duration_cfg{i}_child"
+                ).only_enforce_if(config_active)
+                continue
+
+            # O(cost config * task)
+
+            # define real duration as function of selected cost config
+            assert cfg.duration is not None
+
+            m.model.add(self.real_duration == cfg.duration).with_name(
+                f"t{t.id}_real_duration_cfg{i}_duration"
+            ).only_enforce_if(config_active, self.parent_active)
+
+            if isinstance(self.parent_active, cmh.IntVar):
+                # set real duration to 0 if task config is orphaned
+                m.model.add(self.real_duration == 0).only_enforce_if(
+                    self.parent_active.Not()
+                )
 
 
 @dataclass
@@ -207,149 +466,39 @@ class Model:
 
     # setup
 
-    def __computed_duration_end(self, t: TaskConfig):
-        unit = t.timescale_unit
-        decision = self.decision_vars[t.id]
-        computed = self.computed_vars[t.id]
-        start_time = decision.start
-        end_time = computed.real_end
-        real_duration = computed.real_duration
-        cost_config_active_bools = computed.configs_active
-
-        for i, cfg in enumerate(t.cost_configs):
-            children = cfg.children
-            config_active = cost_config_active_bools[i]
-            task_parent_unit = computed.parent_unit
-
-            if len(children) > 0:  # O(task)
-                # define real duration as sum of children
-                real_duration_expr = 0
-                for c in children:
-                    dur = self.computed_vars[c].real_duration
-                    real_duration_expr += dur
-
-                self.model.add(real_duration == real_duration_expr).only_enforce_if(
-                    config_active
-                ).with_name(f"t{t.id}_real_duration_cfg{i}_child")
-
-                # define real end time as max of children end times
-                children_exprs = [self.computed_vars[c].real_end for c in children]
-                self.model.add_max_equality(end_time, children_exprs).only_enforce_if(
-                    config_active
-                ).with_name(f"t{t.id}_real_end_cfg{i}_child")
-            else:  # O(cost config * task)
-                # define real duration as function of selected cost config
-                assert cfg.duration is not None
-                defined = cfg.duration
-                # define real end time end of scheduled time slot for leaf
-                # tasks (assume worst case)
-                self.model.add(end_time == unit * (start_time + 1)).only_enforce_if(
-                    config_active
-                ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
-                # set real duration to 0 if orphaned task
-                task_orphaned = guard_bool(
-                    self.model,
-                    f"t{t.id}_orphaned_guard",
-                    task_parent_unit == -1,
-                    task_parent_unit != -1,
-                )
-                self.model.add(real_duration == defined).with_name(
-                    f"t{t.id}_real_duration_cfg{i}_duration"
-                ).only_enforce_if(config_active, task_orphaned.Not())
-                self.model.add(real_duration == 0).only_enforce_if(task_orphaned)
-
-    def __computed_parents(self, t: TaskConfig):
-        computed = self.computed_vars[t.id]
-        task_parent_unit = computed.parent_unit
-        task_parent_start = computed.parent_start
-
-        if len(t.parent_conditions) == 0:
-            # indicates that task does not have parent
-            self.model.add(task_parent_unit == 0).with_name(f"t{t.id}_parcond_none")
-            self.model.add(task_parent_start == 0).with_name(f"t{t.id}_parcond_none")
-            return
-
-        no_parent_cost_cond_active: list[cmh.Literal] = []
-        for i, par_cond in enumerate(t.parent_conditions):
-            parent_unit = self.config.tasks[par_cond.id].timescale_unit
-            parent_start = self.decision_vars[par_cond.id].start
-            parent_cost_config_active = self.computed_vars[par_cond.id].configs_active[
-                par_cond.config
-            ]
-
-            self.model.add(task_parent_unit == parent_unit).only_enforce_if(
-                parent_cost_config_active
-            ).with_name(f"t{t.id}_parcond_{i}_unit")
-            self.model.add(task_parent_start == parent_start).only_enforce_if(
-                parent_cost_config_active
-            ).with_name(f"t{t.id}_parcond_{i}_start")
-
-            no_parent_cost_cond_active.append(parent_cost_config_active.Not())
-
-        # we set it to -1 to indicate that the task can possibly have a parent,
-        # but has been orphaned
-        self.model.add(task_parent_unit == -1).with_name(
-            f"t{t.id}_orphaned"
-        ).only_enforce_if(*no_parent_cost_cond_active)
+    def __resolve_computed_state(self, t: int) -> ComputedState:
+        if t in self.computed_vars:
+            return self.computed_vars[t]
+        state = ComputedState(self, self.config.tasks[t])
+        self.computed_vars[t] = state
+        return state
 
     def __start_end_constraints(self, t: TaskConfig):
-        task_unit = t.timescale_unit
         decision = self.decision_vars[t.id]
         computed = self.computed_vars[t.id]
-        task_starting_var = decision.start
 
         # define parent start/end constraints (tautalogy if not specified)
-        parent_unit = computed.parent_unit
-        parent_start_var = computed.parent_start
+        parent = self.props.task.resolve_parent_cfg(t.id)
 
-        # 0. do not enforce start/end if inactive
-        task_not_inactive = guard_bool(
-            self.model,
-            f"t{t.id}_not_inactive",
-            parent_unit != -1,
-            parent_unit == -1,
-        )
+        # if root task, do not need to enforce any particular start/end
+        # constraint, already covered by static lb/ub
+        if parent is None:
+            return
 
-        # 1. do not enforce if task is root task
-        parent_not_root = guard_bool(
-            self.model,
-            f"t{t.id}_not_root",
-            parent_unit != 0,
-            parent_unit == 0,
-        )
+        # parent_start_var = computed.parent_start
+        # parent_not_root = parent is not None
+        scaling_factor = self.props.task.resolve_scaling_factor(t.id)
+        assert scaling_factor is not None  # parent is not None
 
-        # 2. compute scaling factor (if par not null)
-        scaling_factor = self.model.new_int_var(
-            1, self.props.max_scaling_factor, f"scaling_factor_{t.id}"
+        self.model.add(decision.start >= computed.parent_start).only_enforce_if(
+            computed.parent_active
         )
-        self.model.add(parent_unit >= task_unit).with_name(
-            f"t{t.id}_parent_unit_assert"
-        ).only_enforce_if(task_not_inactive, parent_not_root)
-        self.model.add_division_equality(
-            scaling_factor, parent_unit, task_unit
-        ).with_name(f"t{t.id}_scaling_factor_compute").only_enforce_if(
-            task_not_inactive, parent_not_root
-        )
-
-        # 3. compute parent start in the task's unit (if par not null)
-        parent_start_converted = self.model.new_int_var(
-            0, self.props.max_start_time, f"parent_start_converted_{t.id}"
-        )
-        self.model.add_multiplication_equality(
-            parent_start_converted, scaling_factor, parent_start_var
-        ).with_name(f"t{t.id}_conv_parent_start_compute").only_enforce_if(
-            task_not_inactive, parent_not_root
-        )
-
-        # bound parent start and end
-        self.model.add(task_starting_var >= parent_start_converted).with_name(
-            f"t{t.id}_bound_parent_start"
-        ).only_enforce_if(task_not_inactive, parent_not_root)
+        # scaling_factor is # of child unit which = 1 parent unit, therefore
+        # adding by scaling factor will get the end of the timeframe the parent
+        # is scheduled for
         self.model.add(
-            task_starting_var < parent_start_converted + scaling_factor
-        ).with_name(f"t{t.id}_bound_parent_end").only_enforce_if(
-            task_not_inactive, parent_not_root
-        )
+            decision.start < computed.parent_start + scaling_factor
+        ).only_enforce_if(computed.parent_active)
 
     def __prereq_constraints(self, t: TaskConfig):
         start_var = self.decision_vars[t.id].start
@@ -382,14 +531,16 @@ class Model:
                 )
 
             is_aligned = self.computed_pair_aligned_forward[key]
-            other_term = self.model.new_int_var(
-                0, self.props.max_end_time, f"t{t.id}_other{other}_term"
+
+            other_dur_lb, other_dur_ub = self.props.task.resolve_dur_bounds(other)
+            other_dur_var = self.model.new_int_var(
+                other_dur_lb, other_dur_ub, f"t{t.id}_other{other}_term"
             )
             self.model.add(
-                other_term == self.computed_vars[other].real_duration
+                other_dur_var == self.computed_vars[other].real_duration
             ).only_enforce_if(is_aligned)
-            self.model.add(other_term == 0).only_enforce_if(is_aligned.Not())
-            sum += other_term
+            self.model.add(other_dur_var == 0).only_enforce_if(is_aligned.Not())
+            sum += other_dur_var
 
         self.model.add(sum <= unit)
 
@@ -429,7 +580,7 @@ class Model:
     # in general, worst case: O(task * cost config * cost interval)
     def _model(self):
         self.model = cp_model.CpModel()
-        self.props = ModelProps(self.config)
+        self.props = Props(self.config)
 
         # find worst-case max starting/ending time (for default upper-bound without knowing anything else)
 
@@ -440,21 +591,9 @@ class Model:
         self.computed_vars: dict[int, ComputedState] = {}
 
         for t in self.config.tasks.values():
-            self.decision_vars[t.id] = DecisionState(self.model, self.props, t)
-            self.computed_vars[t.id] = ComputedState(
-                self.decision_vars[t.id],
-                self.model,
-                self.props,
-                t,
-            )
-
-        # init computed duration & end time variables defs
-        for t in self.config.tasks.values():
-            self.__computed_duration_end(t)
-
-        # init computed parent vars O(task)
-        for t in self.config.tasks.values():
-            self.__computed_parents(t)
+            state = DecisionState(self.model, self.props, t)
+            self.decision_vars[t.id] = state
+            self.computed_vars[t.id] = ComputedState(self, t)
 
         # add start/end constraints O(task)
         for t in self.config.tasks.values():

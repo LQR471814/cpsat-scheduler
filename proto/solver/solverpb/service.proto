@@ -61,9 +61,15 @@ enum SolveStatus {
   UNKNOWN = 4;
 }
 
+message Interval {
+  int64 start = 1;
+  int64 end = 2;
+}
+
 // Solve
 message SolveRequest {
-  repeated Task tasks = 1;
+  Interval horizon = 1;
+  repeated Task tasks = 2;
 }
 message SolveResponse {
   SolveStatus status = 1;

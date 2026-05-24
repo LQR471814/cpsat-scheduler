@@ -198,11 +198,25 @@ $d_{t} \in \Theta(u_{t}) \cup \{\emptyset\}$ is the deadline (or
 null) of task $t\in{T}$.
 
 $$
-\forall p \in T (\exists i \in I_{p} [Ch_{ip} \neq \emptyset] \to \forall D_{p}[i] \in I_{p} [])
+P(t) := \exists i \in I_{t} \left[Ch_{it} \neq \emptyset\right]
 $$
 
-For each child, it must not have more than one possible parent
-outside of having no parent.
+$P(t)$ is true if $t$ can possibly be a parent task.
+
+$$
+\neg \exists p_1 \in T \exists p_2 \in T
+(
+\left[P(p_1) \land P(p_2)\right] \to
+\left[Ch_{ip_1} \cup Ch_{ip_2} \neq \emptyset\right]
+)
+$$
+
+Each child must not have more than one possible parent.
+
+> [!NOTE]
+> This doesn't say anything about a child possibly becoming
+> [[#Deactivating orphans|deactivated]] if its parent doesn't choose a cost
+configuration including the child.
 
 $\theta_{t} : I_{t} \to \text{Set}~\mathbb{N}$ for a $t \in T$
 
@@ -299,6 +313,13 @@ $$
 \min \sum_{t \in T} [\iota x(x \in C_{D_{t}[i]t} \land u_{t}D_{t}[s] \in x_{I})]_c
 $$
 
+> [!NOTE]
+> This definition means that the cost of parents is weighted
+> equally to the cost of children. Unlike duration, there is no
+> the "real cost" for non-leaf tasks is choice between 0 and
+> multiple constant values according to the available cost configs
+> (according to [[#Deactivating orphans]]).
+
 # Deadlines
 
 Sometimes a task's logical start and end time constraints exceed
@@ -320,19 +341,4 @@ the actual "deadline" involved for the task.
 8. In essence, the logical deadline of a task of a time unit $u$
    and actual deadline $d$ is
    $\left\lceil\frac{d}{u}\right\rceil$
-
-# Reasoning
-
-Suppose I have a task $T$ with subtasks $T_1,T_2$.
-
-Duration of $T_1$ is $\in [a_1, b_1]$
-
-Duration of $T_2$ is $\in [a_2, b_2]$
-
-Margin of task $T$ is $\in [a, b]$
-
-Cost is also dependent on the duration of the children alongside
-the margin, not the margin alone.
-
-Better to phrase cost as a function of task end time
 

@@ -13,4 +13,6 @@
 - [ ] Improve validation & form errors
 - [ ] Impl. proper form for profiles.
 - [x] Add delete fn. for forms
+- [ ] Safety! Ensure child explicit start >= parent explicit start
+  always
 

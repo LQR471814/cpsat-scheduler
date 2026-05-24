@@ -82,11 +82,21 @@ class SolvedTask(_message.Message):
     end: int
     def __init__(self, id: _Optional[int] = ..., start: _Optional[int] = ..., dur_idx: _Optional[int] = ..., children_idx: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
 
+class Interval(_message.Message):
+    __slots__ = ("start", "end")
+    START_FIELD_NUMBER: _ClassVar[int]
+    END_FIELD_NUMBER: _ClassVar[int]
+    start: int
+    end: int
+    def __init__(self, start: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
+
 class SolveRequest(_message.Message):
-    __slots__ = ("tasks",)
+    __slots__ = ("horizon", "tasks")
+    HORIZON_FIELD_NUMBER: _ClassVar[int]
     TASKS_FIELD_NUMBER: _ClassVar[int]
+    horizon: Interval
     tasks: _containers.RepeatedCompositeFieldContainer[Task]
-    def __init__(self, tasks: _Optional[_Iterable[_Union[Task, _Mapping]]] = ...) -> None: ...
+    def __init__(self, horizon: _Optional[_Union[Interval, _Mapping]] = ..., tasks: _Optional[_Iterable[_Union[Task, _Mapping]]] = ...) -> None: ...
 
 class SolveResponse(_message.Message):
     __slots__ = ("status", "score", "solution")

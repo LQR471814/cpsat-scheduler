@@ -2,13 +2,16 @@ from _demos.lib.demo import (
     minute_15,
     day,
     week,
-    task,
     ZERO_COST_INTERVALS,
     constant_cost_intervals,
     deadline_intervals,
     solve,
+    task_builder,
 )
+from cpsatmodel.config_builder import ConfigBuilder
 
+builder = ConfigBuilder((0, 2 * week))
+task = task_builder(builder)
 
 # --- TASK DESCRIPTION
 
@@ -138,4 +141,4 @@ def main():
     __cmpe50()
     __engr10()
     __fixed_time_usage()
-    solve()
+    solve(builder)

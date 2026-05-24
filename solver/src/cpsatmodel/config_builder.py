@@ -13,7 +13,9 @@ class Task:
     _prerequisites: list[int]
 
     _configs: list[CostConfig]
-    _parent_conds: list[ParentCond]
+
+    _parent: int | None
+    _parent_cfgs: list[int]
 
     _builder: ConfigBuilder
 
@@ -30,7 +32,8 @@ class Task:
 
         self._configs = []
         self._prerequisites = []
-        self._parent_conds = []
+        self._parent = None
+        self._parent_cfgs = []
         self._builder = builder
 
         self.id = builder.next_id
@@ -54,9 +57,9 @@ class Task:
             # child must exist
             assert c.id in self._builder.tasks
             # child must not already be a child of another task
-            for cond in c._parent_conds:
-                assert cond.id == self.id
-            c._parent_conds.append(ParentCond(id=self.id, config=len(self._configs)))
+            assert c._parent is None
+            c._parent = self.id
+            c._parent_cfgs.append(len(self._configs))
         self._configs.append(
             CostConfig(
                 costs=costs,
@@ -72,7 +75,8 @@ class Task:
 
 
 class ConfigBuilder:
-    def __init__(self):
+    def __init__(self, horizon: tuple[int, int]):
+        self.horizon = horizon
         self.next_id = 0
         self.timescales: set[int] = set()
         # margin will not be auto-created, the user is in charge of specifying magin
@@ -101,7 +105,7 @@ class ConfigBuilder:
         # ensure that no cycles are present
         visited: set[int] = set()
         for t in self.tasks:
-            if len(self.tasks[t]._parent_conds) > 0:
+            if len(self.tasks[t]._parent_cfgs) > 0:
                 continue
             self._detect_cycles(t, visited, [], 0)
 
@@ -113,7 +117,7 @@ class ConfigBuilder:
 
         original_tasks = list(self.tasks.values())
         for task in original_tasks:
-            if len(task._parent_conds) > 0:
+            if len(task._parent_cfgs) > 0:
                 continue
             if task.unit == max_timescale:
                 continue
@@ -147,6 +151,11 @@ class ConfigBuilder:
                 end=t.end,
                 prerequisites=t._prerequisites,
                 cost_configs=t._configs,
-                parent_conditions=t._parent_conds,
+                parent_configs=t._parent_cfgs,
+                parent=t._parent,
             )
-        return Config(timescales=timescales, tasks=task_configs)
+        return Config(
+            horizon=self.horizon,
+            timescales=timescales,
+            tasks=task_configs,
+        )

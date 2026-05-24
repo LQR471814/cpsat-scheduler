@@ -60,18 +60,19 @@ def deadline_intervals(
 
 task_names: dict[int, str] = {}
 
-builder = ConfigBuilder()
 
+def task_builder(builder: ConfigBuilder):
+    def task(
+        name: str,
+        unit: int,
+        start: int | None = None,
+        end: int | None = None,
+    ):
+        t = Task(builder, unit, start, end)
+        task_names[t.id] = name
+        return t
 
-def task(
-    name: str,
-    unit: int,
-    start: int | None = None,
-    end: int | None = None,
-):
-    t = Task(builder, unit, start, end)
-    task_names[t.id] = name
-    return t
+    return task
 
 
 pert_fidelity: list[float] = [0, 0.4, 0.8, 0.9, 0.95, 0.99, 1]
@@ -106,7 +107,7 @@ pert_fidelity: list[float] = [0, 0.4, 0.8, 0.9, 0.95, 0.99, 1]
 #         )
 
 
-def solve():
+def solve(builder: ConfigBuilder):
     cfg = builder.build()
     model = Model(cfg)
     status, total_cost, solution_tasks = model.solve()

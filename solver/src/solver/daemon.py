@@ -28,7 +28,8 @@ status_map: dict[cp_model.CpSolverStatus, pb.SolveStatus] = {
 class SolverServicer(grpcpb.SolverServicer):
     def Solve(self, request: pb.SolveRequest, context):
         try:
-            builder = ConfigBuilder()
+            horizon = (request.horizon.start, request.horizon.end)
+            builder = ConfigBuilder(horizon)
 
             task_map: dict[int, pb.Task] = {}
             for solved in request.tasks:
