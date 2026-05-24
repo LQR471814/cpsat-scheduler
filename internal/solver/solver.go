@@ -17,15 +17,16 @@ import (
 const socketPath = "/tmp/cpsat-scheduler.solver.sock"
 
 type Solver struct {
+	ctx    context.Context
 	logger *slog.Logger
 	conn   *grpc.ClientConn
 	solverpb.SolverClient
 }
 
-func NewSolver(logger *slog.Logger, daemonPath string) (solver Solver, err error) {
+func NewSolver(ctx context.Context, logger *slog.Logger, daemonPath string) (solver Solver, err error) {
 	logger = logger.WithGroup("solver")
 
-	cmd := exec.Command(daemonPath)
+	cmd := exec.CommandContext(ctx, daemonPath)
 	err = cmd.Start()
 	if err != nil {
 		return
@@ -93,8 +94,8 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile) (res *solverpb
 	// add (full) events back into solution
 	id := int64(-1)
 	for _, ev := range events {
-		start := int64(ev.Start.Sub(profile.UniverseStart)) / int64(profile.AtomicTimescaleDuration)
-		end := int64(ev.End.Sub(profile.UniverseStart)) / int64(profile.AtomicTimescaleDuration)
+		start := state.RealTimeToProfileTime(ev.Start, profile)
+		end := state.RealTimeToProfileTime(ev.End, profile)
 		solution = append(solution, &solverpb.SolvedTask{
 			Id:       id,
 			Start:    start,

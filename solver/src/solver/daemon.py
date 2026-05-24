@@ -118,6 +118,7 @@ def serve(sock_path: str):
     server.add_insecure_port(f"unix:{sock_path}")
     server.start()
 
+    print("listening...")
     try:
         _ONE_DAY_IN_SECONDS = 60 * 60 * 24
         while True:
