@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/solver/solverpb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"fmt"
 )
 
 func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTasksRequest) (res *api.ListScheduledTasksResponse, err error) {
@@ -76,8 +78,14 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 		return
 	}
 
+	s.logger.Debug("solving profile", "profile", profileID)
+
 	solveRes, err := s.solver.SolveProfile(statectx, profile)
 	if err != nil {
+		return
+	}
+	if solveRes.Status == solverpb.SolveStatus_INFEASIBLE {
+		err = fmt.Errorf("solution infeasible, this is a bug")
 		return
 	}
 
@@ -96,8 +104,8 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 		profileStart := sql.NullInt64{Valid: true, Int64: solved.Start * task.Unit}
 		profileEnd := sql.NullInt64{Valid: true, Int64: solved.End * task.Unit}
 
-		realStart := state.ProfileTimeToRealTime(profileStart, profile)
-		realEnd := state.ProfileTimeToRealTime(profileEnd, profile)
+		realStart := state.ProfileNullTimeToRealTime(profileStart, profile)
+		realEnd := state.ProfileNullTimeToRealTime(profileEnd, profile)
 
 		if !realStart.Valid {
 			panic("assert failed: realStart invalid")
@@ -121,6 +129,8 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 	if err != nil {
 		return
 	}
+
+	s.logger.Debug("reset schedule state", "profile", profileID)
 
 	res = &api.RecomputeScheduleResponse{}
 	return

@@ -17,13 +17,19 @@ func (s server) CreateEvent(ctx context.Context, req *api.CreateEventRequest) (r
 	defer tx.Rollback()
 	txqry := s.db.WithTx(tx)
 
-	_, err = txqry.CreateEvent(ctx, db.CreateEventParams{
-		Profile: req.GetEvent().GetProfile(),
-		Name:    req.GetEvent().GetName(),
-		Desc:    req.GetEvent().GetDesc(),
-		Start:   req.GetEvent().GetStart().AsTime(),
-		End:     req.GetEvent().GetEnd().AsTime(),
-	})
+	for _, ev := range req.GetEvent() {
+		_, err = txqry.CreateEvent(ctx, db.CreateEventParams{
+			Profile: ev.GetProfile(),
+			Name:    ev.GetName(),
+			Desc:    ev.GetDesc(),
+			Start:   ev.GetStart().AsTime(),
+			End:     ev.GetEnd().AsTime(),
+		})
+		if err != nil {
+			return
+		}
+	}
+	err = tx.Commit()
 	if err != nil {
 		return
 	}
@@ -58,14 +64,7 @@ func (s server) ReadEvent(ctx context.Context, in *api.ReadEventRequest) (res *a
 }
 
 func (s server) UpdateEvent(ctx context.Context, in *api.UpdateEventRequest) (res *api.UpdateEventResponse, err error) {
-	tx, err := s.driver.BeginTx(ctx, nil)
-	if err != nil {
-		return
-	}
-	defer tx.Rollback()
-	txqry := s.db.WithTx(tx)
-
-	err = txqry.UpdateEvent(ctx, db.UpdateEventParams{
+	err = s.db.UpdateEvent(ctx, db.UpdateEventParams{
 		ID:      in.GetId(),
 		Profile: in.GetEvent().GetProfile(),
 		Name:    in.GetEvent().GetName(),
@@ -80,16 +79,7 @@ func (s server) UpdateEvent(ctx context.Context, in *api.UpdateEventRequest) (re
 }
 
 func (s server) ListEvent(ctx context.Context, in *api.ListEventRequest) (res *api.ListEventResponse, err error) {
-	tx, err := s.driver.BeginTx(ctx, &sql.TxOptions{
-		ReadOnly: true,
-	})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback()
-	txqry := s.db.WithTx(tx)
-
-	events, err := txqry.ListEvent(ctx, in.GetProfile())
+	events, err := s.db.ListEvent(ctx, in.GetProfile())
 	if err != nil {
 		return
 	}
@@ -106,14 +96,7 @@ func (s server) ListEvent(ctx context.Context, in *api.ListEventRequest) (res *a
 }
 
 func (s server) RemoveEvent(ctx context.Context, in *api.RemoveEventRequest) (res *api.RemoveEventResponse, err error) {
-	tx, err := s.driver.BeginTx(ctx, nil)
-	if err != nil {
-		return
-	}
-	defer tx.Rollback()
-	txqry := s.db.WithTx(tx)
-
-	err = txqry.DeleteEvent(ctx, in.GetId())
+	err = s.db.DeleteEvent(ctx, in.GetId())
 	if err != nil {
 		return
 	}

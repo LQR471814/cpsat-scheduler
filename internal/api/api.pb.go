@@ -1914,7 +1914,7 @@ func (x *Event) GetEnd() *timestamppb.Timestamp {
 // CreateEvent
 type CreateEventRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Event         *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	Event         []*Event               `protobuf:"bytes,1,rep,name=event,proto3" json:"event,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1949,7 +1949,7 @@ func (*CreateEventRequest) Descriptor() ([]byte, []int) {
 	return file_api_api_proto_rawDescGZIP(), []int{35}
 }
 
-func (x *CreateEventRequest) GetEvent() *Event {
+func (x *CreateEventRequest) GetEvent() []*Event {
 	if x != nil {
 		return x.Event
 	}
@@ -2713,7 +2713,7 @@ const file_api_api_proto_rawDesc = "" +
 	"\x05start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
 	"\x03end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"2\n" +
 	"\x12CreateEventRequest\x12\x1c\n" +
-	"\x05event\x18\x01 \x01(\v2\x06.EventR\x05event\"\x15\n" +
+	"\x05event\x18\x01 \x03(\v2\x06.EventR\x05event\"\x15\n" +
 	"\x13CreateEventResponse\"\"\n" +
 	"\x10ReadEventRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"1\n" +

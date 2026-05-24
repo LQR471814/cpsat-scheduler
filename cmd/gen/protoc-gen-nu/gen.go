@@ -19,10 +19,15 @@ const self_path = path self
 
 export def req [api: string, method: string]: any -> any {
     let schema_path = $self_path | path dirname | path join ../../proto
-	$in
+	let res = $in
         | to json --raw
         | buf curl -d @- --unix-socket $SOCKET_PATH --protocol grpc --http2-prior-knowledge --schema $schema_path $"http://localhost/($api)/($method)"
-		| from json
+		| complete
+	if $res.exit_code == 0 {
+		$res.stdout | from json
+	} else {
+		error make {msg: 'gRPC returned error'}
+	}
 }
 
 def "deserialize proto dur" []: string -> duration {

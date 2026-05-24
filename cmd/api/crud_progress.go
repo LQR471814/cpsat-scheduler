@@ -130,6 +130,10 @@ func (s server) EditProgressLog(ctx context.Context, req *api.EditProgressLogReq
 			return
 		}
 	}
+	err = tx.Commit()
+	if err != nil {
+		return
+	}
 
 	res = &api.EditProgressLogResponse{}
 	return

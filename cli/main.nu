@@ -14,8 +14,14 @@ def reschedule []: nothing -> nothing {
 	# recompute schedule
 	let spinner = util spin start
 	job spawn {
-		{profile: $env.profile} | api.gen API RecomputeSchedule
-		$spinner | util spin stop
+		try {
+			{profile: $env.profile} | api.gen API RecomputeSchedule
+			$spinner | util spin stop
+		} catch {|err|
+			$spinner | util spin stop
+			print ""
+			print $err.msg
+		}
 	}
 	$spinner | util spin show 'Recomputing schedule...'
 }

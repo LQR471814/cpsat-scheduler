@@ -202,7 +202,7 @@ message Event {
 
 // CreateEvent
 message CreateEventRequest {
-  Event event = 1;
+  repeated Event event = 1;
 }
 message CreateEventResponse {}
 
