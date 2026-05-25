@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/proto/apipb"
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
@@ -29,10 +30,10 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
-			Entries: make([]*apipb.Entry, len(scheduled)),
+			Entries: make([]*commonpb.Entry, len(scheduled)),
 		}
 		for i, s := range scheduled {
-			res.Entries[i] = &apipb.Entry{
+			res.Entries[i] = &commonpb.Entry{
 				Id:   s.Task,
 				Name: s.Name,
 			}
@@ -47,10 +48,10 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
-			Entries: make([]*apipb.Entry, len(scheduled)),
+			Entries: make([]*commonpb.Entry, len(scheduled)),
 		}
 		for i, s := range scheduled {
-			res.Entries[i] = &apipb.Entry{
+			res.Entries[i] = &commonpb.Entry{
 				Id:   s.Task,
 				Name: s.Name,
 			}
@@ -79,8 +80,8 @@ func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeSched
 	s.logger.Debug("solving profile", "profile", profile.ID)
 
 	horizon := state.Horizon{
-		Start: state.RealTimeToProfileTime(req.GetHorizon().GetStart().AsTime(), profile),
-		End:   state.RealTimeToProfileTime(req.GetHorizon().GetEnd().AsTime(), profile),
+		Start: &commonpb.AtomicUnit{Value: state.RealTimeToProfileTime(req.GetHorizon().GetStart().AsTime(), profile)},
+		End:   &commonpb.AtomicUnit{Value: state.RealTimeToProfileTime(req.GetHorizon().GetEnd().AsTime(), profile)},
 	}
 	solveRes, err := s.solver.SolveProfile(statectx, profile, horizon)
 	if err != nil {
@@ -124,8 +125,8 @@ func replaceSchedule(
 			return
 		}
 
-		profileStart := sql.NullInt64{Valid: true, Int64: solved.Start * task.Unit}
-		profileEnd := sql.NullInt64{Valid: true, Int64: solved.End * task.Unit}
+		profileStart := sql.NullInt64{Valid: true, Int64: solved.Start.Value * task.Unit}
+		profileEnd := sql.NullInt64{Valid: true, Int64: solved.End.Value * task.Unit}
 
 		realStart := state.ProfileNullTimeToRealTime(profileStart, profile)
 		realEnd := state.ProfileNullTimeToRealTime(profileEnd, profile)

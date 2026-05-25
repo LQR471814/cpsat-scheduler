@@ -1,6 +1,7 @@
 package state
 
 import (
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state/db"
 	"math"
@@ -26,27 +27,29 @@ var timescales = []int64{
 
 var zeroCost = []*solverpb.CostInterval{
 	&solverpb.CostInterval{
-		Start: 0,
-		End:   math.MaxInt64 - 1,
-		Cost:  0,
+		Start: &commonpb.AtomicUnit{
+			Value: 0,
+		},
+		End: &commonpb.AtomicUnit{
+			Value: math.MaxInt64 - 1,
+		},
+		Cost: 0,
 	},
 }
 
 type Horizon struct {
-	// Start should be in terms of the atomic unit (profile time)
-	Start int64
-	// End should be in terms of the atomic unit (profile time)
-	End int64
+	Start *commonpb.AtomicUnit
+	End   *commonpb.AtomicUnit
 }
 
 func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int64, out *[]*solverpb.Task, ev db.Event) {
 	start := RealTimeToProfileTime(ev.Start, profile)
 	end := RealTimeToProfileTime(ev.End, profile)
 
-	if start >= horizon.End {
+	if start >= horizon.End.Value {
 		return
 	}
-	if end < horizon.Start {
+	if end < horizon.Start.Value {
 		return
 	}
 
@@ -60,16 +63,20 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 		break
 	}
 
+	unitTyped := &commonpb.AtomicUnit{
+		Value: unit,
+	}
+
 	// subtract leftDur from first, set last to rightDur
 	leftDur := start % unit
 	rightDur := end % unit
 
 	for i := int64(0); i < dur/unit; i++ {
 		taskStart := start - leftDur + i*unit
-		if taskStart < horizon.Start {
+		if taskStart < horizon.Start.Value {
 			continue
 		}
-		if taskStart >= horizon.End {
+		if taskStart >= horizon.End.Value {
 			continue
 		}
 
@@ -79,17 +86,22 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 		if i == 0 {
 			dur -= leftDur
 		}
-		taskEnd := taskStart + 1
 		*out = append(*out, &solverpb.Task{
-			Id:      *id,
-			Unit:    unit,
-			Start:   &taskStart,
-			End:     &taskEnd,
+			Id:   *id,
+			Unit: unitTyped,
+			Start: &commonpb.AtomicUnit{
+				Value: taskStart,
+			},
+			End: &commonpb.AtomicUnit{
+				Value: taskStart + 1,
+			},
 			Prereqs: nil,
 			DurCfgs: []*solverpb.DurConfig{
 				&solverpb.DurConfig{
 					Intervals: zeroCost,
-					Duration:  dur,
+					Duration: &commonpb.AtomicUnit{
+						Value: dur,
+					},
 				},
 			},
 		})
@@ -101,17 +113,22 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 	}
 
 	cursor := end - rightDur
-	cursorEnd := cursor + 1
 	*out = append(*out, &solverpb.Task{
-		Id:      *id,
-		Unit:    unit,
-		Start:   &cursor,
-		End:     &cursorEnd,
+		Id:   *id,
+		Unit: unitTyped,
+		Start: &commonpb.AtomicUnit{
+			Value: cursor,
+		},
+		End: &commonpb.AtomicUnit{
+			Value: cursor + 1,
+		},
 		Prereqs: nil,
 		DurCfgs: []*solverpb.DurConfig{
 			&solverpb.DurConfig{
 				Intervals: zeroCost,
-				Duration:  rightDur,
+				Duration: &commonpb.AtomicUnit{
+					Value: rightDur,
+				},
 			},
 		},
 	})
@@ -154,10 +171,10 @@ func LookupProfileState(c Context, profile db.Profile, horizon Horizon, out *[]*
 
 		// we only operate on start because horizon limits the start time
 		if task.Start != nil {
-			if *task.Start < horizon.Start {
+			if task.Start.Value < horizon.Start.Value {
 				continue
 			}
-			if *task.Start >= horizon.End {
+			if task.Start.Value >= horizon.End.Value {
 				continue
 			}
 		}
@@ -174,13 +191,13 @@ func lookupTask(
 	t db.Task,
 	choices int64,
 ) (out *solverpb.Task, err error) {
-	var start *int64
-	var end *int64
+	var start *commonpb.AtomicUnit
+	var end *commonpb.AtomicUnit
 	if t.Start.Valid {
-		start = &t.Start.Int64
+		start = &commonpb.AtomicUnit{Value: t.Start.Int64}
 	}
 	if t.End.Valid {
-		end = &t.End.Int64
+		end = &commonpb.AtomicUnit{Value: t.End.Int64}
 	}
 
 	var rows []db.ListPrereqRow
@@ -200,7 +217,7 @@ func lookupTask(
 	}
 	task := &solverpb.Task{
 		Id:      t.ID,
-		Unit:    t.Unit,
+		Unit:    &commonpb.AtomicUnit{Value: t.Unit},
 		Start:   start,
 		End:     end,
 		Prereqs: prereqs,
@@ -239,7 +256,7 @@ func lookupChildCfgs(c Context, profile db.Profile, task db.Task) (out []*solver
 		out = append(out, &solverpb.ChildrenConfig{
 			Intervals: deadlineIntervals(
 				// no issue if deadline is null, it will just use 0
-				deadline.Int64,
+				&commonpb.AtomicUnit{Value: deadline.Int64},
 				childCfg.ExpCost.Int64,
 				childCfg.TotalCost.Int64,
 			),

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/proto/apipb"
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"errors"
@@ -45,7 +46,7 @@ func (s server) ListProgressUpdates(ctx context.Context, req *apipb.ListProgress
 		for j, u := range updated {
 			res.Logs[j].Updates[j] = &apipb.ListProgressUpdatesResponse_ProgressLog_UpdatedTask{
 				Desc: u.Desc,
-				Task: &apipb.Entry{
+				Task: &commonpb.Entry{
 					Id:   u.Task,
 					Name: u.TaskName,
 				},

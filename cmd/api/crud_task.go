@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/proto/apipb"
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state"
 	"database/sql"
 	"strings"
@@ -133,9 +134,9 @@ where cc.child = t.id
 	}
 	defer rows.Close()
 
-	var items []*apipb.Entry
+	var items []*commonpb.Entry
 	for rows.Next() {
-		entry := &apipb.Entry{}
+		entry := &commonpb.Entry{}
 		err = rows.Scan(&entry.Id, &entry.Name)
 		if err != nil {
 			return

@@ -2,6 +2,7 @@ package solver
 
 import (
 	"context"
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
@@ -78,7 +79,7 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 	s.logger.Debug("generated event tasks, solving...", "tasks", len(tasks))
 	res, err = s.SolverClient.Solve(c.Ctx(), &solverpb.SolveRequest{
 		Tasks: tasks,
-		Horizon: &solverpb.SolveRequest_Interval{
+		Horizon: &commonpb.AtomicInterval{
 			Start: horizon.Start,
 			End:   horizon.End,
 		},
@@ -103,10 +104,10 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 		end := state.RealTimeToProfileTime(ev.End, profile)
 		solution = append(solution, &solverpb.SolvedTask{
 			Id:       id,
-			Start:    start,
-			End:      end,
+			Start:    &commonpb.AtomicUnit{Value: start},
+			End:      &commonpb.AtomicUnit{Value: end},
 			Cost:     0,
-			Duration: end - start,
+			Duration: &commonpb.AtomicUnit{Value: end - start},
 			Config: &solverpb.SolvedTask_DurIdx{
 				DurIdx: 0,
 			},

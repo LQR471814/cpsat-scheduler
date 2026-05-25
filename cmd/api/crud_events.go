@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/proto/apipb"
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 
@@ -84,10 +85,10 @@ func (s server) ListEvent(ctx context.Context, in *apipb.ListEventRequest) (res 
 		return
 	}
 	res = &apipb.ListEventResponse{
-		Entries: make([]*apipb.Entry, len(events)),
+		Entries: make([]*commonpb.Entry, len(events)),
 	}
 	for i, ev := range events {
-		res.Entries[i] = &apipb.Entry{
+		res.Entries[i] = &commonpb.Entry{
 			Id:   ev.ID,
 			Name: ev.Name,
 		}

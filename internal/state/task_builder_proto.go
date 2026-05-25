@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"cpsat-scheduler/internal/proto/apipb"
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"errors"
@@ -59,9 +60,9 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 		if err != nil {
 			return err
 		}
-		childrenEntries := make([]*apipb.Entry, len(children))
+		childrenEntries := make([]*commonpb.Entry, len(children))
 		for i, child := range children {
-			childrenEntries[i] = &apipb.Entry{
+			childrenEntries[i] = &commonpb.Entry{
 				Id:   child.ID,
 				Name: child.Name,
 			}
@@ -85,9 +86,9 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 	if err != nil {
 		return err
 	}
-	s.Prereqs = make([]*apipb.Entry, len(prereqs))
+	s.Prereqs = make([]*commonpb.Entry, len(prereqs))
 	for i, r := range prereqs {
-		s.Prereqs[i] = &apipb.Entry{
+		s.Prereqs[i] = &commonpb.Entry{
 			Id:   r.ID,
 			Name: r.Name,
 		}
@@ -97,9 +98,9 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 	if err != nil {
 		return err
 	}
-	s.Postreqs = make([]*apipb.Entry, len(postreqs))
+	s.Postreqs = make([]*commonpb.Entry, len(postreqs))
 	for i, r := range postreqs {
-		s.Postreqs[i] = &apipb.Entry{
+		s.Postreqs[i] = &commonpb.Entry{
 			Id:   r.ID,
 			Name: r.Name,
 		}
@@ -113,7 +114,7 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 		return err
 	}
 
-	s.Parent = &apipb.Entry{
+	s.Parent = &commonpb.Entry{
 		Id:   par.ID,
 		Name: par.Name,
 	}

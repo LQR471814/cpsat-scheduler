@@ -1,6 +1,7 @@
 package state
 
 import (
+	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state/db"
 	"math"
@@ -32,16 +33,16 @@ func pertPPF(p, opt, exp, pes float64) float64 {
 	return dur
 }
 
-func deadlineIntervals(deadline, expCost, totalCost int64) []*solverpb.CostInterval {
+func deadlineIntervals(deadline *commonpb.AtomicUnit, expCost, totalCost int64) []*solverpb.CostInterval {
 	return []*solverpb.CostInterval{
 		{
-			Start: 0,
+			Start: &commonpb.AtomicUnit{Value: 0},
 			End:   deadline,
 			Cost:  expCost,
 		},
 		{
 			Start: deadline,
-			End:   math.MaxInt64 - 1,
+			End:   &commonpb.AtomicUnit{Value: math.MaxInt64 - 1},
 			Cost:  totalCost,
 		},
 	}
@@ -63,7 +64,9 @@ func pertDurCfgs(
 
 	// no real issue if deadline is null, will just default to 0, which will lead to intv like:
 	// [0, 0] \cup [1, "\infty"]
-	deadline := RealNullTimeToProfileTime(durcfg.Deadline, profile).Int64
+	deadline := &commonpb.AtomicUnit{
+		Value: RealNullTimeToProfileTime(durcfg.Deadline, profile).Int64,
+	}
 
 	for i := range choices {
 		// we distribute probability stops via cube-root power fn
@@ -85,7 +88,9 @@ func pertDurCfgs(
 				roundInt64((1-p)*float64(totalCost)),
 				totalCost,
 			),
-			Duration: RealDurationToProfileDuration(dur, profile),
+			Duration: &commonpb.AtomicUnit{
+				Value: RealDurationToProfileDuration(dur, profile),
+			},
 		})
 	}
 
