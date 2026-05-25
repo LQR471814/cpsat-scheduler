@@ -142,3 +142,6 @@ def main():
     __engr10()
     __fixed_time_usage()
     solve(builder)
+
+
+main()

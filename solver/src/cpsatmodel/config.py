@@ -113,7 +113,7 @@ class TaskProps:
         self.resolve_cost_bounds: Callable[[int], tuple[int, int]] = cache(
             self.__compute_cost_bounds
         )
-        self.resolve_dur_bounds: Callable[[int], tuple[int, int]] = cache(
+        self.resolve_real_dur_bounds: Callable[[int], tuple[int, int]] = cache(
             self.__compute_dur_bounds
         )
         self.resolve_real_end_bounds: Callable[[int], tuple[int, int]] = cache(
@@ -246,7 +246,7 @@ class TaskProps:
             min_dur_sum = 0
             max_dur_sum = 0
             for child in cfg.children:
-                lb, ub = self.resolve_dur_bounds(child)
+                lb, ub = self.resolve_real_dur_bounds(child)
                 min_dur_sum += lb
                 max_dur_sum += ub
 
@@ -314,7 +314,7 @@ class ComputedState:
         model = m.model
         state = m.decision_vars[t.id]
 
-        dur_lb, dur_ub = props.task.resolve_dur_bounds(t.id)
+        dur_lb, dur_ub = props.task.resolve_real_dur_bounds(t.id)
         self.real_duration = model.new_int_var(dur_lb, dur_ub, f"t{t.id}_real_dur")
 
         # non-leaf task: real end = max{child end times}
@@ -521,41 +521,41 @@ class Model:
 
     def __timescale_overflow_constraints(self, t: TaskConfig):
         defined = self.computed_vars[t.id].real_duration
-        unit = t.timescale_unit  # this is also the max duration
+        start_var = self.decision_vars[t.id].start
 
         sum = defined
-        for other in self.config.tasks:
-            if other == t.id:
+        # O(n^2) for n tasks in the same timescale!
+        for other_id, other_task in self.config.tasks.items():
+            if other_id == t.id:
                 continue
-            if self.config.tasks[other].timescale_unit != unit:
+            if other_task.timescale_unit != t.timescale_unit:
                 continue
-            key = frozenset((t.id, other))
 
+            key = frozenset((t.id, other_id))
             if key not in self.computed_pair_aligned_forward:
-                self.computed_pair_aligned_forward[frozenset((t.id, other))] = (
-                    guard_bool(
-                        self.model,
-                        f"t{t.id}_t{other}_same_start",
-                        self.decision_vars[other].start
-                        == self.decision_vars[t.id].start,
-                        self.decision_vars[other].start
-                        != self.decision_vars[t.id].start,
-                    )
+                other_start_var = self.decision_vars[other_id].start
+                self.computed_pair_aligned_forward[key] = guard_bool(
+                    self.model,
+                    f"t{t.id}_t{other_id}_same_start",
+                    other_start_var == start_var,
+                    other_start_var != start_var,
                 )
-
             is_aligned = self.computed_pair_aligned_forward[key]
 
-            other_dur_lb, other_dur_ub = self.props.task.resolve_dur_bounds(other)
-            other_dur_var = self.model.new_int_var(
-                other_dur_lb, other_dur_ub, f"t{t.id}_other{other}_term"
+            _, other_dur_ub = self.props.task.resolve_real_dur_bounds(other_id)
+            other_dur_contrib = self.model.new_int_var(
+                # we use 0 because other_dur_contrib could possibly be 0 (if inactive)
+                0,
+                other_dur_ub,
+                f"t{t.id}_other{other_id}_term",
             )
-            self.model.add(
-                other_dur_var == self.computed_vars[other].real_duration
-            ).only_enforce_if(is_aligned)
-            self.model.add(other_dur_var == 0).only_enforce_if(is_aligned.Not())
-            sum += other_dur_var
+            other_dur = self.computed_vars[other_id].real_duration
+            self.model.add(other_dur_contrib == other_dur).only_enforce_if(is_aligned)
+            self.model.add(other_dur_contrib == 0).only_enforce_if(is_aligned.Not())
 
-        self.model.add(sum <= unit)
+            sum += other_dur_contrib
+
+        self.model.add(sum <= t.timescale_unit)
 
     def __computed_costs(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
