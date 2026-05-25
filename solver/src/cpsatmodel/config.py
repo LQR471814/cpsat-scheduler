@@ -124,7 +124,7 @@ class TaskProps:
         )
 
     def __get_task_cfg(self, task_id: int) -> TaskConfig:
-        return self.__props.__config.tasks[task_id]
+        return self.__props._config.tasks[task_id]
 
     def __get_scaling_factor(self, task_id: int) -> int | None:
         parent = self.resolve_parent_cfg(task_id)
@@ -137,14 +137,14 @@ class TaskProps:
         t = self.__get_task_cfg(task_id)
         if t.parent is None:
             return None
-        return self.__props.__config.tasks[t.parent]
+        return self.__props._config.tasks[t.parent]
 
     def __compute_start_bounds(self, task_id: int) -> tuple[int, int]:
         t = self.__get_task_cfg(task_id)
 
         parent_bound: tuple[int, int]
         if t.timescale_unit == self.__props.model.max_timescale:
-            horizon_lb, horizon_ub = self.__props.__config.horizon
+            horizon_lb, horizon_ub = self.__props._config.horizon
             parent_bound = (
                 horizon_lb // t.timescale_unit,
                 horizon_ub // t.timescale_unit,
@@ -155,7 +155,7 @@ class TaskProps:
             # tasks exist)
             assert parent is not None
             parent_lb, parent_ub = self.resolve_start_bounds(parent.id)
-            parent_unit = self.__props.__config.tasks[parent.id].timescale_unit
+            parent_unit = self.__props._config.tasks[parent.id].timescale_unit
             parent_bound = (
                 parent_lb * parent_unit // t.timescale_unit,
                 parent_ub * parent_unit // t.timescale_unit,
@@ -207,13 +207,13 @@ class TaskProps:
     def __compute_cost_bounds(self, task_id: int) -> tuple[int, int]:
         t = self.__get_task_cfg(task_id)
 
-        min_cost = -sys.maxsize
-        max_cost = sys.maxsize
+        min_cost = sys.maxsize
+        max_cost = -sys.maxsize
         for cfg in t.cost_configs:
             for intv in cfg.costs:
-                if intv.cost > min_cost:
+                if intv.cost < min_cost:
                     min_cost = intv.cost
-                if intv.cost < max_cost:
+                if intv.cost > max_cost:
                     max_cost = intv.cost
 
         return (min_cost, max_cost)
@@ -256,13 +256,13 @@ class TaskProps:
 
 # Props computes static properties of the config and tasks
 class Props:
-    __config: Config
+    _config: Config
 
     model: ModelProps
     task: TaskProps
 
     def __init__(self, config: Config) -> None:
-        self.__config = config
+        self._config = config
         self.model = ModelProps(config)
         self.task = TaskProps(self)
 
@@ -296,10 +296,14 @@ class ComputedState:
         m: Model,
         t: TaskConfig,
     ) -> None:
+        self.m = m
+        self.t = t
         self.__setup_vars(m, t)
-        self.__setup_par_constrain(m, t)
-        self.__setup_real_dur(m, t)
-        self.__setup_real_end(m, t)
+
+    def setup_constraints(self):
+        self.__setup_par_constrain(self.m, self.t)
+        self.__setup_real_dur(self.m, self.t)
+        self.__setup_real_end(self.m, self.t)
 
     def __setup_vars(self, m: Model, t: TaskConfig):
         props = m.props
@@ -350,7 +354,7 @@ class ComputedState:
                 state.config_select == idx,
                 state.config_select != idx,
             )
-            for idx in t.cost_configs
+            for idx in range(len(t.cost_configs))
         ]
 
     def __setup_par_constrain(self, m: Model, t: TaskConfig):
@@ -362,7 +366,7 @@ class ComputedState:
         assert isinstance(self.parent_active, cmh.IntVar)
         assert isinstance(self.parent_start, cmh.IntVar)
 
-        parent_state = m.__resolve_computed_state(parent.id)
+        parent_state = m._resolve_computed_state(parent.id)
 
         # parent active is true when at least one (and in this case, exactly
         # one) of parent_configs is active
@@ -397,7 +401,7 @@ class ComputedState:
             if len(children) > 0:  # O(task)
                 # define real end time as max of children end times
                 child_end_times = [
-                    m.__resolve_computed_state(c).real_end for c in children
+                    m._resolve_computed_state(c).real_end for c in children
                 ]
                 m.model.add_max_equality(
                     self.real_end, child_end_times
@@ -422,7 +426,7 @@ class ComputedState:
                 # define real duration as sum of children
                 sum_child_dur_expr = 0
                 for c in cfg.children:
-                    sum_child_dur_expr += m.__resolve_computed_state(c).real_duration
+                    sum_child_dur_expr += m._resolve_computed_state(c).real_duration
                 m.model.add(self.real_duration == sum_child_dur_expr).with_name(
                     f"t{t.id}_real_duration_cfg{i}_child"
                 ).only_enforce_if(config_active)
@@ -433,15 +437,20 @@ class ComputedState:
             # define real duration as function of selected cost config
             assert cfg.duration is not None
 
-            m.model.add(self.real_duration == cfg.duration).with_name(
-                f"t{t.id}_real_duration_cfg{i}_duration"
-            ).only_enforce_if(config_active, self.parent_active)
-
             if isinstance(self.parent_active, cmh.IntVar):
+                m.model.add(self.real_duration == cfg.duration).with_name(
+                    f"t{t.id}_real_duration_cfg{i}_duration"
+                ).only_enforce_if(config_active, self.parent_active)
+
                 # set real duration to 0 if task config is orphaned
                 m.model.add(self.real_duration == 0).only_enforce_if(
                     self.parent_active.Not()
                 )
+            else:
+                # this is root task, duration always enforced
+                m.model.add(self.real_duration == cfg.duration).with_name(
+                    f"t{t.id}_real_duration_cfg{i}_duration"
+                ).only_enforce_if(config_active)
 
 
 @dataclass
@@ -466,7 +475,7 @@ class Model:
 
     # setup
 
-    def __resolve_computed_state(self, t: int) -> ComputedState:
+    def _resolve_computed_state(self, t: int) -> ComputedState:
         if t in self.computed_vars:
             return self.computed_vars[t]
         state = ComputedState(self, self.config.tasks[t])
@@ -593,7 +602,12 @@ class Model:
         for t in self.config.tasks.values():
             state = DecisionState(self.model, self.props, t)
             self.decision_vars[t.id] = state
-            self.computed_vars[t.id] = ComputedState(self, t)
+
+        for t in self.config.tasks.keys():
+            self._resolve_computed_state(t)
+
+        for t in self.config.tasks.keys():
+            self._resolve_computed_state(t).setup_constraints()
 
         # add start/end constraints O(task)
         for t in self.config.tasks.values():

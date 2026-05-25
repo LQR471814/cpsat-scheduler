@@ -57,7 +57,7 @@ class Task:
             # child must exist
             assert c.id in self._builder.tasks
             # child must not already be a child of another task
-            assert c._parent is None
+            assert c._parent is None or c._parent == self.id
             c._parent = self.id
             c._parent_cfgs.append(len(self._configs))
         self._configs.append(
