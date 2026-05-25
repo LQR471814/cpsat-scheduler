@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state/db"
 	"flag"
 	"log/slog"
@@ -63,7 +63,7 @@ func main() {
 		os.Exit(1)
 	}
 	server := grpc.NewServer()
-	api.RegisterAPIServer(server, impl)
+	apipb.RegisterAPIServer(server, impl)
 
 	logger.Info("listening...", "path", socket_path)
 	err = listenServer(ctx, server)

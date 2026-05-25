@@ -2,7 +2,7 @@ package solver
 
 import (
 	"context"
-	"cpsat-scheduler/internal/solver/solverpb"
+	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"log/slog"

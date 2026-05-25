@@ -2,22 +2,22 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 )
 
-func (s server) ListProfiles(ctx context.Context, in *api.ListProfilesRequest) (res *api.ListProfilesResponse, err error) {
+func (s server) ListProfiles(ctx context.Context, in *apipb.ListProfilesRequest) (res *apipb.ListProfilesResponse, err error) {
 	profiles, err := s.db.ListProfiles(ctx)
 	if err != nil {
 		return
 	}
-	res = &api.ListProfilesResponse{
-		Entries: make([]*api.Profile, len(profiles)),
+	res = &apipb.ListProfilesResponse{
+		Entries: make([]*apipb.Profile, len(profiles)),
 	}
 	for i, p := range profiles {
-		res.Entries[i] = &api.Profile{
+		res.Entries[i] = &apipb.Profile{
 			Id:              p.ID,
 			Name:            p.Name,
 			AtomicTimescale: state.SQLDurationToProto(p.AtomicTimescaleDuration),
@@ -30,7 +30,7 @@ func (s server) ListProfiles(ctx context.Context, in *api.ListProfilesRequest) (
 	return
 }
 
-func (s server) CreateProfile(ctx context.Context, in *api.CreateProfileRequest) (res *api.CreateProfileResponse, err error) {
+func (s server) CreateProfile(ctx context.Context, in *apipb.CreateProfileRequest) (res *apipb.CreateProfileResponse, err error) {
 	_, err = s.db.CreateProfile(ctx, db.CreateProfileParams{
 		Name:                    in.Name,
 		AtomicTimescaleDuration: in.AtomicTimescale.Seconds,
@@ -40,15 +40,15 @@ func (s server) CreateProfile(ctx context.Context, in *api.CreateProfileRequest)
 	if err != nil {
 		return
 	}
-	res = &api.CreateProfileResponse{}
+	res = &apipb.CreateProfileResponse{}
 	return
 }
 
-func (s server) RemoveProfile(ctx context.Context, in *api.RemoveProfileRequest) (res *api.RemoveProfileResponse, err error) {
+func (s server) RemoveProfile(ctx context.Context, in *apipb.RemoveProfileRequest) (res *apipb.RemoveProfileResponse, err error) {
 	err = s.db.DeleteProfile(ctx, in.Id)
 	if err != nil {
 		return
 	}
-	res = &api.RemoveProfileResponse{}
+	res = &apipb.RemoveProfileResponse{}
 	return
 }

@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
-	"cpsat-scheduler/internal/solver/solverpb"
+	"cpsat-scheduler/internal/proto/apipb"
+	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 )
 
-func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTasksRequest) (res *api.ListScheduledTasksResponse, err error) {
+func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduledTasksRequest) (res *apipb.ListScheduledTasksResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -28,11 +28,11 @@ func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTa
 		if err != nil {
 			return nil, err
 		}
-		res = &api.ListScheduledTasksResponse{
-			Entries: make([]*api.Entry, len(scheduled)),
+		res = &apipb.ListScheduledTasksResponse{
+			Entries: make([]*apipb.Entry, len(scheduled)),
 		}
 		for i, s := range scheduled {
-			res.Entries[i] = &api.Entry{
+			res.Entries[i] = &apipb.Entry{
 				Id:   s.Task,
 				Name: s.Name,
 			}
@@ -46,11 +46,11 @@ func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTa
 		if err != nil {
 			return nil, err
 		}
-		res = &api.ListScheduledTasksResponse{
-			Entries: make([]*api.Entry, len(scheduled)),
+		res = &apipb.ListScheduledTasksResponse{
+			Entries: make([]*apipb.Entry, len(scheduled)),
 		}
 		for i, s := range scheduled {
-			res.Entries[i] = &api.Entry{
+			res.Entries[i] = &apipb.Entry{
 				Id:   s.Task,
 				Name: s.Name,
 			}
@@ -61,7 +61,7 @@ func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTa
 }
 
 // RecomputeSchedule lists all profiles, runs scheduling for each profile, and persists the generated schedules.
-func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeScheduleRequest) (res *api.RecomputeScheduleResponse, err error) {
+func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeScheduleRequest) (res *apipb.RecomputeScheduleResponse, err error) {
 	statectx, err := state.NewContext(ctx, s.logger, s.driver, &sql.TxOptions{
 		ReadOnly: true,
 	})
@@ -102,7 +102,7 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 		}
 	}
 
-	res = &api.RecomputeScheduleResponse{}
+	res = &apipb.RecomputeScheduleResponse{}
 	return
 }
 

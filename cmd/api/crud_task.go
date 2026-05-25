@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state"
 	"database/sql"
 	"strings"
 )
 
-func (s server) ReadTask(ctx context.Context, in *api.ReadTaskRequest) (res *api.ReadTaskResponse, err error) {
+func (s server) ReadTask(ctx context.Context, in *apipb.ReadTaskRequest) (res *apipb.ReadTaskResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, &sql.TxOptions{
 		ReadOnly: true,
 	})
@@ -21,11 +21,11 @@ func (s server) ReadTask(ctx context.Context, in *api.ReadTaskRequest) (res *api
 	if err != nil {
 		return
 	}
-	res = &api.ReadTaskResponse{State: taskState}
+	res = &apipb.ReadTaskResponse{State: taskState}
 	return
 }
 
-func (s server) SaveTask(ctx context.Context, in *api.SaveTaskRequest) (res *api.SaveTaskResponse, err error) {
+func (s server) SaveTask(ctx context.Context, in *apipb.SaveTaskRequest) (res *apipb.SaveTaskResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -41,11 +41,11 @@ func (s server) SaveTask(ctx context.Context, in *api.SaveTaskRequest) (res *api
 	if err != nil {
 		return
 	}
-	res = &api.SaveTaskResponse{Id: id}
+	res = &apipb.SaveTaskResponse{Id: id}
 	return
 }
 
-func (s server) DeleteTask(ctx context.Context, in *api.DeleteTaskRequest) (res *api.DeleteTaskResponse, err error) {
+func (s server) DeleteTask(ctx context.Context, in *apipb.DeleteTaskRequest) (res *apipb.DeleteTaskResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -60,11 +60,11 @@ func (s server) DeleteTask(ctx context.Context, in *api.DeleteTaskRequest) (res 
 	if err != nil {
 		return
 	}
-	res = &api.DeleteTaskResponse{}
+	res = &apipb.DeleteTaskResponse{}
 	return
 }
 
-func (s server) ListPossibleRelatives(ctx context.Context, in *api.ListPossibleRelativesRequest) (res *api.ListPossibleRelativesResponse, err error) {
+func (s server) ListPossibleRelatives(ctx context.Context, in *apipb.ListPossibleRelativesRequest) (res *apipb.ListPossibleRelativesResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -81,7 +81,7 @@ func (s server) ListPossibleRelatives(ctx context.Context, in *api.ListPossibleR
 	var query strings.Builder
 	query.WriteString(`select id, name from task t`)
 	switch in.Type {
-	case api.ListPossibleRelativesRequest_CHILD:
+	case apipb.ListPossibleRelativesRequest_CHILD:
 		// where unit is smaller and exclude ones that are already children
 		query.WriteString(` where unit < ? and not exists (
 select 1 from children_config c
@@ -98,7 +98,7 @@ where c.task = t.id
 			query.WriteString(` and (end is null or end < ?)`)
 			args = append(args, task.End.Int64)
 		}
-	case api.ListPossibleRelativesRequest_PARENT:
+	case apipb.ListPossibleRelativesRequest_PARENT:
 		// where unit is larger and exclude already existing parent
 		query.WriteString(` where unit > ? and not exists (
 select 1 from children_config c
@@ -107,7 +107,7 @@ inner join children_config_child cc
 where cc.child = t.id
 )`)
 		args = append(args, task.Unit)
-	case api.ListPossibleRelativesRequest_PREREQ:
+	case apipb.ListPossibleRelativesRequest_PREREQ:
 		// where unit is the same and potential prereq with explicit end time
 		// must end before starting
 		query.WriteString(` where unit = ?`)
@@ -116,7 +116,7 @@ where cc.child = t.id
 			query.WriteString(` and (end is null or end < ?)`)
 			args = append(args, task.Start.Int64)
 		}
-	case api.ListPossibleRelativesRequest_POSTREQ:
+	case apipb.ListPossibleRelativesRequest_POSTREQ:
 		// where unit is the same and potential postreq with explicit start
 		// time must start after end
 		query.WriteString(` where unit = ?`)
@@ -133,9 +133,9 @@ where cc.child = t.id
 	}
 	defer rows.Close()
 
-	var items []*api.Entry
+	var items []*apipb.Entry
 	for rows.Next() {
-		entry := &api.Entry{}
+		entry := &apipb.Entry{}
 		err = rows.Scan(&entry.Id, &entry.Name)
 		if err != nil {
 			return

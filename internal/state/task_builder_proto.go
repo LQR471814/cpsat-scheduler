@@ -2,7 +2,7 @@ package state
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"errors"
@@ -13,7 +13,7 @@ func loadProtoTask(
 	ctx context.Context,
 	txqry *db.Queries,
 	task int64,
-) (*api.TaskState, error) {
+) (*apipb.TaskState, error) {
 	t, err := txqry.GetTask(ctx, task)
 	if err != nil {
 		return nil, err
@@ -23,23 +23,23 @@ func loadProtoTask(
 		return nil, fmt.Errorf("assert: Name is empty")
 	}
 
-	return &api.TaskState{
+	return &apipb.TaskState{
 		Timescale: t.Unit,
 		Name:      t.Name,
 		Desc:      t.Desc,
 	}, nil
 }
 
-func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api.TaskState) error {
+func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *apipb.TaskState) error {
 	cfg, err := txqry.GetDurConfig(ctx, task)
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	} else if err != nil {
 		return err
 	} else {
-		s.DurationCfg = &api.DurState{
+		s.DurationCfg = &apipb.DurState{
 			Deadline: SQLTimeToProto(cfg.Deadline),
-			Pert: &api.PERT{
+			Pert: &apipb.PERT{
 				Pes: SQLDurationToProto(cfg.Pes),
 				Exp: SQLDurationToProto(cfg.Exp),
 				Opt: SQLDurationToProto(cfg.Opt),
@@ -53,21 +53,21 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 		return err
 	}
 
-	s.ChildrenCfgs = make([]*api.ChildrenConfigState, len(configs))
+	s.ChildrenCfgs = make([]*apipb.ChildrenConfigState, len(configs))
 	for i, c := range configs {
 		children, err := txqry.ListChildrenConfigChildren(ctx, c.ID)
 		if err != nil {
 			return err
 		}
-		childrenEntries := make([]*api.Entry, len(children))
+		childrenEntries := make([]*apipb.Entry, len(children))
 		for i, child := range children {
-			childrenEntries[i] = &api.Entry{
+			childrenEntries[i] = &apipb.Entry{
 				Id:   child.ID,
 				Name: child.Name,
 			}
 		}
 
-		s.ChildrenCfgs[i] = &api.ChildrenConfigState{
+		s.ChildrenCfgs[i] = &apipb.ChildrenConfigState{
 			Desc:     c.Desc,
 			Deadline: SQLTimeToProto(c.Deadline),
 			ExpCost:  SQLInt64ToProto(c.ExpCost),
@@ -78,16 +78,16 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 	return nil
 }
 
-func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s *api.TaskState) error {
+func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s *apipb.TaskState) error {
 	var err error
 
 	prereqs, err := txqry.ListPrereq(ctx, task)
 	if err != nil {
 		return err
 	}
-	s.Prereqs = make([]*api.Entry, len(prereqs))
+	s.Prereqs = make([]*apipb.Entry, len(prereqs))
 	for i, r := range prereqs {
-		s.Prereqs[i] = &api.Entry{
+		s.Prereqs[i] = &apipb.Entry{
 			Id:   r.ID,
 			Name: r.Name,
 		}
@@ -97,9 +97,9 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 	if err != nil {
 		return err
 	}
-	s.Postreqs = make([]*api.Entry, len(postreqs))
+	s.Postreqs = make([]*apipb.Entry, len(postreqs))
 	for i, r := range postreqs {
-		s.Postreqs[i] = &api.Entry{
+		s.Postreqs[i] = &apipb.Entry{
 			Id:   r.ID,
 			Name: r.Name,
 		}
@@ -113,7 +113,7 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 		return err
 	}
 
-	s.Parent = &api.Entry{
+	s.Parent = &apipb.Entry{
 		Id:   par.ID,
 		Name: par.Name,
 	}
@@ -124,7 +124,7 @@ func LoadProtoTaskState(
 	ctx context.Context,
 	txqry *db.Queries,
 	task int64,
-) (*api.TaskState, error) {
+) (*apipb.TaskState, error) {
 	s, err := loadProtoTask(ctx, txqry, task)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func saveProtoTask(
 	txqry *db.Queries,
 	task *int64,
 	profile int64,
-	s *api.TaskState,
+	s *apipb.TaskState,
 ) (int64, error) {
 	if s == nil {
 		panic("assert: state != nil")
@@ -171,7 +171,7 @@ func saveProtoTask(
 	return id, err
 }
 
-func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api.TaskState) error {
+func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *apipb.TaskState) error {
 	if s.DurationCfg != nil {
 		if err := txqry.CreateDurConfig(ctx, db.CreateDurConfigParams{
 			Task:      task,
@@ -213,7 +213,7 @@ func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 	return nil
 }
 
-func saveProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s *api.TaskState) error {
+func saveProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s *apipb.TaskState) error {
 	for _, req := range s.Prereqs {
 		if err := txqry.SetPrereq(ctx, db.SetPrereqParams{
 			Prereq:  req.Id,
@@ -254,7 +254,7 @@ func SaveProtoTaskState(
 	txqry *db.Queries,
 	task *int64,
 	profile int64,
-	state *api.TaskState,
+	state *apipb.TaskState,
 ) (id int64, err error) {
 	if state.DurationCfg == nil && len(state.ChildrenCfgs) == 0 {
 		err = fmt.Errorf("invalid input: either duration_cfg must be specified or at least one children_cfg must be specified, both can be specified but not neither")

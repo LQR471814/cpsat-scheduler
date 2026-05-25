@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const frontmatter = `const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
+const frontmatter = `const SOCKET_PATH = "/tmp/cpsat-scheduler.apipb.sock"
 
 const self_path = path self
 

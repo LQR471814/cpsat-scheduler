@@ -1,7 +1,7 @@
 package state
 
 import (
-	"cpsat-scheduler/internal/solver/solverpb"
+	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state/db"
 	"math"
 )

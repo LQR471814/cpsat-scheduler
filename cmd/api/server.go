@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/solver"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 )
 
 type server struct {
-	api.UnimplementedAPIServer
+	apipb.UnimplementedAPIServer
 
 	ctx    context.Context
 	logger *slog.Logger

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s server) ListProgressUpdates(ctx context.Context, req *api.ListProgressUpdatesRequest) (res *api.ListProgressUpdatesResponse, err error) {
+func (s server) ListProgressUpdates(ctx context.Context, req *apipb.ListProgressUpdatesRequest) (res *apipb.ListProgressUpdatesResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, &sql.TxOptions{
 		ReadOnly: true,
 	})
@@ -28,8 +28,8 @@ func (s server) ListProgressUpdates(ctx context.Context, req *api.ListProgressUp
 	if err != nil {
 		return
 	}
-	res = &api.ListProgressUpdatesResponse{
-		Logs: make([]*api.ListProgressUpdatesResponse_ProgressLog, len(logs)),
+	res = &apipb.ListProgressUpdatesResponse{
+		Logs: make([]*apipb.ListProgressUpdatesResponse_ProgressLog, len(logs)),
 	}
 	for i, l := range logs {
 		var updated []db.ListUpdatedTaskRow
@@ -37,15 +37,15 @@ func (s server) ListProgressUpdates(ctx context.Context, req *api.ListProgressUp
 		if err != nil {
 			return
 		}
-		res.Logs[i] = &api.ListProgressUpdatesResponse_ProgressLog{
+		res.Logs[i] = &apipb.ListProgressUpdatesResponse_ProgressLog{
 			Desc:    l.Desc,
 			Time:    timestamppb.New(l.Time),
-			Updates: make([]*api.ListProgressUpdatesResponse_ProgressLog_UpdatedTask, len(updated)),
+			Updates: make([]*apipb.ListProgressUpdatesResponse_ProgressLog_UpdatedTask, len(updated)),
 		}
 		for j, u := range updated {
-			res.Logs[j].Updates[j] = &api.ListProgressUpdatesResponse_ProgressLog_UpdatedTask{
+			res.Logs[j].Updates[j] = &apipb.ListProgressUpdatesResponse_ProgressLog_UpdatedTask{
 				Desc: u.Desc,
-				Task: &api.Entry{
+				Task: &apipb.Entry{
 					Id:   u.Task,
 					Name: u.TaskName,
 				},
@@ -55,7 +55,7 @@ func (s server) ListProgressUpdates(ctx context.Context, req *api.ListProgressUp
 	return
 }
 
-func (s server) ProgressUpdate(ctx context.Context, req *api.ProgressUpdateRequest) (res *api.ProgressUpdateResponse, err error) {
+func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateRequest) (res *apipb.ProgressUpdateResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -86,11 +86,11 @@ func (s server) ProgressUpdate(ctx context.Context, req *api.ProgressUpdateReque
 	if err != nil {
 		return
 	}
-	res = &api.ProgressUpdateResponse{Id: id}
+	res = &apipb.ProgressUpdateResponse{Id: id}
 	return
 }
 
-func (s server) EditProgressLog(ctx context.Context, req *api.EditProgressLogRequest) (res *api.EditProgressLogResponse, err error) {
+func (s server) EditProgressLog(ctx context.Context, req *apipb.EditProgressLogRequest) (res *apipb.EditProgressLogResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -135,27 +135,27 @@ func (s server) EditProgressLog(ctx context.Context, req *api.EditProgressLogReq
 		return
 	}
 
-	res = &api.EditProgressLogResponse{}
+	res = &apipb.EditProgressLogResponse{}
 	return
 }
 
-func (s server) DeleteProgressLog(ctx context.Context, req *api.DeleteProgressLogRequest) (res *api.DeleteProgressLogResponse, err error) {
+func (s server) DeleteProgressLog(ctx context.Context, req *apipb.DeleteProgressLogRequest) (res *apipb.DeleteProgressLogResponse, err error) {
 	err = s.db.DeleteProgressLog(ctx, req.GetId())
 	if err != nil {
 		return
 	}
-	res = &api.DeleteProgressLogResponse{}
+	res = &apipb.DeleteProgressLogResponse{}
 	return
 }
 
-func (s server) GetLastCheckpoint(ctx context.Context, req *api.GetLastCheckpointRequest) (res *api.GetLastCheckpointResponse, err error) {
+func (s server) GetLastCheckpoint(ctx context.Context, req *apipb.GetLastCheckpointRequest) (res *apipb.GetLastCheckpointResponse, err error) {
 	t, err := s.db.GetLastCheckpoint(ctx, req.GetProfile())
 	if err == nil {
-		res = &api.GetLastCheckpointResponse{
+		res = &apipb.GetLastCheckpointResponse{
 			Time: timestamppb.New(t),
 		}
 	} else if errors.Is(err, sql.ErrNoRows) {
-		res = &api.GetLastCheckpointResponse{Time: nil}
+		res = &apipb.GetLastCheckpointResponse{Time: nil}
 		err = nil
 	}
 	return

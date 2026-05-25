@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"cpsat-scheduler/internal/api"
+	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s server) CreateEvent(ctx context.Context, req *api.CreateEventRequest) (res *api.CreateEventResponse, err error) {
+func (s server) CreateEvent(ctx context.Context, req *apipb.CreateEventRequest) (res *apipb.CreateEventResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
 		return
@@ -33,11 +33,11 @@ func (s server) CreateEvent(ctx context.Context, req *api.CreateEventRequest) (r
 	if err != nil {
 		return
 	}
-	res = &api.CreateEventResponse{}
+	res = &apipb.CreateEventResponse{}
 	return
 }
 
-func (s server) ReadEvent(ctx context.Context, in *api.ReadEventRequest) (res *api.ReadEventResponse, err error) {
+func (s server) ReadEvent(ctx context.Context, in *apipb.ReadEventRequest) (res *apipb.ReadEventResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, &sql.TxOptions{
 		ReadOnly: true,
 	})
@@ -51,8 +51,8 @@ func (s server) ReadEvent(ctx context.Context, in *api.ReadEventRequest) (res *a
 	if err != nil {
 		return
 	}
-	res = &api.ReadEventResponse{
-		Event: &api.Event{
+	res = &apipb.ReadEventResponse{
+		Event: &apipb.Event{
 			Name:    ev.Name,
 			Desc:    ev.Desc,
 			Profile: ev.Profile,
@@ -63,7 +63,7 @@ func (s server) ReadEvent(ctx context.Context, in *api.ReadEventRequest) (res *a
 	return
 }
 
-func (s server) UpdateEvent(ctx context.Context, in *api.UpdateEventRequest) (res *api.UpdateEventResponse, err error) {
+func (s server) UpdateEvent(ctx context.Context, in *apipb.UpdateEventRequest) (res *apipb.UpdateEventResponse, err error) {
 	err = s.db.UpdateEvent(ctx, db.UpdateEventParams{
 		ID:      in.GetId(),
 		Profile: in.GetEvent().GetProfile(),
@@ -74,20 +74,20 @@ func (s server) UpdateEvent(ctx context.Context, in *api.UpdateEventRequest) (re
 	if err != nil {
 		return
 	}
-	res = &api.UpdateEventResponse{}
+	res = &apipb.UpdateEventResponse{}
 	return
 }
 
-func (s server) ListEvent(ctx context.Context, in *api.ListEventRequest) (res *api.ListEventResponse, err error) {
+func (s server) ListEvent(ctx context.Context, in *apipb.ListEventRequest) (res *apipb.ListEventResponse, err error) {
 	events, err := s.db.ListEvent(ctx, in.GetProfile())
 	if err != nil {
 		return
 	}
-	res = &api.ListEventResponse{
-		Entries: make([]*api.Entry, len(events)),
+	res = &apipb.ListEventResponse{
+		Entries: make([]*apipb.Entry, len(events)),
 	}
 	for i, ev := range events {
-		res.Entries[i] = &api.Entry{
+		res.Entries[i] = &apipb.Entry{
 			Id:   ev.ID,
 			Name: ev.Name,
 		}
@@ -95,11 +95,11 @@ func (s server) ListEvent(ctx context.Context, in *api.ListEventRequest) (res *a
 	return
 }
 
-func (s server) RemoveEvent(ctx context.Context, in *api.RemoveEventRequest) (res *api.RemoveEventResponse, err error) {
+func (s server) RemoveEvent(ctx context.Context, in *apipb.RemoveEventRequest) (res *apipb.RemoveEventResponse, err error) {
 	err = s.db.DeleteEvent(ctx, in.GetId())
 	if err != nil {
 		return
 	}
-	res = &api.RemoveEventResponse{}
+	res = &apipb.RemoveEventResponse{}
 	return
 }
