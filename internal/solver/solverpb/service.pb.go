@@ -469,62 +469,10 @@ func (*SolvedTask_DurIdx) isSolvedTask_Config() {}
 
 func (*SolvedTask_ChildrenIdx) isSolvedTask_Config() {}
 
-type Interval struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Start         int64                  `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
-	End           int64                  `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Interval) Reset() {
-	*x = Interval{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Interval) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Interval) ProtoMessage() {}
-
-func (x *Interval) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Interval.ProtoReflect.Descriptor instead.
-func (*Interval) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *Interval) GetStart() int64 {
-	if x != nil {
-		return x.Start
-	}
-	return 0
-}
-
-func (x *Interval) GetEnd() int64 {
-	if x != nil {
-		return x.End
-	}
-	return 0
-}
-
 // Solve
 type SolveRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Horizon       *Interval              `protobuf:"bytes,1,opt,name=horizon,proto3" json:"horizon,omitempty"`
+	Horizon       *SolveRequest_Interval `protobuf:"bytes,1,opt,name=horizon,proto3" json:"horizon,omitempty"`
 	Tasks         []*Task                `protobuf:"bytes,2,rep,name=tasks,proto3" json:"tasks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -532,7 +480,7 @@ type SolveRequest struct {
 
 func (x *SolveRequest) Reset() {
 	*x = SolveRequest{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[6]
+	mi := &file_solver_solverpb_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -544,7 +492,7 @@ func (x *SolveRequest) String() string {
 func (*SolveRequest) ProtoMessage() {}
 
 func (x *SolveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[6]
+	mi := &file_solver_solverpb_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,10 +505,10 @@ func (x *SolveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveRequest.ProtoReflect.Descriptor instead.
 func (*SolveRequest) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{6}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *SolveRequest) GetHorizon() *Interval {
+func (x *SolveRequest) GetHorizon() *SolveRequest_Interval {
 	if x != nil {
 		return x.Horizon
 	}
@@ -585,7 +533,7 @@ type SolveResponse struct {
 
 func (x *SolveResponse) Reset() {
 	*x = SolveResponse{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[7]
+	mi := &file_solver_solverpb_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -597,7 +545,7 @@ func (x *SolveResponse) String() string {
 func (*SolveResponse) ProtoMessage() {}
 
 func (x *SolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[7]
+	mi := &file_solver_solverpb_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -610,7 +558,7 @@ func (x *SolveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveResponse.ProtoReflect.Descriptor instead.
 func (*SolveResponse) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{7}
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SolveResponse) GetStatus() SolveStatus {
@@ -632,6 +580,58 @@ func (x *SolveResponse) GetSolution() []*SolvedTask {
 		return x.Solution
 	}
 	return nil
+}
+
+type SolveRequest_Interval struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Start         int64                  `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
+	End           int64                  `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SolveRequest_Interval) Reset() {
+	*x = SolveRequest_Interval{}
+	mi := &file_solver_solverpb_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SolveRequest_Interval) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SolveRequest_Interval) ProtoMessage() {}
+
+func (x *SolveRequest_Interval) ProtoReflect() protoreflect.Message {
+	mi := &file_solver_solverpb_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SolveRequest_Interval.ProtoReflect.Descriptor instead.
+func (*SolveRequest_Interval) Descriptor() ([]byte, []int) {
+	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{5, 0}
+}
+
+func (x *SolveRequest_Interval) GetStart() int64 {
+	if x != nil {
+		return x.Start
+	}
+	return 0
+}
+
+func (x *SolveRequest_Interval) GetEnd() int64 {
+	if x != nil {
+		return x.End
+	}
+	return 0
 }
 
 var File_solver_solverpb_service_proto protoreflect.FileDescriptor
@@ -669,13 +669,13 @@ const file_solver_solverpb_service_proto_rawDesc = "" +
 	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12\x1a\n" +
 	"\bduration\x18\x06 \x01(\x03R\bduration\x12\x10\n" +
 	"\x03end\x18\a \x01(\x03R\x03endB\b\n" +
-	"\x06config\"2\n" +
+	"\x06config\"\x91\x01\n" +
+	"\fSolveRequest\x120\n" +
+	"\ahorizon\x18\x01 \x01(\v2\x16.SolveRequest.IntervalR\ahorizon\x12\x1b\n" +
+	"\x05tasks\x18\x02 \x03(\v2\x05.TaskR\x05tasks\x1a2\n" +
 	"\bInterval\x12\x14\n" +
 	"\x05start\x18\x01 \x01(\x03R\x05start\x12\x10\n" +
-	"\x03end\x18\x02 \x01(\x03R\x03end\"P\n" +
-	"\fSolveRequest\x12#\n" +
-	"\ahorizon\x18\x01 \x01(\v2\t.IntervalR\ahorizon\x12\x1b\n" +
-	"\x05tasks\x18\x02 \x03(\v2\x05.TaskR\x05tasks\"t\n" +
+	"\x03end\x18\x02 \x01(\x03R\x03end\"t\n" +
 	"\rSolveResponse\x12$\n" +
 	"\x06status\x18\x01 \x01(\x0e2\f.SolveStatusR\x06status\x12\x14\n" +
 	"\x05score\x18\x02 \x01(\x03R\x05score\x12'\n" +
@@ -705,27 +705,27 @@ func file_solver_solverpb_service_proto_rawDescGZIP() []byte {
 var file_solver_solverpb_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_solver_solverpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_solver_solverpb_service_proto_goTypes = []any{
-	(SolveStatus)(0),       // 0: SolveStatus
-	(*CostInterval)(nil),   // 1: CostInterval
-	(*DurConfig)(nil),      // 2: DurConfig
-	(*ChildrenConfig)(nil), // 3: ChildrenConfig
-	(*Task)(nil),           // 4: Task
-	(*SolvedTask)(nil),     // 5: SolvedTask
-	(*Interval)(nil),       // 6: Interval
-	(*SolveRequest)(nil),   // 7: SolveRequest
-	(*SolveResponse)(nil),  // 8: SolveResponse
+	(SolveStatus)(0),              // 0: SolveStatus
+	(*CostInterval)(nil),          // 1: CostInterval
+	(*DurConfig)(nil),             // 2: DurConfig
+	(*ChildrenConfig)(nil),        // 3: ChildrenConfig
+	(*Task)(nil),                  // 4: Task
+	(*SolvedTask)(nil),            // 5: SolvedTask
+	(*SolveRequest)(nil),          // 6: SolveRequest
+	(*SolveResponse)(nil),         // 7: SolveResponse
+	(*SolveRequest_Interval)(nil), // 8: SolveRequest.Interval
 }
 var file_solver_solverpb_service_proto_depIdxs = []int32{
 	1, // 0: DurConfig.intervals:type_name -> CostInterval
 	1, // 1: ChildrenConfig.intervals:type_name -> CostInterval
 	2, // 2: Task.dur_cfgs:type_name -> DurConfig
 	3, // 3: Task.children_cfgs:type_name -> ChildrenConfig
-	6, // 4: SolveRequest.horizon:type_name -> Interval
+	8, // 4: SolveRequest.horizon:type_name -> SolveRequest.Interval
 	4, // 5: SolveRequest.tasks:type_name -> Task
 	0, // 6: SolveResponse.status:type_name -> SolveStatus
 	5, // 7: SolveResponse.solution:type_name -> SolvedTask
-	7, // 8: Solver.Solve:input_type -> SolveRequest
-	8, // 9: Solver.Solve:output_type -> SolveResponse
+	6, // 8: Solver.Solve:input_type -> SolveRequest
+	7, // 9: Solver.Solve:output_type -> SolveResponse
 	9, // [9:10] is the sub-list for method output_type
 	8, // [8:9] is the sub-list for method input_type
 	8, // [8:8] is the sub-list for extension type_name

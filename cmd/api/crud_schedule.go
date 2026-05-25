@@ -80,7 +80,10 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 
 	s.logger.Debug("solving profile", "profile", profileID)
 
-	solveRes, err := s.solver.SolveProfile(statectx, profile)
+	solveRes, err := s.solver.SolveProfile(statectx, profile, &solverpb.SolveRequest_Interval{
+		Start: state.RealTimeToProfileTime(req.GetHorizon().GetStart().AsTime(), profile),
+		End:   state.RealTimeToProfileTime(req.GetHorizon().GetEnd().AsTime(), profile),
+	})
 	if err != nil {
 		return
 	}

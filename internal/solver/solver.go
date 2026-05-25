@@ -60,7 +60,7 @@ func (s Solver) Close() error {
 
 // SolveProfile loads the task state of a profile from the database, runs
 // scheduling, and returns the result. (note: it will prune scheduled events)
-func (s Solver) SolveProfile(c state.Context, profile db.Profile) (res *solverpb.SolveResponse, err error) {
+func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon *solverpb.SolveRequest_Interval) (res *solverpb.SolveResponse, err error) {
 	var tasks []*solverpb.Task
 
 	s.logger.Debug("loading profile state")
@@ -76,7 +76,8 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile) (res *solverpb
 
 	s.logger.Debug("generated event tasks, solving...", "tasks", len(tasks))
 	res, err = s.SolverClient.Solve(c.Ctx(), &solverpb.SolveRequest{
-		Tasks: tasks,
+		Tasks:   tasks,
+		Horizon: horizon,
 	})
 	if err != nil {
 		return

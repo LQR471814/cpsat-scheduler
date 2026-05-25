@@ -2,6 +2,7 @@ import logging
 import time
 from concurrent import futures
 import os
+import traceback
 
 import grpc
 from google.protobuf.internal import containers as _containers
@@ -105,6 +106,7 @@ class SolverServicer(grpcpb.SolverServicer):
                 solution=solution_conv,
             )
         except Exception as err:
+            traceback.print_exc()
             context.abort(grpc.StatusCode.INTERNAL, f"internal error: {err}")
 
 

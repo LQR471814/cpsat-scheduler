@@ -100,7 +100,12 @@ message DeleteTaskResponse {}
 
 // RecomputeSchedule
 message RecomputeScheduleRequest {
+  message Interval {
+    google.protobuf.Timestamp start = 1;
+    google.protobuf.Timestamp end = 2;
+  }
   int64 profile = 1;
+  Interval horizon = 2;
 }
 message RecomputeScheduleResponse {}
 
