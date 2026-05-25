@@ -14,6 +14,7 @@ from cpsatmodel.config import (
 from cpsatmodel.config_builder import ConfigBuilder, Task
 import solverpb.service_pb2 as pb
 import solverpb.service_pb2_grpc as grpcpb
+import commonpb.types_pb2 as commonpb
 from ortools.sat.python import cp_model
 
 
@@ -30,7 +31,7 @@ class SolverServicer(grpcpb.SolverServicer):
     def Solve(self, request: pb.SolveRequest, context):
         try:
             horizon = (request.horizon.start, request.horizon.end)
-            builder = ConfigBuilder(horizon)
+            builder = ConfigBuilder((horizon[0].value, horizon[1].value))
 
             task_map: dict[int, pb.Task] = {}
             for solved in request.tasks:
@@ -40,7 +41,9 @@ class SolverServicer(grpcpb.SolverServicer):
                 intervals: _containers.RepeatedCompositeFieldContainer[pb.CostInterval],
             ) -> list[CostInterval]:
                 return [
-                    CostInterval(interval=(intv.start, intv.end), cost=intv.cost)
+                    CostInterval(
+                        interval=(intv.start.value, intv.end.value), cost=intv.cost
+                    )
                     for intv in intervals
                 ]
 
@@ -53,20 +56,20 @@ class SolverServicer(grpcpb.SolverServicer):
 
                 start: int | None = None
                 if task.HasField("start"):
-                    start = task.start
+                    start = task.start.value
                 end: int | None = None
                 if task.HasField("end"):
-                    end = task.end
+                    end = task.end.value
 
                 for id in task.prereqs:
                     __ensure_task(id)
 
-                t = Task(builder=builder, unit=task.unit, start=start, end=end)
+                t = Task(builder=builder, unit=task.unit.value, start=start, end=end)
                 id_task_map[t.id] = task
 
                 for cfg in task.dur_cfgs:
                     t.add_cost_config_duration(
-                        __convert_cost_intv(cfg.intervals), cfg.duration
+                        __convert_cost_intv(cfg.intervals), cfg.duration.value
                     )
                 for cfg in task.children_cfgs:
                     t.add_cost_config_children(
@@ -88,10 +91,10 @@ class SolverServicer(grpcpb.SolverServicer):
 
                 obj = pb.SolvedTask(
                     id=task.id,
-                    start=solved.start,
-                    end=solved.real_end,
+                    start=commonpb.AtomicUnit(solved.start * task.unit.value),
+                    end=commonpb.AtomicUnit(solved.real_end),
                     cost=solved.real_cost,
-                    duration=solved.real_duration,
+                    duration=commonpb.AtomicUnit(solved.real_duration),
                 )
                 if solved.config >= len(task.dur_cfgs):
                     obj.children_idx = solved.config - len(task.dur_cfgs)

@@ -145,6 +145,7 @@ class TaskProps:
         parent_bound: tuple[int, int]
         if t.timescale_unit == self.__props.model.max_timescale:
             horizon_lb, horizon_ub = self.__props._config.horizon
+            print(t.timescale_unit)
             # horizon is in terms of the atomic timescale so we divide by unit
             parent_bound = (
                 horizon_lb // t.timescale_unit,
