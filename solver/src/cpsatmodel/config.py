@@ -116,8 +116,8 @@ class TaskProps:
         self.resolve_dur_bounds: Callable[[int], tuple[int, int]] = cache(
             self.__compute_dur_bounds
         )
-        self.resolve_end_bounds: Callable[[int], tuple[int, int]] = cache(
-            self.__compute_end_bounds
+        self.resolve_real_end_bounds: Callable[[int], tuple[int, int]] = cache(
+            self.__compute_real_end_bounds
         )
         self.resolve_parent_cfg: Callable[[int], TaskConfig | None] = cache(
             self.__get_parent_cfg
@@ -174,10 +174,14 @@ class TaskProps:
             t.end if t.end is not None else parent_bound[1],
         )
 
-    def __compute_end_bounds(self, task_id: int) -> tuple[int, int]:
+    def __compute_real_end_bounds(self, task_id: int) -> tuple[int, int]:
         t = self.__get_task_cfg(task_id)
 
         start_lb, start_ub = self.resolve_start_bounds(task_id)
+
+        # convert start/end in terms of atomic unit
+        start_lb = start_lb * t.timescale_unit
+        start_ub = start_ub * t.timescale_unit
 
         min_end = sys.maxsize
         max_end = 0
@@ -196,7 +200,7 @@ class TaskProps:
                 continue
 
             for child in cfg.children:
-                end_lb, end_ub = self.resolve_end_bounds(child)
+                end_lb, end_ub = self.resolve_real_end_bounds(child)
                 if end_lb < min_end:
                     min_end = end_lb
                 if end_ub > max_end:
@@ -315,7 +319,7 @@ class ComputedState:
 
         # non-leaf task: real end = max{child end times}
         # leaf task: real end = next unit after start
-        end_lb, end_ub = props.task.resolve_end_bounds(t.id)
+        end_lb, end_ub = props.task.resolve_real_end_bounds(t.id)
         self.real_end = model.new_int_var(end_lb, end_ub, f"t{t.id}_real_end")
 
         # should compute min/max per task
