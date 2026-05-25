@@ -71,12 +71,17 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 	}
 
 	s.logger.Debug("loaded profile state, generating event tasks...", "tasks", len(tasks))
-	events, err := state.GenerateEventTasks(c, profile, horizon, &tasks)
+	_, err = state.GenerateEventTasks(c, profile, horizon, &tasks)
 	if err != nil {
 		return
 	}
 
-	s.logger.Debug("generated event tasks, solving...", "tasks", len(tasks))
+	s.logger.Debug(
+		"generated event tasks, solving...",
+		"tasks", len(tasks),
+		"horizon_start", horizon.Start.Value,
+		"horizon_end", horizon.End.Value,
+	)
 	res, err = s.SolverClient.Solve(c.Ctx(), &solverpb.SolveRequest{
 		Tasks: tasks,
 		Horizon: &commonpb.AtomicInterval{
@@ -95,24 +100,6 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 			continue
 		}
 		solution = append(solution, scheduled)
-	}
-
-	// add (full) events back into solution
-	id := int64(-1)
-	for _, ev := range events {
-		start := state.RealTimeToProfileTime(ev.Start, profile)
-		end := state.RealTimeToProfileTime(ev.End, profile)
-		solution = append(solution, &solverpb.SolvedTask{
-			Id:       id,
-			Start:    &commonpb.AtomicUnit{Value: start},
-			End:      &commonpb.AtomicUnit{Value: end},
-			Cost:     0,
-			Duration: &commonpb.AtomicUnit{Value: end - start},
-			Config: &solverpb.SolvedTask_DurIdx{
-				DurIdx: 0,
-			},
-		})
-		id--
 	}
 	res.Solution = solution
 

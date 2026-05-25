@@ -80,8 +80,8 @@ func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeSched
 	s.logger.Debug("solving profile", "profile", profile.ID)
 
 	horizon := state.Horizon{
-		Start: &commonpb.AtomicUnit{Value: state.RealTimeToProfileTime(req.GetHorizon().GetStart().AsTime(), profile)},
-		End:   &commonpb.AtomicUnit{Value: state.RealTimeToProfileTime(req.GetHorizon().GetEnd().AsTime(), profile)},
+		Start: &commonpb.AtomicUnit{Value: int64(state.RealTimeToProfileTime(req.GetHorizon().GetStart().AsTime(), profile))},
+		End:   &commonpb.AtomicUnit{Value: int64(state.RealTimeToProfileTime(req.GetHorizon().GetEnd().AsTime(), profile))},
 	}
 	solveRes, err := s.solver.SolveProfile(statectx, profile, horizon)
 	if err != nil {

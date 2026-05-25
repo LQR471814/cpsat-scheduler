@@ -21,8 +21,8 @@ message ChildrenConfig {
 message Task {
   int64 id = 1;
   AtomicUnit unit = 2;
-  optional AtomicUnit start = 3;
-  optional AtomicUnit end = 4;
+  optional TaskUnit start = 3;
+  optional TaskUnit end = 4;
 
   repeated int64 prereqs = 5;
   repeated DurConfig dur_cfgs = 6;
@@ -32,7 +32,7 @@ message Task {
 message SolvedTask {
   // the id passed in the request
   int64 id = 1;
-  AtomicUnit start = 2;
+  TaskUnit start = 2;
   // the config selected
   oneof config {
     // the id of the duration config

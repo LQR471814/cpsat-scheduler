@@ -4,23 +4,26 @@ from cpsatmodel import (
     Model,
     ConfigBuilder,
     Task,
+    atomic_unit,
+    task_unit,
 )
 from ortools.sat.python import cp_model
 
-minute_15 = 1  # atomic timescale
-hour_4 = 4 * 4 * minute_15
-day = 6 * hour_4
-week = 7 * day
-month = 4 * week
-quarter = 3 * month
-year = 4 * quarter
-year_2 = 2 * year
-year_4 = 2 * year_2
-year_8 = 2 * year_4
-year_16 = 2 * year_8
-year_32 = 2 * year_16
-year_64 = 2 * year_32
-year_128 = 2 * year_64
+# atomic timescale
+minute_15 = atomic_unit(1)
+hour_4 = atomic_unit(4 * 4 * minute_15)
+day = atomic_unit(6 * hour_4)
+week = atomic_unit(7 * day)
+month = atomic_unit(4 * week)
+quarter = atomic_unit(3 * month)
+year = atomic_unit(4 * quarter)
+year_2 = atomic_unit(2 * year)
+year_4 = atomic_unit(2 * year_2)
+year_8 = atomic_unit(2 * year_4)
+year_16 = atomic_unit(2 * year_8)
+year_32 = atomic_unit(2 * year_16)
+year_64 = atomic_unit(2 * year_32)
+year_128 = atomic_unit(2 * year_64)
 
 timescales: list[tuple[int, str]] = [
     (minute_15, "minute_15"),
@@ -43,14 +46,18 @@ END_TIME = year_128
 
 
 def constant_cost_intervals(cost: int):
-    return [CostInterval((0, END_TIME), cost)]
+    return [CostInterval((atomic_unit(0), END_TIME), cost)]
 
 
 ZERO_COST_INTERVALS = constant_cost_intervals(0)
 
 
 def deadline_intervals(
-    deadline: int, exp_cost: int, full_cost: int, start=0, end=END_TIME
+    deadline: atomic_unit,
+    exp_cost: int,
+    full_cost: int,
+    start=atomic_unit(0),
+    end=END_TIME,
 ):
     return [
         CostInterval((start, deadline), exp_cost),
@@ -64,9 +71,9 @@ task_names: dict[int, str] = {}
 def task_builder(builder: ConfigBuilder):
     def task(
         name: str,
-        unit: int,
-        start: int | None = None,
-        end: int | None = None,
+        unit: atomic_unit,
+        start: task_unit | None = None,
+        end: task_unit | None = None,
     ):
         t = Task(builder, unit, start, end)
         task_names[t.id] = name

@@ -9,6 +9,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type AtomicUnits int64
+type TaskUnits int64
+
 func SQLDurationToProto(duration int64) *durationpb.Duration {
 	return durationpb.New(time.Duration(duration) * time.Second)
 }
@@ -69,11 +72,11 @@ func RealNullTimeToProfileTime(t sql.NullTime, profile db.Profile) sql.NullInt64
 
 // converts a non-nullable time.Time to a profile time in terms of the atomic unit.
 // rounds down to the nearest atomic unit.
-func RealTimeToProfileTime(t time.Time, profile db.Profile) int64 {
-	return RealNullTimeToProfileTime(sql.NullTime{
+func RealTimeToProfileTime(t time.Time, profile db.Profile) AtomicUnits {
+	return AtomicUnits(RealNullTimeToProfileTime(sql.NullTime{
 		Time:  t,
 		Valid: true,
-	}, profile).Int64
+	}, profile).Int64)
 }
 
 // converts a nullable profile time int64 to a time.Time.
@@ -89,19 +92,19 @@ func ProfileNullTimeToRealTime(profileTime sql.NullInt64, profile db.Profile) sq
 }
 
 // converts a non-nullable profile time int64 to a time.Time.
-func ProfileTimeToRealTime(profileTime int64, profile db.Profile) time.Time {
+func ProfileTimeToRealTime(profileTime AtomicUnits, profile db.Profile) time.Time {
 	return ProfileNullTimeToRealTime(sql.NullInt64{
-		Int64: profileTime,
+		Int64: int64(profileTime),
 		Valid: true,
 	}, profile).Time
 }
 
 // converts a time.Duration in terms of the atomic unit, rounds down to nearest atomic unit
-func RealDurationToProfileDuration(t time.Duration, profile db.Profile) int64 {
-	return int64(t.Seconds()) / profile.AtomicTimescaleDuration
+func RealDurationToProfileDuration(t time.Duration, profile db.Profile) AtomicUnits {
+	return AtomicUnits(int64(t.Seconds()) / profile.AtomicTimescaleDuration)
 }
 
 // converts a profile duration (in terms of the atomic unit) to a time.Duration
-func ProfileDurationToRealDuration(dur int64, profile db.Profile) time.Duration {
+func ProfileDurationToRealDuration(dur AtomicUnits, profile db.Profile) time.Duration {
 	return time.Duration(dur) * time.Second * time.Duration(profile.AtomicTimescaleDuration)
 }

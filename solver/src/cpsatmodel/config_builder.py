@@ -1,14 +1,21 @@
 from __future__ import annotations
 from typing import Self
-from cpsatmodel.config import CostInterval, CostConfig, Config, TaskConfig
+from cpsatmodel.config import (
+    CostInterval,
+    CostConfig,
+    Config,
+    TaskConfig,
+    atomic_unit,
+    task_unit,
+)
 from sys import maxsize
 
 
 class Task:
     id: int
-    unit: int
-    start: int | None
-    end: int | None
+    unit: atomic_unit
+    start: task_unit | None
+    end: task_unit | None
 
     _prerequisites: list[int]
 
@@ -22,9 +29,9 @@ class Task:
     def __init__(
         self,
         builder: ConfigBuilder,
-        unit: int,
-        start: int | None = None,
-        end: int | None = None,
+        unit: atomic_unit,
+        start: task_unit | None = None,
+        end: task_unit | None = None,
     ) -> None:
         builder.next_id += 1
         builder.tasks[builder.next_id] = self
@@ -42,7 +49,9 @@ class Task:
         self.end = end
         assert start is None or end is None or start < end
 
-    def add_cost_config_duration(self, costs: list[CostInterval], duration: int):
+    def add_cost_config_duration(
+        self, costs: list[CostInterval], duration: atomic_unit
+    ):
         assert duration >= 0
         self._configs.append(
             CostConfig(
@@ -75,10 +84,10 @@ class Task:
 
 
 class ConfigBuilder:
-    def __init__(self, horizon: tuple[int, int]):
+    def __init__(self, horizon: tuple[atomic_unit, atomic_unit]):
         self.horizon = horizon
         self.next_id = 0
-        self.timescales: set[int] = set()
+        self.timescales: set[atomic_unit] = set()
         # margin will not be auto-created, the user is in charge of specifying magin
         self.tasks: dict[int, Task] = {}
         self.temp_tasks: set[int] = set()
@@ -133,14 +142,14 @@ class ConfigBuilder:
         for task_id, temp_task in temporary.items():
             temp_task.add_cost_config_children(
                 # INT_MAX not supported so we do INT_MAX-1
-                [CostInterval((0, maxsize - 1), 0)],
+                [CostInterval((atomic_unit(0), atomic_unit(maxsize - 1)), 0)],
                 children[task_id],
             )
 
     def build(self) -> Config:
         self.__ensure_parents()
 
-        timescales: list[int] = list(self.timescales)
+        timescales: list[atomic_unit] = list(self.timescales)
         task_configs: dict[int, TaskConfig] = {}
         for id in self.tasks:
             t = self.tasks[id]

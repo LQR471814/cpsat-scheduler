@@ -58,12 +58,12 @@ class Task(_message.Message):
     CHILDREN_CFGS_FIELD_NUMBER: _ClassVar[int]
     id: int
     unit: _types_pb2.AtomicUnit
-    start: _types_pb2.AtomicUnit
-    end: _types_pb2.AtomicUnit
+    start: _types_pb2.TaskUnit
+    end: _types_pb2.TaskUnit
     prereqs: _containers.RepeatedScalarFieldContainer[int]
     dur_cfgs: _containers.RepeatedCompositeFieldContainer[DurConfig]
     children_cfgs: _containers.RepeatedCompositeFieldContainer[ChildrenConfig]
-    def __init__(self, id: _Optional[int] = ..., unit: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., start: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., prereqs: _Optional[_Iterable[int]] = ..., dur_cfgs: _Optional[_Iterable[_Union[DurConfig, _Mapping]]] = ..., children_cfgs: _Optional[_Iterable[_Union[ChildrenConfig, _Mapping]]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., unit: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., start: _Optional[_Union[_types_pb2.TaskUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.TaskUnit, _Mapping]] = ..., prereqs: _Optional[_Iterable[int]] = ..., dur_cfgs: _Optional[_Iterable[_Union[DurConfig, _Mapping]]] = ..., children_cfgs: _Optional[_Iterable[_Union[ChildrenConfig, _Mapping]]] = ...) -> None: ...
 
 class SolvedTask(_message.Message):
     __slots__ = ("id", "start", "dur_idx", "children_idx", "cost", "duration", "end")
@@ -75,13 +75,13 @@ class SolvedTask(_message.Message):
     DURATION_FIELD_NUMBER: _ClassVar[int]
     END_FIELD_NUMBER: _ClassVar[int]
     id: int
-    start: _types_pb2.AtomicUnit
+    start: _types_pb2.TaskUnit
     dur_idx: int
     children_idx: int
     cost: int
     duration: _types_pb2.AtomicUnit
     end: _types_pb2.AtomicUnit
-    def __init__(self, id: _Optional[int] = ..., start: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., dur_idx: _Optional[int] = ..., children_idx: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., start: _Optional[_Union[_types_pb2.TaskUnit, _Mapping]] = ..., dur_idx: _Optional[int] = ..., children_idx: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ...) -> None: ...
 
 class SolveRequest(_message.Message):
     __slots__ = ("horizon", "tasks")

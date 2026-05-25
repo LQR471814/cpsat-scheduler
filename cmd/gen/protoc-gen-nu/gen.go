@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const frontmatter = `const SOCKET_PATH = "/tmp/cpsat-scheduler.apipb.sock"
+const frontmatter = `const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
 
 const self_path = path self
 
@@ -26,6 +26,7 @@ export def req [api: string, method: string]: any -> any {
 	if $res.exit_code == 0 {
 		$res.stdout | from json
 	} else {
+		print $res.stdout
 		error make {msg: 'gRPC returned error'}
 	}
 }

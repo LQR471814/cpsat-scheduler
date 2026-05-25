@@ -160,8 +160,8 @@ type CreateTaskParams struct {
 	Unit    int64
 	Name    string
 	Desc    string
-	Start   sql.NullInt64
-	End     sql.NullInt64
+	Start   sql.NullTime
+	End     sql.NullTime
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, error) {
@@ -889,8 +889,8 @@ type UpdateTaskParams struct {
 	Unit  int64
 	Name  string
 	Desc  string
-	Start sql.NullInt64
-	End   sql.NullInt64
+	Start sql.NullTime
+	End   sql.NullTime
 	ID    int64
 }
 

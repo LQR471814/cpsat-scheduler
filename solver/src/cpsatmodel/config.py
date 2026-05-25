@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, NewType
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsatmodel.print import print_vars
 from functools import cache
 import sys
+
+
+atomic_unit = NewType("atomic_unit", int)
+task_unit = NewType("task_unit", int)
 
 
 def guard_bool(
@@ -37,7 +41,7 @@ class CostInterval:
     The specified cost applies if the task's absolute end time is within the interval.
     """
 
-    interval: tuple[int, int]
+    interval: tuple[atomic_unit, atomic_unit]
     cost: int
 
 
@@ -54,40 +58,39 @@ class ParentCond:
 class CostConfig:
     costs: list[CostInterval]
     children: list[int]
-    duration: int | None
+    duration: atomic_unit | None
 
 
 @dataclass
 class TaskConfig:
     id: int
-    timescale_unit: int
+    timescale_unit: atomic_unit
     cost_configs: list[CostConfig]
     prerequisites: list[int]
-    start: int | None
-    end: int | None
+    start: task_unit | None
+    end: task_unit | None
     parent: int | None
     parent_configs: list[int]
 
 
 @dataclass
 class Config:
-    # in terms of the atomic timescale
-    horizon: tuple[int, int]
-    timescales: list[int]
+    horizon: tuple[atomic_unit, atomic_unit]
+    timescales: list[atomic_unit]
     # margin will not be auto-created, the user is in charge of specifying magin
     tasks: dict[int, TaskConfig]
 
 
 @dataclass
 class ModelProps:
-    max_timescale: int
-    max_scaling_factor: int
+    max_timescale: atomic_unit
+    max_scaling_factor: atomic_unit
 
     def __init__(self, cfg: Config) -> None:
         self.max_timescale = max(cfg.timescales)
         self.max_scaling_factor = self.__get_max_scaling_factor(cfg)
 
-    def __get_max_scaling_factor(self, config: Config):
+    def __get_max_scaling_factor(self, config: Config) -> atomic_unit:
         max_scaling_factor = 1
         sorted_timescales = sorted(config.timescales)
         prev = sorted_timescales[0]
@@ -95,7 +98,7 @@ class ModelProps:
             scale = u // prev
             if scale > max_scaling_factor:
                 max_scaling_factor = scale
-        return max_scaling_factor
+        return atomic_unit(max_scaling_factor)
 
 
 class TaskProps:
@@ -104,21 +107,21 @@ class TaskProps:
     def __init__(self, props: Props) -> None:
         self.__props = props
 
-        self.resolve_scaling_factor: Callable[[int], int | None] = cache(
+        self.resolve_scaling_factor: Callable[[int], atomic_unit | None] = cache(
             self.__get_scaling_factor
         )
-        self.resolve_start_bounds: Callable[[int], tuple[int, int]] = cache(
+        self.resolve_start_bounds: Callable[[int], tuple[task_unit, task_unit]] = cache(
             self.__compute_start_bounds
         )
         self.resolve_cost_bounds: Callable[[int], tuple[int, int]] = cache(
             self.__compute_cost_bounds
         )
-        self.resolve_real_dur_bounds: Callable[[int], tuple[int, int]] = cache(
-            self.__compute_dur_bounds
-        )
-        self.resolve_real_end_bounds: Callable[[int], tuple[int, int]] = cache(
-            self.__compute_real_end_bounds
-        )
+        self.resolve_real_dur_bounds: Callable[
+            [int], tuple[atomic_unit, atomic_unit]
+        ] = cache(self.__compute_dur_bounds)
+        self.resolve_real_end_bounds: Callable[
+            [int], tuple[atomic_unit, atomic_unit]
+        ] = cache(self.__compute_real_end_bounds)
         self.resolve_parent_cfg: Callable[[int], TaskConfig | None] = cache(
             self.__get_parent_cfg
         )
@@ -126,12 +129,12 @@ class TaskProps:
     def __get_task_cfg(self, task_id: int) -> TaskConfig:
         return self.__props._config.tasks[task_id]
 
-    def __get_scaling_factor(self, task_id: int) -> int | None:
+    def __get_scaling_factor(self, task_id: int) -> atomic_unit | None:
         parent = self.resolve_parent_cfg(task_id)
         if parent is None:
             return None
         t = self.__get_task_cfg(task_id)
-        return parent.timescale_unit // t.timescale_unit
+        return atomic_unit(parent.timescale_unit // t.timescale_unit)
 
     def __get_parent_cfg(self, task_id: int) -> TaskConfig | None:
         t = self.__get_task_cfg(task_id)
@@ -139,17 +142,16 @@ class TaskProps:
             return None
         return self.__props._config.tasks[t.parent]
 
-    def __compute_start_bounds(self, task_id: int) -> tuple[int, int]:
+    def __compute_start_bounds(self, task_id: int) -> tuple[task_unit, task_unit]:
         t = self.__get_task_cfg(task_id)
 
-        parent_bound: tuple[int, int]
+        parent_bound: tuple[task_unit, task_unit]
         if t.timescale_unit == self.__props.model.max_timescale:
             horizon_lb, horizon_ub = self.__props._config.horizon
-            print(t.timescale_unit)
             # horizon is in terms of the atomic timescale so we divide by unit
             parent_bound = (
-                horizon_lb // t.timescale_unit,
-                horizon_ub // t.timescale_unit,
+                task_unit(horizon_lb // t.timescale_unit),
+                task_unit(horizon_ub // t.timescale_unit),
             )
         else:
             parent = self.resolve_parent_cfg(task_id)
@@ -158,8 +160,8 @@ class TaskProps:
             parent_lb, parent_ub = self.resolve_start_bounds(parent.id)
             parent_unit = self.__props._config.tasks[parent.id].timescale_unit
             parent_bound = (
-                parent_lb * parent_unit // t.timescale_unit,
-                parent_ub * parent_unit // t.timescale_unit,
+                task_unit(parent_lb * parent_unit // t.timescale_unit),
+                task_unit(parent_ub * parent_unit // t.timescale_unit),
             )
 
         start, end = parent_bound
@@ -179,26 +181,28 @@ class TaskProps:
 
         return (start, end)
 
-    def __compute_real_end_bounds(self, task_id: int) -> tuple[int, int]:
+    def __compute_real_end_bounds(
+        self, task_id: int
+    ) -> tuple[atomic_unit, atomic_unit]:
         t = self.__get_task_cfg(task_id)
 
         start_lb, start_ub = self.resolve_start_bounds(task_id)
 
         # convert start/end in terms of atomic unit
-        start_lb = start_lb * t.timescale_unit
-        start_ub = start_ub * t.timescale_unit
+        start_lb = atomic_unit(start_lb * t.timescale_unit)
+        start_ub = atomic_unit(start_ub * t.timescale_unit)
 
-        min_end = sys.maxsize
-        max_end = 0
+        min_end: atomic_unit = atomic_unit(sys.maxsize)
+        max_end: atomic_unit = atomic_unit(0)
         for cfg in t.cost_configs:
             if len(cfg.children) == 0:
                 assert cfg.duration is not None
 
-                end_lb = start_lb + cfg.duration
+                end_lb = atomic_unit(start_lb + cfg.duration)
                 if end_lb < min_end:
                     min_end = end_lb
 
-                end_ub = start_ub + cfg.duration
+                end_ub = atomic_unit(start_ub + cfg.duration)
                 if end_ub > max_end:
                     max_end = end_ub
 
@@ -227,7 +231,7 @@ class TaskProps:
 
         return (min_cost, max_cost)
 
-    def __compute_dur_bounds(self, task_id: int) -> tuple[int, int]:
+    def __compute_dur_bounds(self, task_id: int) -> tuple[atomic_unit, atomic_unit]:
         # non-leaf task: real duration = sum{children durations}
         # leaf task: real duration = chosen duration
         #
@@ -238,8 +242,8 @@ class TaskProps:
 
         t = self.__get_task_cfg(task_id)
 
-        min_dur = sys.maxsize
-        max_dur = 0
+        min_dur: atomic_unit = atomic_unit(sys.maxsize)
+        max_dur: atomic_unit = atomic_unit(0)
         for cfg in t.cost_configs:
             if cfg.duration is not None:
                 if cfg.duration > max_dur:
@@ -248,12 +252,12 @@ class TaskProps:
                     min_dur = cfg.duration
                 continue
 
-            min_dur_sum = 0
-            max_dur_sum = 0
+            min_dur_sum = atomic_unit(0)
+            max_dur_sum = atomic_unit(0)
             for child in cfg.children:
                 lb, ub = self.resolve_real_dur_bounds(child)
-                min_dur_sum += lb
-                max_dur_sum += ub
+                min_dur_sum = atomic_unit(min_dur_sum + lb)
+                max_dur_sum = atomic_unit(max_dur_sum + ub)
 
             if min_dur_sum < min_dur:
                 min_dur = min_dur_sum
@@ -465,13 +469,10 @@ class ComputedState:
 @dataclass
 class ScheduledTask:
     task_id: int
-    # this is in terms of the task_unit
-    start: int
+    start: task_unit
     real_cost: int
-    # this is in terms of the atomic unit
-    real_duration: int
-    # this is in terms of the atomic unit, it may not be a multiple of task_unit
-    real_end: int
+    real_duration: atomic_unit
+    real_end: atomic_unit
     # this is the index of the cost config chosen
     config: int
 
@@ -669,10 +670,12 @@ class Model:
             [
                 ScheduledTask(
                     task_id=t,
-                    start=solver.value(self.decision_vars[t].start),
+                    start=task_unit(solver.value(self.decision_vars[t].start)),
                     real_cost=solver.value(self.computed_vars[t].real_cost),
-                    real_duration=solver.value(self.computed_vars[t].real_duration),
-                    real_end=solver.value(self.computed_vars[t].real_end),
+                    real_duration=atomic_unit(
+                        solver.value(self.computed_vars[t].real_duration)
+                    ),
+                    real_end=atomic_unit(solver.value(self.computed_vars[t].real_end)),
                     config=solver.value(self.decision_vars[t].config_select),
                 )
                 for t in self.config.tasks
@@ -686,10 +689,12 @@ class Model:
         scheduled = [
             ScheduledTask(
                 task_id=t,
-                start=solver.value(self.decision_vars[t].start),
+                start=task_unit(solver.value(self.decision_vars[t].start)),
                 real_cost=solver.value(self.computed_vars[t].real_cost),
-                real_duration=solver.value(self.computed_vars[t].real_duration),
-                real_end=solver.value(self.computed_vars[t].real_end),
+                real_duration=atomic_unit(
+                    solver.value(self.computed_vars[t].real_duration)
+                ),
+                real_end=atomic_unit(solver.value(self.computed_vars[t].real_end)),
                 config=solver.value(self.decision_vars[t].config_select),
             )
             for t in self.config.tasks

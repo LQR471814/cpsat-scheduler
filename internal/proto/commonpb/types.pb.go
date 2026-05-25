@@ -22,6 +22,51 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// TaskUnit indicates that the given value is in terms of the task's unit
+type TaskUnit struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int64                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskUnit) Reset() {
+	*x = TaskUnit{}
+	mi := &file_commonpb_types_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskUnit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskUnit) ProtoMessage() {}
+
+func (x *TaskUnit) ProtoReflect() protoreflect.Message {
+	mi := &file_commonpb_types_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskUnit.ProtoReflect.Descriptor instead.
+func (*TaskUnit) Descriptor() ([]byte, []int) {
+	return file_commonpb_types_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *TaskUnit) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
 // AtomicUnit indicates that the given value is in terms of the atomic unit
 type AtomicUnit struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -32,7 +77,7 @@ type AtomicUnit struct {
 
 func (x *AtomicUnit) Reset() {
 	*x = AtomicUnit{}
-	mi := &file_commonpb_types_proto_msgTypes[0]
+	mi := &file_commonpb_types_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +89,7 @@ func (x *AtomicUnit) String() string {
 func (*AtomicUnit) ProtoMessage() {}
 
 func (x *AtomicUnit) ProtoReflect() protoreflect.Message {
-	mi := &file_commonpb_types_proto_msgTypes[0]
+	mi := &file_commonpb_types_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +102,7 @@ func (x *AtomicUnit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AtomicUnit.ProtoReflect.Descriptor instead.
 func (*AtomicUnit) Descriptor() ([]byte, []int) {
-	return file_commonpb_types_proto_rawDescGZIP(), []int{0}
+	return file_commonpb_types_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *AtomicUnit) GetValue() int64 {
@@ -77,7 +122,7 @@ type AtomicInterval struct {
 
 func (x *AtomicInterval) Reset() {
 	*x = AtomicInterval{}
-	mi := &file_commonpb_types_proto_msgTypes[1]
+	mi := &file_commonpb_types_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -89,7 +134,7 @@ func (x *AtomicInterval) String() string {
 func (*AtomicInterval) ProtoMessage() {}
 
 func (x *AtomicInterval) ProtoReflect() protoreflect.Message {
-	mi := &file_commonpb_types_proto_msgTypes[1]
+	mi := &file_commonpb_types_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -102,7 +147,7 @@ func (x *AtomicInterval) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AtomicInterval.ProtoReflect.Descriptor instead.
 func (*AtomicInterval) Descriptor() ([]byte, []int) {
-	return file_commonpb_types_proto_rawDescGZIP(), []int{1}
+	return file_commonpb_types_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *AtomicInterval) GetStart() *AtomicUnit {
@@ -129,7 +174,7 @@ type Interval struct {
 
 func (x *Interval) Reset() {
 	*x = Interval{}
-	mi := &file_commonpb_types_proto_msgTypes[2]
+	mi := &file_commonpb_types_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -141,7 +186,7 @@ func (x *Interval) String() string {
 func (*Interval) ProtoMessage() {}
 
 func (x *Interval) ProtoReflect() protoreflect.Message {
-	mi := &file_commonpb_types_proto_msgTypes[2]
+	mi := &file_commonpb_types_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -154,7 +199,7 @@ func (x *Interval) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Interval.ProtoReflect.Descriptor instead.
 func (*Interval) Descriptor() ([]byte, []int) {
-	return file_commonpb_types_proto_rawDescGZIP(), []int{2}
+	return file_commonpb_types_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Interval) GetStart() *timestamppb.Timestamp {
@@ -181,7 +226,7 @@ type Entry struct {
 
 func (x *Entry) Reset() {
 	*x = Entry{}
-	mi := &file_commonpb_types_proto_msgTypes[3]
+	mi := &file_commonpb_types_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -193,7 +238,7 @@ func (x *Entry) String() string {
 func (*Entry) ProtoMessage() {}
 
 func (x *Entry) ProtoReflect() protoreflect.Message {
-	mi := &file_commonpb_types_proto_msgTypes[3]
+	mi := &file_commonpb_types_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -206,7 +251,7 @@ func (x *Entry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Entry.ProtoReflect.Descriptor instead.
 func (*Entry) Descriptor() ([]byte, []int) {
-	return file_commonpb_types_proto_rawDescGZIP(), []int{3}
+	return file_commonpb_types_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Entry) GetId() int64 {
@@ -227,7 +272,9 @@ var File_commonpb_types_proto protoreflect.FileDescriptor
 
 const file_commonpb_types_proto_rawDesc = "" +
 	"\n" +
-	"\x14commonpb/types.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\"\n" +
+	"\x14commonpb/types.proto\x1a\x1fgoogle/protobuf/timestamp.proto\" \n" +
+	"\bTaskUnit\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x03R\x05value\"\"\n" +
 	"\n" +
 	"AtomicUnit\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\x03R\x05value\"R\n" +
@@ -254,19 +301,20 @@ func file_commonpb_types_proto_rawDescGZIP() []byte {
 	return file_commonpb_types_proto_rawDescData
 }
 
-var file_commonpb_types_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_commonpb_types_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_commonpb_types_proto_goTypes = []any{
-	(*AtomicUnit)(nil),            // 0: AtomicUnit
-	(*AtomicInterval)(nil),        // 1: AtomicInterval
-	(*Interval)(nil),              // 2: Interval
-	(*Entry)(nil),                 // 3: Entry
-	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(*TaskUnit)(nil),              // 0: TaskUnit
+	(*AtomicUnit)(nil),            // 1: AtomicUnit
+	(*AtomicInterval)(nil),        // 2: AtomicInterval
+	(*Interval)(nil),              // 3: Interval
+	(*Entry)(nil),                 // 4: Entry
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_commonpb_types_proto_depIdxs = []int32{
-	0, // 0: AtomicInterval.start:type_name -> AtomicUnit
-	0, // 1: AtomicInterval.end:type_name -> AtomicUnit
-	4, // 2: Interval.start:type_name -> google.protobuf.Timestamp
-	4, // 3: Interval.end:type_name -> google.protobuf.Timestamp
+	1, // 0: AtomicInterval.start:type_name -> AtomicUnit
+	1, // 1: AtomicInterval.end:type_name -> AtomicUnit
+	5, // 2: Interval.start:type_name -> google.protobuf.Timestamp
+	5, // 3: Interval.end:type_name -> google.protobuf.Timestamp
 	4, // [4:4] is the sub-list for method output_type
 	4, // [4:4] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
@@ -285,7 +333,7 @@ func file_commonpb_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_commonpb_types_proto_rawDesc), len(file_commonpb_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

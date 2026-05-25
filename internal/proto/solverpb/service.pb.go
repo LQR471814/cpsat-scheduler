@@ -245,8 +245,8 @@ type Task struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Unit          *commonpb.AtomicUnit   `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
-	Start         *commonpb.AtomicUnit   `protobuf:"bytes,3,opt,name=start,proto3,oneof" json:"start,omitempty"`
-	End           *commonpb.AtomicUnit   `protobuf:"bytes,4,opt,name=end,proto3,oneof" json:"end,omitempty"`
+	Start         *commonpb.TaskUnit     `protobuf:"bytes,3,opt,name=start,proto3,oneof" json:"start,omitempty"`
+	End           *commonpb.TaskUnit     `protobuf:"bytes,4,opt,name=end,proto3,oneof" json:"end,omitempty"`
 	Prereqs       []int64                `protobuf:"varint,5,rep,packed,name=prereqs,proto3" json:"prereqs,omitempty"`
 	DurCfgs       []*DurConfig           `protobuf:"bytes,6,rep,name=dur_cfgs,json=durCfgs,proto3" json:"dur_cfgs,omitempty"`
 	ChildrenCfgs  []*ChildrenConfig      `protobuf:"bytes,7,rep,name=children_cfgs,json=childrenCfgs,proto3" json:"children_cfgs,omitempty"`
@@ -298,14 +298,14 @@ func (x *Task) GetUnit() *commonpb.AtomicUnit {
 	return nil
 }
 
-func (x *Task) GetStart() *commonpb.AtomicUnit {
+func (x *Task) GetStart() *commonpb.TaskUnit {
 	if x != nil {
 		return x.Start
 	}
 	return nil
 }
 
-func (x *Task) GetEnd() *commonpb.AtomicUnit {
+func (x *Task) GetEnd() *commonpb.TaskUnit {
 	if x != nil {
 		return x.End
 	}
@@ -336,8 +336,8 @@ func (x *Task) GetChildrenCfgs() []*ChildrenConfig {
 type SolvedTask struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// the id passed in the request
-	Id    int64                `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Start *commonpb.AtomicUnit `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	Id    int64              `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Start *commonpb.TaskUnit `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
 	// the config selected
 	//
 	// Types that are valid to be assigned to Config:
@@ -390,7 +390,7 @@ func (x *SolvedTask) GetId() int64 {
 	return 0
 }
 
-func (x *SolvedTask) GetStart() *commonpb.AtomicUnit {
+func (x *SolvedTask) GetStart() *commonpb.TaskUnit {
 	if x != nil {
 		return x.Start
 	}
@@ -588,22 +588,22 @@ const file_solverpb_service_proto_rawDesc = "" +
 	"\bduration\x18\x02 \x01(\v2\v.AtomicUnitR\bduration\"Y\n" +
 	"\x0eChildrenConfig\x12+\n" +
 	"\tintervals\x18\x01 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
-	"\bchildren\x18\x02 \x03(\x03R\bchildren\"\x8c\x02\n" +
+	"\bchildren\x18\x02 \x03(\x03R\bchildren\"\x88\x02\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
-	"\x04unit\x18\x02 \x01(\v2\v.AtomicUnitR\x04unit\x12&\n" +
-	"\x05start\x18\x03 \x01(\v2\v.AtomicUnitH\x00R\x05start\x88\x01\x01\x12\"\n" +
-	"\x03end\x18\x04 \x01(\v2\v.AtomicUnitH\x01R\x03end\x88\x01\x01\x12\x18\n" +
+	"\x04unit\x18\x02 \x01(\v2\v.AtomicUnitR\x04unit\x12$\n" +
+	"\x05start\x18\x03 \x01(\v2\t.TaskUnitH\x00R\x05start\x88\x01\x01\x12 \n" +
+	"\x03end\x18\x04 \x01(\v2\t.TaskUnitH\x01R\x03end\x88\x01\x01\x12\x18\n" +
 	"\aprereqs\x18\x05 \x03(\x03R\aprereqs\x12%\n" +
 	"\bdur_cfgs\x18\x06 \x03(\v2\n" +
 	".DurConfigR\adurCfgs\x124\n" +
 	"\rchildren_cfgs\x18\a \x03(\v2\x0f.ChildrenConfigR\fchildrenCfgsB\b\n" +
 	"\x06_startB\x06\n" +
-	"\x04_end\"\xe5\x01\n" +
+	"\x04_end\"\xe3\x01\n" +
 	"\n" +
 	"SolvedTask\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12!\n" +
-	"\x05start\x18\x02 \x01(\v2\v.AtomicUnitR\x05start\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
+	"\x05start\x18\x02 \x01(\v2\t.TaskUnitR\x05start\x12\x19\n" +
 	"\adur_idx\x18\x03 \x01(\x03H\x00R\x06durIdx\x12#\n" +
 	"\fchildren_idx\x18\x04 \x01(\x03H\x00R\vchildrenIdx\x12\x12\n" +
 	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12'\n" +
@@ -651,7 +651,8 @@ var file_solverpb_service_proto_goTypes = []any{
 	(*SolveRequest)(nil),            // 6: SolveRequest
 	(*SolveResponse)(nil),           // 7: SolveResponse
 	(*commonpb.AtomicUnit)(nil),     // 8: AtomicUnit
-	(*commonpb.AtomicInterval)(nil), // 9: AtomicInterval
+	(*commonpb.TaskUnit)(nil),       // 9: TaskUnit
+	(*commonpb.AtomicInterval)(nil), // 10: AtomicInterval
 }
 var file_solverpb_service_proto_depIdxs = []int32{
 	8,  // 0: CostInterval.start:type_name -> AtomicUnit
@@ -660,14 +661,14 @@ var file_solverpb_service_proto_depIdxs = []int32{
 	8,  // 3: DurConfig.duration:type_name -> AtomicUnit
 	1,  // 4: ChildrenConfig.intervals:type_name -> CostInterval
 	8,  // 5: Task.unit:type_name -> AtomicUnit
-	8,  // 6: Task.start:type_name -> AtomicUnit
-	8,  // 7: Task.end:type_name -> AtomicUnit
+	9,  // 6: Task.start:type_name -> TaskUnit
+	9,  // 7: Task.end:type_name -> TaskUnit
 	2,  // 8: Task.dur_cfgs:type_name -> DurConfig
 	3,  // 9: Task.children_cfgs:type_name -> ChildrenConfig
-	8,  // 10: SolvedTask.start:type_name -> AtomicUnit
+	9,  // 10: SolvedTask.start:type_name -> TaskUnit
 	8,  // 11: SolvedTask.duration:type_name -> AtomicUnit
 	8,  // 12: SolvedTask.end:type_name -> AtomicUnit
-	9,  // 13: SolveRequest.horizon:type_name -> AtomicInterval
+	10, // 13: SolveRequest.horizon:type_name -> AtomicInterval
 	4,  // 14: SolveRequest.tasks:type_name -> Task
 	0,  // 15: SolveResponse.status:type_name -> SolveStatus
 	5,  // 16: SolveResponse.solution:type_name -> SolvedTask

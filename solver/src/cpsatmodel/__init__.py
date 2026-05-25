@@ -5,6 +5,8 @@ from cpsatmodel.config import (
     CostConfig,
     ParentCond,
     ScheduledTask,
+    atomic_unit,
+    task_unit,
 )
 from cpsatmodel.config_builder import Task, ConfigBuilder
 from cpsatmodel.print import ProtoPrinter

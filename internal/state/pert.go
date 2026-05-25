@@ -89,7 +89,7 @@ func pertDurCfgs(
 				totalCost,
 			),
 			Duration: &commonpb.AtomicUnit{
-				Value: RealDurationToProfileDuration(dur, profile),
+				Value: int64(RealDurationToProfileDuration(dur, profile)),
 			},
 		})
 	}

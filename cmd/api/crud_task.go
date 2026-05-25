@@ -93,11 +93,11 @@ where c.task = t.id
 		args = append(args, task.Unit)
 		if task.Start.Valid {
 			query.WriteString(` and (start is null or start >= ?)`)
-			args = append(args, task.Start.Int64)
+			args = append(args, task.Start.Time)
 		}
 		if task.End.Valid {
 			query.WriteString(` and (end is null or end < ?)`)
-			args = append(args, task.End.Int64)
+			args = append(args, task.End.Time)
 		}
 	case apipb.ListPossibleRelativesRequest_PARENT:
 		// where unit is larger and exclude already existing parent
@@ -115,7 +115,7 @@ where cc.child = t.id
 		args = append(args, task.Unit)
 		if task.Start.Valid {
 			query.WriteString(` and (end is null or end < ?)`)
-			args = append(args, task.Start.Int64)
+			args = append(args, task.Start.Time)
 		}
 	case apipb.ListPossibleRelativesRequest_POSTREQ:
 		// where unit is the same and potential postreq with explicit start
@@ -124,7 +124,7 @@ where cc.child = t.id
 		args = append(args, task.Unit)
 		if task.End.Valid {
 			query.WriteString(` and (start is null or start >= ?)`)
-			args = append(args, task.End.Int64)
+			args = append(args, task.End.Time)
 		}
 	}
 

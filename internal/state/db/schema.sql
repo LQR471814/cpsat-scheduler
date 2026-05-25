@@ -18,8 +18,8 @@ create table task (
 
 	name text not null,
 	desc text not null,
-	start int,
-	end int
+	start timestamp,
+	end timestamp
 );
 
 create index idx_task_profile

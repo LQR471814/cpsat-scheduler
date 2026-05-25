@@ -25,19 +25,21 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14\x63ommonpb/types.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x1b\n\nAtomicUnit\x12\r\n\x05value\x18\x01 \x01(\x03\"F\n\x0e\x41tomicInterval\x12\x1a\n\x05start\x18\x01 \x01(\x0b\x32\x0b.AtomicUnit\x12\x18\n\x03\x65nd\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\"^\n\x08Interval\x12)\n\x05start\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\'\n\x03\x65nd\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"!\n\x05\x45ntry\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04name\x18\x02 \x01(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14\x63ommonpb/types.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x19\n\x08TaskUnit\x12\r\n\x05value\x18\x01 \x01(\x03\"\x1b\n\nAtomicUnit\x12\r\n\x05value\x18\x01 \x01(\x03\"F\n\x0e\x41tomicInterval\x12\x1a\n\x05start\x18\x01 \x01(\x0b\x32\x0b.AtomicUnit\x12\x18\n\x03\x65nd\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\"^\n\x08Interval\x12)\n\x05start\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\'\n\x03\x65nd\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"!\n\x05\x45ntry\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0c\n\x04name\x18\x02 \x01(\tb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'commonpb.types_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_ATOMICUNIT']._serialized_start=57
-  _globals['_ATOMICUNIT']._serialized_end=84
-  _globals['_ATOMICINTERVAL']._serialized_start=86
-  _globals['_ATOMICINTERVAL']._serialized_end=156
-  _globals['_INTERVAL']._serialized_start=158
-  _globals['_INTERVAL']._serialized_end=252
-  _globals['_ENTRY']._serialized_start=254
-  _globals['_ENTRY']._serialized_end=287
+  _globals['_TASKUNIT']._serialized_start=57
+  _globals['_TASKUNIT']._serialized_end=82
+  _globals['_ATOMICUNIT']._serialized_start=84
+  _globals['_ATOMICUNIT']._serialized_end=111
+  _globals['_ATOMICINTERVAL']._serialized_start=113
+  _globals['_ATOMICINTERVAL']._serialized_end=183
+  _globals['_INTERVAL']._serialized_start=185
+  _globals['_INTERVAL']._serialized_end=279
+  _globals['_ENTRY']._serialized_start=281
+  _globals['_ENTRY']._serialized_end=314
 # @@protoc_insertion_point(module_scope)

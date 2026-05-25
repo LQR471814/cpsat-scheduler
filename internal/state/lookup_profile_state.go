@@ -8,7 +8,7 @@ import (
 )
 
 // TODO: replace this with something less-hardcoded
-var timescales = []int64{
+var timescales = []AtomicUnits{
 	4128768,
 	2064384,
 	1032192,
@@ -46,15 +46,15 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 	start := RealTimeToProfileTime(ev.Start, profile)
 	end := RealTimeToProfileTime(ev.End, profile)
 
-	if start >= horizon.End.Value {
+	if start >= AtomicUnits(horizon.End.Value) {
 		return
 	}
-	if end < horizon.Start.Value {
+	if end < AtomicUnits(horizon.Start.Value) {
 		return
 	}
 
 	dur := end - start
-	var unit int64
+	var unit AtomicUnits
 	for _, u := range timescales {
 		if u > dur {
 			continue
@@ -64,43 +64,43 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 	}
 
 	unitTyped := &commonpb.AtomicUnit{
-		Value: unit,
+		Value: int64(unit),
 	}
 
 	// subtract leftDur from first, set last to rightDur
 	leftDur := start % unit
 	rightDur := end % unit
 
-	for i := int64(0); i < dur/unit; i++ {
-		taskStart := start - leftDur + i*unit
-		if taskStart < horizon.Start.Value {
+	for i := int64(0); i < int64(dur/unit); i++ {
+		taskStartAtomic := start - leftDur + AtomicUnits(i)*unit
+		if taskStartAtomic < AtomicUnits(horizon.Start.Value) {
 			continue
 		}
-		if taskStart >= horizon.End.Value {
+		if taskStartAtomic >= AtomicUnits(horizon.End.Value) {
 			continue
 		}
-
-		c.logger.Debug("task", "start", taskStart)
 
 		dur := unit
 		if i == 0 {
 			dur -= leftDur
 		}
+		startTask := TaskUnits(taskStartAtomic / unit)
+
 		*out = append(*out, &solverpb.Task{
 			Id:   *id,
 			Unit: unitTyped,
-			Start: &commonpb.AtomicUnit{
-				Value: taskStart,
+			Start: &commonpb.TaskUnit{
+				Value: int64(startTask),
 			},
-			End: &commonpb.AtomicUnit{
-				Value: taskStart + 1,
+			End: &commonpb.TaskUnit{
+				Value: int64(startTask) + 1,
 			},
 			Prereqs: nil,
 			DurCfgs: []*solverpb.DurConfig{
 				&solverpb.DurConfig{
 					Intervals: zeroCost,
 					Duration: &commonpb.AtomicUnit{
-						Value: dur,
+						Value: int64(dur),
 					},
 				},
 			},
@@ -116,18 +116,18 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 	*out = append(*out, &solverpb.Task{
 		Id:   *id,
 		Unit: unitTyped,
-		Start: &commonpb.AtomicUnit{
-			Value: cursor,
+		Start: &commonpb.TaskUnit{
+			Value: int64(cursor / unit),
 		},
-		End: &commonpb.AtomicUnit{
-			Value: cursor + 1,
+		End: &commonpb.TaskUnit{
+			Value: int64(cursor/unit) + 1,
 		},
 		Prereqs: nil,
 		DurCfgs: []*solverpb.DurConfig{
 			&solverpb.DurConfig{
 				Intervals: zeroCost,
 				Duration: &commonpb.AtomicUnit{
-					Value: rightDur,
+					Value: int64(rightDur),
 				},
 			},
 		},
@@ -191,13 +191,17 @@ func lookupTask(
 	t db.Task,
 	choices int64,
 ) (out *solverpb.Task, err error) {
-	var start *commonpb.AtomicUnit
-	var end *commonpb.AtomicUnit
+	var start *commonpb.TaskUnit
+	var end *commonpb.TaskUnit
 	if t.Start.Valid {
-		start = &commonpb.AtomicUnit{Value: t.Start.Int64}
+		atomicTime := RealTimeToProfileTime(t.Start.Time, profile)
+		taskTime := TaskUnits(atomicTime / AtomicUnits(t.Unit))
+		start = &commonpb.TaskUnit{Value: int64(taskTime)}
 	}
 	if t.End.Valid {
-		end = &commonpb.AtomicUnit{Value: t.End.Int64}
+		atomicTime := RealTimeToProfileTime(t.End.Time, profile)
+		taskTime := TaskUnits(atomicTime / AtomicUnits(t.Unit))
+		end = &commonpb.TaskUnit{Value: int64(taskTime)}
 	}
 
 	var rows []db.ListPrereqRow

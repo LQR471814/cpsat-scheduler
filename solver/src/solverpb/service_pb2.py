@@ -25,15 +25,15 @@ _sym_db = _symbol_database.Default()
 from commonpb import types_pb2 as commonpb_dot_types__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16solverpb/service.proto\x1a\x14\x63ommonpb/types.proto\"R\n\x0c\x43ostInterval\x12\x1a\n\x05start\x18\x01 \x01(\x0b\x32\x0b.AtomicUnit\x12\x18\n\x03\x65nd\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\x12\x0c\n\x04\x63ost\x18\x03 \x01(\x03\"L\n\tDurConfig\x12 \n\tintervals\x18\x01 \x03(\x0b\x32\r.CostInterval\x12\x1d\n\x08\x64uration\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\"D\n\x0e\x43hildrenConfig\x12 \n\tintervals\x18\x01 \x03(\x0b\x32\r.CostInterval\x12\x10\n\x08\x63hildren\x18\x02 \x03(\x03\"\xd6\x01\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x19\n\x04unit\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\x12\x1f\n\x05start\x18\x03 \x01(\x0b\x32\x0b.AtomicUnitH\x00\x88\x01\x01\x12\x1d\n\x03\x65nd\x18\x04 \x01(\x0b\x32\x0b.AtomicUnitH\x01\x88\x01\x01\x12\x0f\n\x07prereqs\x18\x05 \x03(\x03\x12\x1c\n\x08\x64ur_cfgs\x18\x06 \x03(\x0b\x32\n.DurConfig\x12&\n\rchildren_cfgs\x18\x07 \x03(\x0b\x32\x0f.ChildrenConfigB\x08\n\x06_startB\x06\n\x04_end\"\xb0\x01\n\nSolvedTask\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x1a\n\x05start\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\x12\x11\n\x07\x64ur_idx\x18\x03 \x01(\x03H\x00\x12\x16\n\x0c\x63hildren_idx\x18\x04 \x01(\x03H\x00\x12\x0c\n\x04\x63ost\x18\x05 \x01(\x03\x12\x1d\n\x08\x64uration\x18\x06 \x01(\x0b\x32\x0b.AtomicUnit\x12\x18\n\x03\x65nd\x18\x07 \x01(\x0b\x32\x0b.AtomicUnitB\x08\n\x06\x63onfig\"F\n\x0cSolveRequest\x12 \n\x07horizon\x18\x01 \x01(\x0b\x32\x0f.AtomicInterval\x12\x14\n\x05tasks\x18\x02 \x03(\x0b\x32\x05.Task\"[\n\rSolveResponse\x12\x1c\n\x06status\x18\x01 \x01(\x0e\x32\x0c.SolveStatus\x12\r\n\x05score\x18\x02 \x01(\x03\x12\x1d\n\x08solution\x18\x03 \x03(\x0b\x32\x0b.SolvedTask*X\n\x0bSolveStatus\x12\x0c\n\x08\x46\x45\x41SIBLE\x10\x00\x12\x0e\n\nINFEASIBLE\x10\x01\x12\x11\n\rMODEL_INVALID\x10\x02\x12\x0b\n\x07OPTIMAL\x10\x03\x12\x0b\n\x07UNKNOWN\x10\x04\x32\x30\n\x06Solver\x12&\n\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16solverpb/service.proto\x1a\x14\x63ommonpb/types.proto\"R\n\x0c\x43ostInterval\x12\x1a\n\x05start\x18\x01 \x01(\x0b\x32\x0b.AtomicUnit\x12\x18\n\x03\x65nd\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\x12\x0c\n\x04\x63ost\x18\x03 \x01(\x03\"L\n\tDurConfig\x12 \n\tintervals\x18\x01 \x03(\x0b\x32\r.CostInterval\x12\x1d\n\x08\x64uration\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\"D\n\x0e\x43hildrenConfig\x12 \n\tintervals\x18\x01 \x03(\x0b\x32\r.CostInterval\x12\x10\n\x08\x63hildren\x18\x02 \x03(\x03\"\xd2\x01\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x19\n\x04unit\x18\x02 \x01(\x0b\x32\x0b.AtomicUnit\x12\x1d\n\x05start\x18\x03 \x01(\x0b\x32\t.TaskUnitH\x00\x88\x01\x01\x12\x1b\n\x03\x65nd\x18\x04 \x01(\x0b\x32\t.TaskUnitH\x01\x88\x01\x01\x12\x0f\n\x07prereqs\x18\x05 \x03(\x03\x12\x1c\n\x08\x64ur_cfgs\x18\x06 \x03(\x0b\x32\n.DurConfig\x12&\n\rchildren_cfgs\x18\x07 \x03(\x0b\x32\x0f.ChildrenConfigB\x08\n\x06_startB\x06\n\x04_end\"\xae\x01\n\nSolvedTask\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x18\n\x05start\x18\x02 \x01(\x0b\x32\t.TaskUnit\x12\x11\n\x07\x64ur_idx\x18\x03 \x01(\x03H\x00\x12\x16\n\x0c\x63hildren_idx\x18\x04 \x01(\x03H\x00\x12\x0c\n\x04\x63ost\x18\x05 \x01(\x03\x12\x1d\n\x08\x64uration\x18\x06 \x01(\x0b\x32\x0b.AtomicUnit\x12\x18\n\x03\x65nd\x18\x07 \x01(\x0b\x32\x0b.AtomicUnitB\x08\n\x06\x63onfig\"F\n\x0cSolveRequest\x12 \n\x07horizon\x18\x01 \x01(\x0b\x32\x0f.AtomicInterval\x12\x14\n\x05tasks\x18\x02 \x03(\x0b\x32\x05.Task\"[\n\rSolveResponse\x12\x1c\n\x06status\x18\x01 \x01(\x0e\x32\x0c.SolveStatus\x12\r\n\x05score\x18\x02 \x01(\x03\x12\x1d\n\x08solution\x18\x03 \x03(\x0b\x32\x0b.SolvedTask*X\n\x0bSolveStatus\x12\x0c\n\x08\x46\x45\x41SIBLE\x10\x00\x12\x0e\n\nINFEASIBLE\x10\x01\x12\x11\n\rMODEL_INVALID\x10\x02\x12\x0b\n\x07OPTIMAL\x10\x03\x12\x0b\n\x07UNKNOWN\x10\x04\x32\x30\n\x06Solver\x12&\n\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'solverpb.service_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_SOLVESTATUS']._serialized_start=841
-  _globals['_SOLVESTATUS']._serialized_end=929
+  _globals['_SOLVESTATUS']._serialized_start=835
+  _globals['_SOLVESTATUS']._serialized_end=923
   _globals['_COSTINTERVAL']._serialized_start=48
   _globals['_COSTINTERVAL']._serialized_end=130
   _globals['_DURCONFIG']._serialized_start=132
@@ -41,13 +41,13 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CHILDRENCONFIG']._serialized_start=210
   _globals['_CHILDRENCONFIG']._serialized_end=278
   _globals['_TASK']._serialized_start=281
-  _globals['_TASK']._serialized_end=495
-  _globals['_SOLVEDTASK']._serialized_start=498
-  _globals['_SOLVEDTASK']._serialized_end=674
-  _globals['_SOLVEREQUEST']._serialized_start=676
-  _globals['_SOLVEREQUEST']._serialized_end=746
-  _globals['_SOLVERESPONSE']._serialized_start=748
-  _globals['_SOLVERESPONSE']._serialized_end=839
-  _globals['_SOLVER']._serialized_start=931
-  _globals['_SOLVER']._serialized_end=979
+  _globals['_TASK']._serialized_end=491
+  _globals['_SOLVEDTASK']._serialized_start=494
+  _globals['_SOLVEDTASK']._serialized_end=668
+  _globals['_SOLVEREQUEST']._serialized_start=670
+  _globals['_SOLVEREQUEST']._serialized_end=740
+  _globals['_SOLVERESPONSE']._serialized_start=742
+  _globals['_SOLVERESPONSE']._serialized_end=833
+  _globals['_SOLVER']._serialized_start=925
+  _globals['_SOLVER']._serialized_end=973
 # @@protoc_insertion_point(module_scope)
