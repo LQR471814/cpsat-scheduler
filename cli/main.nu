@@ -10,12 +10,21 @@ def "prompt prefix" []: nothing -> string {
 	"(scheduler)"
 }
 
-def reschedule []: nothing -> nothing {
+def --env reschedule [--start(-s): datetime, --end(-e): datetime]: nothing -> nothing {
+	let start = $start | default $env.schedule_start? | default (date now)
+	let end = $end | default $env.schedule_end? | default ((date now) + 4wk)
+
 	# recompute schedule
 	let spinner = util spin start
 	job spawn {
 		try {
-			{profile: $env.profile} | api.gen API RecomputeSchedule
+			{
+				profile: $env.profile
+				horizon: {
+					start: $start
+					end: $end
+				}
+			} | api.gen API RecomputeSchedule
 			$spinner | util spin stop
 		} catch {|err|
 			$spinner | util spin stop

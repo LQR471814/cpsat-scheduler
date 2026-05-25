@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: solver/solverpb/service.proto
+// source: solverpb/service.proto
 
 package solverpb
 
@@ -117,5 +117,5 @@ var Solver_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "solver/solverpb/service.proto",
+	Metadata: "solverpb/service.proto",
 }

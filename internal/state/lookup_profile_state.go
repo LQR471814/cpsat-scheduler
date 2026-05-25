@@ -6,19 +6,6 @@ import (
 	"math"
 )
 
-func GenerateEventTasks(c Context, profile db.Profile, out *[]*solverpb.Task) (events []db.Event, err error) {
-	events, err = c.db.ListEvent(c.ctx, profile.ID)
-	if err != nil {
-		return
-	}
-	id := int64(-1)
-	generateEventTasks(c, profile, &id, out, events[0])
-	// for _, ev := range events {
-	// 	generateEventTasks(c, ev, profile, &id, out)
-	// }
-	return
-}
-
 // TODO: replace this with something less-hardcoded
 var timescales = []int64{
 	4128768,
@@ -45,97 +32,23 @@ var zeroCost = []*solverpb.CostInterval{
 	},
 }
 
-func subdivideEventTasks(
-	c Context,
-	profile db.Profile,
-	// id is a ptr to next currently unused id, it shall decrement for each task created
-	id *int64,
-	// subdivided tasks shall be put into out
-	out *[]*solverpb.Task,
-	// list of subdividable timescale units ordered large to small
-	units []int64,
-	// start and end are both profile times, representing the interval to subdivide
-	start, end int64,
-) {
-	if units == nil {
-		panic("assert failed: units != nil")
-	}
-
-	c.logger.Debug("subdivide", "start", start, "end", end)
-
-	// 1) we choose the largest unit that is <= dur
-	// 2) we shrink `units` to all those < the chosen unit
-	dur := end - start
-	var unit int64
-	for i, u := range units {
-		if u > dur {
-			continue
-		}
-		unit = u
-		if i < len(units)-1 {
-			units = units[i+1:]
-		} else {
-			// if unit == 1, then we do not expect any more subdivisions (since
-			// all is divisible by 1)
-			units = nil
-		}
-		break
-	}
-
-	// leftDur is the span of time before the next unit
-	//
-	// start % unit = part of start that exceeds the prior unit
-	// unit - (start % unit) = the atomic units until the next unit
-	leftDur := unit - (start % unit)
-
-	// if part of start that exceeds prior unit is 0, we make left dur 0
-	if start%unit == 0 {
-		leftDur = 0
-	}
-
-	// start + leftDur = the unit to start at
-	unitStart := start + leftDur
-
-	for i := range (end - unitStart) / unit {
-		// both start and end are profile times
-		start := unitStart + i*unit
-
-		// since possible scheduled times is [start, end), we add one for only
-		// possible schedule time to be start
-		end := start + 1
-
-		c.logger.Debug("task instance", "start", start, "end", end, "unit", unit)
-		*out = append(*out, &solverpb.Task{
-			Id:      *id,
-			Unit:    unit,
-			Start:   &start,
-			End:     &end,
-			Prereqs: nil,
-			DurCfgs: []*solverpb.DurConfig{
-				&solverpb.DurConfig{
-					Intervals: zeroCost,
-					Duration:  unit,
-				},
-			},
-		})
-		*id--
-	}
-
-	// since dur / unit rounds down, there may still exist some remainder of
-	// the end that hasn't been covered
-	rightDur := (end - unitStart) % unit
-
-	if leftDur > 0 {
-		subdivideEventTasks(c, profile, id, out, units, start, start+leftDur)
-	}
-	if rightDur > 0 {
-		subdivideEventTasks(c, profile, id, out, units, end-rightDur, end)
-	}
+type Horizon struct {
+	// Start should be in terms of the atomic unit (profile time)
+	Start int64
+	// End should be in terms of the atomic unit (profile time)
+	End int64
 }
 
-func generateEventTasks(c Context, profile db.Profile, id *int64, out *[]*solverpb.Task, ev db.Event) {
+func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int64, out *[]*solverpb.Task, ev db.Event) {
 	start := RealTimeToProfileTime(ev.Start, profile)
 	end := RealTimeToProfileTime(ev.End, profile)
+
+	if start >= horizon.End {
+		return
+	}
+	if end < horizon.Start {
+		return
+	}
 
 	dur := end - start
 	var unit int64
@@ -152,18 +65,26 @@ func generateEventTasks(c Context, profile db.Profile, id *int64, out *[]*solver
 	rightDur := end % unit
 
 	for i := int64(0); i < dur/unit; i++ {
+		taskStart := start - leftDur + i*unit
+		if taskStart < horizon.Start {
+			continue
+		}
+		if taskStart >= horizon.End {
+			continue
+		}
+
+		c.logger.Debug("task", "start", taskStart)
+
 		dur := unit
 		if i == 0 {
 			dur -= leftDur
 		}
-		cursor := start - leftDur + i*unit
-		cursorEnd := cursor + 1
-		c.logger.Debug("task", "start", cursor, "end", cursorEnd, "dur", dur, "unit", unit)
+		taskEnd := taskStart + 1
 		*out = append(*out, &solverpb.Task{
 			Id:      *id,
 			Unit:    unit,
-			Start:   &cursor,
-			End:     &cursorEnd,
+			Start:   &taskStart,
+			End:     &taskEnd,
 			Prereqs: nil,
 			DurCfgs: []*solverpb.DurConfig{
 				&solverpb.DurConfig{
@@ -175,28 +96,43 @@ func generateEventTasks(c Context, profile db.Profile, id *int64, out *[]*solver
 		*id--
 	}
 
-	if rightDur > 0 {
-		cursor := end - rightDur
-		cursorEnd := cursor + 1
-		c.logger.Debug("task", "start", cursor, "end", cursorEnd, "dur", rightDur, "unit", unit)
-		*out = append(*out, &solverpb.Task{
-			Id:      *id,
-			Unit:    unit,
-			Start:   &cursor,
-			End:     &cursorEnd,
-			Prereqs: nil,
-			DurCfgs: []*solverpb.DurConfig{
-				&solverpb.DurConfig{
-					Intervals: zeroCost,
-					Duration:  rightDur,
-				},
-			},
-		})
-		*id--
+	if rightDur == 0 {
+		return
 	}
+
+	cursor := end - rightDur
+	cursorEnd := cursor + 1
+	*out = append(*out, &solverpb.Task{
+		Id:      *id,
+		Unit:    unit,
+		Start:   &cursor,
+		End:     &cursorEnd,
+		Prereqs: nil,
+		DurCfgs: []*solverpb.DurConfig{
+			&solverpb.DurConfig{
+				Intervals: zeroCost,
+				Duration:  rightDur,
+			},
+		},
+	})
+	*id--
 }
 
-func LookupProfileState(c Context, profile db.Profile, out *[]*solverpb.Task) (err error) {
+func GenerateEventTasks(c Context, profile db.Profile, horizon Horizon, out *[]*solverpb.Task) (events []db.Event, err error) {
+	txqry := c.db.WithTx(c.tx)
+	events, err = txqry.ListEvent(c.ctx, profile.ID)
+	if err != nil {
+		return
+	}
+	id := int64(-1)
+	// TODO: remove debugging
+	for _, ev := range events {
+		generateEventTasks(c, profile, horizon, &id, out, ev)
+	}
+	return
+}
+
+func LookupProfileState(c Context, profile db.Profile, horizon Horizon, out *[]*solverpb.Task) (err error) {
 	ctx := c.ctx
 
 	tasks, err := c.db.ListTasks(ctx, profile.ID)
@@ -215,6 +151,17 @@ func LookupProfileState(c Context, profile db.Profile, out *[]*solverpb.Task) (e
 		if err != nil {
 			return
 		}
+
+		// we only operate on start because horizon limits the start time
+		if task.Start != nil {
+			if *task.Start < horizon.Start {
+				continue
+			}
+			if *task.Start >= horizon.End {
+				continue
+			}
+		}
+
 		*out = append(*out, task)
 	}
 

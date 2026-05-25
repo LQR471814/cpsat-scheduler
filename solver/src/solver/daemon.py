@@ -12,8 +12,8 @@ from cpsatmodel.config import (
     Model,
 )
 from cpsatmodel.config_builder import ConfigBuilder, Task
-import solver.solverpb.service_pb2 as pb
-import solver.solverpb.service_pb2_grpc as grpcpb
+import solverpb.service_pb2 as pb
+import solverpb.service_pb2_grpc as grpcpb
 from ortools.sat.python import cp_model
 
 

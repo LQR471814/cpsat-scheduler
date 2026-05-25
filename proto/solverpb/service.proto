@@ -1,17 +1,16 @@
 syntax = "proto3";
 
+import "commonpb/types.proto";
+
 message CostInterval {
-  // in terms of the atomic unit
-  int64 start = 1;
-  // in terms of the atomic unit
-  int64 end = 2;
+  AtomicUnit start = 1;
+  AtomicUnit end = 2;
   int64 cost = 3;
 }
 
 message DurConfig {
   repeated CostInterval intervals = 1;
-  // in terms of the atomic unit
-  int64 duration = 2;
+  AtomicUnit duration = 2;
 }
 
 message ChildrenConfig {
@@ -21,12 +20,9 @@ message ChildrenConfig {
 
 message Task {
   int64 id = 1;
-  // in terms of the atomic unit
-  int64 unit = 2;
-  // in terms of the atomic unit
-  optional int64 start = 3;
-  // in terms of the atomic unit
-  optional int64 end = 4;
+  AtomicUnit unit = 2;
+  optional AtomicUnit start = 3;
+  optional AtomicUnit end = 4;
 
   repeated int64 prereqs = 5;
   repeated DurConfig dur_cfgs = 6;
@@ -36,8 +32,7 @@ message Task {
 message SolvedTask {
   // the id passed in the request
   int64 id = 1;
-  // in terms of the task's unit
-  int64 start = 2;
+  AtomicUnit start = 2;
   // the config selected
   oneof config {
     // the id of the duration config
@@ -47,10 +42,8 @@ message SolvedTask {
   };
   // the cost used
   int64 cost = 5;
-  // the duration used
-  int64 duration = 6;
-  // the "narrowest end" used
-  int64 end = 7;
+  AtomicUnit duration = 6;
+  AtomicUnit end = 7;
 }
 
 enum SolveStatus {
@@ -63,13 +56,7 @@ enum SolveStatus {
 
 // Solve
 message SolveRequest {
-  message Interval {
-    // in terms of the atomic unit
-    int64 start = 1;
-    // in terms of the atomic unit
-    int64 end = 2;
-  }
-  Interval horizon = 1;
+  AtomicInterval horizon = 1;
   repeated Task tasks = 2;
 }
 message SolveResponse {

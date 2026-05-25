@@ -2,11 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
-
-message Entry {
-  int64 id = 1;
-  string name = 2;
-}
+import "commonpb/types.proto";
 
 message PERT {
   google.protobuf.Duration pes = 1;
@@ -100,10 +96,6 @@ message DeleteTaskResponse {}
 
 // RecomputeSchedule
 message RecomputeScheduleRequest {
-  message Interval {
-    google.protobuf.Timestamp start = 1;
-    google.protobuf.Timestamp end = 2;
-  }
   int64 profile = 1;
   Interval horizon = 2;
 }

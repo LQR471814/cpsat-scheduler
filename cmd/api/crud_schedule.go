@@ -7,7 +7,6 @@ import (
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
-	"fmt"
 )
 
 func (s server) ListScheduledTasks(ctx context.Context, req *api.ListScheduledTasksRequest) (res *api.ListScheduledTasksResponse, err error) {
@@ -72,27 +71,48 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 	defer statectx.Tx().Rollback()
 	txqry := statectx.Queries()
 
-	profileID := req.GetProfile()
-	profile, err := txqry.GetProfile(ctx, profileID)
+	profile, err := txqry.GetProfile(ctx, req.GetProfile())
 	if err != nil {
 		return
 	}
 
-	s.logger.Debug("solving profile", "profile", profileID)
+	s.logger.Debug("solving profile", "profile", profile.ID)
 
-	solveRes, err := s.solver.SolveProfile(statectx, profile, &solverpb.SolveRequest_Interval{
+	horizon := state.Horizon{
 		Start: state.RealTimeToProfileTime(req.GetHorizon().GetStart().AsTime(), profile),
 		End:   state.RealTimeToProfileTime(req.GetHorizon().GetEnd().AsTime(), profile),
-	})
+	}
+	solveRes, err := s.solver.SolveProfile(statectx, profile, horizon)
 	if err != nil {
 		return
 	}
-	if solveRes.Status == solverpb.SolveStatus_INFEASIBLE {
-		err = fmt.Errorf("solution infeasible, this is a bug")
-		return
+
+	switch solveRes.Status {
+	case solverpb.SolveStatus_FEASIBLE,
+		solverpb.SolveStatus_OPTIMAL:
+		s.logger.Debug("reset schedule state", "profile", profile.ID)
+
+		err = replaceSchedule(ctx, txqry, profile, solveRes)
+		if err != nil {
+			return
+		}
+		err = statectx.Tx().Commit()
+		if err != nil {
+			return
+		}
 	}
 
-	err = txqry.DeleteSchedule(ctx, profileID)
+	res = &api.RecomputeScheduleResponse{}
+	return
+}
+
+func replaceSchedule(
+	ctx context.Context,
+	txqry *db.Queries,
+	profile db.Profile,
+	solveRes *solverpb.SolveResponse,
+) (err error) {
+	err = txqry.DeleteSchedule(ctx, profile.ID)
 	if err != nil {
 		return
 	}
@@ -128,13 +148,5 @@ func (s server) RecomputeSchedule(ctx context.Context, req *api.RecomputeSchedul
 		}
 	}
 
-	err = statectx.Tx().Commit()
-	if err != nil {
-		return
-	}
-
-	s.logger.Debug("reset schedule state", "profile", profileID)
-
-	res = &api.RecomputeScheduleResponse{}
 	return
 }

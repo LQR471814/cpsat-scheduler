@@ -1,3 +1,4 @@
+from commonpb import types_pb2 as _types_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -25,18 +26,18 @@ class CostInterval(_message.Message):
     START_FIELD_NUMBER: _ClassVar[int]
     END_FIELD_NUMBER: _ClassVar[int]
     COST_FIELD_NUMBER: _ClassVar[int]
-    start: int
-    end: int
+    start: _types_pb2.AtomicUnit
+    end: _types_pb2.AtomicUnit
     cost: int
-    def __init__(self, start: _Optional[int] = ..., end: _Optional[int] = ..., cost: _Optional[int] = ...) -> None: ...
+    def __init__(self, start: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., cost: _Optional[int] = ...) -> None: ...
 
 class DurConfig(_message.Message):
     __slots__ = ("intervals", "duration")
     INTERVALS_FIELD_NUMBER: _ClassVar[int]
     DURATION_FIELD_NUMBER: _ClassVar[int]
     intervals: _containers.RepeatedCompositeFieldContainer[CostInterval]
-    duration: int
-    def __init__(self, intervals: _Optional[_Iterable[_Union[CostInterval, _Mapping]]] = ..., duration: _Optional[int] = ...) -> None: ...
+    duration: _types_pb2.AtomicUnit
+    def __init__(self, intervals: _Optional[_Iterable[_Union[CostInterval, _Mapping]]] = ..., duration: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ...) -> None: ...
 
 class ChildrenConfig(_message.Message):
     __slots__ = ("intervals", "children")
@@ -56,13 +57,13 @@ class Task(_message.Message):
     DUR_CFGS_FIELD_NUMBER: _ClassVar[int]
     CHILDREN_CFGS_FIELD_NUMBER: _ClassVar[int]
     id: int
-    unit: int
-    start: int
-    end: int
+    unit: _types_pb2.AtomicUnit
+    start: _types_pb2.AtomicUnit
+    end: _types_pb2.AtomicUnit
     prereqs: _containers.RepeatedScalarFieldContainer[int]
     dur_cfgs: _containers.RepeatedCompositeFieldContainer[DurConfig]
     children_cfgs: _containers.RepeatedCompositeFieldContainer[ChildrenConfig]
-    def __init__(self, id: _Optional[int] = ..., unit: _Optional[int] = ..., start: _Optional[int] = ..., end: _Optional[int] = ..., prereqs: _Optional[_Iterable[int]] = ..., dur_cfgs: _Optional[_Iterable[_Union[DurConfig, _Mapping]]] = ..., children_cfgs: _Optional[_Iterable[_Union[ChildrenConfig, _Mapping]]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., unit: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., start: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., prereqs: _Optional[_Iterable[int]] = ..., dur_cfgs: _Optional[_Iterable[_Union[DurConfig, _Mapping]]] = ..., children_cfgs: _Optional[_Iterable[_Union[ChildrenConfig, _Mapping]]] = ...) -> None: ...
 
 class SolvedTask(_message.Message):
     __slots__ = ("id", "start", "dur_idx", "children_idx", "cost", "duration", "end")
@@ -74,28 +75,21 @@ class SolvedTask(_message.Message):
     DURATION_FIELD_NUMBER: _ClassVar[int]
     END_FIELD_NUMBER: _ClassVar[int]
     id: int
-    start: int
+    start: _types_pb2.AtomicUnit
     dur_idx: int
     children_idx: int
     cost: int
-    duration: int
-    end: int
-    def __init__(self, id: _Optional[int] = ..., start: _Optional[int] = ..., dur_idx: _Optional[int] = ..., children_idx: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
+    duration: _types_pb2.AtomicUnit
+    end: _types_pb2.AtomicUnit
+    def __init__(self, id: _Optional[int] = ..., start: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., dur_idx: _Optional[int] = ..., children_idx: _Optional[int] = ..., cost: _Optional[int] = ..., duration: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ..., end: _Optional[_Union[_types_pb2.AtomicUnit, _Mapping]] = ...) -> None: ...
 
 class SolveRequest(_message.Message):
     __slots__ = ("horizon", "tasks")
-    class Interval(_message.Message):
-        __slots__ = ("start", "end")
-        START_FIELD_NUMBER: _ClassVar[int]
-        END_FIELD_NUMBER: _ClassVar[int]
-        start: int
-        end: int
-        def __init__(self, start: _Optional[int] = ..., end: _Optional[int] = ...) -> None: ...
     HORIZON_FIELD_NUMBER: _ClassVar[int]
     TASKS_FIELD_NUMBER: _ClassVar[int]
-    horizon: SolveRequest.Interval
+    horizon: _types_pb2.AtomicInterval
     tasks: _containers.RepeatedCompositeFieldContainer[Task]
-    def __init__(self, horizon: _Optional[_Union[SolveRequest.Interval, _Mapping]] = ..., tasks: _Optional[_Iterable[_Union[Task, _Mapping]]] = ...) -> None: ...
+    def __init__(self, horizon: _Optional[_Union[_types_pb2.AtomicInterval, _Mapping]] = ..., tasks: _Optional[_Iterable[_Union[Task, _Mapping]]] = ...) -> None: ...
 
 class SolveResponse(_message.Message):
     __slots__ = ("status", "score", "solution")

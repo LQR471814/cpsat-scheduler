@@ -145,14 +145,14 @@ class TaskProps:
         parent_bound: tuple[int, int]
         if t.timescale_unit == self.__props.model.max_timescale:
             horizon_lb, horizon_ub = self.__props._config.horizon
+            # horizon is in terms of the atomic timescale so we divide by unit
             parent_bound = (
                 horizon_lb // t.timescale_unit,
                 horizon_ub // t.timescale_unit,
             )
         else:
             parent = self.resolve_parent_cfg(task_id)
-            # we assume there is always a parent condition (because synthetic
-            # tasks exist)
+            # we assume there is always a parent (because temp tasks exist)
             assert parent is not None
             parent_lb, parent_ub = self.resolve_start_bounds(parent.id)
             parent_unit = self.__props._config.tasks[parent.id].timescale_unit
@@ -161,18 +161,22 @@ class TaskProps:
                 parent_ub * parent_unit // t.timescale_unit,
             )
 
+        start, end = parent_bound
+
         if t.start is not None:
             # explicit start cannot go outside parent bounds
             assert t.start >= parent_bound[0]
+            assert t.start < parent_bound[1]
+            start = t.start
 
-        if t.end is not None:
-            # explicit end cannot go outside parent bounds
-            assert t.end <= parent_bound[1]
+        # it is okay to implicitly move the end constraint forward here because
+        # technically all it says is that the task *must start* before this
+        # date. if parent gives a tighter bound, it must abide
+        if t.end is not None and t.end < parent_bound[1]:
+            assert t.end > start
+            end = t.end
 
-        return (
-            t.start if t.start is not None else parent_bound[0],
-            t.end if t.end is not None else parent_bound[1],
-        )
+        return (start, end)
 
     def __compute_real_end_bounds(self, task_id: int) -> tuple[int, int]:
         t = self.__get_task_cfg(task_id)

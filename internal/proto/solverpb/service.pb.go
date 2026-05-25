@@ -2,11 +2,12 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: solver/solverpb/service.proto
+// source: solverpb/service.proto
 
 package solverpb
 
 import (
+	commonpb "cpsat-scheduler/internal/proto/commonpb"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -60,11 +61,11 @@ func (x SolveStatus) String() string {
 }
 
 func (SolveStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_solver_solverpb_service_proto_enumTypes[0].Descriptor()
+	return file_solverpb_service_proto_enumTypes[0].Descriptor()
 }
 
 func (SolveStatus) Type() protoreflect.EnumType {
-	return &file_solver_solverpb_service_proto_enumTypes[0]
+	return &file_solverpb_service_proto_enumTypes[0]
 }
 
 func (x SolveStatus) Number() protoreflect.EnumNumber {
@@ -73,23 +74,21 @@ func (x SolveStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SolveStatus.Descriptor instead.
 func (SolveStatus) EnumDescriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{0}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{0}
 }
 
 type CostInterval struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// in terms of the atomic unit
-	Start int64 `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
-	// in terms of the atomic unit
-	End           int64 `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
-	Cost          int64 `protobuf:"varint,3,opt,name=cost,proto3" json:"cost,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Start         *commonpb.AtomicUnit   `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	End           *commonpb.AtomicUnit   `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	Cost          int64                  `protobuf:"varint,3,opt,name=cost,proto3" json:"cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CostInterval) Reset() {
 	*x = CostInterval{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[0]
+	mi := &file_solverpb_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +100,7 @@ func (x *CostInterval) String() string {
 func (*CostInterval) ProtoMessage() {}
 
 func (x *CostInterval) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[0]
+	mi := &file_solverpb_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,21 +113,21 @@ func (x *CostInterval) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CostInterval.ProtoReflect.Descriptor instead.
 func (*CostInterval) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{0}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *CostInterval) GetStart() int64 {
+func (x *CostInterval) GetStart() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.Start
 	}
-	return 0
+	return nil
 }
 
-func (x *CostInterval) GetEnd() int64 {
+func (x *CostInterval) GetEnd() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.End
 	}
-	return 0
+	return nil
 }
 
 func (x *CostInterval) GetCost() int64 {
@@ -139,17 +138,16 @@ func (x *CostInterval) GetCost() int64 {
 }
 
 type DurConfig struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	Intervals []*CostInterval        `protobuf:"bytes,1,rep,name=intervals,proto3" json:"intervals,omitempty"`
-	// in terms of the atomic unit
-	Duration      int64 `protobuf:"varint,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Intervals     []*CostInterval        `protobuf:"bytes,1,rep,name=intervals,proto3" json:"intervals,omitempty"`
+	Duration      *commonpb.AtomicUnit   `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DurConfig) Reset() {
 	*x = DurConfig{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[1]
+	mi := &file_solverpb_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -161,7 +159,7 @@ func (x *DurConfig) String() string {
 func (*DurConfig) ProtoMessage() {}
 
 func (x *DurConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[1]
+	mi := &file_solverpb_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -174,7 +172,7 @@ func (x *DurConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DurConfig.ProtoReflect.Descriptor instead.
 func (*DurConfig) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{1}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DurConfig) GetIntervals() []*CostInterval {
@@ -184,11 +182,11 @@ func (x *DurConfig) GetIntervals() []*CostInterval {
 	return nil
 }
 
-func (x *DurConfig) GetDuration() int64 {
+func (x *DurConfig) GetDuration() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.Duration
 	}
-	return 0
+	return nil
 }
 
 type ChildrenConfig struct {
@@ -201,7 +199,7 @@ type ChildrenConfig struct {
 
 func (x *ChildrenConfig) Reset() {
 	*x = ChildrenConfig{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[2]
+	mi := &file_solverpb_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -213,7 +211,7 @@ func (x *ChildrenConfig) String() string {
 func (*ChildrenConfig) ProtoMessage() {}
 
 func (x *ChildrenConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[2]
+	mi := &file_solverpb_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -226,7 +224,7 @@ func (x *ChildrenConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChildrenConfig.ProtoReflect.Descriptor instead.
 func (*ChildrenConfig) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{2}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ChildrenConfig) GetIntervals() []*CostInterval {
@@ -244,24 +242,21 @@ func (x *ChildrenConfig) GetChildren() []int64 {
 }
 
 type Task struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// in terms of the atomic unit
-	Unit int64 `protobuf:"varint,2,opt,name=unit,proto3" json:"unit,omitempty"`
-	// in terms of the atomic unit
-	Start *int64 `protobuf:"varint,3,opt,name=start,proto3,oneof" json:"start,omitempty"`
-	// in terms of the atomic unit
-	End           *int64            `protobuf:"varint,4,opt,name=end,proto3,oneof" json:"end,omitempty"`
-	Prereqs       []int64           `protobuf:"varint,5,rep,packed,name=prereqs,proto3" json:"prereqs,omitempty"`
-	DurCfgs       []*DurConfig      `protobuf:"bytes,6,rep,name=dur_cfgs,json=durCfgs,proto3" json:"dur_cfgs,omitempty"`
-	ChildrenCfgs  []*ChildrenConfig `protobuf:"bytes,7,rep,name=children_cfgs,json=childrenCfgs,proto3" json:"children_cfgs,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Unit          *commonpb.AtomicUnit   `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
+	Start         *commonpb.AtomicUnit   `protobuf:"bytes,3,opt,name=start,proto3,oneof" json:"start,omitempty"`
+	End           *commonpb.AtomicUnit   `protobuf:"bytes,4,opt,name=end,proto3,oneof" json:"end,omitempty"`
+	Prereqs       []int64                `protobuf:"varint,5,rep,packed,name=prereqs,proto3" json:"prereqs,omitempty"`
+	DurCfgs       []*DurConfig           `protobuf:"bytes,6,rep,name=dur_cfgs,json=durCfgs,proto3" json:"dur_cfgs,omitempty"`
+	ChildrenCfgs  []*ChildrenConfig      `protobuf:"bytes,7,rep,name=children_cfgs,json=childrenCfgs,proto3" json:"children_cfgs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Task) Reset() {
 	*x = Task{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[3]
+	mi := &file_solverpb_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -273,7 +268,7 @@ func (x *Task) String() string {
 func (*Task) ProtoMessage() {}
 
 func (x *Task) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[3]
+	mi := &file_solverpb_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -286,7 +281,7 @@ func (x *Task) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Task.ProtoReflect.Descriptor instead.
 func (*Task) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{3}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Task) GetId() int64 {
@@ -296,25 +291,25 @@ func (x *Task) GetId() int64 {
 	return 0
 }
 
-func (x *Task) GetUnit() int64 {
+func (x *Task) GetUnit() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.Unit
 	}
-	return 0
+	return nil
 }
 
-func (x *Task) GetStart() int64 {
-	if x != nil && x.Start != nil {
-		return *x.Start
+func (x *Task) GetStart() *commonpb.AtomicUnit {
+	if x != nil {
+		return x.Start
 	}
-	return 0
+	return nil
 }
 
-func (x *Task) GetEnd() int64 {
-	if x != nil && x.End != nil {
-		return *x.End
+func (x *Task) GetEnd() *commonpb.AtomicUnit {
+	if x != nil {
+		return x.End
 	}
-	return 0
+	return nil
 }
 
 func (x *Task) GetPrereqs() []int64 {
@@ -341,9 +336,8 @@ func (x *Task) GetChildrenCfgs() []*ChildrenConfig {
 type SolvedTask struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// the id passed in the request
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// in terms of the task's unit
-	Start int64 `protobuf:"varint,2,opt,name=start,proto3" json:"start,omitempty"`
+	Id    int64                `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Start *commonpb.AtomicUnit `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
 	// the config selected
 	//
 	// Types that are valid to be assigned to Config:
@@ -352,18 +346,16 @@ type SolvedTask struct {
 	//	*SolvedTask_ChildrenIdx
 	Config isSolvedTask_Config `protobuf_oneof:"config"`
 	// the cost used
-	Cost int64 `protobuf:"varint,5,opt,name=cost,proto3" json:"cost,omitempty"`
-	// the duration used
-	Duration int64 `protobuf:"varint,6,opt,name=duration,proto3" json:"duration,omitempty"`
-	// the "narrowest end" used
-	End           int64 `protobuf:"varint,7,opt,name=end,proto3" json:"end,omitempty"`
+	Cost          int64                `protobuf:"varint,5,opt,name=cost,proto3" json:"cost,omitempty"`
+	Duration      *commonpb.AtomicUnit `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
+	End           *commonpb.AtomicUnit `protobuf:"bytes,7,opt,name=end,proto3" json:"end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SolvedTask) Reset() {
 	*x = SolvedTask{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[4]
+	mi := &file_solverpb_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -375,7 +367,7 @@ func (x *SolvedTask) String() string {
 func (*SolvedTask) ProtoMessage() {}
 
 func (x *SolvedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[4]
+	mi := &file_solverpb_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -388,7 +380,7 @@ func (x *SolvedTask) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolvedTask.ProtoReflect.Descriptor instead.
 func (*SolvedTask) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{4}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SolvedTask) GetId() int64 {
@@ -398,11 +390,11 @@ func (x *SolvedTask) GetId() int64 {
 	return 0
 }
 
-func (x *SolvedTask) GetStart() int64 {
+func (x *SolvedTask) GetStart() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.Start
 	}
-	return 0
+	return nil
 }
 
 func (x *SolvedTask) GetConfig() isSolvedTask_Config {
@@ -437,18 +429,18 @@ func (x *SolvedTask) GetCost() int64 {
 	return 0
 }
 
-func (x *SolvedTask) GetDuration() int64 {
+func (x *SolvedTask) GetDuration() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.Duration
 	}
-	return 0
+	return nil
 }
 
-func (x *SolvedTask) GetEnd() int64 {
+func (x *SolvedTask) GetEnd() *commonpb.AtomicUnit {
 	if x != nil {
 		return x.End
 	}
-	return 0
+	return nil
 }
 
 type isSolvedTask_Config interface {
@@ -471,16 +463,16 @@ func (*SolvedTask_ChildrenIdx) isSolvedTask_Config() {}
 
 // Solve
 type SolveRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Horizon       *SolveRequest_Interval `protobuf:"bytes,1,opt,name=horizon,proto3" json:"horizon,omitempty"`
-	Tasks         []*Task                `protobuf:"bytes,2,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Horizon       *commonpb.AtomicInterval `protobuf:"bytes,1,opt,name=horizon,proto3" json:"horizon,omitempty"`
+	Tasks         []*Task                  `protobuf:"bytes,2,rep,name=tasks,proto3" json:"tasks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SolveRequest) Reset() {
 	*x = SolveRequest{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[5]
+	mi := &file_solverpb_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -492,7 +484,7 @@ func (x *SolveRequest) String() string {
 func (*SolveRequest) ProtoMessage() {}
 
 func (x *SolveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[5]
+	mi := &file_solverpb_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -505,10 +497,10 @@ func (x *SolveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveRequest.ProtoReflect.Descriptor instead.
 func (*SolveRequest) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{5}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *SolveRequest) GetHorizon() *SolveRequest_Interval {
+func (x *SolveRequest) GetHorizon() *commonpb.AtomicInterval {
 	if x != nil {
 		return x.Horizon
 	}
@@ -533,7 +525,7 @@ type SolveResponse struct {
 
 func (x *SolveResponse) Reset() {
 	*x = SolveResponse{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[6]
+	mi := &file_solverpb_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -545,7 +537,7 @@ func (x *SolveResponse) String() string {
 func (*SolveResponse) ProtoMessage() {}
 
 func (x *SolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[6]
+	mi := &file_solverpb_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -558,7 +550,7 @@ func (x *SolveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveResponse.ProtoReflect.Descriptor instead.
 func (*SolveResponse) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{6}
+	return file_solverpb_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SolveResponse) GetStatus() SolveStatus {
@@ -582,100 +574,45 @@ func (x *SolveResponse) GetSolution() []*SolvedTask {
 	return nil
 }
 
-type SolveRequest_Interval struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Start         int64                  `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
-	End           int64                  `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
+var File_solverpb_service_proto protoreflect.FileDescriptor
 
-func (x *SolveRequest_Interval) Reset() {
-	*x = SolveRequest_Interval{}
-	mi := &file_solver_solverpb_service_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SolveRequest_Interval) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SolveRequest_Interval) ProtoMessage() {}
-
-func (x *SolveRequest_Interval) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_solverpb_service_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SolveRequest_Interval.ProtoReflect.Descriptor instead.
-func (*SolveRequest_Interval) Descriptor() ([]byte, []int) {
-	return file_solver_solverpb_service_proto_rawDescGZIP(), []int{5, 0}
-}
-
-func (x *SolveRequest_Interval) GetStart() int64 {
-	if x != nil {
-		return x.Start
-	}
-	return 0
-}
-
-func (x *SolveRequest_Interval) GetEnd() int64 {
-	if x != nil {
-		return x.End
-	}
-	return 0
-}
-
-var File_solver_solverpb_service_proto protoreflect.FileDescriptor
-
-const file_solver_solverpb_service_proto_rawDesc = "" +
+const file_solverpb_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dsolver/solverpb/service.proto\"J\n" +
-	"\fCostInterval\x12\x14\n" +
-	"\x05start\x18\x01 \x01(\x03R\x05start\x12\x10\n" +
-	"\x03end\x18\x02 \x01(\x03R\x03end\x12\x12\n" +
-	"\x04cost\x18\x03 \x01(\x03R\x04cost\"T\n" +
+	"\x16solverpb/service.proto\x1a\x14commonpb/types.proto\"d\n" +
+	"\fCostInterval\x12!\n" +
+	"\x05start\x18\x01 \x01(\v2\v.AtomicUnitR\x05start\x12\x1d\n" +
+	"\x03end\x18\x02 \x01(\v2\v.AtomicUnitR\x03end\x12\x12\n" +
+	"\x04cost\x18\x03 \x01(\x03R\x04cost\"a\n" +
 	"\tDurConfig\x12+\n" +
-	"\tintervals\x18\x01 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
-	"\bduration\x18\x02 \x01(\x03R\bduration\"Y\n" +
+	"\tintervals\x18\x01 \x03(\v2\r.CostIntervalR\tintervals\x12'\n" +
+	"\bduration\x18\x02 \x01(\v2\v.AtomicUnitR\bduration\"Y\n" +
 	"\x0eChildrenConfig\x12+\n" +
 	"\tintervals\x18\x01 \x03(\v2\r.CostIntervalR\tintervals\x12\x1a\n" +
-	"\bchildren\x18\x02 \x03(\x03R\bchildren\"\xe5\x01\n" +
+	"\bchildren\x18\x02 \x03(\x03R\bchildren\"\x8c\x02\n" +
 	"\x04Task\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04unit\x18\x02 \x01(\x03R\x04unit\x12\x19\n" +
-	"\x05start\x18\x03 \x01(\x03H\x00R\x05start\x88\x01\x01\x12\x15\n" +
-	"\x03end\x18\x04 \x01(\x03H\x01R\x03end\x88\x01\x01\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
+	"\x04unit\x18\x02 \x01(\v2\v.AtomicUnitR\x04unit\x12&\n" +
+	"\x05start\x18\x03 \x01(\v2\v.AtomicUnitH\x00R\x05start\x88\x01\x01\x12\"\n" +
+	"\x03end\x18\x04 \x01(\v2\v.AtomicUnitH\x01R\x03end\x88\x01\x01\x12\x18\n" +
 	"\aprereqs\x18\x05 \x03(\x03R\aprereqs\x12%\n" +
 	"\bdur_cfgs\x18\x06 \x03(\v2\n" +
 	".DurConfigR\adurCfgs\x124\n" +
 	"\rchildren_cfgs\x18\a \x03(\v2\x0f.ChildrenConfigR\fchildrenCfgsB\b\n" +
 	"\x06_startB\x06\n" +
-	"\x04_end\"\xbe\x01\n" +
+	"\x04_end\"\xe5\x01\n" +
 	"\n" +
 	"SolvedTask\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
-	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12!\n" +
+	"\x05start\x18\x02 \x01(\v2\v.AtomicUnitR\x05start\x12\x19\n" +
 	"\adur_idx\x18\x03 \x01(\x03H\x00R\x06durIdx\x12#\n" +
 	"\fchildren_idx\x18\x04 \x01(\x03H\x00R\vchildrenIdx\x12\x12\n" +
-	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12\x1a\n" +
-	"\bduration\x18\x06 \x01(\x03R\bduration\x12\x10\n" +
-	"\x03end\x18\a \x01(\x03R\x03endB\b\n" +
-	"\x06config\"\x91\x01\n" +
-	"\fSolveRequest\x120\n" +
-	"\ahorizon\x18\x01 \x01(\v2\x16.SolveRequest.IntervalR\ahorizon\x12\x1b\n" +
-	"\x05tasks\x18\x02 \x03(\v2\x05.TaskR\x05tasks\x1a2\n" +
-	"\bInterval\x12\x14\n" +
-	"\x05start\x18\x01 \x01(\x03R\x05start\x12\x10\n" +
-	"\x03end\x18\x02 \x01(\x03R\x03end\"t\n" +
+	"\x04cost\x18\x05 \x01(\x03R\x04cost\x12'\n" +
+	"\bduration\x18\x06 \x01(\v2\v.AtomicUnitR\bduration\x12\x1d\n" +
+	"\x03end\x18\a \x01(\v2\v.AtomicUnitR\x03endB\b\n" +
+	"\x06config\"V\n" +
+	"\fSolveRequest\x12)\n" +
+	"\ahorizon\x18\x01 \x01(\v2\x0f.AtomicIntervalR\ahorizon\x12\x1b\n" +
+	"\x05tasks\x18\x02 \x03(\v2\x05.TaskR\x05tasks\"t\n" +
 	"\rSolveResponse\x12$\n" +
 	"\x06status\x18\x01 \x01(\x0e2\f.SolveStatusR\x06status\x12\x14\n" +
 	"\x05score\x18\x02 \x01(\x03R\x05score\x12'\n" +
@@ -688,58 +625,68 @@ const file_solver_solverpb_service_proto_rawDesc = "" +
 	"\aOPTIMAL\x10\x03\x12\v\n" +
 	"\aUNKNOWN\x10\x0420\n" +
 	"\x06Solver\x12&\n" +
-	"\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseB*B\fServiceProtoP\x01Z\x18internal/solver/solverpbb\x06proto3"
+	"\x05Solve\x12\r.SolveRequest\x1a\x0e.SolveResponseB9B\fServiceProtoP\x01Z'cpsat-scheduler/internal/proto/solverpbb\x06proto3"
 
 var (
-	file_solver_solverpb_service_proto_rawDescOnce sync.Once
-	file_solver_solverpb_service_proto_rawDescData []byte
+	file_solverpb_service_proto_rawDescOnce sync.Once
+	file_solverpb_service_proto_rawDescData []byte
 )
 
-func file_solver_solverpb_service_proto_rawDescGZIP() []byte {
-	file_solver_solverpb_service_proto_rawDescOnce.Do(func() {
-		file_solver_solverpb_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_solver_solverpb_service_proto_rawDesc), len(file_solver_solverpb_service_proto_rawDesc)))
+func file_solverpb_service_proto_rawDescGZIP() []byte {
+	file_solverpb_service_proto_rawDescOnce.Do(func() {
+		file_solverpb_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_solverpb_service_proto_rawDesc), len(file_solverpb_service_proto_rawDesc)))
 	})
-	return file_solver_solverpb_service_proto_rawDescData
+	return file_solverpb_service_proto_rawDescData
 }
 
-var file_solver_solverpb_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_solver_solverpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_solver_solverpb_service_proto_goTypes = []any{
-	(SolveStatus)(0),              // 0: SolveStatus
-	(*CostInterval)(nil),          // 1: CostInterval
-	(*DurConfig)(nil),             // 2: DurConfig
-	(*ChildrenConfig)(nil),        // 3: ChildrenConfig
-	(*Task)(nil),                  // 4: Task
-	(*SolvedTask)(nil),            // 5: SolvedTask
-	(*SolveRequest)(nil),          // 6: SolveRequest
-	(*SolveResponse)(nil),         // 7: SolveResponse
-	(*SolveRequest_Interval)(nil), // 8: SolveRequest.Interval
+var file_solverpb_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_solverpb_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_solverpb_service_proto_goTypes = []any{
+	(SolveStatus)(0),                // 0: SolveStatus
+	(*CostInterval)(nil),            // 1: CostInterval
+	(*DurConfig)(nil),               // 2: DurConfig
+	(*ChildrenConfig)(nil),          // 3: ChildrenConfig
+	(*Task)(nil),                    // 4: Task
+	(*SolvedTask)(nil),              // 5: SolvedTask
+	(*SolveRequest)(nil),            // 6: SolveRequest
+	(*SolveResponse)(nil),           // 7: SolveResponse
+	(*commonpb.AtomicUnit)(nil),     // 8: AtomicUnit
+	(*commonpb.AtomicInterval)(nil), // 9: AtomicInterval
 }
-var file_solver_solverpb_service_proto_depIdxs = []int32{
-	1, // 0: DurConfig.intervals:type_name -> CostInterval
-	1, // 1: ChildrenConfig.intervals:type_name -> CostInterval
-	2, // 2: Task.dur_cfgs:type_name -> DurConfig
-	3, // 3: Task.children_cfgs:type_name -> ChildrenConfig
-	8, // 4: SolveRequest.horizon:type_name -> SolveRequest.Interval
-	4, // 5: SolveRequest.tasks:type_name -> Task
-	0, // 6: SolveResponse.status:type_name -> SolveStatus
-	5, // 7: SolveResponse.solution:type_name -> SolvedTask
-	6, // 8: Solver.Solve:input_type -> SolveRequest
-	7, // 9: Solver.Solve:output_type -> SolveResponse
-	9, // [9:10] is the sub-list for method output_type
-	8, // [8:9] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+var file_solverpb_service_proto_depIdxs = []int32{
+	8,  // 0: CostInterval.start:type_name -> AtomicUnit
+	8,  // 1: CostInterval.end:type_name -> AtomicUnit
+	1,  // 2: DurConfig.intervals:type_name -> CostInterval
+	8,  // 3: DurConfig.duration:type_name -> AtomicUnit
+	1,  // 4: ChildrenConfig.intervals:type_name -> CostInterval
+	8,  // 5: Task.unit:type_name -> AtomicUnit
+	8,  // 6: Task.start:type_name -> AtomicUnit
+	8,  // 7: Task.end:type_name -> AtomicUnit
+	2,  // 8: Task.dur_cfgs:type_name -> DurConfig
+	3,  // 9: Task.children_cfgs:type_name -> ChildrenConfig
+	8,  // 10: SolvedTask.start:type_name -> AtomicUnit
+	8,  // 11: SolvedTask.duration:type_name -> AtomicUnit
+	8,  // 12: SolvedTask.end:type_name -> AtomicUnit
+	9,  // 13: SolveRequest.horizon:type_name -> AtomicInterval
+	4,  // 14: SolveRequest.tasks:type_name -> Task
+	0,  // 15: SolveResponse.status:type_name -> SolveStatus
+	5,  // 16: SolveResponse.solution:type_name -> SolvedTask
+	6,  // 17: Solver.Solve:input_type -> SolveRequest
+	7,  // 18: Solver.Solve:output_type -> SolveResponse
+	18, // [18:19] is the sub-list for method output_type
+	17, // [17:18] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
-func init() { file_solver_solverpb_service_proto_init() }
-func file_solver_solverpb_service_proto_init() {
-	if File_solver_solverpb_service_proto != nil {
+func init() { file_solverpb_service_proto_init() }
+func file_solverpb_service_proto_init() {
+	if File_solverpb_service_proto != nil {
 		return
 	}
-	file_solver_solverpb_service_proto_msgTypes[3].OneofWrappers = []any{}
-	file_solver_solverpb_service_proto_msgTypes[4].OneofWrappers = []any{
+	file_solverpb_service_proto_msgTypes[3].OneofWrappers = []any{}
+	file_solverpb_service_proto_msgTypes[4].OneofWrappers = []any{
 		(*SolvedTask_DurIdx)(nil),
 		(*SolvedTask_ChildrenIdx)(nil),
 	}
@@ -747,18 +694,18 @@ func file_solver_solverpb_service_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solver_solverpb_service_proto_rawDesc), len(file_solver_solverpb_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solverpb_service_proto_rawDesc), len(file_solverpb_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_solver_solverpb_service_proto_goTypes,
-		DependencyIndexes: file_solver_solverpb_service_proto_depIdxs,
-		EnumInfos:         file_solver_solverpb_service_proto_enumTypes,
-		MessageInfos:      file_solver_solverpb_service_proto_msgTypes,
+		GoTypes:           file_solverpb_service_proto_goTypes,
+		DependencyIndexes: file_solverpb_service_proto_depIdxs,
+		EnumInfos:         file_solverpb_service_proto_enumTypes,
+		MessageInfos:      file_solverpb_service_proto_msgTypes,
 	}.Build()
-	File_solver_solverpb_service_proto = out.File
-	file_solver_solverpb_service_proto_goTypes = nil
-	file_solver_solverpb_service_proto_depIdxs = nil
+	File_solverpb_service_proto = out.File
+	file_solverpb_service_proto_goTypes = nil
+	file_solverpb_service_proto_depIdxs = nil
 }

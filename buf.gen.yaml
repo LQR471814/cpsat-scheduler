@@ -3,12 +3,16 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: internal
+      value: cpsat-scheduler/internal/proto
 plugins:
   - local: protoc-gen-go
-    out: .
+    out: internal/proto
+    opt:
+      - paths=source_relative
   - local: protoc-gen-go-grpc
-    out: .
+    out: internal/proto
+    opt:
+      - paths=source_relative
   - local: protoc-gen-nu
     out: .
 inputs:
