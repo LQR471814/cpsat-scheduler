@@ -126,7 +126,7 @@ func replaceSchedule(
 		}
 
 		profileStart := sql.NullInt64{Valid: true, Int64: solved.Start.Value * task.Unit}
-		profileEnd := sql.NullInt64{Valid: true, Int64: solved.End.Value * task.Unit}
+		profileEnd := sql.NullInt64{Valid: true, Int64: (solved.Start.Value + 1) * task.Unit}
 
 		realStart := state.ProfileNullTimeToRealTime(profileStart, profile)
 		realEnd := state.ProfileNullTimeToRealTime(profileEnd, profile)
