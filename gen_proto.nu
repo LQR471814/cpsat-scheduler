@@ -7,15 +7,12 @@ let solverpb: list<string> = ls (($proto)/solverpb/**/*.proto | into glob) | get
 
 let commonpb: list<string> = ls (($proto)/commonpb/**/*.proto | into glob) | get name
 
-python-grpc-tools-protoc -I $proto --python_out $python_out --pyi_out $python_out --grpc_python_out $python_out ...$solverpb ...$commonpb
+python-grpc-tools-protoc -I $proto --python_out $python_out --pyi_out $python_out --grpc_python_out $python_out ...$solverpb ...$commonpb | complete | print
 
 print "gen buf..."
 
-buf generate
+buf generate | complete | print
 
 # move nushell gen files into the right directory
-mv apipb/*.gen.nu cli/lib
-rm apipb
-rm --recursive solverpb
-rm --recursive commonpb
-rm --recursive google
+rm --recursive ./cli/lib/proto/commonpb
+rm --recursive ./cli/lib/proto/solverpb

@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/api.gen.nu'
+use '../../lib/proto/apipb/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<profile: int, payload: oneof<nothing, record<task: int>, record<parent: oneof<int, nothing>, prereq: oneof<int, nothing>, postreq: oneof<int, nothing>, child: oneof<int, nothing>, >>, >> = util get form params

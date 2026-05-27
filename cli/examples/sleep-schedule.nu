@@ -1,4 +1,4 @@
-use ../lib/api.gen.nu
+use ../lib/proto/apipb/api.gen.nu
 
 # to convert an event to tasks we discretize it in terms of the smallest timescale
 
@@ -16,6 +16,6 @@ let end: datetime = $start + 365day
 			end: ($st + 8hr)
 		}
 	}
-	| {event: $in}
+	| wrap event
 	| api.gen API CreateEvent
 

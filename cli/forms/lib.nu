@@ -28,7 +28,7 @@ export def "type entry table" []: nothing -> any {
 export def "form imports" []: nothing -> list<string> {
 	return [
 		../../lib/util.nu
-		../../lib/api.gen.nu
+		../../lib/proto/apipb/api.gen.nu
 	]
 }
 

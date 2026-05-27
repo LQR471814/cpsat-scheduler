@@ -14,6 +14,6 @@ plugins:
     opt:
       - paths=source_relative
   - local: protoc-gen-nu
-    out: .
+    out: cli/lib/proto
 inputs:
   - directory: proto

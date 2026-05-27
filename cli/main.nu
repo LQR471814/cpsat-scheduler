@@ -1,4 +1,4 @@
-use lib/api.gen.nu
+use lib/proto/apipb/api.gen.nu
 use lib/util.nu
 use forms/gen/index.nu
 

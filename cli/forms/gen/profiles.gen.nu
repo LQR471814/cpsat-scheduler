@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/api.gen.nu'
+use '../../lib/proto/apipb/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: nothing> = util get form params

@@ -1,5 +1,5 @@
 use '../../lib/util.nu'
-use '../../lib/api.gen.nu'
+use '../../lib/proto/apipb/api.gen.nu'
 use index.nu
 
 let p: record<prompt_prefix: string, state: record<task: int, desc: oneof<string, nothing>, deadline: oneof<datetime, nothing>, exp_cost: oneof<int, nothing>, children: table<id: int, name: string>>> = util get form params
