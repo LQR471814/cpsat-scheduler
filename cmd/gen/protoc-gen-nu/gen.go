@@ -6,8 +6,6 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -18,15 +16,16 @@ const frontmatter = `const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
 const self_path = path self
 
 export def req [api: string, method: string]: any -> any {
-    let schema_path = $self_path | path dirname | path join ../../proto
+    let schema_path = $self_path | path dirname | path join ../../../../proto/
 	let res = $in
         | to json --raw
         | buf curl -d @- --unix-socket $SOCKET_PATH --protocol grpc --http2-prior-knowledge --schema $schema_path $"http://localhost/($api)/($method)"
 		| complete
+		| inspect
 	if $res.exit_code == 0 {
 		$res.stdout | from json
 	} else {
-		print $res.stdout
+		print $res.stdout $res.stderr
 		error make {msg: 'gRPC returned error'}
 	}
 }
@@ -46,39 +45,24 @@ def "serialize proto dur" []: duration -> string {
 def "serialize proto time" []: datetime -> string {
     format date %+
 }
+
 `
 
-const (
-	message_type_duration  = ".google.protobuf.Duration"
-	message_type_timestamp = ".google.protobuf.Timestamp"
-)
-
 type GenContext struct {
-	messages      map[string]*descriptorpb.DescriptorProto
+	types         TypeStore
 	messageTypes  map[string]nugen.TypeDef
 	serializers   map[string]nugen.Closure
 	deserializers map[string]nugen.Closure
 }
 
-func newGenContext(file *descriptorpb.FileDescriptorProto) GenContext {
+func NewGenContext(msgStore TypeStore, file *descriptorpb.FileDescriptorProto) GenContext {
 	ctx := GenContext{
-		messages:      make(map[string]*descriptorpb.DescriptorProto),
+		types:         msgStore,
 		messageTypes:  make(map[string]nugen.TypeDef),
 		serializers:   make(map[string]nugen.Closure),
 		deserializers: make(map[string]nugen.Closure),
 	}
-	for _, msg := range file.GetMessageType() {
-		ctx.exploreMessage("", msg)
-	}
 	return ctx
-}
-
-func (c GenContext) exploreMessage(parent string, msg *descriptorpb.DescriptorProto) {
-	path := fmt.Sprintf("%s.%s", parent, msg.GetName())
-	c.messages[path] = msg
-	for _, nested := range msg.GetNestedType() {
-		c.exploreMessage(path, nested)
-	}
 }
 
 func (c GenContext) getFieldSerialize(field *descriptorpb.FieldDescriptorProto) string {
@@ -105,13 +89,6 @@ func (c GenContext) renderFieldTransform(
 	field *descriptorpb.FieldDescriptorProto,
 	transformer string,
 ) {
-	// proto3 optional is effectively just syntax sugar for oneof
-	optional := field.GetLabel() != descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL || field.OneofIndex != nil
-	var question string
-	if optional {
-		question = "?"
-	}
-
 	transform := transformer
 	if transform == "$in" {
 		return
@@ -121,9 +98,8 @@ func (c GenContext) renderFieldTransform(
 	}
 	fmt.Fprintf(
 		out,
-		"| update %s%s { %s }\n",
+		"| update %s? { %s }\n",
 		field.GetName(),
-		question,
 		transform,
 	)
 }
@@ -132,7 +108,7 @@ func (c GenContext) getSerializerInner(msgName string) nugen.Closure {
 	var body strings.Builder
 	fmt.Fprintln(&body, "$in")
 
-	for _, field := range c.messages[msgName].GetField() {
+	for _, field := range c.types.GetMessageType(msgName).GetField() {
 		c.renderFieldTransform(&body, field, c.getFieldSerialize(field))
 	}
 
@@ -174,29 +150,45 @@ func (c GenContext) getFieldDeserialize(field *descriptorpb.FieldDescriptorProto
 	return "$in"
 }
 
-func capitalize(str string) string {
-	if len(str) == 0 {
-		return ""
+func (c GenContext) getFieldDefaultValue(field *descriptorpb.FieldDescriptorProto) string {
+	switch field.GetLabel() {
+	case descriptorpb.FieldDescriptorProto_LABEL_REPEATED:
+		return "[]"
+	case descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL:
+		return "null"
 	}
-	firstRune, read := utf8.DecodeRune([]byte(str))
-	return string(unicode.ToLower(firstRune)) + str[read:]
-}
-
-func toLowerCamelCase(name string) string {
-	var out strings.Builder
-	var prevSep bool
-	for _, c := range name {
-		if c == '_' {
-			prevSep = true
-			continue
-		}
-		if prevSep {
-			prevSep = false
-			c = unicode.ToUpper(c)
-		}
-		out.WriteRune(c)
+	switch field.GetType() {
+	case
+		descriptorpb.FieldDescriptorProto_TYPE_INT32,
+		descriptorpb.FieldDescriptorProto_TYPE_INT64,
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32,
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64,
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32,
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64,
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32,
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64,
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32,
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64:
+		return "0"
+	case
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT,
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+		return "0.0"
+	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+		return "false"
+	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+		return "\"\""
+	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+		return "0x[]"
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		return "null"
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+		enumType := c.types.GetEnumType(field.GetTypeName())
+		firstValue := enumType.GetValue()[0]
+		return fmt.Sprintf("'%s'", firstValue.GetName())
+	default:
+		panic(fmt.Errorf("unsupported field type: %v", field.GetType()))
 	}
-	return capitalize(out.String())
 }
 
 func (c GenContext) getDeserializerInner(msgName string) nugen.Closure {
@@ -205,40 +197,31 @@ func (c GenContext) getDeserializerInner(msgName string) nugen.Closure {
 	fmt.Fprintln(&body, "$in")
 
 	// rename fields from lowerCamelCase to their original names
-	for _, field := range c.messages[msgName].GetField() {
-		camelCase := toLowerCamelCase(field.GetName())
-		if camelCase == field.GetName() {
-			continue
-		}
+	for _, field := range c.types.GetMessageType(msgName).GetField() {
+		camelCase := field.GetJsonName()
 
-		if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL {
-			fmt.Fprintf(&body, "| if $in.%s? != null { ", camelCase)
-		} else {
-			fmt.Fprint(&body, "| ")
-		}
+		fmt.Fprintln(&body, "| do { let x = $in")
+		fmt.Fprintf(&body, "if '%s' in $x {\n\t$x | ", camelCase)
+
+		defaultTransform := fmt.Sprintf(
+			"default %s %s",
+			c.getFieldDefaultValue(field),
+			field.GetName(),
+		)
 
 		fmt.Fprint(&body, "rename --column {")
 		fmt.Fprint(&body, camelCase)
 		fmt.Fprint(&body, ": ")
 		fmt.Fprint(&body, field.GetName())
-		fmt.Fprint(&body, "}")
+		fmt.Fprintf(&body, "} | %s", defaultTransform)
 
-		if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL {
-			fmt.Fprint(&body, " }")
-		}
+		fmt.Fprintf(&body, "\n} else {\n\t$x | %s\n}\n}", defaultTransform)
 		fmt.Fprintln(&body)
 	}
 
-	for _, field := range c.messages[msgName].GetField() {
+	for _, field := range c.types.GetMessageType(msgName).GetField() {
 		deserializer := c.getFieldDeserialize(field)
 		c.renderFieldTransform(&body, field, deserializer)
-	}
-
-	for _, field := range c.messages[msgName].GetField() {
-		// buf curl will omit the field if it is empty list!
-		if field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED {
-			fmt.Fprintf(&body, "| default [] %s\n", field.GetName())
-		}
 	}
 
 	return nugen.Closure{
@@ -345,7 +328,7 @@ func (c GenContext) convertFieldType(field *descriptorpb.FieldDescriptorProto) n
 }
 
 func (c GenContext) convertMessageTypeInner(msgName string) nugen.TypeDef {
-	msg := c.messages[msgName]
+	msg := c.types.GetMessageType(msgName)
 
 	var commonFields []nugen.KeyValue[nugen.TypeDef]
 	for _, field := range msg.GetField() {

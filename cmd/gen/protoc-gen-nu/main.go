@@ -34,8 +34,12 @@ func doCodeGen(req *pluginpb.CodeGeneratorRequest, resp *pluginpb.CodeGeneratorR
 	supported := uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
 	resp.SupportedFeatures = &supported
 
+	msgs := NewTypeStore()
 	for _, f := range req.GetProtoFile() {
-		ctx := newGenContext(f)
+		msgs.Touch(f)
+	}
+	for _, f := range req.GetSourceFileDescriptors() {
+		ctx := NewGenContext(msgs, f)
 		ctx.Generate(f, resp)
 	}
 }
