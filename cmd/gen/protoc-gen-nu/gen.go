@@ -21,7 +21,6 @@ export def req [api: string, method: string]: any -> any {
         | to json --raw
         | buf curl -d @- --unix-socket $SOCKET_PATH --protocol grpc --http2-prior-knowledge --schema $schema_path $"http://localhost/($api)/($method)"
 		| complete
-		| inspect
 	if $res.exit_code == 0 {
 		$res.stdout | from json
 	} else {
