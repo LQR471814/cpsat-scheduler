@@ -86,7 +86,7 @@ let form = {
 	task_id: $p.state.task
 } | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Choose child to add:'
 if $child == null { return }
-$env.state.children ++= $child"
+$env.state.children ++= [$child]"
 				}
 			}
 		}

@@ -81,7 +81,9 @@ create table scheduled_task (
 	task integer primary key references task (id) on update cascade on delete cascade,
 	profile integer not null references profile (id),
 	start timestamp not null,
-	end timestamp not null
+	end timestamp not null,
+	-- in terms of the atomic timescale
+	duration integer not null
 );
 
 create index idx_scheduled_profile

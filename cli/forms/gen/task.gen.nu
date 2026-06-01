@@ -14,7 +14,7 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(task\)"
 }
 
-def --env "get req" []: nothing -> record<name: string, desc: string, timescale: int> {
+def --env "read req" []: nothing -> record<name: string, desc: string, timescale: int> {
     $env.state | select name desc timescale
 }
 
@@ -35,7 +35,7 @@ def --env "unset req" []: nothing -> nothing {
     null | set req
 }
 
-def --env "get opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
+def --env "read opt" []: nothing -> record<parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {
     $env.state | select parent start end prereqs postreqs
 }
 
@@ -60,15 +60,15 @@ def --env "unset opt" []: nothing -> nothing {
     null | set opt
 }
 
-def --env "get dur" []: nothing -> oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing> {
+def --env "read dur" []: nothing -> oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: oneof<int, nothing>, >, nothing> {
     $env.state | get duration_cfg
 }
 
-def --env "set dur" []: oneof<oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing>, nothing> -> nothing {
+def --env "set dur" []: oneof<oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: oneof<int, nothing>, >, nothing>, nothing> -> nothing {
     $env.state.duration_cfg = $in
 }
 
-def --env "display dur" []: oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing> -> string {
+def --env "display dur" []: oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: oneof<int, nothing>, >, nothing> -> string {
     table -e
 }
 
@@ -79,7 +79,7 @@ def --env dur []: nothing -> nothing {
     }                                                                          
     let results = {                                                            
         prompt_prefix: (prompt prefix)                                         
-        state: { task: $env.id, cfg: (get dur) }                               
+        state: { task: $env.id, cfg: (read dur) }                              
     } | index form duration-config                                             
     if $results != null { $results | set dur }                                 
 }
@@ -88,7 +88,7 @@ def --env "unset dur" []: nothing -> nothing {
     null | set dur
 }
 
-def --env "get children" []: nothing -> table {
+def --env "read children" []: nothing -> table {
     $env.state | get children_cfgs
 }
 
@@ -143,31 +143,30 @@ def --env next []: nothing -> bool {
 }
 
 alias n = next
-def help []: nothing -> nothing {
-    print [[group cmd desc];                                                    
-        [common "status, s" "Show form status."]                                
-        [null "next, n" "Fill in next unfilled field."]                         
-        [null "submit, done, d" "Submit form."]                                 
-        [null "cancel, c" "Abort form."]                                        
-        ["req" 'req' 'Interactively set Required fields.']                      
-        [null 'set req' 'Set Required fields via nushell command.']             
-        [null 'get req' 'Get Required fields via nushell command.']             
-        ["opt" 'opt' 'Interactively set Optional fields.']                      
-        [null 'set opt' 'Set Optional fields via nushell command.']             
-        [null 'get opt' 'Get Optional fields via nushell command.']             
-        ["dur" 'dur' 'Interactively set Duration configuration.']               
-        [null 'set dur' 'Set Duration configuration via nushell command.']      
-        [null 'get dur' 'Get Duration configuration via nushell command.']      
-        ["children" 'children' 'Interactively set Children configurations.']    
-        [null 'set children' 'Set Children configurations via nushell command.']
-        [null 'get children' 'Get Children configurations via nushell command.']
-    ]                                                                           
-                                                                                
+def cmds []: nothing -> nothing {
+    print [[group cmd desc];                                                      
+        [common "status, s" "Show form status."]                                  
+        [null "next, n" "Fill in next unfilled field."]                           
+        [null "submit, done, d" "Submit form."]                                   
+        [null "cancel, c" "Abort form."]                                          
+        ["req" 'req' 'Interactively set Required fields.']                        
+        [null 'write req' 'Set Required fields via nushell command.']             
+        [null 'read req' 'Get Required fields via nushell command.']              
+        ["opt" 'opt' 'Interactively set Optional fields.']                        
+        [null 'write opt' 'Set Optional fields via nushell command.']             
+        [null 'read opt' 'Get Optional fields via nushell command.']              
+        ["dur" 'dur' 'Interactively set Duration configuration.']                 
+        [null 'write dur' 'Set Duration configuration via nushell command.']      
+        [null 'read dur' 'Get Duration configuration via nushell command.']       
+        ["children" 'children' 'Interactively set Children configurations.']      
+        [null 'write children' 'Set Children configurations via nushell command.']
+        [null 'read children' 'Get Children configurations via nushell command.'] 
+    ]                                                                             
+                                                                                  
 }
 
 alias h = help
 def --env submit []: nothing -> nothing {
-    next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }

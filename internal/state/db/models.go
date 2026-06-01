@@ -68,10 +68,11 @@ type ProgressLog struct {
 }
 
 type ScheduledTask struct {
-	Task    int64
-	Profile int64
-	Start   time.Time
-	End     time.Time
+	Task     int64
+	Profile  int64
+	Start    time.Time
+	End      time.Time
+	Duration int64
 }
 
 type Task struct {

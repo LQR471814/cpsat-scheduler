@@ -72,23 +72,30 @@ def --env 'pick task' [--timescale(-u): int, --start(-s): datetime, --end(-e): d
 	fetch state
 }
 
-def help [] {
+def 'cmds' [] {
 	print [[cmd desc];
-		['get dur,gd' 'get task duration']
+		['read dur,rd' 'read task duration']
 		['set dur,sd' 'set task duration']
 		['edit,e' 'directly edit task']
 		['done,d' 'submit']
-		['util range *' 'PERT manipulation commands']
+		['rav,util range shift amount' 'add/subtract a constant amount of time from the time estimate']
+		['rap,util range shift percent' 'add/subtract a constant percentage of time from the time estimate']
+		['rsf,util range scale' 'scale the time estimates by a factor (ex. 2x)']
+		['rsp,util range widen' 'scale the time estimates by an additional percentage (ex. 50% more)']
 	]
 }
 
-def 'get children entries' [] {
+def 'read children entries' [] {
 	$in
 		| get children
 		| flatten
 		| group-by id --to-table
 		| update items { get 0.name }
 		| rename --column {items: name}
+}
+
+def --env 'read dur' []: nothing -> record<pes: duration, exp: duration, opt: duration> {
+	$env.state.duration_cfg.pert
 }
 
 def --env 'set dur' [--id: int]: record<pes: duration, exp: duration, opt: duration> -> nothing {
@@ -99,14 +106,16 @@ def --env 'set dur' [--id: int]: record<pes: duration, exp: duration, opt: durat
 	}
 
 	let task_state = if $id != null {
-		{id: $id} | api.gen API ReadTaskRequest
+		{id: $id} | api.gen API ReadTask | get state
 	} else {
 		$env.state
 	}
 
+	print $task_state
+
 	let children: table<id: int, name: string> = $task_state
-		| get state.children_cfgs
-		| get children entries
+		| get children_cfgs
+		| read children entries
 
 	# if leaf task
 	if ($children | is-empty) {
@@ -142,6 +151,9 @@ def --env edit [] {
 			}
 		}
 	} | index form task
+	if $new_state == null {
+		return
+	}
 	update progress log $env.state $new_state
 	$env.state = $new_state
 }
@@ -156,9 +168,9 @@ def --env 'update progress log' [prev: record, next: record]: nothing -> nothing
 	$env.progress_log = [
 		(if $updated_dur {
 			$'changed duration: (if $prev.duration_cfg != null {
-				$prev.duration_cfg | util range format
+				$prev.duration_cfg.pert | util range format
 			} else { 'null' }) -> (if $next.duration_cfg != null {
-				$next.duration_cfg | util range format
+				$next.duration_cfg.pert | util range format
 			} else { 'null' })'
 		})
 		(if $changed_children { 'changed children' })
@@ -168,9 +180,13 @@ def --env 'update progress log' [prev: record, next: record]: nothing -> nothing
 	] | where $it != null | str join ' & '
 }
 
-alias gd = get dur
+alias rd = read dur
 alias sd = set dur
 alias e = edit
+alias rav = util range shift amount
+alias rap = util range shift percent
+alias rsf = util range scale
+alias rsp = util range widen
 
 if $env.task? == null {
 	let last_ckpt = fetch last checkpoint

@@ -12,7 +12,7 @@ let cfg = {
 			]
 		}]
 		[deadline ({type: datetime} | lib type optional)]
-		[total_cost {type: int}]
+		[total_cost ({type: int} | lib type optional)]
 	]
 } | lib type optional
 

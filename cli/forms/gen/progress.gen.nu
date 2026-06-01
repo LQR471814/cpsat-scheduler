@@ -19,7 +19,6 @@ def "prompt prefix" []: nothing -> string {
 }
 
 def --env submit []: nothing -> nothing {
-    next                                                     
     $env.state | returns post process | util save form output
     exit # nu-lint-ignore: exit_only_in_main                 
 }
@@ -52,7 +51,7 @@ def --env 'add task' [] {
 		}
 	} | index form task-update
 	if $updated == null { return }
-	$env.state ++= $updated
+	$env.state ++= [$updated]
 }
 
 def --env 'run updates' []: nothing -> nothing {

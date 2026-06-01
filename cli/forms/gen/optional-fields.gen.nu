@@ -14,7 +14,7 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(optional-fields\)"
 }
 
-def --env "get parent" []: nothing -> record<id: int, name: string> {
+def --env "read parent" []: nothing -> record<id: int, name: string> {
     $env.state.parent
 }
 
@@ -33,7 +33,7 @@ def --env "unset parent" []: nothing -> nothing {
     null | set parent
 }
 
-def --env "get start" []: nothing -> datetime {
+def --env "read start" []: nothing -> datetime {
     $env.state.start
 }
 
@@ -55,7 +55,7 @@ def --env "unset start" []: nothing -> nothing {
     null | set start
 }
 
-def --env "get end" []: nothing -> datetime {
+def --env "read end" []: nothing -> datetime {
     $env.state.end
 }
 
@@ -77,7 +77,7 @@ def --env "unset end" []: nothing -> nothing {
     null | set end
 }
 
-def --env "get prereqs" []: nothing -> table<id: int, name: string> {
+def --env "read prereqs" []: nothing -> table<id: int, name: string> {
     $env.state.prereqs
 }
 
@@ -98,16 +98,16 @@ def --env "remove prereqs" []: nothing -> nothing {
     if $element == null {                                     
         return                                                
     }                                                         
-    get prereqs | drop nth $element.id | set prereqs          
+    read prereqs | drop nth $element.id | set prereqs         
 }
 
 def --env prereqs []: nothing -> nothing {
     let chosen = {type: PREREQ, task_id: $p.state.id} | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Add a task as a prerequisite:'
     if $chosen == null { return }                                                                                                                                   
-    $env.state.prereqs ++= $chosen                                                                                                                                  
+    $env.state.prereqs ++= [$chosen]                                                                                                                                
 }
 
-def --env "get postreqs" []: nothing -> table<id: int, name: string> {
+def --env "read postreqs" []: nothing -> table<id: int, name: string> {
     $env.state.postreqs
 }
 
@@ -128,13 +128,13 @@ def --env "remove postreqs" []: nothing -> nothing {
     if $element == null {                                      
         return                                                 
     }                                                          
-    get postreqs | drop nth $element.id | set postreqs         
+    read postreqs | drop nth $element.id | set postreqs        
 }
 
 def --env postreqs []: nothing -> nothing {
     let chosen = {type: POSTREQ, task_id: $p.state.id} | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Add a task as a postrequisite:'
     if $chosen == null { return }                                                                                                                                     
-    $env.state.postreqs ++= $chosen                                                                                                                                   
+    $env.state.postreqs ++= [$chosen]                                                                                                                                 
 }
 
 def --env status []: nothing -> nothing {
@@ -174,21 +174,21 @@ def --env next []: nothing -> bool {
 }
 
 alias n = next
-def help []: nothing -> nothing {
+def cmds []: nothing -> nothing {
     print [[group cmd desc];                                             
         [common "status, s" "Show form status."]                         
         [null "next, n" "Fill in next unfilled field."]                  
         [null "submit, done, d" "Submit form."]                          
         [null "cancel, c" "Abort form."]                                 
         ["parent" 'parent' 'Interactively set Parent.']                  
-        [null 'set parent' 'Set Parent via nushell command.']            
-        [null 'get parent' 'Get Parent via nushell command.']            
+        [null 'write parent' 'Set Parent via nushell command.']          
+        [null 'read parent' 'Get Parent via nushell command.']           
         ["start" 'start' 'Interactively set Must start after.']          
-        [null 'set start' 'Set Must start after via nushell command.']   
-        [null 'get start' 'Get Must start after via nushell command.']   
+        [null 'write start' 'Set Must start after via nushell command.'] 
+        [null 'read start' 'Get Must start after via nushell command.']  
         ["end" 'end' 'Interactively set Must end before.']               
-        [null 'set end' 'Set Must end before via nushell command.']      
-        [null 'get end' 'Get Must end before via nushell command.']      
+        [null 'write end' 'Set Must end before via nushell command.']    
+        [null 'read end' 'Get Must end before via nushell command.']     
         ["prereqs" 'prereqs' 'Interactively add a Prerequisites.']       
         [null 'add prereqs' 'Add a Prerequisites via nushell command.']  
         ["postreqs" 'postreqs' 'Interactively add a Postrequisites.']    
@@ -199,7 +199,6 @@ def help []: nothing -> nothing {
 
 alias h = help
 def --env submit []: nothing -> nothing {
-    next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }

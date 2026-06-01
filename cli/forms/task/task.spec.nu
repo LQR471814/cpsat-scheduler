@@ -29,7 +29,7 @@ let dur_cfg_fields = [[key value];
 		]
 	}]
 	[deadline ($deadline_type | lib type optional)]
-	[total_cost {type: int}]
+	[total_cost ({type: int} | lib type optional)]
 ]
 
 let payload = {
@@ -138,7 +138,7 @@ if $results != null { $results | set opt }"
 }
 let results = {
 	prompt_prefix: (prompt prefix)
-	state: { task: $env.id, cfg: (get dur) }
+	state: { task: $env.id, cfg: (read dur) }
 } | index form duration-config
 if $results != null { $results | set dur }"
 				}

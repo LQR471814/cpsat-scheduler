@@ -11,7 +11,7 @@ export def "form child-config" []: record<prompt_prefix: string, state: record<t
 export def "form children-config" []: record<prompt_prefix: string, state: record<task: int, children_cfgs: table>> -> table {
 	util exec form "./forms/gen/children-config.gen.nu" $in
 }
-export def "form duration-config" []: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing>, >> -> oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: int>, nothing> {
+export def "form duration-config" []: record<prompt_prefix: string, state: record<task: oneof<int, nothing>, cfg: oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: oneof<int, nothing>, >, nothing>, >> -> oneof<record<pert: record<opt: duration, exp: duration, pes: duration>, deadline: oneof<datetime, nothing>, total_cost: oneof<int, nothing>, >, nothing> {
 	util exec form "./forms/gen/duration-config.gen.nu" $in
 }
 export def "form optional-fields" []: record<prompt_prefix: string, state: record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>>> -> record<id: oneof<int, nothing>, parent: oneof<record<id: int, name: string>, nothing>, start: oneof<datetime, nothing>, end: oneof<datetime, nothing>, prereqs: table<id: int, name: string>, postreqs: table<id: int, name: string>> {

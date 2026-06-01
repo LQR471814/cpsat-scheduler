@@ -18,7 +18,7 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(children-config\)"
 }
 
-def --env "get config" []: nothing -> table {
+def --env "read config" []: nothing -> table {
     $env.state.children_cfgs
 }
 
@@ -45,22 +45,22 @@ def --env "remove config" []: nothing -> nothing {
     if $element == null {                                    
         return                                               
     }                                                        
-    get config | drop nth $element.id | set config           
+    read config | drop nth $element.id | set config          
 }
 
 def --env config []: nothing -> nothing {
-    let results = {                      
-        state: {                         
-            task: $p.state.task          
-            desc: null                   
-            deadline: null               
-            exp_cost: null               
-            children: []                 
-        }                                
-        prompt_prefix: (prompt prefix)   
-    } | index form child-config          
-    if $results == null { return }       
-    $env.state.children_cfgs ++= $results
+    let results = {                        
+        state: {                           
+            task: $p.state.task            
+            desc: null                     
+            deadline: null                 
+            exp_cost: null                 
+            children: []                   
+        }                                  
+        prompt_prefix: (prompt prefix)     
+    } | index form child-config            
+    if $results == null { return }         
+    $env.state.children_cfgs ++= [$results]
 }
 
 def --env "edit config" []: nothing -> nothing {
@@ -102,7 +102,7 @@ def --env next []: nothing -> bool {
 }
 
 alias n = next
-def help []: nothing -> nothing {
+def cmds []: nothing -> nothing {
     print [[group cmd desc];                                    
         [common "status, s" "Show form status."]                
         [null "next, n" "Fill in next unfilled field."]         
@@ -117,7 +117,6 @@ def help []: nothing -> nothing {
 
 alias h = help
 def --env submit []: nothing -> nothing {
-    next                                                     
     $env.state | returns post process | util save form output
     exit # nu-lint-ignore: exit_only_in_main                 
 }

@@ -88,7 +88,7 @@ let form = {
 				closure_bodies: {
 					add: "let chosen = {type: PREREQ, task_id: $p.state.id} | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Add a task as a prerequisite:'
 if $chosen == null { return }
-$env.state.prereqs ++= $chosen"
+$env.state.prereqs ++= [$chosen]"
 				}
 			}
 		}
@@ -105,7 +105,7 @@ $env.state.prereqs ++= $chosen"
 				closure_bodies: {
 					add: "let chosen = {type: POSTREQ, task_id: $p.state.id} | api.gen API ListPossibleRelatives | get entries | util choose table --header 'Add a task as a postrequisite:'
 if $chosen == null { return }
-$env.state.postreqs ++= $chosen"
+$env.state.postreqs ++= [$chosen]"
 				}
 			}
 		}

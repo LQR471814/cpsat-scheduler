@@ -600,7 +600,7 @@ func (q *Queries) ListProgressLog(ctx context.Context, arg ListProgressLogParams
 }
 
 const listScheduledTasks = `-- name: ListScheduledTasks :many
-select st.task, st.profile, st.start, st."end", t.name from scheduled_task st
+select st.task, st.profile, st.start, st."end", st.duration, t.name from scheduled_task st
 inner join task t on st.task = t.id
 where st.start >= ? and st.end <= ? and st.profile = ?
 `
@@ -612,11 +612,12 @@ type ListScheduledTasksParams struct {
 }
 
 type ListScheduledTasksRow struct {
-	Task    int64
-	Profile int64
-	Start   time.Time
-	End     time.Time
-	Name    string
+	Task     int64
+	Profile  int64
+	Start    time.Time
+	End      time.Time
+	Duration int64
+	Name     string
 }
 
 func (q *Queries) ListScheduledTasks(ctx context.Context, arg ListScheduledTasksParams) ([]ListScheduledTasksRow, error) {
@@ -633,6 +634,7 @@ func (q *Queries) ListScheduledTasks(ctx context.Context, arg ListScheduledTasks
 			&i.Profile,
 			&i.Start,
 			&i.End,
+			&i.Duration,
 			&i.Name,
 		); err != nil {
 			return nil, err
@@ -649,7 +651,7 @@ func (q *Queries) ListScheduledTasks(ctx context.Context, arg ListScheduledTasks
 }
 
 const listScheduledTasksInTimescale = `-- name: ListScheduledTasksInTimescale :many
-select st.task, st.profile, st.start, st."end", t.name from scheduled_task st
+select st.task, st.profile, st.start, st."end", st.duration, t.name from scheduled_task st
 inner join task t on st.task = t.id
 where st.start >= ? and st.end <= ? and st.profile = ? and t.unit = ?
 `
@@ -662,11 +664,12 @@ type ListScheduledTasksInTimescaleParams struct {
 }
 
 type ListScheduledTasksInTimescaleRow struct {
-	Task    int64
-	Profile int64
-	Start   time.Time
-	End     time.Time
-	Name    string
+	Task     int64
+	Profile  int64
+	Start    time.Time
+	End      time.Time
+	Duration int64
+	Name     string
 }
 
 func (q *Queries) ListScheduledTasksInTimescale(ctx context.Context, arg ListScheduledTasksInTimescaleParams) ([]ListScheduledTasksInTimescaleRow, error) {
@@ -688,6 +691,7 @@ func (q *Queries) ListScheduledTasksInTimescale(ctx context.Context, arg ListSch
 			&i.Profile,
 			&i.Start,
 			&i.End,
+			&i.Duration,
 			&i.Name,
 		); err != nil {
 			return nil, err
@@ -793,18 +797,20 @@ func (q *Queries) ReadEvent(ctx context.Context, id int64) (Event, error) {
 }
 
 const saveScheduledTask = `-- name: SaveScheduledTask :exec
-insert into scheduled_task (task, profile, start, end)
-values (?, ?, ?, ?) on conflict do update set
+insert into scheduled_task (task, profile, start, end, duration)
+values (?, ?, ?, ?, ?) on conflict do update set
 	start = excluded.start,
 	end = excluded.end,
-	profile = excluded.profile
+	profile = excluded.profile,
+	duration = excluded.duration
 `
 
 type SaveScheduledTaskParams struct {
-	Task    int64
-	Profile int64
-	Start   time.Time
-	End     time.Time
+	Task     int64
+	Profile  int64
+	Start    time.Time
+	End      time.Time
+	Duration int64
 }
 
 func (q *Queries) SaveScheduledTask(ctx context.Context, arg SaveScheduledTaskParams) error {
@@ -813,6 +819,7 @@ func (q *Queries) SaveScheduledTask(ctx context.Context, arg SaveScheduledTaskPa
 		arg.Profile,
 		arg.Start,
 		arg.End,
+		arg.Duration,
 	)
 	return err
 }

@@ -108,11 +108,12 @@ inner join task t on st.task = t.id
 where st.start >= ? and st.end <= ? and st.profile = ? and t.unit = ?;
 
 -- name: SaveScheduledTask :exec
-insert into scheduled_task (task, profile, start, end)
-values (?, ?, ?, ?) on conflict do update set
+insert into scheduled_task (task, profile, start, end, duration)
+values (?, ?, ?, ?, ?) on conflict do update set
 	start = excluded.start,
 	end = excluded.end,
-	profile = excluded.profile;
+	profile = excluded.profile,
+	duration = excluded.duration;
 
 -- name: DeleteSchedule :exec
 delete from scheduled_task

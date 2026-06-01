@@ -11,7 +11,7 @@ const (
 	cmd_next                = "next"
 	cmd_submit              = "submit"
 	cmd_cancel              = "cancel"
-	cmd_help                = "help"
+	cmd_cmds                = "cmds"
 	cmd_params_postprocess  = "params post process"
 	cmd_returns_postprocess = "returns post process"
 )
@@ -19,7 +19,7 @@ const (
 func (d FieldDef) getterFn() nugen.Closure {
 	return nugen.Closure{
 		Env:    true,
-		Name:   fmt.Sprintf("get %s", d.Name),
+		Name:   fmt.Sprintf("read %s", d.Name),
 		Params: nil,
 		In:     nugen.NullType,
 		Out:    d.Type,
@@ -91,7 +91,7 @@ func (d FieldDef) addFn() nugen.Closure {
 }
 
 func (d FieldDef) editFn() nugen.Closure {
-	displayValueCmd := fmt.Sprintf("to json -r")
+	displayValueCmd := "to json -r"
 	if d.ClosureBodies.DisplayValue != nil {
 		displayValueCmd = fmt.Sprintf("display %s", d.Name)
 	}
@@ -131,7 +131,7 @@ func (d FieldDef) removeFn() nugen.Closure {
 	if d.List.ClosureBodies.Remove != nil {
 		return *d.List.ClosureBodies.Remove
 	}
-	displayValueCmd := fmt.Sprintf("to json -r")
+	displayValueCmd := "to json -r"
 	if d.ClosureBodies.DisplayValue != nil {
 		displayValueCmd = fmt.Sprintf("display %s", d.Name)
 	}
@@ -144,7 +144,7 @@ func (d FieldDef) removeFn() nugen.Closure {
 if $element == null {
 	return
 }
-get %[1]s | drop nth $element.id | set %[1]s`,
+read %[1]s | drop nth $element.id | set %[1]s`,
 		d.Name,
 		displayValueCmd,
 	)

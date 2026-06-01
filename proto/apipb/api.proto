@@ -109,7 +109,12 @@ message ListScheduledTasksRequest {
   google.protobuf.Timestamp end = 4;
 }
 message ListScheduledTasksResponse {
-  repeated Entry entries = 1;
+  message ScheduledTask {
+    int64 id = 1;
+    string name = 2;
+    google.protobuf.Duration duration = 3;
+  }
+  repeated ScheduledTask entries = 1;
 }
 
 // ListPossibleRelatives

@@ -8,6 +8,8 @@ import (
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduledTasksRequest) (res *apipb.ListScheduledTasksResponse, err error) {
@@ -17,6 +19,11 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 	}
 	defer tx.Rollback()
 	txqry := s.db.WithTx(tx)
+
+	profile, err := txqry.GetProfile(ctx, req.ProfileId)
+	if err != nil {
+		return
+	}
 
 	// this is very ugly but unfortunately the fastest way to get this done
 	if req.Timescale != nil {
@@ -30,12 +37,14 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
-			Entries: make([]*commonpb.Entry, len(scheduled)),
+			Entries: make([]*apipb.ListScheduledTasksResponse_ScheduledTask, len(scheduled)),
 		}
 		for i, s := range scheduled {
-			res.Entries[i] = &commonpb.Entry{
-				Id:   s.Task,
-				Name: s.Name,
+			dur := state.ProfileDurationToRealDuration(state.AtomicUnits(s.Duration), profile)
+			res.Entries[i] = &apipb.ListScheduledTasksResponse_ScheduledTask{
+				Id:       s.Task,
+				Name:     s.Name,
+				Duration: durationpb.New(dur),
 			}
 		}
 	} else {
@@ -48,12 +57,14 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
-			Entries: make([]*commonpb.Entry, len(scheduled)),
+			Entries: make([]*apipb.ListScheduledTasksResponse_ScheduledTask, len(scheduled)),
 		}
 		for i, s := range scheduled {
-			res.Entries[i] = &commonpb.Entry{
-				Id:   s.Task,
-				Name: s.Name,
+			dur := state.ProfileDurationToRealDuration(state.AtomicUnits(s.Duration), profile)
+			res.Entries[i] = &apipb.ListScheduledTasksResponse_ScheduledTask{
+				Id:       s.Task,
+				Name:     s.Name,
+				Duration: durationpb.New(dur),
 			}
 		}
 	}
@@ -139,10 +150,11 @@ func replaceSchedule(
 		}
 
 		err = txqry.SaveScheduledTask(ctx, db.SaveScheduledTaskParams{
-			Task:    solved.Id,
-			Profile: profile.ID,
-			Start:   realStart.Time,
-			End:     realEnd.Time,
+			Task:     solved.Id,
+			Profile:  profile.ID,
+			Start:    realStart.Time,
+			End:      realEnd.Time,
+			Duration: solved.Duration.Value,
 		})
 		if err != nil {
 			return

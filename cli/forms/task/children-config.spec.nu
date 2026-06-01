@@ -44,7 +44,7 @@ let form = {
 	prompt_prefix: (prompt prefix)
 } | index form child-config
 if $results == null { return }
-$env.state.children_cfgs ++= $results"
+$env.state.children_cfgs ++= [$results]"
 					edit: "let result = {
 	state: ($in | merge { taks: $p.state.task })
 	prompt_prefix: (prompt prefix)

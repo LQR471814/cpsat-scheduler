@@ -14,7 +14,7 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(profiles\)"
 }
 
-def --env "get profiles" []: nothing -> table<id: int, name: string, atomic_timescale: duration, universe_start: datetime, gen_pert_choices: oneof<int, nothing>, > {
+def --env "read profiles" []: nothing -> table<id: int, name: string, atomic_timescale: duration, universe_start: datetime, gen_pert_choices: oneof<int, nothing>, > {
     $env.state
 }
 
@@ -58,7 +58,7 @@ def --env next []: nothing -> bool {
 }
 
 alias n = next
-def help []: nothing -> nothing {
+def cmds []: nothing -> nothing {
     print [[group cmd desc];                                            
         [common "status, s" "Show form status."]                        
         [null "next, n" "Fill in next unfilled field."]                 
@@ -72,7 +72,6 @@ def help []: nothing -> nothing {
 
 alias h = help
 def --env submit []: nothing -> nothing {
-    next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }

@@ -30,7 +30,7 @@ def "prompt prefix" []: nothing -> string {
     $"($p.prompt_prefix) \(required-fields\)"
 }
 
-def --env "get name" []: nothing -> string {
+def --env "read name" []: nothing -> string {
     $env.state.name
 }
 
@@ -50,7 +50,7 @@ def --env "unset name" []: nothing -> nothing {
     null | set name
 }
 
-def --env "get desc" []: nothing -> string {
+def --env "read desc" []: nothing -> string {
     $env.state.desc
 }
 
@@ -70,7 +70,7 @@ def --env "unset desc" []: nothing -> nothing {
     null | set desc
 }
 
-def --env "get unit" []: nothing -> int {
+def --env "read unit" []: nothing -> int {
     $env.state.timescale
 }
 
@@ -126,28 +126,27 @@ def --env next []: nothing -> bool {
 }
 
 alias n = next
-def help []: nothing -> nothing {
-    print [[group cmd desc];                                                                 
-        [common "status, s" "Show form status."]                                             
-        [null "next, n" "Fill in next unfilled field."]                                      
-        [null "submit, done, d" "Submit form."]                                              
-        [null "cancel, c" "Abort form."]                                                     
-        ["name" 'name' 'Interactively set Name.']                                            
-        [null 'set name' 'Set Name via nushell command.']                                    
-        [null 'get name' 'Get Name via nushell command.']                                    
-        ["desc" 'desc' 'Interactively set Desc.']                                            
-        [null 'set desc' 'Set Desc via nushell command.']                                    
-        [null 'get desc' 'Get Desc via nushell command.']                                    
-        ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']        
-        [null 'set unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
-        [null 'get unit' 'Get Timescale unit (bounds maximum duration) via nushell command.']
-    ]                                                                                        
-                                                                                             
+def cmds []: nothing -> nothing {
+    print [[group cmd desc];                                                                   
+        [common "status, s" "Show form status."]                                               
+        [null "next, n" "Fill in next unfilled field."]                                        
+        [null "submit, done, d" "Submit form."]                                                
+        [null "cancel, c" "Abort form."]                                                       
+        ["name" 'name' 'Interactively set Name.']                                              
+        [null 'write name' 'Set Name via nushell command.']                                    
+        [null 'read name' 'Get Name via nushell command.']                                     
+        ["desc" 'desc' 'Interactively set Desc.']                                              
+        [null 'write desc' 'Set Desc via nushell command.']                                    
+        [null 'read desc' 'Get Desc via nushell command.']                                     
+        ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']          
+        [null 'write unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
+        [null 'read unit' 'Get Timescale unit (bounds maximum duration) via nushell command.'] 
+    ]                                                                                          
+                                                                                               
 }
 
 alias h = help
 def --env submit []: nothing -> nothing {
-    next                                    
     $env.state | util save form output      
     exit # nu-lint-ignore: exit_only_in_main
 }

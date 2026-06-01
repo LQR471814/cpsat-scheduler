@@ -32,7 +32,7 @@ def --env 'add task' [] {
 		}
 	} | index form task-update
 	if $updated == null { return }
-	$env.state ++= $updated
+	$env.state ++= [$updated]
 }
 
 def --env 'run updates' []: nothing -> nothing {
