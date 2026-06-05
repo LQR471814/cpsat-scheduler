@@ -420,18 +420,34 @@ func (c GenContext) renderHelpers(out io.Writer) {
 	}
 }
 
+func (c GenContext) renderAliases(out io.Writer) {
+	for name, msgType := range c.messageTypes {
+		name = strings.ReplaceAll(name[1:], ".", "_")
+
+		fmt.Fprint(out, "# export type ")
+		fmt.Fprint(out, name)
+		fmt.Fprint(out, " = ")
+		msgType.Render(out)
+		fmt.Fprintln(out)
+	}
+	fmt.Fprintln(out)
+}
+
 func (c GenContext) Generate(
 	file *descriptorpb.FileDescriptorProto,
 	resp *pluginpb.CodeGeneratorResponse,
 ) {
 	var contentBuilder strings.Builder
+
 	fmt.Fprint(&contentBuilder, frontmatter)
 	for _, srv := range file.GetService() {
 		c.renderService(&contentBuilder, srv)
 	}
 	c.renderHelpers(&contentBuilder)
-	content := contentBuilder.String()
 
+	c.renderAliases(&contentBuilder)
+
+	content := contentBuilder.String()
 	ext := filepath.Ext(file.GetName())
 	basename := file.GetName()[:len(file.GetName())-len(ext)]
 	name := fmt.Sprintf("%s.gen.nu", basename)
