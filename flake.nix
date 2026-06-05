@@ -1,7 +1,15 @@
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nu-type-alias-pkg.url = "git+https://github.com/LQR471814/nu-type-alias";
+  };
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+
+      nu-type-alias-pkg,
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -16,6 +24,7 @@
             project_root="$(git rev-parse --show-toplevel)"
             go run ''${project_root}/cmd/gen/protoc-gen-nu
           '';
+          nu-type-alias = nu-type-alias-pkg.packages.${system}.default;
         in
         pkgs.mkShell {
           name = "devenv";
@@ -23,6 +32,7 @@
           nativeBuildInputs = (
             with pkgs;
             [
+              go
               pkg-config
               sqlc
 
@@ -31,8 +41,9 @@
               protoc-gen-go-grpc
               python313Packages.grpcio-tools
               buf
-
               protoc-gen-nu
+
+              nu-type-alias
             ]
           );
 
