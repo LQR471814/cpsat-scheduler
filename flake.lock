@@ -32,7 +32,7 @@
         "type": "github"
       }
     },
-    "nu-type-alias": {
+    "nu-type-alias-pkg": {
       "inputs": {
         "nixpkgs": "nixpkgs_2"
       },
@@ -54,7 +54,7 @@
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nu-type-alias": "nu-type-alias"
+        "nu-type-alias-pkg": "nu-type-alias-pkg"
       }
     }
   },
