@@ -1,5 +1,11 @@
+# export type primitive = oneof<string, int, float, duration, datetime, bool, filesize, path>
+
 # choose table allows one to choose a row from a table via fuzzy search
-export def "choose table" [--header: string]: table<id: int, name: string> -> oneof<record<id: int, name: string>, nothing> {
+#
+# @input table<id: primitive, name: string>
+# @output oneof<record<id: primitive, name: string>, nothing>
+# @param header string
+export def "choose table" [--header: string]: table<id: oneof<string, int, float, duration, datetime, bool, filesize, path>, name: string> -> oneof<record<id: oneof<string, int, float, duration, datetime, bool, filesize, path>, name: string>, nothing> {
     if ($in | is-empty) {
         print "no choices possible"
         return null

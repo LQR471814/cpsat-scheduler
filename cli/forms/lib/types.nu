@@ -36,6 +36,8 @@
 #   closure: Closure
 # >
 
+# export type Callback = record<expr: string>
+
 # validate should return string or null
 #
 # export type Field = record<
@@ -44,11 +46,43 @@
 #   desc: string
 #   group: string
 #   type: TypeDef
-#   display_value: closure
+#   display_value: Callback
 #	ops: record<
 # 		read: bool
 #		write: bool
-#		validate: oneof<closure, nothing>
+#		validate: oneof<Callback, nothing>
 # 	>
 # >
 
+# @input nothing
+# @output TypeDef
+export def optional []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+	{
+		type: oneof
+		positional: [$in {type: "nothing"}]
+	}
+}
+
+# @input nothing
+# @output TypeDef
+export def "entry record" []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+	{
+		type: record
+		fields: [[key value];
+			[id {type: int}]
+			[name {type: string}]
+		]
+	}
+}
+
+# @input nothing
+# @output TypeDef
+export def "entry table" []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+	{
+		type: table
+		fields: [[key value];
+			[id {type: int}]
+			[name {type: string}]
+		]
+	}
+}
