@@ -88,6 +88,15 @@ export def "input int" [placeholder: string]: nothing -> oneof<int, nothing> {
 }
 
 
+# input float provides a single float input, does validation, returns
+# null if aborted
+export def "input float" [placeholder: string]: nothing -> oneof<float, nothing> {
+    let result = input text $placeholder
+    if $result == null { return null }
+    $result | into float
+}
+
+
 # confirm prompts the user to confirm, returns true if user accepted, false if
 # rejected
 export def confirm [--prompt: string]: nothing -> bool {

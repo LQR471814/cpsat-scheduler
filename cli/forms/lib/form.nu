@@ -4,14 +4,14 @@
 #
 # @input list<types.Field>
 # @output types.Command
-export def "form done cmd" [] {
+export def "form done cmd" []: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: closure, ops: record<read: bool, write: bool, validate: oneof<closure, nothing>>>> -> record<desc: string, group: string, aliases: list<string>, closure: record<name: string, params: list<record<key: string, value: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
 	# @type list<types.Field>
-	let fields = $in
+	let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: closure, ops: record<read: bool, write: bool, validate: oneof<closure, nothing>>>> = $in
 
 	let validation = $fields
 		| each {|field|
 			# @type types.Field
-			let field = $field
+			let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: closure, ops: record<read: bool, write: bool, validate: oneof<closure, nothing>>> = $field
 			$"let err = (field state access) | do ($field.error | to nuon --serialize)
 if $err != null {
 	error make $err
@@ -22,7 +22,7 @@ if $err != null {
 	let output = $fields
 		| each {|field|
 			# @type types.Field
-			let field = $field
+			let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: closure, ops: record<read: bool, write: bool, validate: oneof<closure, nothing>>> = $field
 			$"\t'($field.id)': (field state access)"
 		}
 		| str join "\n"
@@ -50,7 +50,7 @@ exit"
 
 # @input nothing
 # @output types.Command
-export def "form cancel cmd" [] {
+export def "form cancel cmd" []: nothing -> record<desc: string, group: string, aliases: list<string>, closure: record<name: string, params: list<record<key: string, value: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
 	let body = "if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | util save form output
 exit # nu-lint-ignore: exit_only_in_main"
@@ -78,10 +78,3 @@ exit # nu-lint-ignore: exit_only_in_main"
 # - list fields, callback add/remove/edit/list
 #
 # these are for "standard" things and are not expected to be extended
-
-# @input types.Field
-# @output types.Command
-export def "field single field" [] {
-
-}
-
