@@ -1,53 +1,16 @@
-export def "type optional" []: any -> any {
-	{
-		type: oneof
-		positional: [$in {type: "nothing"}]
-	}
-}
-
-export def "type entry record" []: nothing -> any {
-	{
-		type: record
-		fields: [[key value];
-			[id {type: int}]
-			[name {type: string}]
-		]
-	}
-}
-
-export def "type entry table" []: nothing -> any {
-	{
-		type: table
-		fields: [[key value];
-			[id {type: int}]
-			[name {type: string}]
-		]
-	}
-}
-
-# display_value: nothing -> string
-# state:         nothing -> {unset, set, error}
-# error message: <field_type> -> oneof<string, nothing>
-
-
-# TODO: add template for standard form controls (all separate from each other)
-# - submit, cancel, next
-#
-# allow for integration with validation?
-# how to handle side effects?
-# single "beforeSubmit" and "beforeCancel" callback?
+# @usetype "./types.nu"
 
 # creates a command that validates all fields before returning the form
 #
-# @input list<Field>
-# @output Command
+# @input list<types.Field>
+# @output types.Command
 export def "form done cmd" [] {
-	# @type list<Field>
+	# @type list<types.Field>
 	let fields = $in
 
 	let validation = $fields
 		| each {|field|
-			# @type Field
+			# @type types.Field
 			let field = $field
 			$"let err = (field state access) | do ($field.error | to nuon --serialize)
 if $err != null {
@@ -58,7 +21,7 @@ if $err != null {
 
 	let output = $fields
 		| each {|field|
-			# @type Field
+			# @type types.Field
 			let field = $field
 			$"\t'($field.id)': (field state access)"
 		}
@@ -86,7 +49,7 @@ exit"
 }
 
 # @input nothing
-# @output Command
+# @output types.Command
 export def "form cancel cmd" [] {
 	let body = "if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | util save form output
@@ -116,6 +79,8 @@ exit # nu-lint-ignore: exit_only_in_main"
 #
 # these are for "standard" things and are not expected to be extended
 
+# @input types.Field
+# @output types.Command
 export def "field single field" [] {
 
 }
