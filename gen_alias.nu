@@ -1,6 +1,5 @@
 ls cli/**/*.nu
 	| get name
-	| each { $"($in)\n" }
-	| str join ""
+	| str join "\n"
 	| nu-type-alias
 
