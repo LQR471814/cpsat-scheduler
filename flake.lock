@@ -37,11 +37,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1780706568,
-        "narHash": "sha256-Hi+nB8mODn4+/uDdshqml/72WyUMk+73kFSbgvqU0hg=",
+        "lastModified": 1780757892,
+        "narHash": "sha256-/KIhXqqj5EtTEXFnj6zgUGkH2UR2QWZQb1j4SN7Bgrs=",
         "ref": "refs/heads/main",
-        "rev": "0384f2524ef9b32357ca98333f06dff5074c8a45",
-        "revCount": 58,
+        "rev": "67f966ff3d324fc7bd1e2be31e1289da78365523",
+        "revCount": 65,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/LQR471814/nu-type-alias"
