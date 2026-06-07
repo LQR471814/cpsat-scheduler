@@ -1,3 +1,5 @@
+# @usetype "./callback.nu"
+
 # export type TypeDef = oneof<
 #   record<
 #     type: string,
@@ -19,7 +21,7 @@
 
 # export type KeyValue<T> = record<key: string, value: T>
 
-# export type Closure = record<
+# export type CommandDef = record<
 #   name: string
 #   params: list<KeyValue<TypeDef>>
 #   body: string
@@ -33,10 +35,8 @@
 #   desc: string
 #   group: string
 #   aliases: list<string>
-#   closure: Closure
+#   closure: CommandDef
 # >
-
-# export type Callback = record<expr: string>
 
 # validate should return string or null
 #
@@ -46,12 +46,21 @@
 #   desc: string
 #   group: string
 #   type: TypeDef
-#   display_value: Callback
+#   display_value: callback.Callback
 #	ops: record<
 # 		read: bool
 #		write: bool
-#		validate: oneof<Callback, nothing>
+#		validate: oneof<callback.Callback, nothing>
 # 	>
+# >
+
+# export type Form = record<
+#   name: string
+#   params: TypeDef
+#   returns: TypeDef
+#   use: list<string>
+#   commands: list<Command>
+#   init: oneof<string, nothing>
 # >
 
 # @input nothing
@@ -59,7 +68,10 @@
 export def optional []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{
 		type: oneof
-		positional: [$in {type: "nothing"}]
+		positional: [
+			$in
+			{type: "nothing"}
+		]
 	}
 }
 
@@ -85,4 +97,40 @@ export def "entry table" []: nothing -> oneof<record<type: string, fields: list<
 			[name {type: string}]
 		]
 	}
+}
+
+# @input TypeDef
+# @output string
+export def render []: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> string {
+	# @type TypeDef
+	let type: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
+	if ($type.fields? | is-not-empty) and ($type.positional? | is-not-empty) {
+		error make {
+			msg: "type definition cannot have both fields and positional args at the same time!"
+			label: {
+				text: "input type def"
+				span: (metadata $type).span
+			}
+		}
+	}
+	let field_args: oneof<string, nothing> = if ($type.fields? | is-not-empty) {
+		$type.fields
+			| each {|kv|
+				$"($kv.key): ($kv.value | render)"
+			}
+			| str join ", "
+	}
+	let pos_args: oneof<string, nothing> = if ($type.positional? | is-not-empty) {
+		$type.positional
+			| each { render }
+			| str join ", "
+	}
+	let args = if $field_args != null or $pos_args != null {
+		$"<(if $field_args != null {
+			$field_args
+		} else if $pos_args != null {
+			$pos_args
+		})>"
+	} else { "" }
+	$"($type.type)($args)"
 }

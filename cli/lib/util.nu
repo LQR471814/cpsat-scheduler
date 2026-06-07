@@ -32,25 +32,65 @@ export def "choose table" [--header: string]: table<id: oneof<string, int, float
 }
 
 
+const TEXT_LABEL_COLOR = 212
+const TEXT_DESC_COLOR = 103
+const TEXT_ERR_COLOR = 5
+const NUM_COLOR = 110
+const TRUE_COLOR = 002
+const FALSE_COLOR = 210
+
+
 # print label prints a label to STDOUT
-export def "print label" [text: string]: nothing -> nothing { gum style --foreground 212 $text --bold }
+export def "print label" [text: string]: nothing -> nothing {
+    gum style --foreground $TEXT_LABEL_COLOR $text --bold
+}
+
+
+# print desc prints a greyed out description to STDOUT
+export def "print desc" [text: string]: nothing -> nothing {
+    gum style --foreground $TEXT_DESC_COLOR $text
+}
+
+
+# print number prints a number
+export def "print number" [value: number]: nothing -> nothing {
+    gum style --foreground $NUM_COLOR $value
+}
+
+
+# print bool prints a boolean value
+export def "print bool" [value: bool]: nothing -> nothing {
+    if $value {
+        gum style --foreground $TRUE_COLOR $value
+    } else {
+        gum style --foreground $FALSE_COLOR $value
+    }
+}
+
+
+# print err prints an error message to STDOUT
+export def "print error" [text: string]: nothing -> nothing {
+    gum style --foreground $TEXT_ERR_COLOR $text
+}
 
 
 # print section title prints a section title
-export def "print section title" [text: string]: nothing -> nothing { gum style --align center --width 30 --border hidden $text }
+export def "print section title" [text: string]: nothing -> nothing {
+    gum style --align center --width 30 --border hidden $text
+}
 
 
 # print date prints a date value (without time)
 export def "print date" [date: oneof<datetime, nothing>]: nothing -> nothing {
     if $date == null { return null }
-    gum style --foreground 121 ($date | format date %Y-%m-%d)
+    gum style --foreground $NUM_COLOR ($date | format date %Y-%m-%d)
 }
 
 
 # print duration prints a duration value
 export def "print duration" [dur: oneof<duration, nothing>]: nothing -> nothing {
     if $dur == null { return null }
-    gum style --foreground 138 ($dur | into string)
+    gum style --foreground $NUM_COLOR ($dur | into string)
 }
 
 

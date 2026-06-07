@@ -44,7 +44,9 @@
               buf
               protoc-gen-nu
 
-              nu-type-alias
+              (nu-type-alias.overrideAttrs (old: {
+                doCheck = false;
+              }))
             ]
           );
 
