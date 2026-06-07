@@ -11,7 +11,9 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const frontmatter = `const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
+const frontmatter = `# @usetype "../../../forms/lib/types.nu"
+
+const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
 
 const self_path = path self
 
@@ -420,17 +422,56 @@ func (c GenContext) renderHelpers(out io.Writer) {
 	}
 }
 
-func (c GenContext) renderAliases(out io.Writer) {
-	for name, msgType := range c.messageTypes {
-		name = strings.ReplaceAll(name[1:], ".", "_")
+func convertToNuMsgName(name string) string {
+	return strings.ReplaceAll(name[1:], ".", "")
+}
 
-		fmt.Fprint(out, "# export type ")
-		fmt.Fprint(out, name)
-		fmt.Fprint(out, " = ")
+func (c GenContext) renderTypeAliases(out io.Writer) {
+	for name, msgType := range c.messageTypes {
+		fmt.Fprintf(out, "# export type %s = ", convertToNuMsgName(name))
 		msgType.Render(out)
 		fmt.Fprintln(out)
 	}
 	fmt.Fprintln(out)
+}
+
+func (c GenContext) renderTypeStruct(out io.Writer, typ nugen.TypeDef) {
+	fmt.Fprintf(out, "{type: '%s'", typ.Type)
+	if len(typ.Positional) > 0 && len(typ.Fields) > 0 {
+		panic("assert failed: type cannot have both positional and field args")
+	}
+	if len(typ.Positional) > 0 {
+		fmt.Fprint(out, " positional: [")
+		for _, arg := range typ.Positional {
+			c.renderTypeStruct(out, arg)
+			fmt.Fprint(out, " ")
+		}
+		fmt.Fprint(out, "]")
+	}
+	if len(typ.Fields) > 0 {
+		fmt.Fprint(out, " fields: [")
+		for _, kv := range typ.Fields {
+			fmt.Fprintf(out, "{key: '%s' value: ", kv.Key)
+			c.renderTypeStruct(out, kv.Value)
+			fmt.Fprint(out, "} ")
+		}
+		fmt.Fprint(out, "]")
+	}
+	fmt.Fprint(out, "}")
+}
+
+func (c GenContext) renderAllTypeStruct(out io.Writer) {
+	for name, msg := range c.messageTypes {
+		nuName := convertToNuMsgName(name)
+		fmt.Fprintf(out, `# type structure for proto message %s
+#
+# @input nothing
+# @output types.TypeDef
+`, name)
+		fmt.Fprintf(out, "export def 'type %s' [] {\n\t", nuName)
+		c.renderTypeStruct(out, msg)
+		fmt.Fprint(out, "\n}\n\n")
+	}
 }
 
 func (c GenContext) Generate(
@@ -444,8 +485,8 @@ func (c GenContext) Generate(
 		c.renderService(&contentBuilder, srv)
 	}
 	c.renderHelpers(&contentBuilder)
-
-	c.renderAliases(&contentBuilder)
+	c.renderTypeAliases(&contentBuilder)
+	c.renderAllTypeStruct(&contentBuilder)
 
 	content := contentBuilder.String()
 	ext := filepath.Ext(file.GetName())
