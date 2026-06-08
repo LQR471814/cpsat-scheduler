@@ -32,13 +32,29 @@
         "type": "github"
       }
     },
-    "nu-type-alias-pkg": {
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1763618868,
+        "narHash": "sha256-v5afmLjn/uyD9EQuPBn7nZuaZVV9r+JerayK/4wvdWA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "a8d610af3f1a5fb71e23e08434d8d61a466fc942",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nu-type-alias-flake": {
       "inputs": {
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1780856923,
-        "narHash": "sha256-1qS5bT5YPzzEVd4GOTay0SkAWxQsygapqKP9IPjD8us=",
+        "lastModified": 1780857048,
+        "narHash": "sha256-X3FTQ4M3BfN3v3kC2tvxVqBkkCm5Et3PFPwjJ1IiSW8=",
         "path": "/home/lqr471814/go/src/nu-type-alias",
         "type": "path"
       },
@@ -50,7 +66,26 @@
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nu-type-alias-pkg": "nu-type-alias-pkg"
+        "nu-type-alias-flake": "nu-type-alias-flake",
+        "topiary-nushell-flake": "topiary-nushell-flake"
+      }
+    },
+    "topiary-nushell-flake": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_3"
+      },
+      "locked": {
+        "lastModified": 1772590084,
+        "narHash": "sha256-fTfxSnVI7TY6vQhD+GimPBRJ4K0SyyVtoLcLGH3xIPc=",
+        "owner": "blindFS",
+        "repo": "topiary-nushell",
+        "rev": "6e2f9b339a664a46e4015fa5d79e537807fefa39",
+        "type": "github"
+      },
+      "original": {
+        "owner": "blindFS",
+        "repo": "topiary-nushell",
+        "type": "github"
       }
     }
   },

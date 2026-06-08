@@ -61,76 +61,80 @@
 # @input TypeDef
 # @output TypeDef
 export def optional []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
-	{
-		type: oneof
-		positional: [
-			$in
-			{type: "nothing"}
-		]
-	}
+  {
+    type: oneof
+    positional: [
+      $in
+      {type: "nothing"}
+    ]
+  }
 }
 
 # @input nothing
 # @output TypeDef
 export def "entry record" []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
-	{
-		type: record
-		fields: [[key value];
-			[id {type: int}]
-			[name {type: string}]
-		]
-	}
+  {
+    type: record
+    fields: [
+      [key value];
+      [id {type: int}]
+      [name {type: string}]
+    ]
+  }
 }
 
 # @input nothing
 # @output TypeDef
 export def "entry table" []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
-	{
-		type: table
-		fields: [[key value];
-			[id {type: int}]
-			[name {type: string}]
-		]
-	}
+  {
+    type: table
+    fields: [
+      [key value];
+      [id {type: int}]
+      [name {type: string}]
+    ]
+  }
 }
 
 # @input TypeDef
 # @output string
 export def render []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> string {
-	# @type TypeDef
-	let type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
-	if ($type.fields? | is-not-empty) and ($type.positional? | is-not-empty) {
-		error make {
-			msg: "type definition cannot have both fields and positional args at the same time!"
-			label: {
-				text: "input type def"
-				span: (metadata $type).span
-			}
-		}
-	}
-	let field_args: oneof<string, nothing> = if ($type.fields? | is-not-empty) {
-		$type.fields
-			| each {|kv|
-				$"($kv.key): ($kv.value | render)"
-			}
-			| str join ", "
-	}
-	let pos_args: oneof<string, nothing> = if ($type.positional? | is-not-empty) {
-		$type.positional
-			| each {
-				if ($in | describe) == string {
-					$type | table -e | print
-				}
-				$in | render
-			}
-			| str join ", "
-	}
-	let args = if $field_args != null or $pos_args != null {
-		$"<(if $field_args != null {
-			$field_args
-		} else if $pos_args != null {
-			$pos_args
-		})>"
-	} else { "" }
-	$"($type.type)($args)"
+  # @type TypeDef
+  let type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
+  if ($type.fields? | is-not-empty) and ($type.positional? | is-not-empty) {
+    error make {
+      msg: "type definition cannot have both fields and positional args at the same time!"
+      label: {
+        text: "input type def"
+        span: (metadata $type).span
+      }
+    }
+  }
+  let field_args: oneof<string, nothing> = if ($type.fields? | is-not-empty) {
+    $type.fields
+    | each {|kv|
+      $"($kv.key): ($kv.value | render)"
+    }
+    | str join ", "
+  }
+  let pos_args: oneof<string, nothing> = if ($type.positional? | is-not-empty) {
+    $type.positional
+    | each {
+      if ($in | describe) == string {
+        $type | table -e | print
+      }
+      $in | render
+    }
+    | str join ", "
+  }
+  let args = if $field_args != null or $pos_args != null {
+    $"<(
+      if $field_args != null {
+        $field_args
+      } else if $pos_args != null {
+        $pos_args
+      }
+    )>"
+  } else { "" }
+  $"($type.type)($args)"
 }

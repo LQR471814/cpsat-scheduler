@@ -2,7 +2,7 @@ use '../../lib/util.nu'
 use '../../lib/proto/apipb/api.gen.nu'
 use index.nu
 
-let p: record<prompt_prefix: string, state: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>, >> = util get form params
+let p: record<prompt_prefix: string, state: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>>> = util get form params
 
 let cmd = $env.PROMPT_COMMAND
 
@@ -10,151 +10,151 @@ $env.PROMPT_COMMAND = {|| $"(prompt prefix) ($in | do $cmd)" }
 
 $env.state = $p.state
 
-let timescales: table<id: int, name: string> = [[id, name];
-	[16, "4 hour"]
-    [96, "day"]
-    [672, "week"]
-    [2688, "month"]
-    [8064, "quarter"]
-    [32256, "year"]
-    [64512, "2 year"]
-    [129024, "4 year"]
-    [258048, "8 year"]
-    [516096, "16 year"]
-    [1032192, "32 year"]
-    [2064384, "64 year"]
-    [4128768, "128 year"]
+let timescales: table<id: int, name: string> = [
+  [id name];
+  [16 "4 hour"]
+  [96 "day"]
+  [672 "week"]
+  [2688 "month"]
+  [8064 "quarter"]
+  [32256 "year"]
+  [64512 "2 year"]
+  [129024 "4 year"]
+  [258048 "8 year"]
+  [516096 "16 year"]
+  [1032192 "32 year"]
+  [2064384 "64 year"]
+  [4128768 "128 year"]
 ]
 
 def "prompt prefix" []: nothing -> string {
-    $"($p.prompt_prefix) \(required-fields\)"
+  $"($p.prompt_prefix) \(required-fields\)"
 }
 
 def --env "read name" []: nothing -> string {
-    $env.state.name
+  $env.state.name
 }
 
 def --env "set name" []: oneof<string, nothing> -> nothing {
-    $env.state.name = $in
+  $env.state.name = $in
 }
 
 def --env "validate name" []: oneof<string, nothing> -> bool {
-    $env.state.name | is-not-empty
+  $env.state.name | is-not-empty
 }
 
 def --env name []: nothing -> nothing {
-    $env.state.name = util input text Name...
+  $env.state.name = util input text Name...
 }
 
 def --env "unset name" []: nothing -> nothing {
-    null | set name
+  null | set name
 }
 
 def --env "read desc" []: nothing -> string {
-    $env.state.desc
+  $env.state.desc
 }
 
 def --env "set desc" []: oneof<string, nothing> -> nothing {
-    $env.state.desc = $in
+  $env.state.desc = $in
 }
 
 def --env "validate desc" []: oneof<string, nothing> -> bool {
-    $env.state.desc != null
+  $env.state.desc != null
 }
 
 def --env desc []: nothing -> nothing {
-    $env.state.desc = util input text Description...
+  $env.state.desc = util input text Description...
 }
 
 def --env "unset desc" []: nothing -> nothing {
-    null | set desc
+  null | set desc
 }
 
 def --env "read unit" []: nothing -> int {
-    $env.state.timescale
+  $env.state.timescale
 }
 
 def --env "set unit" []: oneof<int, nothing> -> nothing {
-    $env.state.timescale = $in
+  $env.state.timescale = $in
 }
 
 def --env "validate unit" []: oneof<int, nothing> -> bool {
-    $env.state.timescale | is-not-empty
+  $env.state.timescale | is-not-empty
 }
 
 def --env unit []: nothing -> nothing {
-    $env.state.timescale = $timescales | util choose table --header 'Timescale unit (bounds maximum duration):' | get id?
+  $env.state.timescale = $timescales | util choose table --header 'Timescale unit (bounds maximum duration):' | get id?
 }
 
 def --env "unset unit" []: nothing -> nothing {
-    null | set unit
+  null | set unit
 }
 
 def --env status []: nothing -> nothing {
-    util print section title 'Form: required-fields'           
-    util print label 'Name'                                    
-    print ($env.state.name)                                    
-    print ""                                                   
-    util print label 'Desc'                                    
-    print ($env.state.desc)                                    
-    print ""                                                   
-    util print label 'Timescale unit (bounds maximum duration)'
-    print ($env.state.timescale)                               
-    print ""                                                   
-                                                               
+  util print section title 'Form: required-fields'
+  util print label 'Name'
+  print ($env.state.name)
+  print ""
+  util print label 'Desc'
+  print ($env.state.desc)
+  print ""
+  util print label 'Timescale unit (bounds maximum duration)'
+  print ($env.state.timescale)
+  print ""
 }
 
 alias s = status
 def --env next []: nothing -> bool {
-    # nu-lint-ignore: print_and_return_data                           
-    if not ($env.state.name | validate name) {                        
-        name                                                          
-        if not ($env.state.name | validate name) { return false }     
-        return (next)                                                 
-    }                                                                 
-    if not ($env.state.desc | validate desc) {                        
-        desc                                                          
-        if not ($env.state.desc | validate desc) { return false }     
-        return (next)                                                 
-    }                                                                 
-    if not ($env.state.timescale | validate unit) {                   
-        unit                                                          
-        if not ($env.state.timescale | validate unit) { return false }
-        return (next)                                                 
-    }                                                                 
-    true                                                              
+  # nu-lint-ignore: print_and_return_data                           
+  if not ($env.state.name | validate name) {
+    name
+    if not ($env.state.name | validate name) { return false }
+    return (next)
+  }
+  if not ($env.state.desc | validate desc) {
+    desc
+    if not ($env.state.desc | validate desc) { return false }
+    return (next)
+  }
+  if not ($env.state.timescale | validate unit) {
+    unit
+    if not ($env.state.timescale | validate unit) { return false }
+    return (next)
+  }
+  true
 }
 
 alias n = next
 def cmds []: nothing -> nothing {
-    print [[group cmd desc];                                                                   
-        [common "status, s" "Show form status."]                                               
-        [null "next, n" "Fill in next unfilled field."]                                        
-        [null "submit, done, d" "Submit form."]                                                
-        [null "cancel, c" "Abort form."]                                                       
-        ["name" 'name' 'Interactively set Name.']                                              
-        [null 'write name' 'Set Name via nushell command.']                                    
-        [null 'read name' 'Get Name via nushell command.']                                     
-        ["desc" 'desc' 'Interactively set Desc.']                                              
-        [null 'write desc' 'Set Desc via nushell command.']                                    
-        [null 'read desc' 'Get Desc via nushell command.']                                     
-        ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']          
-        [null 'write unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
-        [null 'read unit' 'Get Timescale unit (bounds maximum duration) via nushell command.'] 
-    ]                                                                                          
-                                                                                               
+  print [
+    [group cmd desc];
+    [common "status, s" "Show form status."]
+    [null "next, n" "Fill in next unfilled field."]
+    [null "submit, done, d" "Submit form."]
+    [null "cancel, c" "Abort form."]
+    ["name" 'name' 'Interactively set Name.']
+    [null 'write name' 'Set Name via nushell command.']
+    [null 'read name' 'Get Name via nushell command.']
+    ["desc" 'desc' 'Interactively set Desc.']
+    [null 'write desc' 'Set Desc via nushell command.']
+    [null 'read desc' 'Get Desc via nushell command.']
+    ["unit" 'unit' 'Interactively set Timescale unit (bounds maximum duration).']
+    [null 'write unit' 'Set Timescale unit (bounds maximum duration) via nushell command.']
+    [null 'read unit' 'Get Timescale unit (bounds maximum duration) via nushell command.']
+  ]
 }
 
 alias h = help
 def --env submit []: nothing -> nothing {
-    $env.state | util save form output      
-    exit # nu-lint-ignore: exit_only_in_main
+  $env.state | util save form output
+  exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env cancel []: nothing -> nothing {
-    if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
-    null | util save form output                                                                           
-    exit # nu-lint-ignore: exit_only_in_main                                                               
+  if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+  null | util save form output
+  exit # nu-lint-ignore: exit_only_in_main                                                               
 }
 
 alias done = submit

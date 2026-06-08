@@ -1,37 +1,39 @@
 use ./lib.nu
 
 let form = {
-	name: task-update
-	use: (lib form imports)
-	params: {
-		type: record
-		fields: [[key value];
-			[profile {type: int}]
-		]
-	}
-	returns: {
-		type: oneof
-		positional: [
-			{type: 'nothing'}
-			{
-				type: record
-				fields: [[key value];
-					[task_id {type: int}]
-					[task_state {type: record}]
-					[progress_log {type: string}]
-				]
-			}
-		]
-	}
-	closures: {
-		returns_post_process: "{
+  name: task-update
+  use: (lib form imports)
+  params: {
+    type: record
+    fields: [
+      [key value];
+      [profile {type: int}]
+    ]
+  }
+  returns: {
+    type: oneof
+    positional: [
+      {type: 'nothing'}
+      {
+        type: record
+        fields: [
+          [key value];
+          [task_id {type: int}]
+          [task_state {type: record}]
+          [progress_log {type: string}]
+        ]
+      }
+    ]
+  }
+  closures: {
+    returns_post_process: "{
 	task_id: $env.task
 	task_state: $env.state
 	progress_log: $env.progress_log?
 }"
-	}
-	fields: []
-	backmatter: "
+  }
+  fields: []
+  backmatter: "
 def 'fetch last checkpoint' []: nothing -> oneof<datetime, nothing> {
 	{profile: $p.state.profile} | api.gen API GetLastCheckpoint | get time?
 }
@@ -201,4 +203,3 @@ if $env.task? == null {
 }
 
 $form | to json --raw
-

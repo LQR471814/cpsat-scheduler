@@ -1,20 +1,21 @@
 use ./lib.nu
 
 let form = {
-	name: progress
-	use: (lib form imports)
-	params: {
-		type: record
-		fields: [[key value];
-			[profile {type: int}]
-		]
-	}
-	returns: {type: 'nothing'}
-	closures: {
-		returns_post_process: "run updates"
-	}
-	fields: []
-	backmatter: "
+  name: progress
+  use: (lib form imports)
+  params: {
+    type: record
+    fields: [
+      [key value];
+      [profile {type: int}]
+    ]
+  }
+  returns: {type: 'nothing'}
+  closures: {
+    returns_post_process: "run updates"
+  }
+  fields: []
+  backmatter: "
 let profile = $p.state.profile
 let time = date now
 
@@ -71,4 +72,3 @@ add task
 }
 
 $form | to json --raw
-
