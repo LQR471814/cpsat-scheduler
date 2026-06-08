@@ -234,8 +234,7 @@ export def "render command def" []: record<name: string, params: list<record<key
     | types render
   let body = $cmd.body
 
-  $"($export)def ($envflag)'($cmd.name)' [($params)]: ($in_type) -> ($out_type) {($body)
-}"
+  $"($export)def ($envflag)'($cmd.name)' [($params)]: ($in_type) -> ($out_type) {\n($body)\n}"
 }
 
 # @input types.Form
@@ -252,10 +251,15 @@ export def render []: record<name: string, params: oneof<record<type: string, po
     | each { $in.def | render command def }
     | str join "\n\n"
 
-  $"use index.nu
+  [
+    $"use index.nu
 use ../lib/nav.nu
 use ../../lib/util.nu
-use ../../proto/apipb/api.gen.nu($uses)($cmds)($setup)"
+use ../../lib/proto/apipb/api.gen.nu"
+    $uses
+    $cmds
+    $setup
+  ] | str join "\n\n"
 }
 
 # @input types.Form
@@ -266,7 +270,7 @@ export def call []: record<name: string, params: oneof<record<type: string, posi
   {
     name: $"form ($form.name)"
     params: []
-    body: $"nav exec form './($form.name).gen.nu' $in"
+    body: $"nav exec form './gen/($form.name).spec.gen.nu' $in"
     in: ($form | input type)
     out: ($form.returns)
     env: false

@@ -112,7 +112,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: $"
-$params.profiles | ($profiles_field | field cmd write name)
+$params | ($profiles_field | field cmd write name)
 	"
 }
 
