@@ -43,7 +43,7 @@ if $err != null {
 
   let body = $"($validation)
 {($output)
-} | util save form output
+} | nav save form output
 exit"
   {
     desc: "Validate and submit form."
@@ -65,7 +65,7 @@ exit"
 # @output types.Command
 export def "cmd cancel" []: nothing -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
   let body = "if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
-null | util save form output
+null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main"
 
   {
@@ -206,7 +206,7 @@ def setup []: record<name: string, params: oneof<record<type: string, positional
   # @type types.Form
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = $in
 
-  $"let __input: ($form | input type | types render) = util get form params
+  $"let __input: ($form | input type | types render) = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
 let params: ($form.params | types render) = $__input.params
@@ -253,6 +253,7 @@ export def render []: record<name: string, params: oneof<record<type: string, po
     | str join "\n\n"
 
   $"use index.nu
+use ../lib/nav.nu
 use ../../lib/util.nu
 use ../../proto/apipb/api.gen.nu($uses)($cmds)($setup)"
 }
@@ -265,7 +266,7 @@ export def call []: record<name: string, params: oneof<record<type: string, posi
   {
     name: $"form ($form.name)"
     params: []
-    body: $"util exec form './($form.name).gen.nu' $in"
+    body: $"nav exec form './($form.name).gen.nu' $in"
     in: ($form | input type)
     out: ($form.returns)
     env: false

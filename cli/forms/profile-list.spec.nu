@@ -2,9 +2,9 @@
 # @usetype "./lib/form.nu"
 # @usetype "../lib/proto/apipb/api.gen.nu"
 
-use ./lib/form.nu
-use ./lib/field.nu
-use ./lib/callback.nu
+use ./lib/gen/form.nu
+use ./lib/gen/field.nu
+use ./lib/gen/callback.nu
 use ../lib/proto/apipb/api.gen.nu
 
 # @type types.Field
