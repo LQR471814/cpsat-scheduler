@@ -3,7 +3,9 @@
 # @input closure
 # @output Callback
 export def "from closure" []: closure -> record<expr: string> {
-	{expr: (to nuon --serialize)}
+	# to nuon --serialize will quote the string, so we need to unquote it with
+	# "from json"
+	{expr: ($in | to nuon --serialize | from json)}
 }
 
 # @input nothing

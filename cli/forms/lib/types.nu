@@ -3,11 +3,6 @@
 # export type TypeDef = oneof<
 #   record<
 #     type: string,
-#     fields: list<KeyValue<any>>,
-#     positional: list<any>
-#   >
-#   record<
-#     type: string,
 #     positional: list<any>
 #   >
 #   record<
@@ -35,7 +30,7 @@
 #   desc: string
 #   group: string
 #   aliases: list<string>
-#   closure: CommandDef
+#   def: CommandDef
 # >
 
 # validate should return string or null
@@ -46,7 +41,7 @@
 #   desc: string
 #   group: string
 #   type: TypeDef
-#   display_value: callback.Callback
+#   display_value: oneof<callback.Callback, nothing>
 #	ops: record<
 # 		read: bool
 #		write: bool
@@ -63,9 +58,9 @@
 #   init: oneof<string, nothing>
 # >
 
-# @input nothing
+# @input TypeDef
 # @output TypeDef
-export def optional []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+export def optional []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{
 		type: oneof
 		positional: [
@@ -77,7 +72,7 @@ export def optional []: nothing -> oneof<record<type: string, fields: list<recor
 
 # @input nothing
 # @output TypeDef
-export def "entry record" []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+export def "entry record" []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{
 		type: record
 		fields: [[key value];
@@ -89,7 +84,7 @@ export def "entry record" []: nothing -> oneof<record<type: string, fields: list
 
 # @input nothing
 # @output TypeDef
-export def "entry table" []: nothing -> oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+export def "entry table" []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{
 		type: table
 		fields: [[key value];
@@ -101,9 +96,9 @@ export def "entry table" []: nothing -> oneof<record<type: string, fields: list<
 
 # @input TypeDef
 # @output string
-export def render []: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> string {
+export def render []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> string {
 	# @type TypeDef
-	let type: oneof<record<type: string, fields: list<record<key: string, value: any>>, positional: list<any>>, record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
+	let type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
 	if ($type.fields? | is-not-empty) and ($type.positional? | is-not-empty) {
 		error make {
 			msg: "type definition cannot have both fields and positional args at the same time!"
@@ -122,7 +117,12 @@ export def render []: oneof<record<type: string, fields: list<record<key: string
 	}
 	let pos_args: oneof<string, nothing> = if ($type.positional? | is-not-empty) {
 		$type.positional
-			| each { render }
+			| each {
+				if ($in | describe) == string {
+					$type | table -e | print
+				}
+				$in | render
+			}
 			| str join ", "
 	}
 	let args = if $field_args != null or $pos_args != null {
