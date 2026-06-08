@@ -70,17 +70,35 @@ let fields_ordering: list<record<field: record<id: string, display_name: string,
 
 # @type types.Form
 let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = {
-	name: profiles
+	name: profile-list
 	params: $profiles_field.type
-	returns: {type: 'nothing'}
+	returns: $profiles_field.type
 	use: []
 	commands: [
 		...($fields | each { field cmds core } | flatten)
-		($fields | form cmd done)
+
+		$add_profile
+		($profiles_field | field cmd interact list remove (
+			{||
+				# @type apigen.Profile
+				let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
+				$profile | select id name
+			} | callback from closure
+		))
+		($profiles_field | field cmd interact list edit (
+			{||
+				# @type apigen.Profile
+				let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
+				$profile | select id name
+			} | callback from closure
+		) ({||
+			index form profile
+		} | callback from closure))
+
 		(form cmd cancel)
+		($fields | form cmd done --output (callback make [] $"($profiles_field | field cmd read name)"))
 		($fields | form cmd status)
 		($fields_ordering | form cmd next)
-		$add_profile
 	]
 	init: $"
 $params.profiles | ($profiles_field | field cmd write name)

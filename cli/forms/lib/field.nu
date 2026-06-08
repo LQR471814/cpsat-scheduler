@@ -233,15 +233,14 @@ $state
 
 # @input types.Field
 # @output types.Command
-# @param id callback.Callback
-# @param name callback.Callback
+# @param entry callback.Callback
 #
 # if it returns null, it means to cancel
-export def "cmd interact list remove" [id: record<expr: string> name: record<expr: string>]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
+export def "cmd interact list remove" [entry: record<expr: string>]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
 	# @type types.Field
 	let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
 
-	if $field.type.name != list and $field.type.name != table {
+	if $field.type.type != list and $field.type.type != table {
 		error make {
 			msg: "input field type must be of either list or table"
 			label: {
@@ -261,15 +260,13 @@ export def "cmd interact list remove" [id: record<expr: string> name: record<exp
 			body: $"let state = ($field | cmd read name)
 let chosen = $state
 	| each {|row|
-		{
-			id: \($row | ($id | callback run)\)
-			name: \($row | ($name | callback run)\)
-		}
+		\($row | ($entry | callback run)\)
 	}
-	| util choose table --header '($field.desc)'
+	| util choose table --header 'Remove: ($field.desc)'
 if $chosen == null { return }
+if not \(util confirm --prompt $\"Are you sure you wish to remove \($chosen.name\)?\"\) { return }
 $state
-	| where \($it | ($id | callback run)\) != $chosen.id
+	| where \($it | ($entry | callback run) | get id\) != $chosen.id
 	| ($field | cmd write name)"
 			in: {type: "nothing"}
 			out: {type: "nothing"}
@@ -300,12 +297,14 @@ export def "cmd interact list list" []: record<id: string, display_name: string,
 	}
 }
 
-# TODO: finish this later
-#
 # @input types.Field
 # @output types.Command
+# @param entry callback.Callback
 # @param edit callback.Callback
-export def "cmd interact list edit" [edit: record<expr: string>]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
+#
+# entry: list_entry -> record<id: primitive, name: string>
+# edit: list_entry -> oneof<list_entry, nothing>
+export def "cmd interact list edit" [entry: record<expr: string> edit: record<expr: string>]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
 	# @type types.Field
 	let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
 	{
@@ -315,7 +314,32 @@ export def "cmd interact list edit" [edit: record<expr: string>]: record<id: str
 		def: {
 			name: $"edit ($field.id)"
 			params: []
-			body: $"($field | cmd read name) | table -e | print"
+			body: $"let state = ($field | cmd read name)
+	| each {|row|
+		{
+			row: $row
+			entry: \($row | ($entry | callback run)\)
+		}
+	}
+
+let chosen = $state
+	| get entry
+	| util choose table --header 'Edit: ($field.desc)'
+if $chosen == null { return }
+
+let new_row = $state
+	| where entry == $chosen
+	| get row
+	| ($edit | callback run)
+
+if $new_row == null { return }
+
+$state
+	| each {|row|
+		if $in.entry == $chosen { $new_row } else { $row }
+	}
+	| ($field | cmd write name)
+"
 			in: {type: "nothing"}
 			out: {type: "nothing"}
 			env: false

@@ -9,7 +9,10 @@ use types.nu
 #
 # @input list<types.Field>
 # @output types.Command
-export def "cmd done" []: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
+# @param output callback.Callback
+#
+# output: nothing -> any
+export def "cmd done" [--output: record<expr: string>]: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
 	# @type list<types.Field>
 	let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = $in
 
@@ -26,13 +29,17 @@ if $err != null {
 		| where $it != null
 		| str join "\n"
 
-	let output = $fields
-		| each {|field|
-			# @type types.Field
-			let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
-			$"\t'($field.id)': \(($field | field cmd read name)\)"
-		}
-		| str join "\n"
+	let output: string = if $output == null {
+		$fields
+			| each {|field|
+				# @type types.Field
+				let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
+				$"\t'($field.id)': \(($field | field cmd read name)\)"
+			}
+			| str join "\n"
+	} else {
+		$output | callback run
+	}
 
 	let body = $"($validation)
 {
@@ -145,7 +152,7 @@ export def "cmd next" []: list<record<field: record<id: string, display_name: st
 	($interact | callback run)
 	let err = ($field | field cmd validate name)
 	if $err != null {
-		$err | util print error
+		util print error $err
 		return false
 	}
 	return \(next\)
