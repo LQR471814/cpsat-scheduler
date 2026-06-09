@@ -5,6 +5,19 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
+let __input: record<prompt_prefix: string, params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>>> = nav get form params
+
+let prompt_prefix: string = $__input.prompt_prefix
+let params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> = $__input.params
+
+let default_prompt_prefix: closure = $env.PROMPT_COMMAND
+$env.prompt_prefix = {|| prompt prefix }
+$env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+
+def 'prompt prefix' []: nothing -> string {
+$"($prompt_prefix) \(profile-list\)"
+}
+
 def --env 'read profile' []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> {
 $env.__state_profile
 }
@@ -17,7 +30,7 @@ let err = $new | do --env {||
         }
       }
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }
 $env.__state_profile = $new
@@ -97,7 +110,7 @@ $state
 	| write profile
 }
 
-def --env 'cancel' [param.key]: nothing -> nothing {
+def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
@@ -159,17 +172,10 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list
 ["control","next",["n"],"Fill in the next unfilled fields interactively."]]
 }
 
-let __input: record<prompt_prefix: string, params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>>> = nav get form params
+cmds | table -e | print
 
-let prompt_prefix: string = $__input.prompt_prefix
-let params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> = $__input.params
-
-let default_prompt_prefix: closure = $env.PROMPT_COMMAND
-$env.PROMPT_COMMAND = {|| $"($prompt_prefix) \(profile-list\) ($in | do $default_prompt_prefix)" }
 $params | write profile
 	
-
-cmds | table -e | print
 
 alias ap = add profile
 alias c = cancel

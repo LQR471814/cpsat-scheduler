@@ -5,6 +5,19 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
+let __input: record<prompt_prefix: string, params: record<state: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, id: oneof<int, nothing>, profile_id: int>> = nav get form params
+
+let prompt_prefix: string = $__input.prompt_prefix
+let params: record<state: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, id: oneof<int, nothing>, profile_id: int> = $__input.params
+
+let default_prompt_prefix: closure = $env.PROMPT_COMMAND
+$env.prompt_prefix = {|| prompt prefix }
+$env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+
+def 'prompt prefix' []: nothing -> string {
+$"($prompt_prefix) \(task\)"
+}
+
 def --env 'read required' []: nothing -> record {
 $env.__state_required
 }
@@ -50,7 +63,7 @@ if $env.__tmp_task_id != null {
 | get id
 | do --env {|| $env.__tmp_task_id = $in } }
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }
 $env.__state_required = $new
@@ -105,7 +118,7 @@ def --env 'write optional' []: record<state: oneof<nothing, record<name: oneof<n
 let new = $in
 let err = $new | do --env {|| }
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }
 $env.__state_optional = $new
@@ -118,21 +131,23 @@ read optional | do --env {|| }
 def --env 'set required' []: nothing -> nothing {
 read required
 	| do --env {|| 
-let new_value = $in
-  | read required
-  | index form task-required
-if $new_value == null { cancel -y }
-   }
+let new = $in | index form task-required
+if $new == null {
+  cancel -y
+}
+$new }
 	| write required
 }
 
 def --env 'set optional' []: nothing -> nothing {
 read optional
-	| do --env {|| read optional | index form task-optional }
+	| do --env {|| 
+let new = $in | index form task-optional
+         }
 	| write optional
 }
 
-def --env 'cancel' [param.key]: nothing -> nothing {
+def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
@@ -285,13 +300,8 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list
 ["control","next",["n"],"Fill in the next unfilled fields interactively."]]
 }
 
-let __input: record<prompt_prefix: string, params: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, id: oneof<int, nothing>>> = nav get form params
+cmds | table -e | print
 
-let prompt_prefix: string = $__input.prompt_prefix
-let params: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, id: oneof<int, nothing>> = $__input.params
-
-let default_prompt_prefix: closure = $env.PROMPT_COMMAND
-$env.PROMPT_COMMAND = {|| $"($prompt_prefix) \(task\) ($in | do $default_prompt_prefix)" }
 $params
 | select name desc timescale
 | write required
@@ -303,8 +313,6 @@ $params
 $params.id | do --env {|| $env.__tmp_task_id = $in }
 
 let is_creating = $params.id == null
-
-cmds | table -e | print
 
 alias c = cancel
 alias d = done

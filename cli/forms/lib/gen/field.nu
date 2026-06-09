@@ -53,7 +53,7 @@ export def "cmd write" []: record<id: string, display_name: string, desc: string
       body: $"let new = $in
 let err = $new | ($field.ops.validate | callback run)
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }\n($field | state access) = $new"
       in: $field.type

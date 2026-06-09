@@ -188,9 +188,23 @@ return true"
 }
 
 # @input types.Form
-# @output callback.Callback
-def "default prompt prefix" []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> record<expr: string> {
-  callback make [] $"$\"\($prompt_prefix\) \\\(($in.name)\\\) \($in | do $default_prompt_prefix\)\""
+# @output types.CommandDef
+def "cmd prompt prefix" []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool> {
+  {
+    name: (cmd prompt prefix name)
+    params: []
+    body: $"$\"\($prompt_prefix\) \\\(($in.name)\\\)\""
+    in: {type: "nothing"}
+    out: {type: string}
+    env: false
+    export: false
+  }
+}
+
+# @input nothing
+# @output string
+export def "cmd prompt prefix name" []: nothing -> string {
+  "prompt prefix"
 }
 
 # @input types.Form
@@ -272,9 +286,11 @@ def "cmd cmds" []: record<name: string, params: oneof<record<type: string, posit
 
 # @input types.Form
 # @output string
-def setup []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> string {
+def "init before cmds" []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> string {
   # @type types.Form
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = $in
+
+  let prompt_callback = callback make [] $"$\"\((cmd prompt prefix name)\) \($in | do $default_prompt_prefix\)\""
 
   $"let __input: ($form | input type | types render) = nav get form params
 
@@ -282,9 +298,14 @@ let prompt_prefix: string = $__input.prompt_prefix
 let params: ($form.params | types render) = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
-$env.PROMPT_COMMAND = ($form | default prompt prefix | $in.expr)($form.init | default '')
+$env.prompt_prefix = {|| (cmd prompt prefix name) }
+$env.PROMPT_COMMAND = ($prompt_callback | callback run)"
+}
 
-cmds | table -e | print"
+# @input types.Form
+# @output string
+def "init after cmds" []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> string {
+  $"cmds | table -e | print\n($in.init | default '')"
 }
 
 # @input types.CommandDef
@@ -299,7 +320,7 @@ export def "render command def" []: record<name: string, params: list<record<key
     | each {|param|
       if $param.value.type == bool and ($param.key | str starts-with "-") {
         # we don't render type def for bool flags
-        return param.key
+        return $param.key
       }
       $"($param.key): ($param.value | types render)"
     }
@@ -322,7 +343,6 @@ export def render []: record<name: string, params: oneof<record<type: string, po
   let uses = $form.use
     | each { $"use '($in)'" }
     | str join "\n"
-  let setup = $form | setup
   let cmds: string = $form.commands
     | each { $in.def | render command def }
     | append ($form | cmd cmds | render command def)
@@ -335,8 +355,10 @@ use ../lib/nav.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu"
     $uses
+    ($form | init before cmds)
+    ($form | cmd prompt prefix | render command def)
     $cmds
-    $setup
+    ($form | init after cmds)
     $aliases
   ] | str join "\n\n"
 }
@@ -350,8 +372,8 @@ export def call []: record<name: string, params: oneof<record<type: string, posi
     name: $"form ($form.name)"
     params: []
     body: $"nav exec form './gen/($form.name).spec.gen.nu' $in"
-    in: ($form | input type)
-    out: ($form.returns)
+    in: $form.params
+    out: $form.returns
     env: true
     export: true
   }

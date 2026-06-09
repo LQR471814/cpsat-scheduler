@@ -96,7 +96,7 @@ let end_field: record<id: string, display_name: string, desc: string, group: str
 }
 
 let validate_range = callback make [] $"
-if ($start_field | field cmd read name) >= ($end_field | field cmd read name) {
+if \(($start_field | field cmd read name)\) >= \(($end_field | field cmd read name)\) {
   'explicit start cannot be >= end'
 }"
 

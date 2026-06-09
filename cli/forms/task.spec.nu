@@ -97,12 +97,12 @@ let opt_fields_field: record<id: string, display_name: string, desc: string, gro
 
 # delete task if cancel on newly created task (after required fields)
 # @type callback.Callback
-let remove_tmp_task = callback make [] $"if $is_creating and (access tmp task id) != null {
+let remove_tmp_task: record<expr: string> = callback make [] $"if $is_creating and (access tmp task id) != null {
   {id: (access tmp task id)} | api.gen API DeleteTask
 }"
 
 # @type callback.Callback
-let output = callback make [] $"($remove_tmp_task | callback run)\n($req_fields_field | field cmd read name)
+let output: record<expr: string> = callback make [] $"($remove_tmp_task | callback run)\n($req_fields_field | field cmd read name)
 | merge \(($opt_fields_field | field cmd read name)\)"
 
 # @type list<types.Field>
@@ -128,13 +128,12 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   name: task
   params: {
     type: record
-    fields: (
-      $task_type.fields
-      | append {
-        key: id
-        value: ({type: int} | types optional)
-      }
-    )
+    fields: [
+      [key value];
+      [state {type: record fields: $task_type.fields}]
+      [id ({type: int} | types optional)]
+      [profile_id {type: int}]
+    ]
   }
   returns: $task_type
   use: []
@@ -144,16 +143,18 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     (
       $req_fields_field | field cmd interact set --callback (
         callback make [] $"
-let new_value = $in
-  | ($req_fields_field | field cmd read name)
-  | index form task-required
-if $new_value == null { (form cmd cancel name) -y }
-  "
+let new = $in | index form task-required
+if $new == null {
+  (form cmd cancel name) -y
+}
+$new"
       )
     )
     (
       $opt_fields_field | field cmd interact set --callback (
-        callback make [] $"($opt_fields_field | field cmd read name) | index form task-optional"
+        callback make [] $"
+let new = $in | index form task-optional
+        "
       )
     )
 

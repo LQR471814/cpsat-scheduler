@@ -8,7 +8,14 @@ export def "exec form" [script: path params: any]: nothing -> any {
       p_in: $"/tmp/cpsat-cli.form-state.in.($id)"
       p_out: $"/tmp/cpsat-cli.form-state.out.($id)"
     }
-    $params | to nuon | save $env.p_in # nu-lint-ignore: catch_builtin_error_try
+    {
+      prompt_prefix: (
+        if $env.prompt_prefix? != null {
+          do $env.prompt_prefix?
+        } else { "" }
+      )
+      params: $params
+    } | to nuon | save $env.p_in # nu-lint-ignore: catch_builtin_error_try
     nu -e $"source '($script)'"
     let res = open $env.p_out | from nuon # nu-lint-ignore: catch_builtin_error_try
     try {
@@ -20,12 +27,12 @@ export def "exec form" [script: path params: any]: nothing -> any {
 }
 
 # get form params gets the input parameters of a form
-export def "get form params" []: nothing -> any {
+export def --env "get form params" []: nothing -> any {
   # nu-lint-ignore: missing_output_type
   open $env.p_in | from nuon # nu-lint-ignore: catch_builtin_error_try
 }
 
 # save form output saves the output of a form into the output file
-export def "save form output" []: any -> nothing {
+export def --env "save form output" []: any -> nothing {
   to nuon | save $env.p_out # nu-lint-ignore: catch_builtin_error_try
 }

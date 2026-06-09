@@ -5,6 +5,19 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
+let __input: record<prompt_prefix: string, params: record<task_id: int, name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>>> = nav get form params
+
+let prompt_prefix: string = $__input.prompt_prefix
+let params: record<task_id: int, name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>> = $__input.params
+
+let default_prompt_prefix: closure = $env.PROMPT_COMMAND
+$env.prompt_prefix = {|| prompt prefix }
+$env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+
+def 'prompt prefix' []: nothing -> string {
+$"($prompt_prefix) \(task-required\)"
+}
+
 def --env 'read name' []: nothing -> oneof<string, nothing> {
 $env.__state_name
 }
@@ -17,7 +30,7 @@ let err = $new | do --env {||
         }
       }
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }
 $env.__state_name = $new
@@ -39,7 +52,7 @@ def --env 'write desc' []: oneof<string, nothing> -> nothing {
 let new = $in
 let err = $new | do --env {|| }
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }
 $env.__state_desc = $new
@@ -49,22 +62,22 @@ def --env 'validate desc' []: nothing -> oneof<string, nothing> {
 read desc | do --env {|| }
 }
 
-def --env 'read unit' []: nothing -> oneof<int, nothing> {
-$env.__state_unit
+def --env 'read timescale' []: nothing -> oneof<int, nothing> {
+$env.__state_timescale
 }
 
-def --env 'write unit' []: oneof<int, nothing> -> nothing {
+def --env 'write timescale' []: oneof<int, nothing> -> nothing {
 let new = $in
 let err = $new | do --env {|| }
 if $err != null {
-  $err | util print error
+  util print error $err
   return
 }
-$env.__state_unit = $new
+$env.__state_timescale = $new
 }
 
-def --env 'validate unit' []: nothing -> oneof<string, nothing> {
-read unit | do --env {|| }
+def --env 'validate timescale' []: nothing -> oneof<string, nothing> {
+read timescale | do --env {|| }
 }
 
 def --env 'set name' []: nothing -> nothing {
@@ -79,13 +92,13 @@ read desc
 	| write desc
 }
 
-def --env 'set unit' []: nothing -> nothing {
-read unit
-	| do --env {|| {|| util input int 'Timescale unit (should be the upper-bound for task duration).' } }
-	| write unit
+def --env 'set timescale' []: nothing -> nothing {
+read timescale
+	| do --env {|| {|| util input int 'Timescale timescale (should be the upper-bound for task duration).' } }
+	| write timescale
 }
 
-def --env 'cancel' [param.key]: nothing -> nothing {
+def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
@@ -104,12 +117,12 @@ let err = read desc | do --env {|| }
 if $err != null {
 	error make $err
 }
-let err = read unit | do --env {|| }
+let err = read timescale | do --env {|| }
 if $err != null {
 	error make $err
 };	'name': (read name)
 	'desc': (read desc)
-	'unit': (read unit) | nav save form output
+	'timescale': (read timescale) | nav save form output
 
 exit
 }
@@ -142,12 +155,12 @@ if $err != null {
 }
 print ''
 util print label 'Unit []'
-util print desc 'Timescale unit (should be the upper-bound for task duration).'
-read unit | do --env {|| match ($in | describe) {
+util print desc 'Timescale timescale (should be the upper-bound for task duration).'
+read timescale | do --env {|| match ($in | describe) {
 int => { $in | {|| util print number $in } }
 nothing => { $in | {|| print } }
 } } | print
-let err = read unit | do --env {|| }
+let err = read timescale | do --env {|| }
 if $err != null {
 	util print error $err
 }
@@ -173,9 +186,9 @@ if (validate desc) != null {
 	}
 	return (next)
 }
-if (validate unit) != null {
-	do --env {|| set unit }
-	let err = validate unit
+if (validate timescale) != null {
+	do --env {|| set timescale }
+	let err = validate timescale
 	if $err != null {
 		util print error $err
 		return false
@@ -192,27 +205,20 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list
 ["","read desc",[],"Get the value of desc."]
 ["","write desc",[],"Set the value of desc."]
 ["","validate desc",[],"Check if the current value of desc has any errors."]
-["","read unit",[],"Get the value of unit."]
-["","write unit",[],"Set the value of unit."]
-["","validate unit",[],"Check if the current value of unit has any errors."]
+["","read timescale",[],"Get the value of timescale."]
+["","write timescale",[],"Set the value of timescale."]
+["","validate timescale",[],"Check if the current value of timescale has any errors."]
 ["","set name",[],"Set name interactively."]
 ["","set desc",[],"Set desc interactively."]
-["","set unit",[],"Set unit interactively."]
+["","set timescale",[],"Set timescale interactively."]
 ["control","cancel",["c"],"Abort submission and discard changes."]
 ["control","done",["d"],"Validate and submit form."]
 ["control","status",["s"],"Show the current form status."]
 ["control","next",["n"],"Fill in the next unfilled fields interactively."]]
 }
 
-let __input: record<prompt_prefix: string, params: record<task_id: int, name: oneof<string, nothing>, desc: oneof<string, nothing>, unit: oneof<int, nothing>>> = nav get form params
-
-let prompt_prefix: string = $__input.prompt_prefix
-let params: record<task_id: int, name: oneof<string, nothing>, desc: oneof<string, nothing>, unit: oneof<int, nothing>> = $__input.params
-
-let default_prompt_prefix: closure = $env.PROMPT_COMMAND
-$env.PROMPT_COMMAND = {|| $"($prompt_prefix) \(task-required\) ($in | do $default_prompt_prefix)" }
-
 cmds | table -e | print
+
 
 alias c = cancel
 alias d = done
