@@ -14,6 +14,7 @@ let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
 
+
 def 'prompt prefix' []: nothing -> string {
 $"($prompt_prefix) \(profile-list\)"
 }

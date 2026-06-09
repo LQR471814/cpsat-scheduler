@@ -13,6 +13,7 @@ let params: record<state: record<name: oneof<nothing, string>, desc: oneof<nothi
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+let is_creating = $params.id == null
 
 def 'prompt prefix' []: nothing -> string {
 $"($prompt_prefix) \(task\)"
@@ -302,17 +303,15 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list
 
 cmds | table -e | print
 
-$params
+$params.state
 | select name desc timescale
 | write required
 
-$params
+$params.state
 | reject name desc timescale
 | write required
 
 $params.id | do --env {|| $env.__tmp_task_id = $in }
-
-let is_creating = $params.id == null
 
 alias c = cancel
 alias d = done

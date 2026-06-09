@@ -124,7 +124,7 @@ let fields_ordering: list<record<field: record<id: string, display_name: string,
 ]
 
 # @type types.Form
-let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = {
+let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = {
   name: task
   params: {
     type: record
@@ -163,18 +163,19 @@ let new = $in | index form task-optional
     ($fields | form cmd status)
     ($fields_ordering | form cmd next)
   ]
-  init: $"
-$params
+  init: {
+    before_cmds: "let is_creating = $params.id == null"
+    after_cmds: $"
+$params.state
 | select ($required_ids | str join ' ')
 | ($req_fields_field | field cmd write name)
 
-$params
+$params.state
 | reject ($required_ids | str join ' ')
 | ($req_fields_field | field cmd write name)
 
-$params.id | (write tmp task id run)
-
-let is_creating = $params.id == null"
+$params.id | (write tmp task id run)"
+  }
 }
 
 $form | to nuon --raw

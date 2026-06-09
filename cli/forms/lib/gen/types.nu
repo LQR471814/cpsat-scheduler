@@ -55,7 +55,10 @@
 #   returns: TypeDef
 #   use: list<string>
 #   commands: list<Command>
-#   init: oneof<string, nothing>
+#   init: record<
+#     before_cmds: oneof<string, nothing>
+#     after_cmds: oneof<string, nothing>
+#   >
 # >
 
 # @input TypeDef
