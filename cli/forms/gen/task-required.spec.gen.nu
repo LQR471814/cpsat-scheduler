@@ -238,6 +238,17 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
+$env.config.keybindings = $env.config.keybindings | append {
+  name: ctrl_d_hook
+  modifier: control
+  keycode: char_d
+  mode: [emacs vi_insert vi_normal]
+  event: {
+    send: executehostcommand
+    cmd: 'cancel'
+  }
+}
+
 cmds | table -e | print
 
 

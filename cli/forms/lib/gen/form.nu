@@ -342,6 +342,19 @@ export def render []: record<name: string, params: oneof<record<type: string, po
     | str join "\n\n"
   let aliases = $form | aliases
 
+  let ctrl_d_hook = if ($form.commands | where def.name == cancel | is-not-empty) {
+    "$env.config.keybindings = $env.config.keybindings | append {
+  name: ctrl_d_hook
+  modifier: control
+  keycode: char_d
+  mode: [emacs vi_insert vi_normal]
+  event: {
+    send: executehostcommand
+    cmd: 'cancel'
+  }
+}"
+  } else { "" }
+
   [
     $"# @usetype "../../lib/proto/apipb/api.gen.nu"
 
@@ -353,6 +366,7 @@ use ../../lib/proto/apipb/api.gen.nu"
     ($form | init before cmds)
     ($form | cmd prompt prefix | render command def)
     $cmds
+    $ctrl_d_hook
     ($form | init after cmds)
     $aliases
   ] | str join "\n\n"
