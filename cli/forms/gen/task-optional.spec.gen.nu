@@ -1,3 +1,5 @@
+# @usetype "../../lib/proto/apipb/api.gen.nu"
+
 use index.nu
 use ../lib/nav.nu
 use ../../lib/util.nu

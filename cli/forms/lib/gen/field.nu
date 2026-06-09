@@ -97,7 +97,7 @@ export def "cmd write name" [--skipval (-s)]: record<id: string, display_name: s
 # @param validate bool
 export def "cmd write optional" [--skipval (-s)]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
   # @type types.Field
-  let field = $in
+  let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
   let call = $field | if $skipval {
       cmd write name -s
     } else {
