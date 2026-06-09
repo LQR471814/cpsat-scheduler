@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const frontmatter = `# @usetype "../../../forms/lib/types.nu"
+const frontmatter = `# @usetype "../../../forms/lib/gen/types.nu"
 
 const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
 

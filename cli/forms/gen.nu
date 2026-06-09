@@ -1,4 +1,4 @@
-# @usetype "./lib/types.nu"
+# @usetype "./lib/gen/types.nu"
 
 use ./lib/gen/form.nu
 

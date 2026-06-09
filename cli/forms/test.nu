@@ -7,4 +7,4 @@ let result = {
   params: ({} | api.gen API ListProfiles | get entries)
 } | index form profile-list
 
-$result | table -e | print
+$result | table --expand | print

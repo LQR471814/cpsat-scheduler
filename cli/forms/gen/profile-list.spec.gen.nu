@@ -110,8 +110,8 @@ exit
 def 'status' []: nothing -> nothing {
 util print label 'Profiles [field]'
 util print desc 'List of existing profiles.'
-read profile | {expr: {|| table -e | print }} | print
-let err = do {||
+read profile | do {|| table -e | print } | print
+let err = read profile | do {||
         if ($in | is-empty) {
           "you must have at least one profile created"
         }
@@ -137,6 +137,19 @@ if (validate profile) != null {
 return true
 }
 
+def 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
+[[group name aliases desc];["field","read profile",[],"Get the value of profile."]
+["field","write profile",[],"Set the value of profile."]
+["field","validate profile",[],"Check if the current value of profile has any errors."]
+["field","add profile",["ap"],"add a new profile"]
+["field","remove profile",[],"Remove a value from list profile interactively."]
+["field","edit profile",[],"Choose a value of profile to edit."]
+["control","cancel",["c"],"Abort submission and discard changes."]
+["control","done",["d"],"Validate and submit form."]
+["control","status",["s"],"Show the current form status."]
+["control","next",["n"],"Fill in the next unfilled fields interactively."]]
+}
+
 let __input: record<prompt_prefix: string, params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
@@ -146,3 +159,11 @@ let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.PROMPT_COMMAND = {|| $"($prompt_prefix) \(profile-list\) ($in | do $default_prompt_prefix)" }
 $params | write profile
 	
+
+cmds | table -e | print
+
+alias ap = add profile
+alias c = cancel
+alias d = done
+alias s = status
+alias n = next

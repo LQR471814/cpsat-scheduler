@@ -1,5 +1,5 @@
-# @usetype "./lib/types.nu"
-# @usetype "./lib/form.nu"
+# @usetype "./lib/gen/types.nu"
+# @usetype "./lib/gen/form.nu"
 # @usetype "../lib/proto/apipb/api.gen.nu"
 
 use ./lib/gen/form.nu

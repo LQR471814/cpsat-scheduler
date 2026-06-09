@@ -94,7 +94,7 @@ export def "cmd status" []: list<record<id: string, display_name: string, desc: 
       # @type types.Field
       let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
       let valid = if $field.ops.validate != null {
-        $"let err = ($field.ops.validate | callback run)
+        $"let err = ($field | field cmd read name) | ($field.ops.validate | callback run)
 if $err != null {
 	util print error $err
 }"
@@ -102,7 +102,7 @@ if $err != null {
       [
         $"util print label '($field.display_name) [($field.group)]'"
         $"util print desc '($field.desc)'"
-        $"($field | field cmd read name) | ($field | field display value callback) | print"
+        $"($field | field cmd read name) | ($field | field display value callback | callback run) | print"
         $valid
         "print ''"
       ]
@@ -202,6 +202,65 @@ def "input type" []: record<name: string, params: oneof<record<type: string, pos
 
 # @input types.Form
 # @output string
+def aliases []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> string {
+  get commands
+  | each {|cmd|
+    # @type types.Command
+    let cmd: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = $cmd
+    $cmd.aliases | each {|alias|
+      $"alias ($alias) = ($cmd.def.name)"
+    }
+  }
+  | flatten
+  | str join "\n"
+}
+
+# @input types.Form
+# @output types.CommandDef
+def "cmd cmds" []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool> {
+  # @type types.Form
+  let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = $in
+
+  let rows = $form.commands
+    | each {|cmd|
+      # @type types.Command
+      let cmd: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = $cmd
+      [$cmd.group $cmd.def.name $cmd.aliases $cmd.desc] | to json -r
+    }
+    | str join "\n"
+
+  let table_def = $"[[group name aliases desc];($rows)]"
+
+  {
+    name: cmds
+    params: []
+    body: $table_def
+    in: {type: "nothing"}
+    out: {
+      type: table
+      fields: [
+        [key value];
+        [group {type: string}]
+        [name {type: string}]
+        [
+          aliases
+          {
+            type: list
+            positional: [
+              {type: string}
+            ]
+          }
+        ]
+        [desc {type: string}]
+      ]
+    }
+    env: false
+    export: false
+  }
+}
+
+# @input types.Form
+# @output string
 def setup []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> -> string {
   # @type types.Form
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = $in
@@ -212,7 +271,9 @@ let prompt_prefix: string = $__input.prompt_prefix
 let params: ($form.params | types render) = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
-$env.PROMPT_COMMAND = ($form | default prompt prefix | $in.expr)($form.init | default '')"
+$env.PROMPT_COMMAND = ($form | default prompt prefix | $in.expr)($form.init | default '')
+
+cmds | table -e | print"
 }
 
 # @input types.CommandDef
@@ -249,7 +310,9 @@ export def render []: record<name: string, params: oneof<record<type: string, po
   let setup = $form | setup
   let cmds: string = $form.commands
     | each { $in.def | render command def }
+    | append ($form | cmd cmds | render command def)
     | str join "\n\n"
+  let aliases = $form | aliases
 
   [
     $"use index.nu
@@ -259,6 +322,7 @@ use ../../lib/proto/apipb/api.gen.nu"
     $uses
     $cmds
     $setup
+    $aliases
   ] | str join "\n\n"
 }
 

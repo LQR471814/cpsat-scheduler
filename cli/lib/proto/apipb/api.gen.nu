@@ -1,4 +1,4 @@
-# @usetype "../../../forms/lib/types.nu"
+# @usetype "../../../forms/lib/gen/types.nu"
 
 const SOCKET_PATH = "/tmp/cpsat-scheduler.api.sock"
 
