@@ -23,7 +23,9 @@ export def "cmd done" [--output: record<expr: string>]: list<record<id: string, 
       let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
       $"let err = ($field | field cmd read name) | ($field.ops.validate | callback run)
 if $err != null {
-	error make $err
+  util print label '($field.display_name):'
+	util print error $err
+  return
 }"
     }
     | where $it != null
@@ -250,7 +252,7 @@ def "cmd cmds" []: record<name: string, params: oneof<record<type: string, posit
     | each {|cmd|
       # @type types.Command
       let cmd: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = $cmd
-      [$cmd.group $cmd.def.name $cmd.aliases $cmd.desc] | to json -r
+      [$cmd.group $cmd.def.name ($cmd.aliases | str join ', ') $cmd.desc] | to json -r
     }
     | str join "\n"
 
@@ -267,15 +269,7 @@ def "cmd cmds" []: record<name: string, params: oneof<record<type: string, posit
         [key value];
         [group {type: string}]
         [name {type: string}]
-        [
-          aliases
-          {
-            type: list
-            positional: [
-              {type: string}
-            ]
-          }
-        ]
+        [aliases {type: string}]
         [desc {type: string}]
       ]
     }

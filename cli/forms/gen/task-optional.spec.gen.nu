@@ -244,35 +244,45 @@ exit # nu-lint-ignore: exit_only_in_main
 def --env 'done' []: nothing -> nothing {
 let err = read parent | do --env {|| }
 if $err != null {
-	error make $err
+  util print label 'Parent:'
+	util print error $err
+  return
 }
 let err = read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
 if $err != null {
-	error make $err
+  util print label 'Prerequisites:'
+	util print error $err
+  return
 }
 let err = read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
 if $err != null {
-	error make $err
+  util print label 'Postrequisites:'
+	util print error $err
+  return
 }
 let err = read start | do --env {|| 
 if (read start) >= (read end) {
   'explicit start cannot be >= end'
 } }
 if $err != null {
-	error make $err
+  util print label 'Start:'
+	util print error $err
+  return
 }
 let err = read end | do --env {|| 
 if (read start) >= (read end) {
   'explicit start cannot be >= end'
 } }
 if $err != null {
-	error make $err
+  util print label 'End:'
+	util print error $err
+  return
 };	'parent': (read parent)
 	'prereqs': (read prereqs)
 	'postreqs': (read postreqs)
@@ -386,33 +396,33 @@ if (validate end) != null {
 return true
 }
 
-def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
-[[group name aliases desc];["relationships","read parent",[],"Get the value of parent."]
-["relationships","write parent",[],"Set the value of parent."]
-["relationships","validate parent",[],"Check if the current value of parent has any errors."]
-["relationships","read prereqs",[],"Get the value of prereqs."]
-["relationships","write prereqs",[],"Set the value of prereqs."]
-["relationships","validate prereqs",[],"Check if the current value of prereqs has any errors."]
-["relationships","read postreqs",[],"Get the value of postreqs."]
-["relationships","write postreqs",[],"Set the value of postreqs."]
-["relationships","validate postreqs",[],"Check if the current value of postreqs has any errors."]
-["explicit_range","read start",[],"Get the value of start."]
-["explicit_range","write start",[],"Set the value of start."]
-["explicit_range","validate start",[],"Check if the current value of start has any errors."]
-["explicit_range","read end",[],"Get the value of end."]
-["explicit_range","write end",[],"Set the value of end."]
-["explicit_range","validate end",[],"Check if the current value of end has any errors."]
-["relationships","set parent",[],"Set parent interactively."]
-["explicit_range","set start",[],"Set start interactively."]
-["explicit_range","set end",[],"Set end interactively."]
-["relationships","add prereqs",[],"Add a value to list prereqs interactively."]
-["relationships","add postreqs",[],"Add a value to list postreqs interactively."]
-["relationships","remove prereqs",[],"Remove a value from list prereqs interactively."]
-["relationships","remove postreqs",[],"Remove a value from list postreqs interactively."]
-["control","cancel",["c"],"Abort submission and discard changes."]
-["control","done",["d"],"Validate and submit form."]
-["control","status",["s"],"Show the current form status."]
-["control","next",["n"],"Fill in the next unfilled fields interactively."]]
+def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
+[[group name aliases desc];["relationships","read parent","","Get the value of parent."]
+["relationships","write parent","","Set the value of parent."]
+["relationships","validate parent","","Check if the current value of parent has any errors."]
+["relationships","read prereqs","","Get the value of prereqs."]
+["relationships","write prereqs","","Set the value of prereqs."]
+["relationships","validate prereqs","","Check if the current value of prereqs has any errors."]
+["relationships","read postreqs","","Get the value of postreqs."]
+["relationships","write postreqs","","Set the value of postreqs."]
+["relationships","validate postreqs","","Check if the current value of postreqs has any errors."]
+["explicit_range","read start","","Get the value of start."]
+["explicit_range","write start","","Set the value of start."]
+["explicit_range","validate start","","Check if the current value of start has any errors."]
+["explicit_range","read end","","Get the value of end."]
+["explicit_range","write end","","Set the value of end."]
+["explicit_range","validate end","","Check if the current value of end has any errors."]
+["relationships","set parent","","Set parent interactively."]
+["explicit_range","set start","","Set start interactively."]
+["explicit_range","set end","","Set end interactively."]
+["relationships","add prereqs","","Add a value to list prereqs interactively."]
+["relationships","add postreqs","","Add a value to list postreqs interactively."]
+["relationships","remove prereqs","","Remove a value from list prereqs interactively."]
+["relationships","remove postreqs","","Remove a value from list postreqs interactively."]
+["control","cancel","c","Abort submission and discard changes."]
+["control","done","d","Validate and submit form."]
+["control","status","s","Show the current form status."]
+["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
 cmds | table -e | print

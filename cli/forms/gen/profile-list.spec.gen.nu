@@ -128,7 +128,9 @@ let err = read profile | do --env {||
         }
       }
 if $err != null {
-	error make $err
+  util print label 'Profiles:'
+	util print error $err
+  return
 };do --env {|| read profile } | nav save form output
 
 exit
@@ -164,17 +166,17 @@ if (validate profile) != null {
 return true
 }
 
-def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
-[[group name aliases desc];["field","read profile",[],"Get the value of profile."]
-["field","write profile",[],"Set the value of profile."]
-["field","validate profile",[],"Check if the current value of profile has any errors."]
-["field","add profile",["ap"],"add a new profile"]
-["field","remove profile",[],"Remove a value from list profile interactively."]
-["field","edit profile",[],"Choose a value of profile to edit."]
-["control","cancel",["c"],"Abort submission and discard changes."]
-["control","done",["d"],"Validate and submit form."]
-["control","status",["s"],"Show the current form status."]
-["control","next",["n"],"Fill in the next unfilled fields interactively."]]
+def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
+[[group name aliases desc];["field","read profile","","Get the value of profile."]
+["field","write profile","","Set the value of profile."]
+["field","validate profile","","Check if the current value of profile has any errors."]
+["field","add profile","ap","add a new profile"]
+["field","remove profile","","Remove a value from list profile interactively."]
+["field","edit profile","","Choose a value of profile to edit."]
+["control","cancel","c","Abort submission and discard changes."]
+["control","done","d","Validate and submit form."]
+["control","status","s","Show the current form status."]
+["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
 cmds | table -e | print

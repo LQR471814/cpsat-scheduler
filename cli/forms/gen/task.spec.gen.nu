@@ -197,11 +197,15 @@ if $env.__tmp_task_id != null {
 | get id
 | do --env {|| $env.__tmp_task_id = $in } }
 if $err != null {
-	error make $err
+  util print label 'Required Fields:'
+	util print error $err
+  return
 }
 let err = read optional | do --env {|| }
 if $err != null {
-	error make $err
+  util print label 'Optional Fields:'
+	util print error $err
+  return
 };do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id != null {
   {id: $env.__tmp_task_id} | api.gen API DeleteTask
 } }
@@ -288,19 +292,19 @@ if (validate optional) != null {
 return true
 }
 
-def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
-[[group name aliases desc];["","read required",[],"Get the value of required."]
-["","write required",[],"Set the value of required."]
-["","validate required",[],"Check if the current value of required has any errors."]
-["","read optional",[],"Get the value of optional."]
-["","write optional",[],"Set the value of optional."]
-["","validate optional",[],"Check if the current value of optional has any errors."]
-["","set required",[],"Set required interactively."]
-["","set optional",[],"Set optional interactively."]
-["control","cancel",["c"],"Abort submission and discard changes."]
-["control","done",["d"],"Validate and submit form."]
-["control","status",["s"],"Show the current form status."]
-["control","next",["n"],"Fill in the next unfilled fields interactively."]]
+def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
+[[group name aliases desc];["","read required","","Get the value of required."]
+["","write required","","Set the value of required."]
+["","validate required","","Check if the current value of required has any errors."]
+["","read optional","","Get the value of optional."]
+["","write optional","","Set the value of optional."]
+["","validate optional","","Check if the current value of optional has any errors."]
+["","set required","","Set required interactively."]
+["","set optional","","Set optional interactively."]
+["control","cancel","c","Abort submission and discard changes."]
+["control","done","d","Validate and submit form."]
+["control","status","s","Show the current form status."]
+["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
 cmds | table -e | print

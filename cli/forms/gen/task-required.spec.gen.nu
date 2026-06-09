@@ -124,15 +124,21 @@ let err = read name | do --env {||
         }
       }
 if $err != null {
-	error make $err
+  util print label 'Name:'
+	util print error $err
+  return
 }
 let err = read desc | do --env {|| }
 if $err != null {
-	error make $err
+  util print label 'Description:'
+	util print error $err
+  return
 }
 let err = read timescale | do --env {|| }
 if $err != null {
-	error make $err
+  util print label 'Unit:'
+	util print error $err
+  return
 };	'name': (read name)
 	'desc': (read desc)
 	'timescale': (read timescale) | nav save form output
@@ -211,23 +217,23 @@ if (validate timescale) != null {
 return true
 }
 
-def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
-[[group name aliases desc];["","read name",[],"Get the value of name."]
-["","write name",[],"Set the value of name."]
-["","validate name",[],"Check if the current value of name has any errors."]
-["","read desc",[],"Get the value of desc."]
-["","write desc",[],"Set the value of desc."]
-["","validate desc",[],"Check if the current value of desc has any errors."]
-["","read timescale",[],"Get the value of timescale."]
-["","write timescale",[],"Set the value of timescale."]
-["","validate timescale",[],"Check if the current value of timescale has any errors."]
-["","set name",[],"Set name interactively."]
-["","set desc",[],"Set desc interactively."]
-["","set timescale",[],"Set timescale interactively."]
-["control","cancel",["c"],"Abort submission and discard changes."]
-["control","done",["d"],"Validate and submit form."]
-["control","status",["s"],"Show the current form status."]
-["control","next",["n"],"Fill in the next unfilled fields interactively."]]
+def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
+[[group name aliases desc];["","read name","","Get the value of name."]
+["","write name","","Set the value of name."]
+["","validate name","","Check if the current value of name has any errors."]
+["","read desc","","Get the value of desc."]
+["","write desc","","Set the value of desc."]
+["","validate desc","","Check if the current value of desc has any errors."]
+["","read timescale","","Get the value of timescale."]
+["","write timescale","","Set the value of timescale."]
+["","validate timescale","","Check if the current value of timescale has any errors."]
+["","set name","","Set name interactively."]
+["","set desc","","Set desc interactively."]
+["","set timescale","","Set timescale interactively."]
+["control","cancel","c","Abort submission and discard changes."]
+["control","done","d","Validate and submit form."]
+["control","status","s","Show the current form status."]
+["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
 cmds | table -e | print
