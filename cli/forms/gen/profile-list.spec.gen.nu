@@ -10,11 +10,21 @@ $env.__state_profile
 }
 
 def --env 'write profile' []: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> nothing {
-$env.__state_profile = $field
+let new = $in
+let err = $new | do --env {||
+        if ($in | is-empty) {
+          "you must have at least one profile created"
+        }
+      }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_profile = $new
 }
 
 def --env 'validate profile' []: nothing -> oneof<string, nothing> {
-read profile | do {||
+read profile | do --env {||
         if ($in | is-empty) {
           "you must have at least one profile created"
         }
@@ -35,7 +45,7 @@ def --env 'remove profile' []: nothing -> nothing {
 let state = read profile
 let chosen = $state
 	| each {|row|
-		($row | do {||
+		($row | do --env {||
           # @type apigen.Profile
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
           $profile | select id name
@@ -45,7 +55,7 @@ let chosen = $state
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
 $state
-	| where ($it | do {||
+	| where ($it | do --env {||
           # @type apigen.Profile
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
           $profile | select id name
@@ -58,7 +68,7 @@ let state = read profile
 	| each {|row|
 		{
 			row: $row
-			entry: ($row | do {||
+			entry: ($row | do --env {||
           # @type apigen.Profile
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
           $profile | select id name
@@ -74,7 +84,7 @@ if $chosen == null { return }
 let new_row = $state
 	| where entry == $chosen
 	| get row
-	| do {||
+	| do --env {||
           index form profile
         }
 
@@ -87,21 +97,21 @@ $state
 	| write profile
 }
 
-def --env 'cancel' []: nothing -> nothing {
-if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+def --env 'cancel' [param.key]: nothing -> nothing {
+if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env 'done' []: nothing -> nothing {
-let err = read profile | do {||
+let err = read profile | do --env {||
         if ($in | is-empty) {
           "you must have at least one profile created"
         }
       }
 if $err != null {
 	error make $err
-};do {|| read profile } | nav save form output
+};do --env {|| read profile } | nav save form output
 
 exit
 }
@@ -109,8 +119,8 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Profiles [field]'
 util print desc 'List of existing profiles.'
-read profile | do {|| table -e | print } | print
-let err = read profile | do {||
+read profile | do --env {|| table -e | print } | print
+let err = read profile | do --env {||
         if ($in | is-empty) {
           "you must have at least one profile created"
         }
@@ -123,7 +133,7 @@ print ''
 
 def --env 'next' []: nothing -> bool {
 if (validate profile) != null {
-	do {||
+	do --env {||
         print "use the 'add profile' command to a profile"
       }
 	let err = validate profile

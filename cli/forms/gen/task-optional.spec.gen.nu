@@ -10,11 +10,17 @@ $env.__state_parent
 }
 
 def --env 'write parent' []: record<id: int, name: string> -> nothing {
-$env.__state_parent = $field
+let new = $in
+let err = $new | do --env {|| }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_parent = $new
 }
 
 def --env 'validate parent' []: nothing -> oneof<string, nothing> {
-read parent | do {|| }
+read parent | do --env {|| }
 }
 
 def --env 'read prereqs' []: nothing -> table<id: int, name: string> {
@@ -22,11 +28,20 @@ $env.__state_prereqs
 }
 
 def --env 'write prereqs' []: table<id: int, name: string> -> nothing {
-$env.__state_prereqs = $field
+let new = $in
+let err = $new | do --env {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_prereqs = $new
 }
 
 def --env 'validate prereqs' []: nothing -> oneof<string, nothing> {
-read prereqs | do {||
+read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
@@ -37,11 +52,20 @@ $env.__state_postreqs
 }
 
 def --env 'write postreqs' []: table<id: int, name: string> -> nothing {
-$env.__state_postreqs = $field
+let new = $in
+let err = $new | do --env {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_postreqs = $new
 }
 
 def --env 'validate postreqs' []: nothing -> oneof<string, nothing> {
-read postreqs | do {||
+read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
@@ -52,11 +76,20 @@ $env.__state_start
 }
 
 def --env 'write start' []: datetime -> nothing {
-$env.__state_start = $field
+let new = $in
+let err = $new | do --env {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_start = $new
 }
 
 def --env 'validate start' []: nothing -> oneof<string, nothing> {
-read start | do {|| 
+read start | do --env {|| 
 if read start >= read end {
   'explicit start cannot be >= end'
 } }
@@ -67,11 +100,20 @@ $env.__state_end
 }
 
 def --env 'write end' []: datetime -> nothing {
-$env.__state_end = $field
+let new = $in
+let err = $new | do --env {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_end = $new
 }
 
 def --env 'validate end' []: nothing -> oneof<string, nothing> {
-read end | do {|| 
+read end | do --env {|| 
 if read start >= read end {
   'explicit start cannot be >= end'
 } }
@@ -79,7 +121,7 @@ if read start >= read end {
 
 def --env 'set parent' []: nothing -> nothing {
 read parent
-	| do {|| 
+	| do --env {|| 
 {
   type: PARENT
   task_id: $params.task_id
@@ -93,18 +135,18 @@ read parent
 
 def --env 'set start' []: nothing -> nothing {
 read start
-	| do {|| util choose date }
+	| do --env {|| util choose date }
 	| write start
 }
 
 def --env 'set end' []: nothing -> nothing {
 read end
-	| do {|| util choose date }
+	| do --env {|| util choose date }
 	| write end
 }
 
 def --env 'add prereqs' []: nothing -> nothing {
-let chosen = do {|| let chosen = {
+let chosen = do --env {|| let chosen = {
   type: PREREQ
   task_id: $params.task_id
 }
@@ -118,7 +160,7 @@ $state
 }
 
 def --env 'add postreqs' []: nothing -> nothing {
-let chosen = do {|| let chosen = {
+let chosen = do --env {|| let chosen = {
   type: POSTREQ
   task_id: $params.task_id
 }
@@ -135,13 +177,13 @@ def --env 'remove prereqs' []: nothing -> nothing {
 let state = read prereqs
 let chosen = $state
 	| each {|row|
-		($row | do {|| $in })
+		($row | do --env {|| $in })
 	}
 	| util choose table --header 'Remove: Tasks that must be scheduled before this task.'
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
 $state
-	| where ($it | do {|| $in } | get id) != $chosen.id
+	| where ($it | do --env {|| $in } | get id) != $chosen.id
 	| write prereqs
 }
 
@@ -149,49 +191,49 @@ def --env 'remove postreqs' []: nothing -> nothing {
 let state = read postreqs
 let chosen = $state
 	| each {|row|
-		($row | do {|| $in })
+		($row | do --env {|| $in })
 	}
 	| util choose table --header 'Remove: Tasks that must be scheduled after this task.'
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
 $state
-	| where ($it | do {|| $in } | get id) != $chosen.id
+	| where ($it | do --env {|| $in } | get id) != $chosen.id
 	| write postreqs
 }
 
-def --env 'cancel' []: nothing -> nothing {
-if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+def --env 'cancel' [param.key]: nothing -> nothing {
+if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env 'done' []: nothing -> nothing {
-let err = read parent | do {|| }
+let err = read parent | do --env {|| }
 if $err != null {
 	error make $err
 }
-let err = read prereqs | do {||
+let err = read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
 if $err != null {
 	error make $err
 }
-let err = read postreqs | do {||
+let err = read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
 if $err != null {
 	error make $err
 }
-let err = read start | do {|| 
+let err = read start | do --env {|| 
 if read start >= read end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
 	error make $err
 }
-let err = read end | do {|| 
+let err = read end | do --env {|| 
 if read start >= read end {
   'explicit start cannot be >= end'
 } }
@@ -209,16 +251,16 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Parent [relationships]'
 util print desc 'Parent task'
-read parent | do {|| table -e | print } | print
-let err = read parent | do {|| }
+read parent | do --env {|| table -e | print } | print
+let err = read parent | do --env {|| }
 if $err != null {
 	util print error $err
 }
 print ''
 util print label 'Prerequisites [relationships]'
 util print desc 'Tasks that must be scheduled before this task.'
-read prereqs | do {|| table -e | print } | print
-let err = read prereqs | do {||
+read prereqs | do --env {|| table -e | print } | print
+let err = read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
@@ -228,8 +270,8 @@ if $err != null {
 print ''
 util print label 'Postrequisites [relationships]'
 util print desc 'Tasks that must be scheduled after this task.'
-read postreqs | do {|| table -e | print } | print
-let err = read postreqs | do {||
+read postreqs | do --env {|| table -e | print } | print
+let err = read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
       }
@@ -239,8 +281,8 @@ if $err != null {
 print ''
 util print label 'Start [explicit_range]'
 util print desc 'An explicit time which the task must start after.'
-read start | do {|| util print date $in } | print
-let err = read start | do {|| 
+read start | do --env {|| util print date $in } | print
+let err = read start | do --env {|| 
 if read start >= read end {
   'explicit start cannot be >= end'
 } }
@@ -250,8 +292,8 @@ if $err != null {
 print ''
 util print label 'End [explicit_range]'
 util print desc 'An explicit time which the task must start before.'
-read end | do {|| util print date $in } | print
-let err = read end | do {|| 
+read end | do --env {|| util print date $in } | print
+let err = read end | do --env {|| 
 if read start >= read end {
   'explicit start cannot be >= end'
 } }
@@ -263,7 +305,7 @@ print ''
 
 def --env 'next' []: nothing -> bool {
 if (validate parent) != null {
-	do {|| set parent }
+	do --env {|| set parent }
 	let err = validate parent
 	if $err != null {
 		util print error $err
@@ -272,7 +314,7 @@ if (validate parent) != null {
 	return (next)
 }
 if (validate prereqs) != null {
-	do {|| set prereqs }
+	do --env {|| set prereqs }
 	let err = validate prereqs
 	if $err != null {
 		util print error $err
@@ -281,7 +323,7 @@ if (validate prereqs) != null {
 	return (next)
 }
 if (validate postreqs) != null {
-	do {|| set postreqs }
+	do --env {|| set postreqs }
 	let err = validate postreqs
 	if $err != null {
 		util print error $err
@@ -290,7 +332,7 @@ if (validate postreqs) != null {
 	return (next)
 }
 if (validate start) != null {
-	do {|| set start }
+	do --env {|| set start }
 	let err = validate start
 	if $err != null {
 		util print error $err
@@ -299,7 +341,7 @@ if (validate start) != null {
 	return (next)
 }
 if (validate end) != null {
-	do {|| set end }
+	do --env {|| set end }
 	let err = validate end
 	if $err != null {
 		util print error $err

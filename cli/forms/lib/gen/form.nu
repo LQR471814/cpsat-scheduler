@@ -62,8 +62,11 @@ exit"
 
 # @input nothing
 # @output types.Command
-export def "cmd cancel" []: nothing -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
-  let body = "if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+# @param before callback.Callback
+#
+# before should return nothing
+export def "cmd cancel" [--before: record<expr: string>]: nothing -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
+  let body = "if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main"
 
@@ -72,8 +75,11 @@ exit # nu-lint-ignore: exit_only_in_main"
     group: control
     aliases: [c]
     def: {
-      name: cancel
-      params: []
+      name: (cmd cancel name)
+      params: [
+        [key value];
+        ["--no-prompt(-y)" {type: bool}]
+      ]
       body: $body
       in: {type: "nothing"}
       out: {type: "nothing"}
@@ -81,6 +87,12 @@ exit # nu-lint-ignore: exit_only_in_main"
       export: false
     }
   }
+}
+
+# @input nothing
+# @output string
+export def "cmd cancel name" []: nothing -> string {
+  "cancel"
 }
 
 # @input list<types.Field>
@@ -284,8 +296,12 @@ export def "render command def" []: record<name: string, params: list<record<key
   let export: string = if $cmd.export { "export " } else { "" }
   let envflag: string = if $cmd.env { "--env " } else { "" }
   let params: string = $cmd.params
-    | each {
-      $"($in.key): ($in.value | types render)"
+    | each {|param|
+      if $param.value.type == bool and ($param.key | str starts-with "-") {
+        # we don't render type def for bool flags
+        return param.key
+      }
+      $"($param.key): ($param.value | types render)"
     }
     | str join " "
   let in_type: string = $cmd.in

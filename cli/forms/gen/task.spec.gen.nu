@@ -10,19 +10,91 @@ $env.__state_required
 }
 
 def --env 'write required' []: record -> nothing {
-$env.__state_required = $field
+let new = $in
+let err = $new | do --env {|| 
+let v = $in
+if ($v.name | is-empty) {
+  return 'name cannot be empty'
+}
+if $v.timescale == null {
+  return 'timescale cannot be empty'
+}
+
+if $env.__tmp_task_id != null {
+  return
+}
+
+{
+  id: null
+  profile_id: $params.profile_id
+  state: {
+    name: $v.name
+    desc: ($v.desc | default '')
+    timescale: $v.timescale
+    duration_cfg: {
+      pert: {
+        pert: {pes: 90min, exp: 1hr, opt: 30min}
+        deadline: null
+        total_cost: 0
+      }
+    }
+    children_cfgs: []
+    prereqs: []
+    postreqs: []
+    parent: null
+    start: null
+    end: null
+  }
+}
+| api.gen API SaveTask
+| get id
+| do --env {|| $env.__tmp_task_id = $in } }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_required = $new
 }
 
 def --env 'validate required' []: nothing -> oneof<string, nothing> {
-read required | do {||
-        let v = $in
-        if ($v.name | is-empty) {
-          return "name cannot be empty"
-        }
-        if $v.timescale == null {
-          return "timescale cannot be empty"
-        }
+read required | do --env {|| 
+let v = $in
+if ($v.name | is-empty) {
+  return 'name cannot be empty'
+}
+if $v.timescale == null {
+  return 'timescale cannot be empty'
+}
+
+if $env.__tmp_task_id != null {
+  return
+}
+
+{
+  id: null
+  profile_id: $params.profile_id
+  state: {
+    name: $v.name
+    desc: ($v.desc | default '')
+    timescale: $v.timescale
+    duration_cfg: {
+      pert: {
+        pert: {pes: 90min, exp: 1hr, opt: 30min}
+        deadline: null
+        total_cost: 0
       }
+    }
+    children_cfgs: []
+    prereqs: []
+    postreqs: []
+    parent: null
+    start: null
+    end: null
+  }
+}
+| api.gen API SaveTask
+| get id
+| do --env {|| $env.__tmp_task_id = $in } }
 }
 
 def --env 'read optional' []: nothing -> record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> {
@@ -30,48 +102,91 @@ $env.__state_optional
 }
 
 def --env 'write optional' []: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> -> nothing {
-$env.__state_optional = $field
+let new = $in
+let err = $new | do --env {|| }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_optional = $new
 }
 
 def --env 'validate optional' []: nothing -> oneof<string, nothing> {
-read optional | do {|| }
+read optional | do --env {|| }
 }
 
 def --env 'set required' []: nothing -> nothing {
 read required
-	| do {|| read required | index form task-required }
+	| do --env {|| 
+let new_value = $in
+  | read required
+  | index form task-required
+if $new_value == null { cancel -y }
+   }
 	| write required
 }
 
 def --env 'set optional' []: nothing -> nothing {
 read optional
-	| do {|| read optional | index form task-optional }
+	| do --env {|| read optional | index form task-optional }
 	| write optional
 }
 
-def --env 'cancel' []: nothing -> nothing {
-if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+def --env 'cancel' [param.key]: nothing -> nothing {
+if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env 'done' []: nothing -> nothing {
-let err = read required | do {||
-        let v = $in
-        if ($v.name | is-empty) {
-          return "name cannot be empty"
-        }
-        if $v.timescale == null {
-          return "timescale cannot be empty"
-        }
+let err = read required | do --env {|| 
+let v = $in
+if ($v.name | is-empty) {
+  return 'name cannot be empty'
+}
+if $v.timescale == null {
+  return 'timescale cannot be empty'
+}
+
+if $env.__tmp_task_id != null {
+  return
+}
+
+{
+  id: null
+  profile_id: $params.profile_id
+  state: {
+    name: $v.name
+    desc: ($v.desc | default '')
+    timescale: $v.timescale
+    duration_cfg: {
+      pert: {
+        pert: {pes: 90min, exp: 1hr, opt: 30min}
+        deadline: null
+        total_cost: 0
       }
+    }
+    children_cfgs: []
+    prereqs: []
+    postreqs: []
+    parent: null
+    start: null
+    end: null
+  }
+}
+| api.gen API SaveTask
+| get id
+| do --env {|| $env.__tmp_task_id = $in } }
 if $err != null {
 	error make $err
 }
-let err = read optional | do {|| }
+let err = read optional | do --env {|| }
 if $err != null {
 	error make $err
-};do {|| read required
+};do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id != null {
+  {id: $env.__tmp_task_id} | api.gen API DeleteTask
+} }
+read required
 | merge (read optional) } | nav save form output
 
 exit
@@ -80,24 +195,53 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Required Fields []'
 util print desc 'Required task fields.'
-read required | do {|| table -e | print } | print
-let err = read required | do {||
-        let v = $in
-        if ($v.name | is-empty) {
-          return "name cannot be empty"
-        }
-        if $v.timescale == null {
-          return "timescale cannot be empty"
-        }
+read required | do --env {|| table -e | print } | print
+let err = read required | do --env {|| 
+let v = $in
+if ($v.name | is-empty) {
+  return 'name cannot be empty'
+}
+if $v.timescale == null {
+  return 'timescale cannot be empty'
+}
+
+if $env.__tmp_task_id != null {
+  return
+}
+
+{
+  id: null
+  profile_id: $params.profile_id
+  state: {
+    name: $v.name
+    desc: ($v.desc | default '')
+    timescale: $v.timescale
+    duration_cfg: {
+      pert: {
+        pert: {pes: 90min, exp: 1hr, opt: 30min}
+        deadline: null
+        total_cost: 0
       }
+    }
+    children_cfgs: []
+    prereqs: []
+    postreqs: []
+    parent: null
+    start: null
+    end: null
+  }
+}
+| api.gen API SaveTask
+| get id
+| do --env {|| $env.__tmp_task_id = $in } }
 if $err != null {
 	util print error $err
 }
 print ''
 util print label 'Optional Fields []'
 util print desc 'Optional task fields.'
-read optional | do {|| table -e | print } | print
-let err = read optional | do {|| }
+read optional | do --env {|| table -e | print } | print
+let err = read optional | do --env {|| }
 if $err != null {
 	util print error $err
 }
@@ -106,7 +250,7 @@ print ''
 
 def --env 'next' []: nothing -> bool {
 if (validate required) != null {
-	do {|| set required }
+	do --env {|| set required }
 	let err = validate required
 	if $err != null {
 		util print error $err
@@ -115,7 +259,7 @@ if (validate required) != null {
 	return (next)
 }
 if (validate optional) != null {
-	do {|| set optional }
+	do --env {|| set optional }
 	let err = validate optional
 	if $err != null {
 		util print error $err
@@ -141,10 +285,10 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list
 ["control","next",["n"],"Fill in the next unfilled fields interactively."]]
 }
 
-let __input: record<prompt_prefix: string, params: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, id: oneof<int, nothing>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> = $__input.params
+let params: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, id: oneof<int, nothing>> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.PROMPT_COMMAND = {|| $"($prompt_prefix) \(task\) ($in | do $default_prompt_prefix)" }
@@ -155,6 +299,10 @@ $params
 $params
 | reject name desc timescale
 | write required
+
+$params.id | do --env {|| $env.__tmp_task_id = $in }
+
+let is_creating = $params.id == null
 
 cmds | table -e | print
 

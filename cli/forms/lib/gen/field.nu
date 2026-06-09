@@ -50,7 +50,12 @@ export def "cmd write" []: record<id: string, display_name: string, desc: string
     def: {
       name: $"write ($field.id)"
       params: []
-      body: $"($field | state access) = $field"
+      body: $"let new = $in
+let err = $new | ($field.ops.validate | callback run)
+if $err != null {
+  $err | util print error
+  return
+}\n($field | state access) = $new"
       in: $field.type
       out: {type: "nothing"}
       env: true

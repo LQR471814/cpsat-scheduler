@@ -10,11 +10,21 @@ $env.__state_name
 }
 
 def --env 'write name' []: oneof<string, nothing> -> nothing {
-$env.__state_name = $field
+let new = $in
+let err = $new | do --env {||
+        if ($in | is-empty) {
+          "name cannot be empty"
+        }
+      }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_name = $new
 }
 
 def --env 'validate name' []: nothing -> oneof<string, nothing> {
-read name | do {||
+read name | do --env {||
         if ($in | is-empty) {
           "name cannot be empty"
         }
@@ -26,11 +36,17 @@ $env.__state_desc
 }
 
 def --env 'write desc' []: oneof<string, nothing> -> nothing {
-$env.__state_desc = $field
+let new = $in
+let err = $new | do --env {|| }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_desc = $new
 }
 
 def --env 'validate desc' []: nothing -> oneof<string, nothing> {
-read desc | do {|| }
+read desc | do --env {|| }
 }
 
 def --env 'read unit' []: nothing -> oneof<int, nothing> {
@@ -38,39 +54,45 @@ $env.__state_unit
 }
 
 def --env 'write unit' []: oneof<int, nothing> -> nothing {
-$env.__state_unit = $field
+let new = $in
+let err = $new | do --env {|| }
+if $err != null {
+  $err | util print error
+  return
+}
+$env.__state_unit = $new
 }
 
 def --env 'validate unit' []: nothing -> oneof<string, nothing> {
-read unit | do {|| }
+read unit | do --env {|| }
 }
 
 def --env 'set name' []: nothing -> nothing {
 read name
-	| do {|| {|| input text 'The name of the task.' } }
+	| do --env {|| {|| input text 'The name of the task.' } }
 	| write name
 }
 
 def --env 'set desc' []: nothing -> nothing {
 read desc
-	| do {|| {|| input text 'The description of the task.' } }
+	| do --env {|| {|| input text 'The description of the task.' } }
 	| write desc
 }
 
 def --env 'set unit' []: nothing -> nothing {
 read unit
-	| do {|| {|| util input int 'Timescale unit (should be the upper-bound for task duration).' } }
+	| do --env {|| {|| util input int 'Timescale unit (should be the upper-bound for task duration).' } }
 	| write unit
 }
 
-def --env 'cancel' []: nothing -> nothing {
-if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+def --env 'cancel' [param.key]: nothing -> nothing {
+if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env 'done' []: nothing -> nothing {
-let err = read name | do {||
+let err = read name | do --env {||
         if ($in | is-empty) {
           "name cannot be empty"
         }
@@ -78,11 +100,11 @@ let err = read name | do {||
 if $err != null {
 	error make $err
 }
-let err = read desc | do {|| }
+let err = read desc | do --env {|| }
 if $err != null {
 	error make $err
 }
-let err = read unit | do {|| }
+let err = read unit | do --env {|| }
 if $err != null {
 	error make $err
 };	'name': (read name)
@@ -95,11 +117,11 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Name []'
 util print desc 'The name of the task.'
-read name | do {|| match ($in | describe) {
+read name | do --env {|| match ($in | describe) {
 string => { $in | {|| util print desc $in } }
 nothing => { $in | {|| print } }
 } } | print
-let err = read name | do {||
+let err = read name | do --env {||
         if ($in | is-empty) {
           "name cannot be empty"
         }
@@ -110,22 +132,22 @@ if $err != null {
 print ''
 util print label 'Description []'
 util print desc 'The description of the task.'
-read desc | do {|| match ($in | describe) {
+read desc | do --env {|| match ($in | describe) {
 string => { $in | {|| util print desc $in } }
 nothing => { $in | {|| print } }
 } } | print
-let err = read desc | do {|| }
+let err = read desc | do --env {|| }
 if $err != null {
 	util print error $err
 }
 print ''
 util print label 'Unit []'
 util print desc 'Timescale unit (should be the upper-bound for task duration).'
-read unit | do {|| match ($in | describe) {
+read unit | do --env {|| match ($in | describe) {
 int => { $in | {|| util print number $in } }
 nothing => { $in | {|| print } }
 } } | print
-let err = read unit | do {|| }
+let err = read unit | do --env {|| }
 if $err != null {
 	util print error $err
 }
@@ -134,7 +156,7 @@ print ''
 
 def --env 'next' []: nothing -> bool {
 if (validate name) != null {
-	do {|| set name }
+	do --env {|| set name }
 	let err = validate name
 	if $err != null {
 		util print error $err
@@ -143,7 +165,7 @@ if (validate name) != null {
 	return (next)
 }
 if (validate desc) != null {
-	do {|| set desc }
+	do --env {|| set desc }
 	let err = validate desc
 	if $err != null {
 		util print error $err
@@ -152,7 +174,7 @@ if (validate desc) != null {
 	return (next)
 }
 if (validate unit) != null {
-	do {|| set unit }
+	do --env {|| set unit }
 	let err = validate unit
 	if $err != null {
 		util print error $err

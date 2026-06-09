@@ -22,5 +22,9 @@ export def make [params: list<string> body: string]: nothing -> record<expr: str
 # @input Callback
 # @output string
 export def run []: record<expr: string> -> string {
-  $"do ($in.expr)"
+  if ($in.expr | str starts-with "--env") {
+    $"do ($in.expr)"
+  } else {
+    $"do --env ($in.expr)"
+  }
 }
