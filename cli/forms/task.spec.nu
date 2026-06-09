@@ -40,13 +40,12 @@ let req_fields_field: record<id: string, display_name: string, desc: string, gro
     validate: (
       callback make [] $"
 let v = $in
-if \($v.name | is-empty\) {
+if \($v.name? | is-empty\) {
   return 'name cannot be empty'
 }
-if $v.timescale == null {
+if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-
 if (access tmp task id) != null {
   return
 }
@@ -152,9 +151,7 @@ $new"
     )
     (
       $opt_fields_field | field cmd interact set --callback (
-        callback make [] $"
-let new = $in | index form task-optional
-        "
+        callback make [] $"$in | index form task-optional"
       )
     )
 
@@ -168,11 +165,11 @@ let new = $in | index form task-optional
     after_cmds: $"
 $params.state
 | select ($required_ids | str join ' ')
-| ($req_fields_field | field cmd write name)
+| ($req_fields_field | field cmd write name -s)
 
 $params.state
 | reject ($required_ids | str join ' ')
-| ($req_fields_field | field cmd write name)
+| ($req_fields_field | field cmd write name -s)
 
 $params.id | (write tmp task id run)"
   }

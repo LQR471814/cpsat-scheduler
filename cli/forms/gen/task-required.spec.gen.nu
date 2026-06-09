@@ -23,8 +23,12 @@ def --env 'read name' []: nothing -> oneof<string, nothing> {
 $env.__state_name
 }
 
-def --env 'write name' []: oneof<string, nothing> -> nothing {
+def --env 'write name' [--skipval(-s)]: oneof<string, nothing> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_name = $new
+  return
+}
 let err = $new | do --env {||
         if ($in | is-empty) {
           "name cannot be empty"
@@ -49,8 +53,12 @@ def --env 'read desc' []: nothing -> oneof<string, nothing> {
 $env.__state_desc
 }
 
-def --env 'write desc' []: oneof<string, nothing> -> nothing {
+def --env 'write desc' [--skipval(-s)]: oneof<string, nothing> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_desc = $new
+  return
+}
 let err = $new | do --env {|| }
 if $err != null {
   util print error $err
@@ -67,8 +75,12 @@ def --env 'read timescale' []: nothing -> oneof<int, nothing> {
 $env.__state_timescale
 }
 
-def --env 'write timescale' []: oneof<int, nothing> -> nothing {
+def --env 'write timescale' [--skipval(-s)]: oneof<int, nothing> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_timescale = $new
+  return
+}
 let err = $new | do --env {|| }
 if $err != null {
   util print error $err
@@ -84,19 +96,19 @@ read timescale | do --env {|| }
 def --env 'set name' []: nothing -> nothing {
 read name
 	| do --env {|| {|| input text 'The name of the task.' } }
-	| write name
+	| write name 
 }
 
 def --env 'set desc' []: nothing -> nothing {
 read desc
 	| do --env {|| {|| input text 'The description of the task.' } }
-	| write desc
+	| write desc 
 }
 
 def --env 'set timescale' []: nothing -> nothing {
 read timescale
 	| do --env {|| {|| util input int 'Timescale timescale (should be the upper-bound for task duration).' } }
-	| write timescale
+	| write timescale 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {

@@ -23,8 +23,12 @@ def --env 'read profile' []: nothing -> list<record<id: oneof<nothing, int>, nam
 $env.__state_profile
 }
 
-def --env 'write profile' []: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> nothing {
+def --env 'write profile' [--skipval(-s)]: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_profile = $new
+  return
+}
 let err = $new | do --env {||
         if ($in | is-empty) {
           "you must have at least one profile created"
@@ -52,7 +56,7 @@ read profile | append {
 	atomic_timescale: $atomic_timescale
 	universe_start: $universe_start
 	gen_pert_choices: $pert_choices
-} | write profile
+} | write profile 
 }
 
 def --env 'remove profile' []: nothing -> nothing {
@@ -74,7 +78,7 @@ $state
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
           $profile | select id name
         } | get id) != $chosen.id
-	| write profile
+	| write profile 
 }
 
 def --env 'edit profile' []: nothing -> nothing {
@@ -108,7 +112,7 @@ $state
 	| each {|row|
 		if $in.entry == $chosen { $new_row } else { $row }
 	}
-	| write profile
+	| write profile 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
@@ -175,7 +179,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list
 
 cmds | table -e | print
 
-$params | write profile
+$params | write profile 
 	
 
 alias ap = add profile

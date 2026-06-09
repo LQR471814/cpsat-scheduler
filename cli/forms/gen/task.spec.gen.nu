@@ -23,17 +23,20 @@ def --env 'read required' []: nothing -> record {
 $env.__state_required
 }
 
-def --env 'write required' []: record -> nothing {
+def --env 'write required' [--skipval(-s)]: record -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_required = $new
+  return
+}
 let err = $new | do --env {|| 
 let v = $in
-if ($v.name | is-empty) {
+if ($v.name? | is-empty) {
   return 'name cannot be empty'
 }
-if $v.timescale == null {
+if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-
 if $env.__tmp_task_id != null {
   return
 }
@@ -73,13 +76,12 @@ $env.__state_required = $new
 def --env 'validate required' []: nothing -> oneof<string, nothing> {
 read required | do --env {|| 
 let v = $in
-if ($v.name | is-empty) {
+if ($v.name? | is-empty) {
   return 'name cannot be empty'
 }
-if $v.timescale == null {
+if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-
 if $env.__tmp_task_id != null {
   return
 }
@@ -115,8 +117,12 @@ def --env 'read optional' []: nothing -> record<state: oneof<nothing, record<nam
 $env.__state_optional
 }
 
-def --env 'write optional' []: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> -> nothing {
+def --env 'write optional' [--skipval(-s)]: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_optional = $new
+  return
+}
 let err = $new | do --env {|| }
 if $err != null {
   util print error $err
@@ -137,15 +143,13 @@ if $new == null {
   cancel -y
 }
 $new }
-	| write required
+	| write required 
 }
 
 def --env 'set optional' []: nothing -> nothing {
 read optional
-	| do --env {|| 
-let new = $in | index form task-optional
-         }
-	| write optional
+	| do --env {|| $in | index form task-optional }
+	| write optional 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
@@ -157,13 +161,12 @@ exit # nu-lint-ignore: exit_only_in_main
 def --env 'done' []: nothing -> nothing {
 let err = read required | do --env {|| 
 let v = $in
-if ($v.name | is-empty) {
+if ($v.name? | is-empty) {
   return 'name cannot be empty'
 }
-if $v.timescale == null {
+if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-
 if $env.__tmp_task_id != null {
   return
 }
@@ -214,13 +217,12 @@ util print desc 'Required task fields.'
 read required | do --env {|| table -e | print } | print
 let err = read required | do --env {|| 
 let v = $in
-if ($v.name | is-empty) {
+if ($v.name? | is-empty) {
   return 'name cannot be empty'
 }
-if $v.timescale == null {
+if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-
 if $env.__tmp_task_id != null {
   return
 }
@@ -305,11 +307,11 @@ cmds | table -e | print
 
 $params.state
 | select name desc timescale
-| write required
+| write required -s
 
 $params.state
 | reject name desc timescale
-| write required
+| write required -s
 
 $params.id | do --env {|| $env.__tmp_task_id = $in }
 

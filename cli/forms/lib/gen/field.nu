@@ -49,8 +49,15 @@ export def "cmd write" []: record<id: string, display_name: string, desc: string
     aliases: []
     def: {
       name: $"write ($field.id)"
-      params: []
+      params: [
+        [key value];
+        ["--skipval(-s)" {type: bool}]
+      ]
       body: $"let new = $in
+if $skipval {
+  ($field | state access) = $new
+  return
+}
 let err = $new | ($field.ops.validate | callback run)
 if $err != null {
   util print error $err
@@ -70,19 +77,33 @@ export def "cmd read name" []: record<id: string, display_name: string, desc: st
   $"read ($in.id)"
 }
 
+# `skipval` indicates that validation should be skipped after write
+#
 # @input types.Field
 # @output string
-export def "cmd write name" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
-  $"write ($in.id)"
+# @param skipval bool
+export def "cmd write name" [--skipval (-s)]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
+  let args: string = if $skipval { "-s" } else { "" }
+  $"write ($in.id) ($args)"
 }
 
 # `cmd write optional` is an expression which if the value passed in is
 # null, write will be skipped
 #
+# `skipval` indicates that validation should be skipped after write
+#
 # @input types.Field
 # @output string
-export def "cmd write optional" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
-  $"do {|| let v = $in; if $v == null { return }; ($in | cmd write name) }"
+# @param validate bool
+export def "cmd write optional" [--skipval (-s)]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
+  # @type types.Field
+  let field = $in
+  let call = $field | if $skipval {
+      cmd write name -s
+    } else {
+      cmd write name
+    }
+  $"do {|| let v = $in; if $v == null { return }; ($call) }"
 }
 
 # @input types.Field

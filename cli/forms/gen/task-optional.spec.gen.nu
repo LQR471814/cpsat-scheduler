@@ -23,8 +23,12 @@ def --env 'read parent' []: nothing -> record<id: int, name: string> {
 $env.__state_parent
 }
 
-def --env 'write parent' []: record<id: int, name: string> -> nothing {
+def --env 'write parent' [--skipval(-s)]: record<id: int, name: string> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_parent = $new
+  return
+}
 let err = $new | do --env {|| }
 if $err != null {
   util print error $err
@@ -41,8 +45,12 @@ def --env 'read prereqs' []: nothing -> table<id: int, name: string> {
 $env.__state_prereqs
 }
 
-def --env 'write prereqs' []: table<id: int, name: string> -> nothing {
+def --env 'write prereqs' [--skipval(-s)]: table<id: int, name: string> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_prereqs = $new
+  return
+}
 let err = $new | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
@@ -65,8 +73,12 @@ def --env 'read postreqs' []: nothing -> table<id: int, name: string> {
 $env.__state_postreqs
 }
 
-def --env 'write postreqs' []: table<id: int, name: string> -> nothing {
+def --env 'write postreqs' [--skipval(-s)]: table<id: int, name: string> -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_postreqs = $new
+  return
+}
 let err = $new | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
@@ -89,8 +101,12 @@ def --env 'read start' []: nothing -> datetime {
 $env.__state_start
 }
 
-def --env 'write start' []: datetime -> nothing {
+def --env 'write start' [--skipval(-s)]: datetime -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_start = $new
+  return
+}
 let err = $new | do --env {|| 
 if (read start) >= (read end) {
   'explicit start cannot be >= end'
@@ -113,8 +129,12 @@ def --env 'read end' []: nothing -> datetime {
 $env.__state_end
 }
 
-def --env 'write end' []: datetime -> nothing {
+def --env 'write end' [--skipval(-s)]: datetime -> nothing {
 let new = $in
+if $skipval {
+  $env.__state_end = $new
+  return
+}
 let err = $new | do --env {|| 
 if (read start) >= (read end) {
   'explicit start cannot be >= end'
@@ -144,19 +164,19 @@ read parent
 | get entries
 | util choose table --header 'Choose parent:'
  }
-	| write parent
+	| write parent 
 }
 
 def --env 'set start' []: nothing -> nothing {
 read start
 	| do --env {|| util choose date }
-	| write start
+	| write start 
 }
 
 def --env 'set end' []: nothing -> nothing {
 read end
 	| do --env {|| util choose date }
-	| write end
+	| write end 
 }
 
 def --env 'add prereqs' []: nothing -> nothing {
@@ -170,7 +190,7 @@ let chosen = do --env {|| let chosen = {
 if $chosen == null { return }
 $state
 	| append $chosen
-	| write prereqs
+	| write prereqs 
 }
 
 def --env 'add postreqs' []: nothing -> nothing {
@@ -184,7 +204,7 @@ let chosen = do --env {|| let chosen = {
 if $chosen == null { return }
 $state
 	| append $chosen
-	| write postreqs
+	| write postreqs 
 }
 
 def --env 'remove prereqs' []: nothing -> nothing {
@@ -198,7 +218,7 @@ if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
 $state
 	| where ($it | do --env {|| $in } | get id) != $chosen.id
-	| write prereqs
+	| write prereqs 
 }
 
 def --env 'remove postreqs' []: nothing -> nothing {
@@ -212,7 +232,7 @@ if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
 $state
 	| where ($it | do --env {|| $in } | get id) != $chosen.id
-	| write postreqs
+	| write postreqs 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
