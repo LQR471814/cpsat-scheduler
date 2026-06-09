@@ -1,0 +1,355 @@
+use index.nu
+use ../lib/nav.nu
+use ../../lib/util.nu
+use ../../lib/proto/apipb/api.gen.nu
+
+
+
+def --env 'read parent' []: nothing -> record<id: int, name: string> {
+$env.__state_parent
+}
+
+def --env 'write parent' []: record<id: int, name: string> -> nothing {
+$env.__state_parent = $field
+}
+
+def --env 'validate parent' []: nothing -> oneof<string, nothing> {
+read parent | do {|| }
+}
+
+def --env 'read prereqs' []: nothing -> table<id: int, name: string> {
+$env.__state_prereqs
+}
+
+def --env 'write prereqs' []: table<id: int, name: string> -> nothing {
+$env.__state_prereqs = $field
+}
+
+def --env 'validate prereqs' []: nothing -> oneof<string, nothing> {
+read prereqs | do {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+}
+
+def --env 'read postreqs' []: nothing -> table<id: int, name: string> {
+$env.__state_postreqs
+}
+
+def --env 'write postreqs' []: table<id: int, name: string> -> nothing {
+$env.__state_postreqs = $field
+}
+
+def --env 'validate postreqs' []: nothing -> oneof<string, nothing> {
+read postreqs | do {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+}
+
+def --env 'read start' []: nothing -> datetime {
+$env.__state_start
+}
+
+def --env 'write start' []: datetime -> nothing {
+$env.__state_start = $field
+}
+
+def --env 'validate start' []: nothing -> oneof<string, nothing> {
+read start | do {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+}
+
+def --env 'read end' []: nothing -> datetime {
+$env.__state_end
+}
+
+def --env 'write end' []: datetime -> nothing {
+$env.__state_end = $field
+}
+
+def --env 'validate end' []: nothing -> oneof<string, nothing> {
+read end | do {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+}
+
+def --env 'set parent' []: nothing -> nothing {
+read parent
+	| do {|| 
+{
+  type: PARENT
+  task_id: $params.task_id
+}
+| api.gen API ListPossibleRelatives
+| get entries
+| util choose table --header 'Choose parent:'
+ }
+	| write parent
+}
+
+def --env 'set start' []: nothing -> nothing {
+read start
+	| do {|| util choose date }
+	| write start
+}
+
+def --env 'set end' []: nothing -> nothing {
+read end
+	| do {|| util choose date }
+	| write end
+}
+
+def --env 'add prereqs' []: nothing -> nothing {
+let chosen = do {|| let chosen = {
+  type: PREREQ
+  task_id: $params.task_id
+}
+| api.gen API ListPossibleRelatives
+| get entries
+| util choose table --header 'Choose a PREREQ to add:' }
+if $chosen == null { return }
+$state
+	| append $chosen
+	| write prereqs
+}
+
+def --env 'add postreqs' []: nothing -> nothing {
+let chosen = do {|| let chosen = {
+  type: POSTREQ
+  task_id: $params.task_id
+}
+| api.gen API ListPossibleRelatives
+| get entries
+| util choose table --header 'Choose a POSTREQ to add:' }
+if $chosen == null { return }
+$state
+	| append $chosen
+	| write postreqs
+}
+
+def --env 'remove prereqs' []: nothing -> nothing {
+let state = read prereqs
+let chosen = $state
+	| each {|row|
+		($row | do {|| $in })
+	}
+	| util choose table --header 'Remove: Tasks that must be scheduled before this task.'
+if $chosen == null { return }
+if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
+$state
+	| where ($it | do {|| $in } | get id) != $chosen.id
+	| write prereqs
+}
+
+def --env 'remove postreqs' []: nothing -> nothing {
+let state = read postreqs
+let chosen = $state
+	| each {|row|
+		($row | do {|| $in })
+	}
+	| util choose table --header 'Remove: Tasks that must be scheduled after this task.'
+if $chosen == null { return }
+if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
+$state
+	| where ($it | do {|| $in } | get id) != $chosen.id
+	| write postreqs
+}
+
+def --env 'cancel' []: nothing -> nothing {
+if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+null | nav save form output
+exit # nu-lint-ignore: exit_only_in_main
+}
+
+def --env 'done' []: nothing -> nothing {
+let err = read parent | do {|| }
+if $err != null {
+	error make $err
+}
+let err = read prereqs | do {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+if $err != null {
+	error make $err
+}
+let err = read postreqs | do {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+if $err != null {
+	error make $err
+}
+let err = read start | do {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+if $err != null {
+	error make $err
+}
+let err = read end | do {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+if $err != null {
+	error make $err
+};	'parent': (read parent)
+	'prereqs': (read prereqs)
+	'postreqs': (read postreqs)
+	'start': (read start)
+	'end': (read end) | nav save form output
+
+exit
+}
+
+def --env 'status' []: nothing -> nothing {
+util print label 'Parent [relationships]'
+util print desc 'Parent task'
+read parent | do {|| table -e | print } | print
+let err = read parent | do {|| }
+if $err != null {
+	util print error $err
+}
+print ''
+util print label 'Prerequisites [relationships]'
+util print desc 'Tasks that must be scheduled before this task.'
+read prereqs | do {|| table -e | print } | print
+let err = read prereqs | do {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+if $err != null {
+	util print error $err
+}
+print ''
+util print label 'Postrequisites [relationships]'
+util print desc 'Tasks that must be scheduled after this task.'
+read postreqs | do {|| table -e | print } | print
+let err = read postreqs | do {||
+        # TODO: add actual logic checking for impossible situations here
+        # ex. no cycles (though maybe this is handled server-side, check later)
+      }
+if $err != null {
+	util print error $err
+}
+print ''
+util print label 'Start [explicit_range]'
+util print desc 'An explicit time which the task must start after.'
+read start | do {|| util print date $in } | print
+let err = read start | do {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+if $err != null {
+	util print error $err
+}
+print ''
+util print label 'End [explicit_range]'
+util print desc 'An explicit time which the task must start before.'
+read end | do {|| util print date $in } | print
+let err = read end | do {|| 
+if read start >= read end {
+  'explicit start cannot be >= end'
+} }
+if $err != null {
+	util print error $err
+}
+print ''
+}
+
+def --env 'next' []: nothing -> bool {
+if (validate parent) != null {
+	do {|| set parent }
+	let err = validate parent
+	if $err != null {
+		util print error $err
+		return false
+	}
+	return (next)
+}
+if (validate prereqs) != null {
+	do {|| set prereqs }
+	let err = validate prereqs
+	if $err != null {
+		util print error $err
+		return false
+	}
+	return (next)
+}
+if (validate postreqs) != null {
+	do {|| set postreqs }
+	let err = validate postreqs
+	if $err != null {
+		util print error $err
+		return false
+	}
+	return (next)
+}
+if (validate start) != null {
+	do {|| set start }
+	let err = validate start
+	if $err != null {
+		util print error $err
+		return false
+	}
+	return (next)
+}
+if (validate end) != null {
+	do {|| set end }
+	let err = validate end
+	if $err != null {
+		util print error $err
+		return false
+	}
+	return (next)
+}
+return true
+}
+
+def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
+[[group name aliases desc];["relationships","read parent",[],"Get the value of parent."]
+["relationships","write parent",[],"Set the value of parent."]
+["relationships","validate parent",[],"Check if the current value of parent has any errors."]
+["relationships","read prereqs",[],"Get the value of prereqs."]
+["relationships","write prereqs",[],"Set the value of prereqs."]
+["relationships","validate prereqs",[],"Check if the current value of prereqs has any errors."]
+["relationships","read postreqs",[],"Get the value of postreqs."]
+["relationships","write postreqs",[],"Set the value of postreqs."]
+["relationships","validate postreqs",[],"Check if the current value of postreqs has any errors."]
+["explicit_range","read start",[],"Get the value of start."]
+["explicit_range","write start",[],"Set the value of start."]
+["explicit_range","validate start",[],"Check if the current value of start has any errors."]
+["explicit_range","read end",[],"Get the value of end."]
+["explicit_range","write end",[],"Set the value of end."]
+["explicit_range","validate end",[],"Check if the current value of end has any errors."]
+["relationships","set parent",[],"Set parent interactively."]
+["explicit_range","set start",[],"Set start interactively."]
+["explicit_range","set end",[],"Set end interactively."]
+["relationships","add prereqs",[],"Add a value to list prereqs interactively."]
+["relationships","add postreqs",[],"Add a value to list postreqs interactively."]
+["relationships","remove prereqs",[],"Remove a value from list prereqs interactively."]
+["relationships","remove postreqs",[],"Remove a value from list postreqs interactively."]
+["control","cancel",["c"],"Abort submission and discard changes."]
+["control","done",["d"],"Validate and submit form."]
+["control","status",["s"],"Show the current form status."]
+["control","next",["n"],"Fill in the next unfilled fields interactively."]]
+}
+
+let __input: record<prompt_prefix: string, params: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>, task_id: int>> = nav get form params
+
+let prompt_prefix: string = $__input.prompt_prefix
+let params: record<state: oneof<nothing, record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>, task_id: int> = $__input.params
+
+let default_prompt_prefix: closure = $env.PROMPT_COMMAND
+$env.PROMPT_COMMAND = {|| $"($prompt_prefix) \(task-optional\) ($in | do $default_prompt_prefix)" }
+
+cmds | table -e | print
+
+alias c = cancel
+alias d = done
+alias s = status
+alias n = next

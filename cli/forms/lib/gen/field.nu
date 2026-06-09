@@ -20,15 +20,15 @@ export def "cmd read" []: record<id: string, display_name: string, desc: string,
     return null
   }
   {
-    desc: $"Get the value of ($in.id)."
-    group: $in.group
+    desc: $"Get the value of ($field.id)."
+    group: $field.group
     aliases: []
     def: {
-      name: $"read ($in.id)"
+      name: $"read ($field.id)"
       params: []
-      body: ($in | state access)
+      body: ($field | state access)
       in: {type: "nothing"}
-      out: $in.type
+      out: $field.type
       env: true
       export: false
     }
@@ -44,14 +44,14 @@ export def "cmd write" []: record<id: string, display_name: string, desc: string
     return null
   }
   {
-    desc: $"Set the value of ($in.id)."
-    group: $in.group
+    desc: $"Set the value of ($field.id)."
+    group: $field.group
     aliases: []
     def: {
-      name: $"write ($in.id)"
+      name: $"write ($field.id)"
       params: []
-      body: $"($in | state access) = $in"
-      in: $in.type
+      body: $"($field | state access) = $field"
+      in: $field.type
       out: {type: "nothing"}
       env: true
       export: false
@@ -69,6 +69,15 @@ export def "cmd read name" []: record<id: string, display_name: string, desc: st
 # @output string
 export def "cmd write name" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
   $"write ($in.id)"
+}
+
+# `cmd write optional` is an expression which if the value passed in is
+# null, write will be skipped
+#
+# @input types.Field
+# @output string
+export def "cmd write optional" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
+  $"do {|| let v = $in; if $v == null { return }; ($in | cmd write name) }"
 }
 
 # @input types.Field
@@ -121,8 +130,10 @@ export def "cmds core" []: record<id: string, display_name: string, desc: string
 # @input types.TypeDef
 # @output callback.Callback
 def "default interact setter" [desc: string --multiline]: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> record<expr: string> {
-  let type = $in.type
-  let body = match $type {
+  # @type types.TypeDef
+  let typedef: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
+  let type: string = $typedef.type
+  let body: string = match $type {
     string => {
       if $multiline {
         $"input multiline '($desc)'"
@@ -143,6 +154,24 @@ def "default interact setter" [desc: string --multiline]: oneof<record<type: str
       # TODO: add desc support to datepicker
       "util choose date"
     }
+    oneof => {
+      let notnull = $typedef.positional | where type != "nothing"
+      if ($notnull | length) > 2 {
+        error make {
+          msg: $"oneof other than oneof<T, nothing> is currently unsupported"
+          label: {
+            text: "type def"
+            span: (metadata $type).span
+          }
+        }
+      }
+      let callback = if $multiline {
+        $notnull | first | default interact setter $desc --multiline
+      } else {
+        $notnull | first | default interact setter $desc
+      }
+      $callback | get expr
+    }
     _ => {
       error make {
         msg: $"unsupported type ($type)"
@@ -159,6 +188,8 @@ def "default interact setter" [desc: string --multiline]: oneof<record<type: str
 # @input types.Field
 # @output types.Command
 # @param callback callback.Callback
+#
+# callback should prompt the user and return the new value to be set.
 export def "cmd interact set" [--callback: record<expr: string> --multiline]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
   # @type types.Field
   let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
@@ -177,7 +208,7 @@ export def "cmd interact set" [--callback: record<expr: string> --multiline]: re
     group: $field.group
     aliases: []
     def: {
-      name: $"set ($field.id)"
+      name: ($field | cmd interact set name)
       params: []
       body: $"($field | cmd read name)
 	| ($callback | callback run)
@@ -191,6 +222,18 @@ export def "cmd interact set" [--callback: record<expr: string> --multiline]: re
 }
 
 # @input types.Field
+# @output string
+export def "cmd interact set name" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
+  $"set ($in.id)"
+}
+
+# @input types.Field
+# @output callback.Callback
+export def "cmd interact set callback" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<expr: string> {
+  callback make [] ($in | cmd interact set name)
+}
+
+# @input types.Field
 # @output types.Command
 # @param callback callback.Callback
 #
@@ -201,12 +244,12 @@ export def "cmd interact list add" [callback: record<expr: string>]: record<id: 
   # @type types.Field
   let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
 
-  if $field.type.name != list and $field.type.name != table {
+  if $field.type.type != list and $field.type.type != table {
     error make {
       msg: "input field type must be of either list or table"
       label: {
         text: "input field type name"
-        span: (metadata $field.type.name).span
+        span: (metadata $field.type.type).span
       }
     }
   }
@@ -245,7 +288,7 @@ export def "cmd interact list remove" [entry: record<expr: string>]: record<id: 
       msg: "input field type must be of either list or table"
       label: {
         text: "input field type"
-        span: (metadata $field.type.name).span
+        span: (metadata $field.type.type).span
       }
     }
   }
@@ -350,7 +393,8 @@ $state
 # @input types.TypeDef
 # @output callback.Callback
 def "default display value callback" []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> record<expr: string> {
-  let type = $in.type
+  let typedef = $in
+  let type = $typedef.type
   let body = match $type {
     string => { "util print desc $in" }
     int | float | number => { "util print number $in" }
@@ -358,6 +402,20 @@ def "default display value callback" []: oneof<record<type: string, positional: 
     datetime => { "util print date $in" }
     duration => { "util print duration $in" }
     record | list | table => { "table -e | print" }
+    "nothing" => { "print" }
+    oneof => {
+      let cases = $typedef.positional
+        | each {
+          let typedef = $in
+          let expr = $typedef
+            | default display value callback
+            | get expr
+          $"($typedef.type) => { $in | ($expr) }"
+        }
+        | str join "\n"
+
+      $"match \($in | describe\) {\n($cases)\n}"
+    }
     _ => {
       error make {
         msg: $"unsupported type ($type)"

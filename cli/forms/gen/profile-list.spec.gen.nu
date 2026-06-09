@@ -10,7 +10,7 @@ $env.__state_profile
 }
 
 def --env 'write profile' []: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> nothing {
-$env.__state_profile = $in
+$env.__state_profile = $field
 }
 
 def --env 'validate profile' []: nothing -> oneof<string, nothing> {

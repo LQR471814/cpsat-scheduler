@@ -1,0 +1,109 @@
+# @usetype "./lib/gen/types.nu"
+# @usetype "./lib/gen/form.nu"
+# @usetype "../lib/proto/apipb/api.gen.nu"
+
+use ./lib/gen/types.nu
+use ./lib/gen/form.nu
+use ./lib/gen/field.nu
+use ./lib/gen/callback.nu
+use ../lib/proto/apipb/api.gen.nu
+use ./task-common.nu
+
+# @type types.Field
+let name_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+  id: name
+  display_name: Name
+  desc: "The name of the task."
+  group: ""
+  type: ({type: string} | types optional)
+  display_value: null
+  ops: {
+    read: true
+    write: true
+    validate: (
+      {||
+        if ($in | is-empty) {
+          "name cannot be empty"
+        }
+      } | callback from closure
+    )
+  }
+}
+
+# @type types.Field
+let desc_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+  id: desc
+  display_name: Description
+  desc: "The description of the task."
+  group: ""
+  type: ({type: string} | types optional)
+  display_value: null
+  ops: {
+    read: true
+    write: true
+    validate: ({|| } | callback from closure)
+  }
+}
+
+# @type types.Field
+let unit_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+  id: unit
+  display_name: Unit
+  desc: "Timescale unit (should be the upper-bound for task duration)."
+  group: ""
+  type: ({type: int} | types optional)
+  display_value: null
+  ops: {
+    read: true
+    write: true
+    validate: ({|| } | callback from closure)
+  }
+}
+
+# @type list<types.Field>
+let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
+  $name_field
+  $desc_field
+  $unit_field
+]
+
+# @type list<form.InteractiveField>
+let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = $fields
+  | each {
+    {
+      field: $in
+      interact: ($in | field cmd interact set callback)
+    }
+  }
+
+# @type types.Form
+let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: oneof<string, nothing>> = {
+  name: task-required
+  params: {
+    type: record
+    fields: [
+      [key value];
+      [task_id {type: int}]
+      [name ({type: string} | types optional)]
+      [desc ({type: string} | types optional)]
+      [unit ({type: int} | types optional)]
+    ]
+  }
+  returns: {
+    type: record
+    fields: (task-common required fields)
+  }
+  use: []
+  commands: [
+    ...($fields | each { field cmds core } | flatten)
+    ...($fields | each { field cmd interact set })
+
+    (form cmd cancel)
+    ($fields | form cmd done)
+    ($fields | form cmd status)
+    ($fields_ordering | form cmd next)
+  ]
+  init: $""
+}
+
+$form | to nuon --raw
