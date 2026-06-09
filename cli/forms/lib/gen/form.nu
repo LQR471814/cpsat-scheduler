@@ -41,9 +41,8 @@ if $err != null {
     $output | callback run
   }
 
-  let body = $"($validation)
-{($output)
-} | nav save form output
+  let body = $"($validation);($output) | nav save form output
+
 exit"
   {
     desc: "Validate and submit form."
@@ -55,7 +54,7 @@ exit"
       body: $body
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
@@ -78,7 +77,7 @@ exit # nu-lint-ignore: exit_only_in_main"
       body: $body
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
@@ -120,7 +119,7 @@ if $err != null {
       in: {type: "nothing"}
       out: {type: "nothing"}
       body: $body
-      env: false
+      env: true
       export: false
     }
   }
@@ -170,7 +169,7 @@ return true"
       in: {type: "nothing"}
       out: {type: "bool"}
       body: $body
-      env: false
+      env: true
       export: false
     }
   }
@@ -254,7 +253,7 @@ def "cmd cmds" []: record<name: string, params: oneof<record<type: string, posit
         [desc {type: string}]
       ]
     }
-    env: false
+    env: true
     export: false
   }
 }
@@ -337,7 +336,7 @@ export def call []: record<name: string, params: oneof<record<type: string, posi
     body: $"nav exec form './gen/($form.name).spec.gen.nu' $in"
     in: ($form | input type)
     out: ($form.returns)
-    env: false
+    env: true
     export: true
   }
 }

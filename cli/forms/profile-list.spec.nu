@@ -56,7 +56,7 @@ let add_profile: record<desc: string, group: string, aliases: list<string>, def:
 	universe_start: $universe_start
 	gen_pert_choices: $pert_choices
 } | ($profiles_field | field cmd write name)"
-    env: false
+    env: true
     export: false
   }
 }

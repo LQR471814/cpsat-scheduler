@@ -13,7 +13,7 @@ def --env 'write profile' []: list<record<id: oneof<nothing, int>, name: oneof<n
 $env.__state_profile = $in
 }
 
-def 'validate profile' []: nothing -> oneof<string, nothing> {
+def --env 'validate profile' []: nothing -> oneof<string, nothing> {
 read profile | do {||
         if ($in | is-empty) {
           "you must have at least one profile created"
@@ -21,7 +21,7 @@ read profile | do {||
       }
 }
 
-def 'add profile' [name: string atomic_timescale: duration universe_start: datetime --pert_choices: int]: nothing -> nothing {
+def --env 'add profile' [name: string atomic_timescale: duration universe_start: datetime --pert_choices: int]: nothing -> nothing {
 read profile | append {
 	id: null
 	name: $name
@@ -31,7 +31,7 @@ read profile | append {
 } | write profile
 }
 
-def 'remove profile' []: nothing -> nothing {
+def --env 'remove profile' []: nothing -> nothing {
 let state = read profile
 let chosen = $state
 	| each {|row|
@@ -53,7 +53,7 @@ $state
 	| write profile
 }
 
-def 'edit profile' []: nothing -> nothing {
+def --env 'edit profile' []: nothing -> nothing {
 let state = read profile
 	| each {|row|
 		{
@@ -87,13 +87,13 @@ $state
 	| write profile
 }
 
-def 'cancel' []: nothing -> nothing {
+def --env 'cancel' []: nothing -> nothing {
 if not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
 
-def 'done' []: nothing -> nothing {
+def --env 'done' []: nothing -> nothing {
 let err = read profile | do {||
         if ($in | is-empty) {
           "you must have at least one profile created"
@@ -101,13 +101,12 @@ let err = read profile | do {||
       }
 if $err != null {
 	error make $err
-}
-{do {|| read profile }
-} | nav save form output
+};do {|| read profile } | nav save form output
+
 exit
 }
 
-def 'status' []: nothing -> nothing {
+def --env 'status' []: nothing -> nothing {
 util print label 'Profiles [field]'
 util print desc 'List of existing profiles.'
 read profile | do {|| table -e | print } | print
@@ -122,7 +121,7 @@ if $err != null {
 print ''
 }
 
-def 'next' []: nothing -> bool {
+def --env 'next' []: nothing -> bool {
 if (validate profile) != null {
 	do {||
         print "use the 'add profile' command to a profile"
@@ -137,7 +136,7 @@ if (validate profile) != null {
 return true
 }
 
-def 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
+def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: list<string>, desc: string> {
 [[group name aliases desc];["field","read profile",[],"Get the value of profile."]
 ["field","write profile",[],"Set the value of profile."]
 ["field","validate profile",[],"Check if the current value of profile has any errors."]

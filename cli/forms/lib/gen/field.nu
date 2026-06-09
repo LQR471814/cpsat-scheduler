@@ -95,7 +95,7 @@ export def "cmd validate" []: record<id: string, display_name: string, desc: str
           {type: "nothing"}
         ]
       }
-      env: false
+      env: true
       export: false
     }
   }
@@ -184,7 +184,7 @@ export def "cmd interact set" [--callback: record<expr: string> --multiline]: re
 	| ($field | cmd write name)"
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
@@ -225,7 +225,7 @@ $state
 	| ($field | cmd write name)"
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
@@ -270,7 +270,7 @@ $state
 	| ($field | cmd write name)"
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
@@ -291,7 +291,7 @@ export def "cmd interact list list" []: record<id: string, display_name: string,
       body: $"($field | cmd read name) | table -e | print"
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
@@ -341,7 +341,7 @@ $state
 	| ($field | cmd write name)"
       in: {type: "nothing"}
       out: {type: "nothing"}
-      env: false
+      env: true
       export: false
     }
   }
