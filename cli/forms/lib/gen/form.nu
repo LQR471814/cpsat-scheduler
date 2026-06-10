@@ -113,7 +113,11 @@ if $err != null {
 }"
       }
       [
-        $"util print label '($field.display_name) [($field.group)]'"
+        (if ($field.group | is-not-empty) {
+          $"util print label '($field.display_name) [($field.group)]'"
+        } else {
+          $"util print label '($field.display_name)'"
+        })
         $"util print desc '($field.desc)'"
         $"($field | field cmd read name) | ($field | field display value callback | callback run) | print"
         $valid

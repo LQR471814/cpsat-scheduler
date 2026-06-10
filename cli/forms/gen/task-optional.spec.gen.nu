@@ -36,7 +36,7 @@ if $skipval {
   $env.__state_parent = $new
   return
 }
-let err = $new | do --env {|| }
+let err = $new | do --env {|| null }
 if $err != null {
   util print error $err
   return
@@ -45,7 +45,7 @@ $env.__state_parent = $new
 }
 
 def --env 'validate parent' []: nothing -> oneof<string, nothing> {
-read parent | do --env {|| }
+read parent | do --env {|| null }
 }
 
 def --env 'read prereqs' []: nothing -> table<id: int, name: string> {
@@ -251,7 +251,7 @@ exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env 'done' []: nothing -> nothing {
-let err = read parent | do --env {|| }
+let err = read parent | do --env {|| null }
 if $err != null {
   util print label 'Parent:'
 	util print error $err
@@ -306,7 +306,7 @@ def --env 'status' []: nothing -> nothing {
 util print label 'Parent [relationships]'
 util print desc 'Parent task'
 read parent | do --env {|| table -e | print } | print
-let err = read parent | do --env {|| }
+let err = read parent | do --env {|| null }
 if $err != null {
 	util print error $err
 }

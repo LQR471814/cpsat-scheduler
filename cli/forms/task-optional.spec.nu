@@ -21,7 +21,7 @@ let parent_field: record<id: string, display_name: string, desc: string, group: 
   ops: {
     read: true
     write: true
-    validate: ({|| } | callback from closure)
+    validate: ({|| null } | callback from closure)
   }
 }
 
@@ -76,7 +76,7 @@ let start_field: record<id: string, display_name: string, desc: string, group: s
   ops: {
     read: true
     write: true
-    validate: ({|| } | callback from closure)
+    validate: ({|| null } | callback from closure)
   }
 }
 
@@ -91,7 +91,7 @@ let end_field: record<id: string, display_name: string, desc: string, group: str
   ops: {
     read: true
     write: true
-    validate: ({|| } | callback from closure)
+    validate: ({|| null } | callback from closure)
   }
 }
 

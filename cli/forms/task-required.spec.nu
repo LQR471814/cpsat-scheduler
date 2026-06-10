@@ -41,22 +41,22 @@ let desc_field: record<id: string, display_name: string, desc: string, group: st
   ops: {
     read: true
     write: true
-    validate: ({|| } | callback from closure)
+    validate: ({|| null } | callback from closure)
   }
 }
 
 # @type types.Field
 let timescale_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: timescale
-  display_name: Unit
-  desc: "Timescale timescale (should be the upper-bound for task duration)."
+  display_name: "Timescale Unit"
+  desc: "Should be the upper-bound for task duration."
   group: ""
   type: ({type: int} | types optional)
   display_value: null
   ops: {
     read: true
     write: true
-    validate: ({|| } | callback from closure)
+    validate: ({|| null } | callback from closure)
   }
 }
 
@@ -103,11 +103,11 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: $"
-$params.name | ($name_field | field cmd write name)
-$params.desc | ($desc_field | field cmd write name)
-$params.timescale | ($timescale_field | field cmd write name)"
-    after_cmds: ""
+    before_cmds: ""
+    after_cmds: $"
+$params.name | ($name_field | field cmd write name -s)
+$params.desc | ($desc_field | field cmd write name -s)
+$params.timescale | ($timescale_field | field cmd write name -s)"
   }
 }
 

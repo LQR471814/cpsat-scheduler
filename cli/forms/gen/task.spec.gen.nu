@@ -125,7 +125,7 @@ if $skipval {
   $env.__state_optional = $new
   return
 }
-let err = $new | do --env {|| }
+let err = $new | do --env {|| null }
 if $err != null {
   util print error $err
   return
@@ -134,7 +134,7 @@ $env.__state_optional = $new
 }
 
 def --env 'validate optional' []: nothing -> oneof<string, nothing> {
-read optional | do --env {|| }
+read optional | do --env {|| null }
 }
 
 def --env 'set required' []: nothing -> nothing {
@@ -203,7 +203,7 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read optional | do --env {|| }
+let err = read optional | do --env {|| null }
 if $err != null {
   util print label 'Optional Fields:'
 	util print error $err
@@ -219,7 +219,7 @@ exit
 }
 
 def --env 'status' []: nothing -> nothing {
-util print label 'Required Fields []'
+util print label 'Required Fields'
 util print desc 'Required task fields.'
 read required | do --env {|| table -e | print } | print
 let err = read required | do --env {|| 
@@ -263,10 +263,10 @@ if $err != null {
 	util print error $err
 }
 print ''
-util print label 'Optional Fields []'
+util print label 'Optional Fields'
 util print desc 'Optional task fields.'
 read optional | do --env {|| table -e | print } | print
-let err = read optional | do --env {|| }
+let err = read optional | do --env {|| null }
 if $err != null {
 	util print error $err
 }

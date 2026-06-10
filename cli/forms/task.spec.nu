@@ -90,7 +90,7 @@ let opt_fields_field: record<id: string, display_name: string, desc: string, gro
   ops: {
     read: true
     write: true
-    validate: ({|| } | callback from closure)
+    validate: ({|| null } | callback from closure)
   }
 }
 

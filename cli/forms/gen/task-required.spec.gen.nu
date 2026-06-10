@@ -16,9 +16,6 @@ let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
 
-$params.name | write name 
-$params.desc | write desc 
-$params.timescale | write timescale 
 
 def 'prompt prefix' []: nothing -> string {
 $"($prompt_prefix) \(task-required\)"
@@ -64,7 +61,7 @@ if $skipval {
   $env.__state_desc = $new
   return
 }
-let err = $new | do --env {|| }
+let err = $new | do --env {|| null }
 if $err != null {
   util print error $err
   return
@@ -73,7 +70,7 @@ $env.__state_desc = $new
 }
 
 def --env 'validate desc' []: nothing -> oneof<string, nothing> {
-read desc | do --env {|| }
+read desc | do --env {|| null }
 }
 
 def --env 'read timescale' []: nothing -> oneof<int, nothing> {
@@ -86,7 +83,7 @@ if $skipval {
   $env.__state_timescale = $new
   return
 }
-let err = $new | do --env {|| }
+let err = $new | do --env {|| null }
 if $err != null {
   util print error $err
   return
@@ -95,24 +92,24 @@ $env.__state_timescale = $new
 }
 
 def --env 'validate timescale' []: nothing -> oneof<string, nothing> {
-read timescale | do --env {|| }
+read timescale | do --env {|| null }
 }
 
 def --env 'set name' []: nothing -> nothing {
 read name
-	| do --env {|| {|| util input text 'The name of the task.' } }
+	| do --env {|| do --env {|| util input text 'The name of the task.' } }
 	| write name 
 }
 
 def --env 'set desc' []: nothing -> nothing {
 read desc
-	| do --env {|| {|| util input text 'The description of the task.' } }
+	| do --env {|| do --env {|| util input text 'The description of the task.' } }
 	| write desc 
 }
 
 def --env 'set timescale' []: nothing -> nothing {
 read timescale
-	| do --env {|| {|| util input int 'Timescale timescale (should be the upper-bound for task duration).' } }
+	| do --env {|| do --env {|| util input int 'Timescale timescale (should be the upper-bound for task duration).' } }
 	| write timescale 
 }
 
@@ -133,13 +130,13 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read desc | do --env {|| }
+let err = read desc | do --env {|| null }
 if $err != null {
   util print label 'Description:'
 	util print error $err
   return
 }
-let err = read timescale | do --env {|| }
+let err = read timescale | do --env {|| null }
 if $err != null {
   util print label 'Unit:'
 	util print error $err
@@ -153,10 +150,10 @@ exit
 }
 
 def --env 'status' []: nothing -> nothing {
-util print label 'Name []'
+util print label 'Name'
 util print desc 'The name of the task.'
 read name | do --env {|| match ($in | describe) {
-'string' => { $in | do {|| util print desc $in } }
+'string' => { $in | do {|| print $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
 let err = read name | do --env {||
@@ -168,24 +165,24 @@ if $err != null {
 	util print error $err
 }
 print ''
-util print label 'Description []'
+util print label 'Description'
 util print desc 'The description of the task.'
 read desc | do --env {|| match ($in | describe) {
-'string' => { $in | do {|| util print desc $in } }
+'string' => { $in | do {|| print $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
-let err = read desc | do --env {|| }
+let err = read desc | do --env {|| null }
 if $err != null {
 	util print error $err
 }
 print ''
-util print label 'Unit []'
+util print label 'Unit'
 util print desc 'Timescale timescale (should be the upper-bound for task duration).'
 read timescale | do --env {|| match ($in | describe) {
 'int' => { $in | do {|| util print number $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
-let err = read timescale | do --env {|| }
+let err = read timescale | do --env {|| null }
 if $err != null {
 	util print error $err
 }
@@ -255,6 +252,9 @@ $env.config.keybindings = $env.config.keybindings | append {
 
 cmds | table -e | print
 
+$params.name | write name -s
+$params.desc | write desc -s
+$params.timescale | write timescale -s
 
 alias c = cancel
 alias d = done

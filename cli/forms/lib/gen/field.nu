@@ -191,12 +191,12 @@ def "default interact setter" [desc: string --multiline]: oneof<record<type: str
           }
         }
       }
-      let callback = if $multiline {
+      if $multiline {
         $notnull | first | default interact setter $desc --multiline
       } else {
         $notnull | first | default interact setter $desc
       }
-      $callback | get expr
+      | callback run
     }
     _ => {
       error make {
@@ -423,7 +423,7 @@ def "default display value callback" []: oneof<record<type: string, positional: 
   let typedef = $in
   let type = $typedef.type
   let body = match $type {
-    string => { "util print desc $in" }
+    string => { "print $in" }
     int | float | number => { "util print number $in" }
     bool => { "util print bool $in" }
     datetime => { "util print date $in" }
