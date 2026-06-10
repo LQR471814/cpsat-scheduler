@@ -32,18 +32,19 @@ if $err != null {
     | str join "\n"
 
   let output: string = if $output == null {
-    $fields
+    let object_body = $fields
     | each {|field|
       # @type types.Field
       let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
       $"'($field.id)': \(($field | field cmd read name)\)"
     }
     | str join "\n"
+    $"{($object_body)}"
   } else {
     $output | callback run
   }
 
-  let body = $"($validation)\n{($output)} | nav save form output
+  let body = $"($validation)\n($output) | nav save form output
 
 exit"
   {
@@ -66,9 +67,10 @@ exit"
 # @output types.Command
 # @param before callback.Callback
 #
-# before should return nothing
+# before should return nothing, it is called right before exiting
 export def "cmd cancel" [--before: record<expr: string>]: nothing -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>        {
-  let body = "if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+  let body = $"if not $no_prompt and not \(util confirm --prompt 'Are you sure you want to abort? \(changes will not be saved\)'\) { return }
+(if $before != null { $before | callback run } else { "" })
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main"
 

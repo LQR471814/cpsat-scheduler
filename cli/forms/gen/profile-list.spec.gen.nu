@@ -119,6 +119,7 @@ $orig
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
@@ -134,7 +135,7 @@ if $err != null {
 	util print error $err
   return
 }
-{do --env {|| read profile }} | nav save form output
+do --env {|| read profile } | nav save form output
 
 exit
 }

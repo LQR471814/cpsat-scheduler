@@ -51,11 +51,9 @@ if $env.__tmp_task_id != null {
     desc: ($v.desc | default '')
     timescale: $v.timescale
     duration_cfg: {
-      pert: {
-        pert: {pes: 90min, exp: 1hr, opt: 30min}
-        deadline: null
-        total_cost: 0
-      }
+      pert: {pes: 90min, exp: 1hr, opt: 30min}
+      deadline: null
+      total_cost: 0
     }
     children_cfgs: []
     prereqs: []
@@ -96,11 +94,9 @@ if $env.__tmp_task_id != null {
     desc: ($v.desc | default '')
     timescale: $v.timescale
     duration_cfg: {
-      pert: {
-        pert: {pes: 90min, exp: 1hr, opt: 30min}
-        deadline: null
-        total_cost: 0
-      }
+      pert: {pes: 90min, exp: 1hr, opt: 30min}
+      deadline: null
+      total_cost: 0
     }
     children_cfgs: []
     prereqs: []
@@ -156,6 +152,9 @@ read optional
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
+do --env {|| if $is_creating and $env.__tmp_task_id != null {
+  {id: $env.__tmp_task_id} | api.gen API DeleteTask
+} }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
@@ -181,11 +180,9 @@ if $env.__tmp_task_id != null {
     desc: ($v.desc | default '')
     timescale: $v.timescale
     duration_cfg: {
-      pert: {
-        pert: {pes: 90min, exp: 1hr, opt: 30min}
-        deadline: null
-        total_cost: 0
-      }
+      pert: {pes: 90min, exp: 1hr, opt: 30min}
+      deadline: null
+      total_cost: 0
     }
     children_cfgs: []
     prereqs: []
@@ -209,11 +206,11 @@ if $err != null {
 	util print error $err
   return
 }
-{do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id != null {
+do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id != null {
   {id: $env.__tmp_task_id} | api.gen API DeleteTask
 } }
 read required
-| merge (read optional) }} | nav save form output
+| merge (read optional) } | nav save form output
 
 exit
 }
@@ -242,11 +239,9 @@ if $env.__tmp_task_id != null {
     desc: ($v.desc | default '')
     timescale: $v.timescale
     duration_cfg: {
-      pert: {
-        pert: {pes: 90min, exp: 1hr, opt: 30min}
-        deadline: null
-        total_cost: 0
-      }
+      pert: {pes: 90min, exp: 1hr, opt: 30min}
+      deadline: null
+      total_cost: 0
     }
     children_cfgs: []
     prereqs: []

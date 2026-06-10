@@ -58,11 +58,9 @@ if (access tmp task id) != null {
     desc: \($v.desc | default ''\)
     timescale: $v.timescale
     duration_cfg: {
-      pert: {
-        pert: {pes: 90min, exp: 1hr, opt: 30min}
-        deadline: null
-        total_cost: 0
-      }
+      pert: {pes: 90min, exp: 1hr, opt: 30min}
+      deadline: null
+      total_cost: 0
     }
     children_cfgs: []
     prereqs: []
