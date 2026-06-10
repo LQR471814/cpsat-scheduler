@@ -61,7 +61,11 @@ if $skipval {
   $env.__state_desc = $new
   return
 }
-let err = $new | do --env {|| null }
+let err = $new | do --env {||
+        if ($in == null) {
+          "description should not be null"
+        }
+      }
 if $err != null {
   util print error $err
   return
@@ -70,7 +74,11 @@ $env.__state_desc = $new
 }
 
 def --env 'validate desc' []: nothing -> oneof<string, nothing> {
-read desc | do --env {|| null }
+read desc | do --env {||
+        if ($in == null) {
+          "description should not be null"
+        }
+      }
 }
 
 def --env 'read timescale' []: nothing -> oneof<int, nothing> {
@@ -83,7 +91,11 @@ if $skipval {
   $env.__state_timescale = $new
   return
 }
-let err = $new | do --env {|| null }
+let err = $new | do --env {||
+        if ($in == null) {
+          "timescale shoud not be null"
+        }
+      }
 if $err != null {
   util print error $err
   return
@@ -92,7 +104,11 @@ $env.__state_timescale = $new
 }
 
 def --env 'validate timescale' []: nothing -> oneof<string, nothing> {
-read timescale | do --env {|| null }
+read timescale | do --env {||
+        if ($in == null) {
+          "timescale shoud not be null"
+        }
+      }
 }
 
 def --env 'set name' []: nothing -> nothing {
@@ -109,7 +125,7 @@ read desc
 
 def --env 'set timescale' []: nothing -> nothing {
 read timescale
-	| do --env {|| do --env {|| util input int 'Timescale timescale (should be the upper-bound for task duration).' } }
+	| do --env {|| do --env {|| util input int 'Should be the upper-bound for task duration.' } }
 	| write timescale 
 }
 
@@ -130,15 +146,23 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read desc | do --env {|| null }
+let err = read desc | do --env {||
+        if ($in == null) {
+          "description should not be null"
+        }
+      }
 if $err != null {
   util print label 'Description:'
 	util print error $err
   return
 }
-let err = read timescale | do --env {|| null }
+let err = read timescale | do --env {||
+        if ($in == null) {
+          "timescale shoud not be null"
+        }
+      }
 if $err != null {
-  util print label 'Unit:'
+  util print label 'Timescale Unit:'
 	util print error $err
   return
 }
@@ -171,18 +195,26 @@ read desc | do --env {|| match ($in | describe) {
 'string' => { $in | do {|| print $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
-let err = read desc | do --env {|| null }
+let err = read desc | do --env {||
+        if ($in == null) {
+          "description should not be null"
+        }
+      }
 if $err != null {
 	util print error $err
 }
 print ''
-util print label 'Unit'
-util print desc 'Timescale timescale (should be the upper-bound for task duration).'
+util print label 'Timescale Unit'
+util print desc 'Should be the upper-bound for task duration.'
 read timescale | do --env {|| match ($in | describe) {
 'int' => { $in | do {|| util print number $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
-let err = read timescale | do --env {|| null }
+let err = read timescale | do --env {||
+        if ($in == null) {
+          "timescale shoud not be null"
+        }
+      }
 if $err != null {
 	util print error $err
 }

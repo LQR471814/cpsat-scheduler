@@ -41,7 +41,13 @@ let desc_field: record<id: string, display_name: string, desc: string, group: st
   ops: {
     read: true
     write: true
-    validate: ({|| null } | callback from closure)
+    validate: (
+      {||
+        if ($in == null) {
+          "description should not be null"
+        }
+      } | callback from closure
+    )
   }
 }
 
@@ -56,7 +62,13 @@ let timescale_field: record<id: string, display_name: string, desc: string, grou
   ops: {
     read: true
     write: true
-    validate: ({|| null } | callback from closure)
+    validate: (
+      {||
+        if ($in == null) {
+          "timescale shoud not be null"
+        }
+      } | callback from closure
+    )
   }
 }
 
