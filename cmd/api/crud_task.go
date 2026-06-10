@@ -53,10 +53,20 @@ func (s server) DeleteTask(ctx context.Context, in *apipb.DeleteTaskRequest) (re
 	}
 	defer tx.Rollback()
 	txqry := s.db.WithTx(tx)
+
+	err = txqry.DeleteTask(ctx, in.Id)
+	if err != nil {
+		return
+	}
+	err = txqry.DeleteDurConfig(ctx, in.Id)
+	if err != nil {
+		return
+	}
 	err = txqry.DeleteChildrenConfigs(ctx, in.Id)
 	if err != nil {
 		return
 	}
+
 	err = tx.Commit()
 	if err != nil {
 		return

@@ -32,6 +32,9 @@ update task set
 	end = ?
 where id = ?;
 
+-- name: DeleteTask :exec
+delete from task where id = ?;
+
 
 -- name: GetDurConfig :one
 select * from dur_config where task = ?;
