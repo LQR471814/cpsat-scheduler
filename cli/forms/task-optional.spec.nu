@@ -40,6 +40,7 @@ let prereqs_field: record<id: string, display_name: string, desc: string, group:
       {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       } | callback from closure
     )
   }
@@ -60,6 +61,7 @@ let postreqs_field: record<id: string, display_name: string, desc: string, group
       {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       } | callback from closure
     )
   }
@@ -151,7 +153,21 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   params: {
     type: record
     fields: (
-      task-common optional fields | append {
+      task-common optional fields
+      | each {|entry|
+        match $entry.key {
+          duration_cfg | parent => {
+            {
+              key: $entry.key
+              value: ($entry.value | types optional)
+            }
+          }
+          _ => {
+            $entry
+          }
+        }
+      }
+      | append {
         key: task_id
         value: {type: int}
       }
@@ -207,11 +223,11 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   ]
   init: {
     before_cmds: $"
-$params.parent | ($parent_field | field cmd write name)
 $params.prereqs | ($prereqs_field | field cmd write name)
 $params.postreqs | ($postreqs_field | field cmd write name)
-$params.start | ($start_field | field cmd write name)
-$params.end | ($end_field | field cmd write name)"
+if $params.parent != null { $params.parent | ($parent_field | field cmd write name) }
+if $params.start != null { $params.start | ($start_field | field cmd write name) }
+if $params.end != null { $params.end | ($end_field | field cmd write name) }"
     after_cmds: ""
   }
 }

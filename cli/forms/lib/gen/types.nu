@@ -42,10 +42,11 @@
 #   group: string
 #   type: TypeDef
 #   display_value: oneof<callback.Callback, nothing>
-#	ops: record<
+#   init: callback.Callback
+#	  ops: record<
 # 		read: bool
-#		write: bool
-#		validate: oneof<callback.Callback, nothing>
+#		  write: bool
+#		  validate: oneof<callback.Callback, nothing>
 # 	>
 # >
 

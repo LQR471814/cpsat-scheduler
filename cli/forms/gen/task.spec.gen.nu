@@ -7,6 +7,17 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
+$env.config.keybindings = $env.config.keybindings | append {
+  name: ctrl_d_hook
+  modifier: control
+  keycode: char_d
+  mode: [emacs vi_insert vi_normal]
+  event: {
+    send: executehostcommand
+    cmd: 'cancel'
+  }
+}
+
 let __input: record<prompt_prefix: string, params: record<state: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, id: oneof<int, nothing>, profile_id: int>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
@@ -43,6 +54,12 @@ if $env.__tmp_task_id != null {
   return
 }
 
+let default_dur_cfg = {
+  pert: {pes: 90min, exp: 1hr, opt: 30min}
+  deadline: null
+  total_cost: 0
+}
+
 {
   id: null
   profile_id: $params.profile_id
@@ -50,11 +67,7 @@ if $env.__tmp_task_id != null {
     name: $v.name
     desc: ($v.desc | default '')
     timescale: $v.timescale
-    duration_cfg: {
-      pert: {pes: 90min, exp: 1hr, opt: 30min}
-      deadline: null
-      total_cost: 0
-    }
+    duration_cfg: $default_dur_cfg
     children_cfgs: []
     prereqs: []
     postreqs: []
@@ -86,6 +99,12 @@ if $env.__tmp_task_id != null {
   return
 }
 
+let default_dur_cfg = {
+  pert: {pes: 90min, exp: 1hr, opt: 30min}
+  deadline: null
+  total_cost: 0
+}
+
 {
   id: null
   profile_id: $params.profile_id
@@ -93,11 +112,7 @@ if $env.__tmp_task_id != null {
     name: $v.name
     desc: ($v.desc | default '')
     timescale: $v.timescale
-    duration_cfg: {
-      pert: {pes: 90min, exp: 1hr, opt: 30min}
-      deadline: null
-      total_cost: 0
-    }
+    duration_cfg: $default_dur_cfg
     children_cfgs: []
     prereqs: []
     postreqs: []
@@ -121,7 +136,11 @@ if $skipval {
   $env.__state_optional = $new
   return
 }
-let err = $new | do --env {|| null }
+let err = $new | do --env {||
+        if $in.duration_cfg == null {
+          'optional field duration_cfg must not be null'
+        }
+      }
 if $err != null {
   util print error $err
   return
@@ -130,13 +149,19 @@ $env.__state_optional = $new
 }
 
 def --env 'validate optional' []: nothing -> oneof<string, nothing> {
-read optional | do --env {|| null }
+read optional | do --env {||
+        if $in.duration_cfg == null {
+          'optional field duration_cfg must not be null'
+        }
+      }
 }
 
 def --env 'set required' []: nothing -> nothing {
 read required
 	| do --env {|| 
-let new = $in | index form task-required
+let new = $in | merge {
+  task_id: $env.__tmp_task_id
+} | index form task-required
 if $new == null {
   cancel -y
 }
@@ -146,7 +171,9 @@ $new }
 
 def --env 'set optional' []: nothing -> nothing {
 read optional
-	| do --env {|| $in | index form task-optional }
+	| do --env {|| $in | merge {
+  task_id: $env.__tmp_task_id
+} | index form task-optional }
 	| write optional 
 }
 
@@ -172,6 +199,12 @@ if $env.__tmp_task_id != null {
   return
 }
 
+let default_dur_cfg = {
+  pert: {pes: 90min, exp: 1hr, opt: 30min}
+  deadline: null
+  total_cost: 0
+}
+
 {
   id: null
   profile_id: $params.profile_id
@@ -179,11 +212,7 @@ if $env.__tmp_task_id != null {
     name: $v.name
     desc: ($v.desc | default '')
     timescale: $v.timescale
-    duration_cfg: {
-      pert: {pes: 90min, exp: 1hr, opt: 30min}
-      deadline: null
-      total_cost: 0
-    }
+    duration_cfg: $default_dur_cfg
     children_cfgs: []
     prereqs: []
     postreqs: []
@@ -200,7 +229,11 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read optional | do --env {|| null }
+let err = read optional | do --env {||
+        if $in.duration_cfg == null {
+          'optional field duration_cfg must not be null'
+        }
+      }
 if $err != null {
   util print label 'Optional Fields:'
 	util print error $err
@@ -231,6 +264,12 @@ if $env.__tmp_task_id != null {
   return
 }
 
+let default_dur_cfg = {
+  pert: {pes: 90min, exp: 1hr, opt: 30min}
+  deadline: null
+  total_cost: 0
+}
+
 {
   id: null
   profile_id: $params.profile_id
@@ -238,11 +277,7 @@ if $env.__tmp_task_id != null {
     name: $v.name
     desc: ($v.desc | default '')
     timescale: $v.timescale
-    duration_cfg: {
-      pert: {pes: 90min, exp: 1hr, opt: 30min}
-      deadline: null
-      total_cost: 0
-    }
+    duration_cfg: $default_dur_cfg
     children_cfgs: []
     prereqs: []
     postreqs: []
@@ -261,7 +296,11 @@ print ''
 util print label 'Optional Fields'
 util print desc 'Optional task fields.'
 read optional | do --env {|| table -e | print } | print
-let err = read optional | do --env {|| null }
+let err = read optional | do --env {||
+        if $in.duration_cfg == null {
+          'optional field duration_cfg must not be null'
+        }
+      }
 if $err != null {
 	util print error $err
 }
@@ -303,17 +342,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
-$env.config.keybindings = $env.config.keybindings | append {
-  name: ctrl_d_hook
-  modifier: control
-  keycode: char_d
-  mode: [emacs vi_insert vi_normal]
-  event: {
-    send: executehostcommand
-    cmd: 'cancel'
-  }
-}
-
+util print section title 'task'
 cmds | table -e | print
 
 $params.state
@@ -325,6 +354,12 @@ $params.state
 | write optional -s
 
 $params.id | do --env {|| $env.__tmp_task_id = $in }
+
+set required
+
+if (validate required) != null {
+  cancel -y
+}
 
 alias c = cancel
 alias d = done

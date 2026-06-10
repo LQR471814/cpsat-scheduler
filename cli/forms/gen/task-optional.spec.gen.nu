@@ -7,20 +7,31 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
-let __input: record<prompt_prefix: string, params: record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, task_id: int>> = nav get form params
+$env.config.keybindings = $env.config.keybindings | append {
+  name: ctrl_d_hook
+  modifier: control
+  keycode: char_d
+  mode: [emacs vi_insert vi_normal]
+  event: {
+    send: executehostcommand
+    cmd: 'cancel'
+  }
+}
+
+let __input: record<prompt_prefix: string, params: record<duration_cfg: oneof<oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, nothing>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, nothing>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, task_id: int>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, task_id: int> = $__input.params
+let params: record<duration_cfg: oneof<oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, nothing>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, nothing>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>, task_id: int> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
 
-$params.parent | write parent 
 $params.prereqs | write prereqs 
 $params.postreqs | write postreqs 
-$params.start | write start 
-$params.end | write end 
+if $params.parent != null { $params.parent | write parent  }
+if $params.start != null { $params.start | write start  }
+if $params.end != null { $params.end | write end  }
 
 def 'prompt prefix' []: nothing -> string {
 $"($prompt_prefix) \(task-optional\)"
@@ -61,6 +72,7 @@ if $skipval {
 let err = $new | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 if $err != null {
   util print error $err
@@ -73,6 +85,7 @@ def --env 'validate prereqs' []: nothing -> oneof<string, nothing> {
 read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 }
 
@@ -89,6 +102,7 @@ if $skipval {
 let err = $new | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 if $err != null {
   util print error $err
@@ -101,6 +115,7 @@ def --env 'validate postreqs' []: nothing -> oneof<string, nothing> {
 read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 }
 
@@ -261,6 +276,7 @@ if $err != null {
 let err = read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 if $err != null {
   util print label 'Prerequisites:'
@@ -270,6 +286,7 @@ if $err != null {
 let err = read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 if $err != null {
   util print label 'Postrequisites:'
@@ -318,6 +335,7 @@ read prereqs | do --env {|| table -e | print } | print
 let err = read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 if $err != null {
 	util print error $err
@@ -329,6 +347,7 @@ read postreqs | do --env {|| table -e | print } | print
 let err = read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
+        null
       }
 if $err != null {
 	util print error $err
@@ -431,17 +450,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
-$env.config.keybindings = $env.config.keybindings | append {
-  name: ctrl_d_hook
-  modifier: control
-  keycode: char_d
-  mode: [emacs vi_insert vi_normal]
-  event: {
-    send: executehostcommand
-    cmd: 'cancel'
-  }
-}
-
+util print section title 'task-optional'
 cmds | table -e | print
 
 

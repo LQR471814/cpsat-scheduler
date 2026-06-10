@@ -95,8 +95,12 @@ exit # nu-lint-ignore: exit_only_in_main"
 
 # @input nothing
 # @output string
-export def "cmd cancel name" []: nothing -> string {
-  "cancel"
+export def "cmd cancel name" [--no-prompt(-y)]: nothing -> string {
+  if $no_prompt {
+    "cancel -y"
+  } else {
+    "cancel"
+  }
 }
 
 # @input list<types.Field>
@@ -304,7 +308,8 @@ $env.PROMPT_COMMAND = ($prompt_callback | callback run)\n($form.init.before_cmds
 # @input types.Form
 # @output string
 def "init after cmds" []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> -> string {
-  $"cmds | table -e | print\n($in.init.after_cmds)"
+  $"util print section title '($in.name)'
+cmds | table -e | print\n($in.init.after_cmds)"
 }
 
 # @input types.CommandDef
@@ -368,10 +373,10 @@ use ../lib/nav.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu"
     $uses
+    $ctrl_d_hook
     ($form | init before cmds)
     ($form | cmd prompt prefix | render command def)
     $cmds
-    $ctrl_d_hook
     ($form | init after cmds)
     $aliases
   ] | str join "\n\n"

@@ -63,16 +63,15 @@ let timescale_field: record<id: string, display_name: string, desc: string, grou
     read: true
     write: true
     validate: (
-      {||
-        let unit: int = $in
-        if ($unit == null) {
-          "timescale should not be null"
-        }
-        let possible = $timescales | get id
-        if ($unit in $possible) {
-          $"the given timescale is not one of the possible timescales: ($possible)"
-        }
-      } | callback from closure
+      callback make [] "
+let unit: int = $in
+if \($unit == null\) {
+  \"timescale should not be null\"
+}
+let possible = $timescales | get id
+if not \($unit in $possible\) {
+  $\"the given timescale is not one of the possible timescales: ($possible)\"
+}"
     )
   }
 }

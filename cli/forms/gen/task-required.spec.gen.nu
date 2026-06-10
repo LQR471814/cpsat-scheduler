@@ -7,6 +7,17 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
+$env.config.keybindings = $env.config.keybindings | append {
+  name: ctrl_d_hook
+  modifier: control
+  keycode: char_d
+  mode: [emacs vi_insert vi_normal]
+  event: {
+    send: executehostcommand
+    cmd: 'cancel'
+  }
+}
+
 let __input: record<prompt_prefix: string, params: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
@@ -108,11 +119,15 @@ if $skipval {
   $env.__state_timescale = $new
   return
 }
-let err = $new | do --env {||
-        if ($in == null) {
-          "timescale should not be null"
-        }
-      }
+let err = $new | do --env {|| 
+let unit: int = $in
+if ($unit == null) {
+  "timescale should not be null"
+}
+let possible = $timescales | get id
+if not ($unit in $possible) {
+  $"the given timescale is not one of the possible timescales: ($possible)"
+} }
 if $err != null {
   util print error $err
   return
@@ -121,11 +136,15 @@ $env.__state_timescale = $new
 }
 
 def --env 'validate timescale' []: nothing -> oneof<string, nothing> {
-read timescale | do --env {||
-        if ($in == null) {
-          "timescale should not be null"
-        }
-      }
+read timescale | do --env {|| 
+let unit: int = $in
+if ($unit == null) {
+  "timescale should not be null"
+}
+let possible = $timescales | get id
+if not ($unit in $possible) {
+  $"the given timescale is not one of the possible timescales: ($possible)"
+} }
 }
 
 def --env 'set name' []: nothing -> nothing {
@@ -176,11 +195,15 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read timescale | do --env {||
-        if ($in == null) {
-          "timescale should not be null"
-        }
-      }
+let err = read timescale | do --env {|| 
+let unit: int = $in
+if ($unit == null) {
+  "timescale should not be null"
+}
+let possible = $timescales | get id
+if not ($unit in $possible) {
+  $"the given timescale is not one of the possible timescales: ($possible)"
+} }
 if $err != null {
   util print label 'Timescale Unit:'
 	util print error $err
@@ -230,11 +253,15 @@ read timescale | do --env {|| match ($in | describe) {
 'int' => { $in | do {|| util print number $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
-let err = read timescale | do --env {||
-        if ($in == null) {
-          "timescale should not be null"
-        }
-      }
+let err = read timescale | do --env {|| 
+let unit: int = $in
+if ($unit == null) {
+  "timescale should not be null"
+}
+let possible = $timescales | get id
+if not ($unit in $possible) {
+  $"the given timescale is not one of the possible timescales: ($possible)"
+} }
 if $err != null {
 	util print error $err
 }
@@ -288,17 +315,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
-$env.config.keybindings = $env.config.keybindings | append {
-  name: ctrl_d_hook
-  modifier: control
-  keycode: char_d
-  mode: [emacs vi_insert vi_normal]
-  event: {
-    send: executehostcommand
-    cmd: 'cancel'
-  }
-}
-
+util print section title 'task-required'
 cmds | table -e | print
 
 $params.name | write name -s

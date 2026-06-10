@@ -50,6 +50,12 @@ if (access tmp task id) != null {
   return
 }
 
+let default_dur_cfg = {
+  pert: {pes: 90min, exp: 1hr, opt: 30min}
+  deadline: null
+  total_cost: 0
+}
+
 {
   id: null
   profile_id: $params.profile_id
@@ -57,11 +63,7 @@ if (access tmp task id) != null {
     name: $v.name
     desc: \($v.desc | default ''\)
     timescale: $v.timescale
-    duration_cfg: {
-      pert: {pes: 90min, exp: 1hr, opt: 30min}
-      deadline: null
-      total_cost: 0
-    }
+    duration_cfg: $default_dur_cfg
     children_cfgs: []
     prereqs: []
     postreqs: []
@@ -88,7 +90,13 @@ let opt_fields_field: record<id: string, display_name: string, desc: string, gro
   ops: {
     read: true
     write: true
-    validate: ({|| null } | callback from closure)
+    validate: (
+      {||
+        if $in.duration_cfg == null {
+          'optional field duration_cfg must not be null'
+        }
+      } | callback from closure
+    )
   }
 }
 
@@ -140,16 +148,20 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     (
       $req_fields_field | field cmd interact set --callback (
         callback make [] $"
-let new = $in | index form task-required
+let new = $in | merge {
+  task_id: (access tmp task id)
+} | index form task-required
 if $new == null {
-  (form cmd cancel name) -y
+  (form cmd cancel name -y)
 }
 $new"
       )
     )
     (
       $opt_fields_field | field cmd interact set --callback (
-        callback make [] $"$in | index form task-optional"
+        callback make [] $"$in | merge {
+  task_id: (access tmp task id)
+} | index form task-optional"
       )
     )
 
@@ -169,7 +181,13 @@ $params.state
 | reject ($required_ids | str join ' ')
 | ($opt_fields_field | field cmd write name -s)
 
-$params.id | (write tmp task id run)"
+$params.id | (write tmp task id run)
+
+set required
+
+if \(($req_fields_field | field cmd validate name)\) != null {
+  (form cmd cancel name -y)
+}"
   }
 }
 

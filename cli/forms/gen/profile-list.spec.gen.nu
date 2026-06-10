@@ -7,6 +7,17 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
+$env.config.keybindings = $env.config.keybindings | append {
+  name: ctrl_d_hook
+  modifier: control
+  keycode: char_d
+  mode: [emacs vi_insert vi_normal]
+  event: {
+    send: executehostcommand
+    cmd: 'cancel'
+  }
+}
+
 let __input: record<prompt_prefix: string, params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
@@ -182,17 +193,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
-$env.config.keybindings = $env.config.keybindings | append {
-  name: ctrl_d_hook
-  modifier: control
-  keycode: char_d
-  mode: [emacs vi_insert vi_normal]
-  event: {
-    send: executehostcommand
-    cmd: 'cancel'
-  }
-}
-
+util print section title 'profile-list'
 cmds | table -e | print
 
 $params | write profile 
