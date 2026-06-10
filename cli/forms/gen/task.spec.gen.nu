@@ -157,8 +157,7 @@ read optional | do --env {||
 }
 
 def --env 'set required' []: nothing -> nothing {
-read required
-	| do --env {|| 
+let new = read required | do --env {|| 
 let new = $in | merge {
   task_id: $env.__tmp_task_id
 } | index form task-required
@@ -166,15 +165,16 @@ if $new == null {
   cancel -y
 }
 $new }
-	| write required 
+if $new == null { return }
+$new | write required 
 }
 
 def --env 'set optional' []: nothing -> nothing {
-read optional
-	| do --env {|| $in | merge {
+let new = read optional | do --env {|| $in | merge {
   task_id: $env.__tmp_task_id
 } | index form task-optional }
-	| write optional 
+if $new == null { return }
+$new | write optional 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
@@ -344,14 +344,11 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title 'task'
 cmds | table -e | print
-
-$params.state
+$env.__state_required = do --env {|| $params.state
 | select name desc timescale
-| write required -s
-
-$params.state
-| reject name desc timescale
-| write optional -s
+   }
+$env.__state_optional = do --env {|| $params.state
+| reject name desc timescale }
 
 $params.id | do --env {|| $env.__tmp_task_id = $in }
 

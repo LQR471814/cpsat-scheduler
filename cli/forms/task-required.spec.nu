@@ -10,13 +10,14 @@ use ../lib/proto/apipb/api.gen.nu
 use ./task-common.nu
 
 # @type types.Field
-let name_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let name_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: name
   display_name: Name
   desc: "The name of the task."
   group: ""
   type: ({type: string} | types optional)
   display_value: null
+  init: (callback make [] "$params.name")
   ops: {
     read: true
     write: true
@@ -31,13 +32,14 @@ let name_field: record<id: string, display_name: string, desc: string, group: st
 }
 
 # @type types.Field
-let desc_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let desc_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: desc
   display_name: Description
   desc: "The description of the task."
   group: ""
   type: ({type: string} | types optional)
   display_value: null
+  init: (callback make [] "$params.desc")
   ops: {
     read: true
     write: true
@@ -52,13 +54,14 @@ let desc_field: record<id: string, display_name: string, desc: string, group: st
 }
 
 # @type types.Field
-let timescale_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let timescale_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: timescale
   display_name: "Timescale Unit"
   desc: "Should be the upper-bound for task duration."
   group: ""
   type: ({type: int} | types optional)
   display_value: null
+  init: (callback make [] "$params.timescale")
   ops: {
     read: true
     write: true
@@ -77,14 +80,14 @@ if not \($unit in $possible\) {
 }
 
 # @type list<types.Field>
-let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
+let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
   $name_field
   $desc_field
   $timescale_field
 ]
 
 # @type list<form.InteractiveField>
-let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = $fields
+let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = $fields
   | each {
     {
       field: $in
@@ -145,10 +148,7 @@ let timescales: table<id: int, name: string> = [
   [4128768 '128 year']
 ]
     "
-    after_cmds: $"
-$params.name | ($name_field | field cmd write name -s)
-$params.desc | ($desc_field | field cmd write name -s)
-$params.timescale | ($timescale_field | field cmd write name -s)"
+    after_cmds: $"($fields | form fields init)"
   }
 }
 

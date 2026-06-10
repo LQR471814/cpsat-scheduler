@@ -195,9 +195,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title 'profile-list'
 cmds | table -e | print
-
-$params | write profile 
-	
+$env.__state_profile = do --env {|| $params }
 
 alias ap = add profile
 alias c = cancel

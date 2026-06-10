@@ -148,23 +148,23 @@ if not ($unit in $possible) {
 }
 
 def --env 'set name' []: nothing -> nothing {
-read name
-	| do --env {|| do --env {|| util input text 'The name of the task.' } }
-	| write name 
+let new = read name | do --env {|| do --env {|| util input text 'The name of the task.' } }
+if $new == null { return }
+$new | write name 
 }
 
 def --env 'set desc' []: nothing -> nothing {
-read desc
-	| do --env {|| do --env {|| util input multiline 'The description of the task.' } }
-	| write desc 
+let new = read desc | do --env {|| do --env {|| util input multiline 'The description of the task.' } }
+if $new == null { return }
+$new | write desc 
 }
 
 def --env 'set timescale' []: nothing -> nothing {
-read timescale
-	| do --env {|| $timescales
+let new = read timescale | do --env {|| $timescales
 | util choose table --header 'Timescale unit (upper-bound for task duration):'
 | get id? }
-	| write timescale 
+if $new == null { return }
+$new | write timescale 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
@@ -317,10 +317,9 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title 'task-required'
 cmds | table -e | print
-
-$params.name | write name -s
-$params.desc | write desc -s
-$params.timescale | write timescale -s
+$env.__state_name = do --env {|| $params.name }
+$env.__state_desc = do --env {|| $params.desc }
+$env.__state_timescale = do --env {|| $params.timescale }
 
 alias c = cancel
 alias d = done

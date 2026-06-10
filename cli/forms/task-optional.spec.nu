@@ -11,13 +11,14 @@ use ../lib/proto/apipb/api.gen.nu
 use ./task-common.nu
 
 # @type types.Field
-let parent_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let parent_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: parent
   display_name: Parent
   desc: "Parent task"
   group: relationships
-  type: (types entry record)
+  type: (types entry record | types optional)
   display_value: null
+  init: (callback make [] "$params.parent")
   ops: {
     read: true
     write: true
@@ -26,13 +27,14 @@ let parent_field: record<id: string, display_name: string, desc: string, group: 
 }
 
 # @type types.Field
-let prereqs_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let prereqs_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: prereqs
   display_name: Prerequisites
   desc: "Tasks that must be scheduled before this task."
   group: relationships
   type: (types entry table)
   display_value: null
+  init: (callback make [] "$params.prereqs")
   ops: {
     read: true
     write: true
@@ -47,13 +49,14 @@ let prereqs_field: record<id: string, display_name: string, desc: string, group:
 }
 
 # @type types.Field
-let postreqs_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let postreqs_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: postreqs
   display_name: Postrequisites
   desc: "Tasks that must be scheduled after this task."
   group: relationships
   type: (types entry table)
   display_value: null
+  init: (callback make [] "$params.postreqs")
   ops: {
     read: true
     write: true
@@ -68,13 +71,14 @@ let postreqs_field: record<id: string, display_name: string, desc: string, group
 }
 
 # @type types.Field
-let start_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let start_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: start
   display_name: Start
   desc: "An explicit time which the task must start after."
   group: explicit_range
-  type: {type: datetime}
+  type: ({type: datetime} | types optional)
   display_value: null
+  init: (callback make [] "$params.start")
   ops: {
     read: true
     write: true
@@ -83,13 +87,14 @@ let start_field: record<id: string, display_name: string, desc: string, group: s
 }
 
 # @type types.Field
-let end_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let end_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: end
   display_name: End
   desc: "An explicit time which the task must start before."
   group: explicit_range
-  type: {type: datetime}
+  type: ({type: datetime} | types optional)
   display_value: null
+  init: (callback make [] "$params.end")
   ops: {
     read: true
     write: true
@@ -98,20 +103,25 @@ let end_field: record<id: string, display_name: string, desc: string, group: str
 }
 
 let validate_range = callback make [] $"
-if \(($start_field | field cmd read name)\) >= \(($end_field | field cmd read name)\) {
+if \(($start_field | field cmd read name)\) == null or \(($end_field | field cmd read name)\) == null {
+  return
+}
+let start: datetime = ($start_field | field cmd read name)
+let end: datetime = ($end_field | field cmd read name)
+if $start >= $end {
   'explicit start cannot be >= end'
 }"
 
 # @type types.Field
-let start_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $start_field
+let start_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $start_field
   | update ops.validate { $validate_range }
 
 # @type types.Field
-let end_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $end_field
+let end_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $end_field
   | update ops.validate { $validate_range }
 
 # @type list<types.Field>
-let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
+let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
   $parent_field
   $prereqs_field
   $postreqs_field
@@ -120,7 +130,7 @@ let fields: list<record<id: string, display_name: string, desc: string, group: s
 ]
 
 # @type list<form.InteractiveField>
-let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = $fields
+let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = $fields
   | each {
     {
       field: $in
@@ -197,7 +207,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
         let reqtype = $entry.reqtype
         let field = $entry.field
         $field | field cmd interact list add (
-          callback make [] $"let chosen = {
+          callback make [] $"{
   type: ($reqtype)
   task_id: $params.task_id
 }
@@ -222,13 +232,8 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: $"
-$params.prereqs | ($prereqs_field | field cmd write name)
-$params.postreqs | ($postreqs_field | field cmd write name)
-if $params.parent != null { $params.parent | ($parent_field | field cmd write name) }
-if $params.start != null { $params.start | ($start_field | field cmd write name) }
-if $params.end != null { $params.end | ($end_field | field cmd write name) }"
-    after_cmds: ""
+    before_cmds: ""
+    after_cmds: $"($fields | form fields init)"
   }
 }
 

@@ -8,13 +8,14 @@ use ./lib/gen/callback.nu
 use ../lib/proto/apipb/api.gen.nu
 
 # @type types.Field
-let profiles_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let profiles_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: profile
   display_name: Profiles
   desc: "List of existing profiles."
   group: field
   type: {type: list positional: [(api.gen type Profile)]}
   display_value: null
+  init: (callback make [] "$params")
   ops: {
     read: true
     write: true
@@ -29,7 +30,7 @@ let profiles_field: record<id: string, display_name: string, desc: string, group
 }
 
 # @type list<types.Field>
-let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
+let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
   $profiles_field
 ]
 
@@ -62,7 +63,7 @@ let add_profile: record<desc: string, group: string, aliases: list<string>, def:
 }
 
 # @type list<form.InteractiveField>
-let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = [
+let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = [
   {
     field: $profiles_field
     interact: (
@@ -113,9 +114,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   ]
   init: {
     before_cmds: ""
-    after_cmds: $"
-$params | ($profiles_field | field cmd write name)
-	"
+    after_cmds: $"($fields | form fields init)"
   }
 }
 

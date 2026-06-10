@@ -33,7 +33,9 @@
 #   def: CommandDef
 # >
 
-# validate should return string or null
+# - validate should return string or null
+# - init should return the type of the field, it will be called after
+# cmds are defined
 #
 # export type Field = record<
 #   id: string

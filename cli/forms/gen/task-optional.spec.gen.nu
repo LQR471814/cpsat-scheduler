@@ -27,21 +27,16 @@ let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
 
-$params.prereqs | write prereqs 
-$params.postreqs | write postreqs 
-if $params.parent != null { $params.parent | write parent  }
-if $params.start != null { $params.start | write start  }
-if $params.end != null { $params.end | write end  }
 
 def 'prompt prefix' []: nothing -> string {
 $"($prompt_prefix) \(task-optional\)"
 }
 
-def --env 'read parent' []: nothing -> record<id: int, name: string> {
+def --env 'read parent' []: nothing -> oneof<record<id: int, name: string>, nothing> {
 $env.__state_parent
 }
 
-def --env 'write parent' [--skipval(-s)]: record<id: int, name: string> -> nothing {
+def --env 'write parent' [--skipval(-s)]: oneof<record<id: int, name: string>, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_parent = $new
@@ -119,18 +114,23 @@ read postreqs | do --env {||
       }
 }
 
-def --env 'read start' []: nothing -> datetime {
+def --env 'read start' []: nothing -> oneof<datetime, nothing> {
 $env.__state_start
 }
 
-def --env 'write start' [--skipval(-s)]: datetime -> nothing {
+def --env 'write start' [--skipval(-s)]: oneof<datetime, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_start = $new
   return
 }
 let err = $new | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
@@ -142,23 +142,33 @@ $env.__state_start = $new
 
 def --env 'validate start' []: nothing -> oneof<string, nothing> {
 read start | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 }
 
-def --env 'read end' []: nothing -> datetime {
+def --env 'read end' []: nothing -> oneof<datetime, nothing> {
 $env.__state_end
 }
 
-def --env 'write end' [--skipval(-s)]: datetime -> nothing {
+def --env 'write end' [--skipval(-s)]: oneof<datetime, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_end = $new
   return
 }
 let err = $new | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
@@ -170,14 +180,18 @@ $env.__state_end = $new
 
 def --env 'validate end' []: nothing -> oneof<string, nothing> {
 read end | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 }
 
 def --env 'set parent' []: nothing -> nothing {
-read parent
-	| do --env {|| 
+let new = read parent | do --env {|| 
 {
   type: PARENT
   task_id: $params.task_id
@@ -186,24 +200,25 @@ read parent
 | get entries
 | util choose table --header 'Choose parent:'
  }
-	| write parent 
+if $new == null { return }
+$new | write parent 
 }
 
 def --env 'set start' []: nothing -> nothing {
-read start
-	| do --env {|| util choose date }
-	| write start 
+let new = read start | do --env {|| do --env {|| util choose date } }
+if $new == null { return }
+$new | write start 
 }
 
 def --env 'set end' []: nothing -> nothing {
-read end
-	| do --env {|| util choose date }
-	| write end 
+let new = read end | do --env {|| do --env {|| util choose date } }
+if $new == null { return }
+$new | write end 
 }
 
 def --env 'add prereqs' []: nothing -> nothing {
 let orig = read prereqs
-let chosen = $orig | do --env {|| let chosen = {
+let chosen = $orig | do --env {|| {
   type: PREREQ
   task_id: $params.task_id
 }
@@ -218,7 +233,7 @@ $orig
 
 def --env 'add postreqs' []: nothing -> nothing {
 let orig = read postreqs
-let chosen = $orig | do --env {|| let chosen = {
+let chosen = $orig | do --env {|| {
   type: POSTREQ
   task_id: $params.task_id
 }
@@ -294,7 +309,12 @@ if $err != null {
   return
 }
 let err = read start | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
@@ -303,7 +323,12 @@ if $err != null {
   return
 }
 let err = read end | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
@@ -323,7 +348,10 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Parent [relationships]'
 util print desc 'Parent task'
-read parent | do --env {|| table -e | print } | print
+read parent | do --env {|| match ($in | describe) {
+'record' => { $in | do {|| table -e | print } }
+'nothing' => { $in | do {|| print } }
+} } | print
 let err = read parent | do --env {|| null }
 if $err != null {
 	util print error $err
@@ -355,9 +383,17 @@ if $err != null {
 print ''
 util print label 'Start [explicit_range]'
 util print desc 'An explicit time which the task must start after.'
-read start | do --env {|| util print date $in } | print
+read start | do --env {|| match ($in | describe) {
+'datetime' => { $in | do {|| util print date $in } }
+'nothing' => { $in | do {|| print } }
+} } | print
 let err = read start | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
@@ -366,9 +402,17 @@ if $err != null {
 print ''
 util print label 'End [explicit_range]'
 util print desc 'An explicit time which the task must start before.'
-read end | do --env {|| util print date $in } | print
+read end | do --env {|| match ($in | describe) {
+'datetime' => { $in | do {|| util print date $in } }
+'nothing' => { $in | do {|| print } }
+} } | print
 let err = read end | do --env {|| 
-if (read start) >= (read end) {
+if (read start) == null or (read end) == null {
+  return
+}
+let start: datetime = read start
+let end: datetime = read end
+if $start >= $end {
   'explicit start cannot be >= end'
 } }
 if $err != null {
@@ -452,7 +496,11 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title 'task-optional'
 cmds | table -e | print
-
+$env.__state_parent = do --env {|| $params.parent }
+$env.__state_prereqs = do --env {|| $params.prereqs }
+$env.__state_postreqs = do --env {|| $params.postreqs }
+$env.__state_start = do --env {|| $params.start }
+$env.__state_end = do --env {|| $params.end }
 
 alias c = cancel
 alias d = done

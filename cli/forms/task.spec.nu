@@ -27,13 +27,18 @@ def "write tmp task id run" []: nothing -> string {
 }
 
 # @type types.Field
-let req_fields_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let req_fields_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: required
   display_name: "Required Fields"
   desc: "Required task fields."
   group: ""
   type: {type: record fields: $required_fields}
   display_value: null
+  init: (
+    callback make [] $"$params.state
+| select ($required_ids | str join ' ')
+  "
+  )
   ops: {
     read: true
     write: true
@@ -80,13 +85,17 @@ let default_dur_cfg = {
 }
 
 # @type types.Field
-let opt_fields_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+let opt_fields_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
   id: optional
   display_name: "Optional Fields"
   desc: "Optional task fields."
   group: ""
   type: {type: record fields: $optional_fields}
   display_value: null
+  init: (
+    callback make [] $"$params.state
+| reject ($required_ids | str join ' ')"
+  )
   ops: {
     read: true
     write: true
@@ -111,13 +120,13 @@ let output: record<expr: string> = callback make [] $"($remove_tmp_task | callba
 | merge \(($opt_fields_field | field cmd read name)\)"
 
 # @type list<types.Field>
-let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
+let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
   $req_fields_field
   $opt_fields_field
 ]
 
 # @type list<form.InteractiveField>
-let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = [
+let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = [
   {
     field: $req_fields_field
     interact: ($req_fields_field | field cmd interact set callback)
@@ -172,14 +181,7 @@ $new"
   ]
   init: {
     before_cmds: "let is_creating = $params.id == null"
-    after_cmds: $"
-$params.state
-| select ($required_ids | str join ' ')
-| ($req_fields_field | field cmd write name -s)
-
-$params.state
-| reject ($required_ids | str join ' ')
-| ($opt_fields_field | field cmd write name -s)
+    after_cmds: $"($fields | form fields init)
 
 $params.id | (write tmp task id run)
 
