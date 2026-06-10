@@ -162,9 +162,9 @@ def "default interact setter" [desc: string --multiline]: oneof<record<type: str
   let body: string = match $type {
     string => {
       if $multiline {
-        $"input multiline '($desc)'"
+        $"util input multiline '($desc)'"
       } else {
-        $"input text '($desc)'"
+        $"util input text '($desc)'"
       }
     }
     int => {
@@ -287,9 +287,10 @@ export def "cmd interact list add" [callback: record<expr: string>]: record<id: 
     def: {
       name: $"add ($field.id)"
       params: []
-      body: $"let chosen = ($callback | callback run)
+      body: $"let orig = ($field | cmd read name)
+let chosen = $orig | ($callback | callback run)
 if $chosen == null { return }
-$state
+$orig
 	| append $chosen
 	| ($field | cmd write name)"
       in: {type: "nothing"}
@@ -326,15 +327,15 @@ export def "cmd interact list remove" [entry: record<expr: string>]: record<id: 
     def: {
       name: $"remove ($field.id)"
       params: []
-      body: $"let state = ($field | cmd read name)
-let chosen = $state
+      body: $"let orig = ($field | cmd read name)
+let chosen = $orig
 	| each {|row|
 		\($row | ($entry | callback run)\)
 	}
 	| util choose table --header 'Remove: ($field.desc)'
 if $chosen == null { return }
 if not \(util confirm --prompt $\"Are you sure you wish to remove \($chosen.name\)?\"\) { return }
-$state
+$orig
 	| where \($it | ($entry | callback run) | get id\) != $chosen.id
 	| ($field | cmd write name)"
       in: {type: "nothing"}
@@ -383,7 +384,7 @@ export def "cmd interact list edit" [entry: record<expr: string> edit: record<ex
     def: {
       name: $"edit ($field.id)"
       params: []
-      body: $"let state = ($field | cmd read name)
+      body: $"let orig = ($field | cmd read name)
 	| each {|row|
 		{
 			row: $row
@@ -391,19 +392,19 @@ export def "cmd interact list edit" [entry: record<expr: string> edit: record<ex
 		}
 	}
 
-let chosen = $state
+let chosen = $orig
 	| get entry
 	| util choose table --header 'Edit: ($field.desc)'
 if $chosen == null { return }
 
-let new_row = $state
+let new_row = $orig
 	| where entry == $chosen
 	| get row
 	| ($edit | callback run)
 
 if $new_row == null { return }
 
-$state
+$orig
 	| each {|row|
 		if $in.entry == $chosen { $new_row } else { $row }
 	}

@@ -1,3 +1,4 @@
+# nu-lint-ignore-file: dont_mix_different_effects
 # @usetype "./lib/gen/types.nu"
 
 use ./lib/gen/form.nu
@@ -41,3 +42,19 @@ $forms
 $forms
 | get obj
 | index generate ($dir_self | path join gen)
+
+let errors = ls ./gen/*.nu
+  | each {
+    let entry = $in
+    try {
+      nu-check --debug $entry.name
+    } catch {|err|
+      print $entry.name ($err | get msg)
+      print ""
+      false
+    }
+  }
+  | where not $it
+if ($errors | is-empty) {
+  print success.
+}

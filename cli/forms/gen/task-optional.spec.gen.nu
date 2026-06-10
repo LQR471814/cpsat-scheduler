@@ -187,7 +187,8 @@ read end
 }
 
 def --env 'add prereqs' []: nothing -> nothing {
-let chosen = do --env {|| let chosen = {
+let orig = read prereqs
+let chosen = $orig | do --env {|| let chosen = {
   type: PREREQ
   task_id: $params.task_id
 }
@@ -195,13 +196,14 @@ let chosen = do --env {|| let chosen = {
 | get entries
 | util choose table --header 'Choose a PREREQ to add:' }
 if $chosen == null { return }
-$state
+$orig
 	| append $chosen
 	| write prereqs 
 }
 
 def --env 'add postreqs' []: nothing -> nothing {
-let chosen = do --env {|| let chosen = {
+let orig = read postreqs
+let chosen = $orig | do --env {|| let chosen = {
   type: POSTREQ
   task_id: $params.task_id
 }
@@ -209,35 +211,35 @@ let chosen = do --env {|| let chosen = {
 | get entries
 | util choose table --header 'Choose a POSTREQ to add:' }
 if $chosen == null { return }
-$state
+$orig
 	| append $chosen
 	| write postreqs 
 }
 
 def --env 'remove prereqs' []: nothing -> nothing {
-let state = read prereqs
-let chosen = $state
+let orig = read prereqs
+let chosen = $orig
 	| each {|row|
 		($row | do --env {|| $in })
 	}
 	| util choose table --header 'Remove: Tasks that must be scheduled before this task.'
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
-$state
+$orig
 	| where ($it | do --env {|| $in } | get id) != $chosen.id
 	| write prereqs 
 }
 
 def --env 'remove postreqs' []: nothing -> nothing {
-let state = read postreqs
-let chosen = $state
+let orig = read postreqs
+let chosen = $orig
 	| each {|row|
 		($row | do --env {|| $in })
 	}
 	| util choose table --header 'Remove: Tasks that must be scheduled after this task.'
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
-$state
+$orig
 	| where ($it | do --env {|| $in } | get id) != $chosen.id
 	| write postreqs 
 }
@@ -290,11 +292,12 @@ if $err != null {
   util print label 'End:'
 	util print error $err
   return
-};	'parent': (read parent)
-	'prereqs': (read prereqs)
-	'postreqs': (read postreqs)
-	'start': (read start)
-	'end': (read end) | nav save form output
+}
+{'parent': (read parent)
+'prereqs': (read prereqs)
+'postreqs': (read postreqs)
+'start': (read start)
+'end': (read end)} | nav save form output
 
 exit
 }

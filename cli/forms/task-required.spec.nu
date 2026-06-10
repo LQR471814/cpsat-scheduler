@@ -83,7 +83,6 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     type: record
     fields: [
       [key value];
-      [task_id {type: int}]
       [name ({type: string} | types optional)]
       [desc ({type: string} | types optional)]
       [timescale ({type: int} | types optional)]

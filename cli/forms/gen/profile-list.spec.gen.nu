@@ -62,8 +62,8 @@ read profile | append {
 }
 
 def --env 'remove profile' []: nothing -> nothing {
-let state = read profile
-let chosen = $state
+let orig = read profile
+let chosen = $orig
 	| each {|row|
 		($row | do --env {||
           # @type apigen.Profile
@@ -74,7 +74,7 @@ let chosen = $state
 	| util choose table --header 'Remove: List of existing profiles.'
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
-$state
+$orig
 	| where ($it | do --env {||
           # @type apigen.Profile
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
@@ -84,7 +84,7 @@ $state
 }
 
 def --env 'edit profile' []: nothing -> nothing {
-let state = read profile
+let orig = read profile
 	| each {|row|
 		{
 			row: $row
@@ -96,12 +96,12 @@ let state = read profile
 		}
 	}
 
-let chosen = $state
+let chosen = $orig
 	| get entry
 	| util choose table --header 'Edit: List of existing profiles.'
 if $chosen == null { return }
 
-let new_row = $state
+let new_row = $orig
 	| where entry == $chosen
 	| get row
 	| do --env {||
@@ -110,7 +110,7 @@ let new_row = $state
 
 if $new_row == null { return }
 
-$state
+$orig
 	| each {|row|
 		if $in.entry == $chosen { $new_row } else { $row }
 	}
@@ -133,7 +133,8 @@ if $err != null {
   util print label 'Profiles:'
 	util print error $err
   return
-};do --env {|| read profile } | nav save form output
+}
+{do --env {|| read profile }} | nav save form output
 
 exit
 }

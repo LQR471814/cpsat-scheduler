@@ -36,14 +36,14 @@ if $err != null {
     | each {|field|
       # @type types.Field
       let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
-      $"\t'($field.id)': \(($field | field cmd read name)\)"
+      $"'($field.id)': \(($field | field cmd read name)\)"
     }
     | str join "\n"
   } else {
     $output | callback run
   }
 
-  let body = $"($validation);($output) | nav save form output
+  let body = $"($validation)\n{($output)} | nav save form output
 
 exit"
   {

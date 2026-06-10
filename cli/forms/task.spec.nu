@@ -169,7 +169,7 @@ $params.state
 
 $params.state
 | reject ($required_ids | str join ' ')
-| ($req_fields_field | field cmd write name -s)
+| ($opt_fields_field | field cmd write name -s)
 
 $params.id | (write tmp task id run)"
   }

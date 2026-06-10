@@ -7,10 +7,10 @@ use ../../lib/proto/apipb/api.gen.nu
 
 
 
-let __input: record<prompt_prefix: string, params: record<task_id: int, name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<task_id: int, name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>> = $__input.params
+let params: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, timescale: oneof<int, nothing>> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
@@ -100,13 +100,13 @@ read timescale | do --env {|| }
 
 def --env 'set name' []: nothing -> nothing {
 read name
-	| do --env {|| {|| input text 'The name of the task.' } }
+	| do --env {|| {|| util input text 'The name of the task.' } }
 	| write name 
 }
 
 def --env 'set desc' []: nothing -> nothing {
 read desc
-	| do --env {|| {|| input text 'The description of the task.' } }
+	| do --env {|| {|| util input text 'The description of the task.' } }
 	| write desc 
 }
 
@@ -144,9 +144,10 @@ if $err != null {
   util print label 'Unit:'
 	util print error $err
   return
-};	'name': (read name)
-	'desc': (read desc)
-	'timescale': (read timescale) | nav save form output
+}
+{'name': (read name)
+'desc': (read desc)
+'timescale': (read timescale)} | nav save form output
 
 exit
 }
