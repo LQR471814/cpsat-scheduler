@@ -126,21 +126,17 @@ let default_dur_cfg = {
 | do --env {|| $env.__tmp_task_id = $in } }
 }
 
-def --env 'read optional' []: nothing -> record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> {
+def --env 'read optional' []: nothing -> record<prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> {
 $env.__state_optional
 }
 
-def --env 'write optional' [--skipval(-s)]: record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> -> nothing {
+def --env 'write optional' [--skipval(-s)]: record<prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_optional = $new
   return
 }
-let err = $new | do --env {||
-        if $in.duration_cfg == null {
-          'optional field duration_cfg must not be null'
-        }
-      }
+let err = $new | do --env {|| null }
 if $err != null {
   util print error $err
   return
@@ -149,11 +145,63 @@ $env.__state_optional = $new
 }
 
 def --env 'validate optional' []: nothing -> oneof<string, nothing> {
-read optional | do --env {||
-        if $in.duration_cfg == null {
-          'optional field duration_cfg must not be null'
-        }
-      }
+read optional | do --env {|| null }
+}
+
+def --env 'read duration' []: nothing -> record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>> {
+$env.__state_duration
+}
+
+def --env 'write duration' [--skipval(-s)]: record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>> -> nothing {
+let new = $in
+if $skipval {
+  $env.__state_duration = $new
+  return
+}
+let err = $new | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
+if $err != null {
+  util print error $err
+  return
+}
+$env.__state_duration = $new
+}
+
+def --env 'validate duration' []: nothing -> oneof<string, nothing> {
+read duration | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
+}
+
+def --env 'read children' []: nothing -> record<children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> {
+$env.__state_children
+}
+
+def --env 'write children' [--skipval(-s)]: record<children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> -> nothing {
+let new = $in
+if $skipval {
+  $env.__state_children = $new
+  return
+}
+let err = $new | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
+if $err != null {
+  util print error $err
+  return
+}
+$env.__state_children = $new
+}
+
+def --env 'validate children' []: nothing -> oneof<string, nothing> {
+read children | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
 }
 
 def --env 'set required' []: nothing -> nothing {
@@ -229,13 +277,27 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read optional | do --env {||
-        if $in.duration_cfg == null {
-          'optional field duration_cfg must not be null'
-        }
-      }
+let err = read optional | do --env {|| null }
 if $err != null {
   util print label 'Optional Fields:'
+	util print error $err
+  return
+}
+let err = read duration | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
+if $err != null {
+  util print label 'Explicit Duration:'
+	util print error $err
+  return
+}
+let err = read children | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
+if $err != null {
+  util print label 'Children Duration:'
 	util print error $err
   return
 }
@@ -296,11 +358,29 @@ print ''
 util print label 'Optional Fields'
 util print desc 'Optional task fields.'
 read optional | do --env {|| table -e | print } | print
-let err = read optional | do --env {||
-        if $in.duration_cfg == null {
-          'optional field duration_cfg must not be null'
-        }
-      }
+let err = read optional | do --env {|| null }
+if $err != null {
+	util print error $err
+}
+print ''
+util print label 'Explicit Duration [duration]'
+util print desc 'If set, the duration of the task will be determined solely by a PERT distribution. If this is set, children cannot be set.'
+read duration | do --env {|| table -e | print } | print
+let err = read duration | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
+if $err != null {
+	util print error $err
+}
+print ''
+util print label 'Children Duration [duration]'
+util print desc 'If not empty, the duration of the task will be determined by the sum of the durations chosen by the children. If this is set, explicit duration cannot be set.'
+read children | do --env {|| table -e | print } | print
+let err = read children | do --env {|| 
+if (read duration) == null and (read children) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+} }
 if $err != null {
 	util print error $err
 }
@@ -324,6 +404,14 @@ if (validate optional) != null {
 	}
 	return (next)
 }
+if (validate duration) != null {
+	do --env {|| print "use `set duration` or `set children` to set a duration" }
+	let err = validate duration
+	if $err != null {
+		return false
+	}
+	return (next)
+}
 return true
 }
 
@@ -334,6 +422,12 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["","read optional","","Get the value of optional."]
 ["","write optional","","Set the value of optional."]
 ["","validate optional","","Check if the current value of optional has any errors."]
+["duration","read duration","","Get the value of duration."]
+["duration","write duration","","Set the value of duration."]
+["duration","validate duration","","Check if the current value of duration has any errors."]
+["duration","read children","","Get the value of children."]
+["duration","write children","","Set the value of children."]
+["duration","validate children","","Check if the current value of children has any errors."]
 ["","set required","","Set required interactively."]
 ["","set optional","","Set optional interactively."]
 ["control","cancel","c","Abort submission and discard changes."]
@@ -348,7 +442,9 @@ $env.__state_required = do --env {|| $params.state
 | select name desc timescale
    }
 $env.__state_optional = do --env {|| $params.state
-| reject name desc timescale }
+| select start end prereqs postreqs parent }
+$env.__state_duration = do --env {|| $params.state | get duration_cfg }
+$env.__state_children = do --env {|| $params.state | get children_cfgs }
 
 $params.id | do --env {|| $env.__tmp_task_id = $in }
 

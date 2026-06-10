@@ -11,6 +11,7 @@ use ../lib/proto/apipb/api.gen.nu
 use ./task-common.nu
 
 let required_ids = task-common required ids
+let optional_ids = task-common optional ids
 let task_type = api.gen type TaskState
 let required_fields = task-common required fields
 let optional_fields = task-common optional fields
@@ -90,24 +91,71 @@ let opt_fields_field: record<id: string, display_name: string, desc: string, gro
   display_name: "Optional Fields"
   desc: "Optional task fields."
   group: ""
-  type: {type: record fields: $optional_fields}
+  type: {
+    type: record
+    fields: $optional_fields
+  }
   display_value: null
   init: (
     callback make [] $"$params.state
-| reject ($required_ids | str join ' ')"
+| select ($optional_ids | str join ' ')"
   )
   ops: {
     read: true
     write: true
-    validate: (
-      {||
-        if $in.duration_cfg == null {
-          'optional field duration_cfg must not be null'
-        }
-      } | callback from closure
-    )
+    validate: ({|| null } | callback from closure)
   }
 }
+
+# @type types.Field
+let dur_cfg_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+  id: duration
+  display_name: "Explicit Duration"
+  desc: "If set, the duration of the task will be determined solely by a PERT distribution. If this is set, children cannot be set."
+  group: duration
+  type: {
+    type: record
+    fields: ($task_type.fields | where key == duration_cfg)
+  }
+  display_value: null
+  init: (
+    callback make [] $"$params.state | get duration_cfg"
+  )
+  ops: {
+    read: true
+    write: true
+    validate: ({|| null } | callback from closure)
+  }
+}
+
+# @type types.Field
+let children_cfg_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
+  id: children
+  display_name: "Children Duration"
+  desc: "If not empty, the duration of the task will be determined by the sum of the durations chosen by the children. If this is set, explicit duration cannot be set."
+  group: duration
+  type: {
+    type: record
+    fields: ($task_type.fields | where key == children_cfgs)
+  }
+  display_value: null
+  init: (
+    callback make [] $"$params.state | get children_cfgs"
+  )
+  ops: {
+    read: true
+    write: true
+    validate: ({|| null } | callback from closure)
+  }
+}
+
+let validate_duration = callback make [] $"
+if \(($dur_cfg_field | field cmd read name)\) == null and \(($children_cfg_field | field cmd read name)\) == null {
+  'either an explicit duration configuration or at least one child configuration must be set'
+}"
+
+let dur_cfg_field = $dur_cfg_field | update ops.validate { $validate_duration }
+let children_cfg_field = $children_cfg_field | update ops.validate { $validate_duration }
 
 # delete task if cancel on newly created task (after required fields)
 # @type callback.Callback
@@ -123,6 +171,8 @@ let output: record<expr: string> = callback make [] $"($remove_tmp_task | callba
 let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
   $req_fields_field
   $opt_fields_field
+  $dur_cfg_field
+  $children_cfg_field
 ]
 
 # @type list<form.InteractiveField>
@@ -134,6 +184,10 @@ let fields_ordering: list<record<field: record<id: string, display_name: string,
   {
     field: $opt_fields_field
     interact: ($opt_fields_field | field cmd interact set callback)
+  }
+  {
+    field: $dur_cfg_field
+    interact: (callback make [] 'print "use `set duration` or `set children` to set a duration"')
   }
 ]
 
@@ -173,6 +227,14 @@ $new"
 } | index form task-optional"
       )
     )
+    # (
+    # $dur_cfg_field | field cmd interact set --callback (
+    # )
+    # )
+    # (
+    # $children_cfg_field | field cmd interact set --callback (
+    # )
+    # )
 
     (form cmd cancel --before $remove_tmp_task)
     ($fields | form cmd done --output $output)
