@@ -64,8 +64,13 @@ let timescale_field: record<id: string, display_name: string, desc: string, grou
     write: true
     validate: (
       {||
-        if ($in == null) {
+        let unit: int = $in
+        if ($unit == null) {
           "timescale should not be null"
+        }
+        let possible = $timescales | get id
+        if ($unit in $possible) {
+          $"the given timescale is not one of the possible timescales: ($possible)"
         }
       } | callback from closure
     )
@@ -107,7 +112,15 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   use: []
   commands: [
     ...($fields | each { field cmds core } | flatten)
-    ...($fields | each { field cmd interact set })
+    ($name_field | field cmd interact set)
+    ($desc_field | field cmd interact set --multiline)
+    (
+      $timescale_field | field cmd interact set --callback (
+        callback make [] "$timescales
+| util choose table --header 'Timescale unit (upper-bound for task duration):'
+| get id?"
+      )
+    )
 
     (form cmd cancel)
     ($fields | form cmd done)
@@ -115,7 +128,24 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: ""
+    before_cmds: "
+let timescales: table<id: int, name: string> = [
+  [id name];
+  [16 '4 hour']
+  [96 'day']
+  [672 'week']
+  [2688 'month']
+  [8064 'quarter']
+  [32256 'year']
+  [64512 '2 year']
+  [129024 '4 year']
+  [258048 '8 year']
+  [516096 '16 year']
+  [1032192 '32 year']
+  [2064384 '64 year']
+  [4128768 '128 year']
+]
+    "
     after_cmds: $"
 $params.name | ($name_field | field cmd write name -s)
 $params.desc | ($desc_field | field cmd write name -s)
