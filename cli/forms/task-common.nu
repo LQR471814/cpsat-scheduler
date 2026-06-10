@@ -11,7 +11,7 @@ export def "required ids" []: nothing -> list<string> {
 # @input nothing
 # @output types.TypeDef
 export def type []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
-  api.gen type ReadTaskResponse
+  api.gen type TaskState
 }
 
 # @input nothing

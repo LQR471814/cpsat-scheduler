@@ -104,7 +104,10 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: ""
+    before_cmds: $"
+$params.name | ($name_field | field cmd write name)
+$params.desc | ($desc_field | field cmd write name)
+$params.timescale | ($timescale_field | field cmd write name)"
     after_cmds: ""
   }
 }

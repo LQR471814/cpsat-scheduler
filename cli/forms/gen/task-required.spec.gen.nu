@@ -16,6 +16,9 @@ let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
 
+$params.name | write name 
+$params.desc | write desc 
+$params.timescale | write timescale 
 
 def 'prompt prefix' []: nothing -> string {
 $"($prompt_prefix) \(task-required\)"
@@ -152,8 +155,8 @@ def --env 'status' []: nothing -> nothing {
 util print label 'Name []'
 util print desc 'The name of the task.'
 read name | do --env {|| match ($in | describe) {
-string => { $in | {|| util print desc $in } }
-nothing => { $in | {|| print } }
+'string' => { $in | do {|| util print desc $in } }
+'nothing' => { $in | do {|| print } }
 } } | print
 let err = read name | do --env {||
         if ($in | is-empty) {
@@ -167,8 +170,8 @@ print ''
 util print label 'Description []'
 util print desc 'The description of the task.'
 read desc | do --env {|| match ($in | describe) {
-string => { $in | {|| util print desc $in } }
-nothing => { $in | {|| print } }
+'string' => { $in | do {|| util print desc $in } }
+'nothing' => { $in | do {|| print } }
 } } | print
 let err = read desc | do --env {|| }
 if $err != null {
@@ -178,8 +181,8 @@ print ''
 util print label 'Unit []'
 util print desc 'Timescale timescale (should be the upper-bound for task duration).'
 read timescale | do --env {|| match ($in | describe) {
-int => { $in | {|| util print number $in } }
-nothing => { $in | {|| print } }
+'int' => { $in | do {|| util print number $in } }
+'nothing' => { $in | do {|| print } }
 } } | print
 let err = read timescale | do --env {|| }
 if $err != null {

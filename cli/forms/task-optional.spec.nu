@@ -206,7 +206,12 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: ""
+    before_cmds: $"
+$params.parent | ($parent_field | field cmd write name)
+$params.prereqs | ($prereqs_field | field cmd write name)
+$params.postreqs | ($postreqs_field | field cmd write name)
+$params.start | ($start_field | field cmd write name)
+$params.end | ($end_field | field cmd write name)"
     after_cmds: ""
   }
 }

@@ -436,7 +436,7 @@ def "default display value callback" []: oneof<record<type: string, positional: 
           let expr = $typedef
             | default display value callback
             | get expr
-          $"($typedef.type) => { $in | ($expr) }"
+          $"'($typedef.type)' => { $in | do ($expr) }"
         }
         | str join "\n"
 
