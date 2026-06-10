@@ -162,7 +162,6 @@ if (validate profile) != null {
       }
 	let err = validate profile
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)

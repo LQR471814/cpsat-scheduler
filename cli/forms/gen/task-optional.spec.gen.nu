@@ -363,7 +363,6 @@ if (validate parent) != null {
 	do --env {|| set parent }
 	let err = validate parent
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -372,7 +371,6 @@ if (validate prereqs) != null {
 	do --env {|| set prereqs }
 	let err = validate prereqs
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -381,7 +379,6 @@ if (validate postreqs) != null {
 	do --env {|| set postreqs }
 	let err = validate postreqs
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -390,7 +387,6 @@ if (validate start) != null {
 	do --env {|| set start }
 	let err = validate start
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -399,7 +395,6 @@ if (validate end) != null {
 	do --env {|| set end }
 	let err = validate end
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)

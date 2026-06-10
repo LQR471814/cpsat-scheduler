@@ -93,7 +93,7 @@ if $skipval {
 }
 let err = $new | do --env {||
         if ($in == null) {
-          "timescale shoud not be null"
+          "timescale should not be null"
         }
       }
 if $err != null {
@@ -106,7 +106,7 @@ $env.__state_timescale = $new
 def --env 'validate timescale' []: nothing -> oneof<string, nothing> {
 read timescale | do --env {||
         if ($in == null) {
-          "timescale shoud not be null"
+          "timescale should not be null"
         }
       }
 }
@@ -159,7 +159,7 @@ if $err != null {
 }
 let err = read timescale | do --env {||
         if ($in == null) {
-          "timescale shoud not be null"
+          "timescale should not be null"
         }
       }
 if $err != null {
@@ -213,7 +213,7 @@ read timescale | do --env {|| match ($in | describe) {
 } } | print
 let err = read timescale | do --env {||
         if ($in == null) {
-          "timescale shoud not be null"
+          "timescale should not be null"
         }
       }
 if $err != null {
@@ -227,7 +227,6 @@ if (validate name) != null {
 	do --env {|| set name }
 	let err = validate name
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -236,7 +235,6 @@ if (validate desc) != null {
 	do --env {|| set desc }
 	let err = validate desc
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -245,7 +243,6 @@ if (validate timescale) != null {
 	do --env {|| set timescale }
 	let err = validate timescale
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)

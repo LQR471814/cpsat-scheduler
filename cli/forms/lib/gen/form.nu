@@ -170,7 +170,6 @@ export def "cmd next" []: list<record<field: record<id: string, display_name: st
 	($interact | callback run)
 	let err = ($field | field cmd validate name)
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return \(next\)

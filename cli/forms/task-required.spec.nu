@@ -65,7 +65,7 @@ let timescale_field: record<id: string, display_name: string, desc: string, grou
     validate: (
       {||
         if ($in == null) {
-          "timescale shoud not be null"
+          "timescale should not be null"
         }
       } | callback from closure
     )

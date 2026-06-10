@@ -273,7 +273,6 @@ if (validate required) != null {
 	do --env {|| set required }
 	let err = validate required
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
@@ -282,7 +281,6 @@ if (validate optional) != null {
 	do --env {|| set optional }
 	let err = validate optional
 	if $err != null {
-		util print error $err
 		return false
 	}
 	return (next)
