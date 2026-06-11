@@ -50,9 +50,6 @@ if ($v.name? | is-empty) {
 if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-if $env.__tmp_task_id != null {
-  return
-}
 
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
@@ -61,7 +58,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: null
+  id: $env.__tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -95,9 +92,6 @@ if ($v.name? | is-empty) {
 if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-if $env.__tmp_task_id != null {
-  return
-}
 
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
@@ -106,7 +100,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: null
+  id: $env.__tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -258,9 +252,6 @@ if ($v.name? | is-empty) {
 if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-if $env.__tmp_task_id != null {
-  return
-}
 
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
@@ -269,7 +260,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: null
+  id: $env.__tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -337,9 +328,6 @@ if ($v.name? | is-empty) {
 if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-if $env.__tmp_task_id != null {
-  return
-}
 
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
@@ -348,7 +336,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: null
+  id: $env.__tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name

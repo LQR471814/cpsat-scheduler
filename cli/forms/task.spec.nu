@@ -52,9 +52,6 @@ if \($v.name? | is-empty\) {
 if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
-if (access tmp task id) != null {
-  return
-}
 
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
@@ -63,7 +60,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: null
+  id: (access tmp task id)?
   profile_id: $params.profile_id
   state: {
     name: $v.name
