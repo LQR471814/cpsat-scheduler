@@ -6,16 +6,16 @@ export def --env "form task-required" []: record<name: oneof<string, nothing>, d
 nav exec form ($form_dir | path join "task-required.spec.gen.nu") $in
 }
 
-export def --env "form task-child-config" []: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int> -> record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>> {
-nav exec form ($form_dir | path join "task-child-config.spec.gen.nu") $in
+export def --env "form task-duration" []: oneof<record<pert: oneof<oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, nothing>, deadline: oneof<oneof<nothing, datetime>, nothing>, total_cost: oneof<oneof<nothing, int>, nothing>>, nothing> -> record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>> {
+nav exec form ($form_dir | path join "task-duration.spec.gen.nu") $in
 }
 
 export def --env "form profile-list" []: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> {
 nav exec form ($form_dir | path join "profile-list.spec.gen.nu") $in
 }
 
-export def --env "form task-duration" []: oneof<record<pert: oneof<oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, nothing>, deadline: oneof<oneof<nothing, datetime>, nothing>, total_cost: oneof<oneof<nothing, int>, nothing>>, nothing> -> record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>> {
-nav exec form ($form_dir | path join "task-duration.spec.gen.nu") $in
+export def --env "form task-child-config" []: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int> -> record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>> {
+nav exec form ($form_dir | path join "task-child-config.spec.gen.nu") $in
 }
 
 export def --env "form task-children-configs" []: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> -> list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> {

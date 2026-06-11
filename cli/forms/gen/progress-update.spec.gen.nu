@@ -89,9 +89,7 @@ let chosen = {
   end: (date now)
 } | api.gen API ListScheduledTasks | get entries | util choose table --header 'Choose a task:' | get id?
 if $chosen == null { return }
-$chosen
-| get id
-| update task
+$chosen | update task
 }
 
 export def --env "pick task" [--start(-s): datetime --end(-e): datetime]: nothing -> nothing {
@@ -104,7 +102,7 @@ let chosen = {
   end: ($end | default ($now + 1wk))
 } | api.gen API ListScheduledTasks | get entries | util choose table --header 'Choose a task:' | get id?
 if $chosen == null { return }
-$chosen | get id | update task
+$chosen | update task
 }
 
 def --env "progress log" []: nothing -> string {
