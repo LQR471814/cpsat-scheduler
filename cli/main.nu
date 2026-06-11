@@ -29,7 +29,7 @@ def "edit profiles" []: nothing -> record<created: list<string>, updated: list<s
 
   let created = $new
     | where id == null
-    | each {
+    | par-each {
       let prof = $in
       $prof
       | reject id
@@ -104,10 +104,33 @@ def --env "new task" []: nothing -> nothing {
 }
 
 def --env "progress update" []: nothing -> nothing {
+  let res = {
+    profile_id: (profile read)
+  }
+    | index form progress-update
+
   {
-    prompt_prefix: (prompt prefix)
-    state: {profile: (profile read)}
-  } | index form progress
+    profile: (profile read)
+    time: (date now)
+    desc: $res.progress_log
+    updates: (
+      $res.modified | each {|row|
+        {
+          task: $row.id
+          desc: null
+        }
+      }
+    )
+  } | api.gen API ProgressUpdate
+
+  $res.modified
+  | par-each {|row|
+    {
+      profile_id: (profile read)
+      id: $row.id
+      state: $row.state
+    } | api.gen API SaveTask
+  }
 
   schedule recompute
 }
