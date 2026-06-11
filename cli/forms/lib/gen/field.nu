@@ -303,7 +303,7 @@ export def "cmd interact list add" [callback: record<expr: string>]: record<id: 
       name: ($field | cmd interact list add name)
       params: []
       body: $"let orig = ($field | cmd read name)
-let chosen = $orig | ($callback | callback run)
+let chosen = ($callback | callback run)
 if $chosen == null { return }
 $orig
 	| append $chosen

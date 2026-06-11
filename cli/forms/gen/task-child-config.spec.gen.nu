@@ -152,7 +152,7 @@ $new | write deadline
 
 def --env "add children" []: nothing -> nothing {
 let orig = read children
-let chosen = $orig | do --env {|| {
+let chosen = do --env {|| {
   type: CHILD
   task_id: $params.task_id
 }

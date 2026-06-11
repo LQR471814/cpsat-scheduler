@@ -56,7 +56,7 @@ read children | do --env {|| null }
 
 def --env "add children" []: nothing -> nothing {
 let orig = read children
-let chosen = $orig | do --env {|| index form task-child-config }
+let chosen = do --env {|| index form task-child-config }
 if $chosen == null { return }
 $orig
 	| append $chosen

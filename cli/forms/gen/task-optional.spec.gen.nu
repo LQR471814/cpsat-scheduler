@@ -218,7 +218,7 @@ $new | write end
 
 def --env "add prereqs" []: nothing -> nothing {
 let orig = read prereqs
-let chosen = $orig | do --env {|| {
+let chosen = do --env {|| {
   type: PREREQ
   task_id: $params.task_id
 }
@@ -233,7 +233,7 @@ $orig
 
 def --env "add postreqs" []: nothing -> nothing {
 let orig = read postreqs
-let chosen = $orig | do --env {|| {
+let chosen = do --env {|| {
   type: POSTREQ
   task_id: $params.task_id
 }
