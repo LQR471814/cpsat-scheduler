@@ -32,14 +32,14 @@ def "prompt prefix" []: nothing -> string {
 $"($prompt_prefix) \(" + "task-children-configs" + "\)"
 }
 
-def --env "read children" []: nothing -> list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> {
-$env.__state_children
+def --env "read configs" []: nothing -> list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> {
+$env.__state_configs
 }
 
-def --env "write children" [--skipval(-s)]: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> -> nothing {
+def --env "write configs" [--skipval(-s)]: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_children = $new
+  $env.__state_configs = $new
   return
 }
 let err = $new | do --env {|| null }
@@ -47,15 +47,15 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_children = $new
+$env.__state_configs = $new
 }
 
-def --env "validate children" []: nothing -> oneof<string, nothing> {
-read children | do --env {|| null }
+def --env "validate configs" []: nothing -> oneof<string, nothing> {
+read configs | do --env {|| null }
 }
 
-def --env "add children" []: nothing -> nothing {
-let orig = read children
+def --env "add configs" []: nothing -> nothing {
+let orig = read configs
 let chosen = do --env {|| {
   task_id: $params.task_id
   desc: null
@@ -66,11 +66,11 @@ let chosen = do --env {|| {
 if $chosen == null { return }
 $orig
 	| append $chosen
-	| write children 
+	| write configs 
 }
 
-def --env "remove children" []: nothing -> nothing {
-let orig = read children
+def --env "remove configs" []: nothing -> nothing {
+let orig = read configs
 let chosen = $orig
   | enumerate
 	| each {|row|
@@ -85,7 +85,7 @@ $orig
 	| where ($it | do --env {|idx|
           {id: $idx name: $in.desc}
         } | get id) != $chosen.id
-	| write children 
+	| write configs 
 }
 
 def --env "cancel" [--no-prompt(-y)]: nothing -> nothing {
@@ -96,13 +96,13 @@ exit # nu-lint-ignore: exit_only_in_main
 }
 
 def --env "done" []: nothing -> nothing {
-let err = read children | do --env {|| null }
+let err = read configs | do --env {|| null }
 if $err != null {
   util print label "Children Configs"
 	util print error $err
   return
 }
-do --env {|| read children } | nav save form output
+do --env {|| read configs } | nav save form output
 
 exit
 }
@@ -110,8 +110,8 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "Children Configs"
 util print desc "List of children configurations."
-read children | do --env {|| table -e | print } | print
-let err = read children | do --env {|| null }
+read configs | do --env {|| table -e | print } | print
+let err = read configs | do --env {|| null }
 if $err != null {
 	util print error $err
 }
@@ -119,9 +119,9 @@ print ''
 }
 
 def --env "next" []: nothing -> bool {
-if (validate children) != null {
-	do --env {|| add children }
-	let err = validate children
+if (validate configs) != null {
+	do --env {|| add configs }
+	let err = validate configs
 	if $err != null {
 		return false
 	}
@@ -131,11 +131,11 @@ return true
 }
 
 def --env "cmds" []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
-[[group name aliases desc];["","read children","","Get the value of children."]
-["","write children","","Set the value of children."]
-["","validate children","","Check if the current value of children has any errors."]
-["","add children","","Add a value to list children interactively."]
-["","remove children","","Remove a value from list children interactively."]
+[[group name aliases desc];["","read configs","","Get the value of configs."]
+["","write configs","","Set the value of configs."]
+["","validate configs","","Check if the current value of configs has any errors."]
+["","add configs","","Add a value to list configs interactively."]
+["","remove configs","","Remove a value from list configs interactively."]
 ["control","cancel","c","Abort submission and discard changes."]
 ["control","done","d","Validate and submit form."]
 ["control","status","s","Show the current form status."]
@@ -144,7 +144,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-children-configs"
 cmds | table -e | print
-$env.__state_children = do --env {|| $params.children }
+$env.__state_configs = do --env {|| $params.children }
 
 alias c = cancel
 alias d = done

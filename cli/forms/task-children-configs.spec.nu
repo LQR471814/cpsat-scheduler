@@ -10,18 +10,18 @@ use ../lib/proto/apipb/api.gen.nu
 use ./task-common.nu
 
 # @type types.TypeDef
-let children_type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = {
+let children_configs_type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = {
   type: list
   positional: [(api.gen type ChildrenConfigState)]
 }
 
 # @type types.Field
 let children_field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = {
-  id: children
+  id: configs
   display_name: "Children Configs"
   desc: "List of children configurations."
   group: ""
-  type: $children_type
+  type: $children_configs_type
   display_value: null
   init: (callback make [] "$params.children")
   ops: {
@@ -54,10 +54,10 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     fields: [
       [key value];
       [task_id {type: int}]
-      [children $children_type]
+      [children $children_configs_type]
     ]
   }
-  returns: $children_type
+  returns: $children_configs_type
   use: []
   commands: [
     ...($fields | each { field cmds core } | flatten)
