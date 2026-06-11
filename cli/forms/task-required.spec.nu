@@ -71,7 +71,7 @@ let unit: int = $in
 if \($unit == null\) {
   \"timescale should not be null\"
 }
-let possible = $timescales | get id
+let possible = util timescales | get id
 if not \($unit in $possible\) {
   $\"the given timescale is not one of the possible timescales: ($possible)\"
 }"
@@ -118,7 +118,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($desc_field | field cmd interact set --multiline)
     (
       $timescale_field | field cmd interact set --callback (
-        callback make [] "$timescales
+        callback make [] "util timescales
 | util choose table --header 'Timescale unit (upper-bound for task duration):'
 | get id?"
       )
@@ -130,24 +130,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: "
-let timescales: table<id: int, name: string> = [
-  [id name];
-  [16 '4 hour']
-  [96 'day']
-  [672 'week']
-  [2688 'month']
-  [8064 'quarter']
-  [32256 'year']
-  [64512 '2 year']
-  [129024 '4 year']
-  [258048 '8 year']
-  [516096 '16 year']
-  [1032192 '32 year']
-  [2064384 '64 year']
-  [4128768 '128 year']
-]
-    "
+    before_cmds: ""
     after_cmds: $"($fields | form fields init)"
   }
 }

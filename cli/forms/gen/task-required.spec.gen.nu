@@ -27,23 +27,6 @@ let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
 
-let timescales: table<id: int, name: string> = [
-  [id name];
-  [16 '4 hour']
-  [96 'day']
-  [672 'week']
-  [2688 'month']
-  [8064 'quarter']
-  [32256 'year']
-  [64512 '2 year']
-  [129024 '4 year']
-  [258048 '8 year']
-  [516096 '16 year']
-  [1032192 '32 year']
-  [2064384 '64 year']
-  [4128768 '128 year']
-]
-    
 
 def "prompt prefix" []: nothing -> string {
 $"($prompt_prefix) \(" + "task-required" + "\)"
@@ -124,7 +107,7 @@ let unit: int = $in
 if ($unit == null) {
   "timescale should not be null"
 }
-let possible = $timescales | get id
+let possible = util timescales | get id
 if not ($unit in $possible) {
   $"the given timescale is not one of the possible timescales: ($possible)"
 } }
@@ -141,7 +124,7 @@ let unit: int = $in
 if ($unit == null) {
   "timescale should not be null"
 }
-let possible = $timescales | get id
+let possible = util timescales | get id
 if not ($unit in $possible) {
   $"the given timescale is not one of the possible timescales: ($possible)"
 } }
@@ -160,7 +143,7 @@ $new | write desc
 }
 
 def --env "set timescale" []: nothing -> nothing {
-let new = read timescale | do --env {|| $timescales
+let new = read timescale | do --env {|| util timescales
 | util choose table --header 'Timescale unit (upper-bound for task duration):'
 | get id? }
 if $new == null { return }
@@ -200,7 +183,7 @@ let unit: int = $in
 if ($unit == null) {
   "timescale should not be null"
 }
-let possible = $timescales | get id
+let possible = util timescales | get id
 if not ($unit in $possible) {
   $"the given timescale is not one of the possible timescales: ($possible)"
 } }
@@ -258,7 +241,7 @@ let unit: int = $in
 if ($unit == null) {
   "timescale should not be null"
 }
-let possible = $timescales | get id
+let possible = util timescales | get id
 if not ($unit in $possible) {
   $"the given timescale is not one of the possible timescales: ($possible)"
 } }

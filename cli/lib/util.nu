@@ -211,3 +211,32 @@ export def "spin show" [title: string]: string -> nothing {
   let path = $in | spin pipe
   gum spin --spinner dot --title $title -- $"($path).sh"
 }
+
+# timescales gives the built-in timescales
+# (eventually a better customizable timescale hierarchy will be created)
+export def timescales []: nothing -> table<id: int, name: string> {
+  [
+    [id name];
+    [16 '4 hour']
+    [96 day]
+    [672 week]
+    [2688 month]
+    [8064 quarter]
+    [32256 year]
+    [64512 '2 year']
+    [129024 '4 year']
+    [258048 '8 year']
+    [516096 '16 year']
+    [1032192 '32 year']
+    [2064384 '64 year']
+    [4128768 '128 year']
+  ]
+}
+
+# choose timescale shows a popup for the user to interactively choose a
+# timescale unit value
+export def "choose timescale" []: nothing -> int {
+  timescales
+  | choose table --header "Choose a timescale unit value:"
+  | get id
+}
