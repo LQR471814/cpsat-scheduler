@@ -311,7 +311,11 @@ do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id != null {
   {id: $env.__tmp_task_id} | api.gen API DeleteTask
 } }
 read required
-| merge (read optional) } | nav save form output
+| merge (read optional)
+| merge {
+  duration_cfg: (read duration)
+  children_cfgs: (read children)
+} } | nav save form output
 
 exit
 }

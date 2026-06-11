@@ -156,7 +156,11 @@ let remove_tmp_task: record<expr: string> = callback make [] $"if $is_creating a
 
 # @type callback.Callback
 let output: record<expr: string> = callback make [] $"($remove_tmp_task | callback run)\n($req_fields_field | field cmd read name)
-| merge \(($opt_fields_field | field cmd read name)\)"
+| merge \(($opt_fields_field | field cmd read name)\)
+| merge {
+  duration_cfg: \(($dur_cfg_field | field cmd read name)\)
+  children_cfgs: \(($children_cfg_field | field cmd read name)\)
+}"
 
 # @type list<types.Field>
 let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [

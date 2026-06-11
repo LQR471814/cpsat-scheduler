@@ -28,6 +28,7 @@
             go run ''${project_root}/cmd/gen/protoc-gen-nu
           '';
           nu-type-alias = nu-type-alias-flake.packages.${system}.default;
+          nu-type-fmt = nu-type-alias-flake.packages.${system}.nu-type-fmt;
           topiary-nushell = topiary-nushell-flake.packages.${system}.default;
         in
         pkgs.mkShell {
@@ -49,6 +50,9 @@
 
               topiary-nushell
               (nu-type-alias.overrideAttrs (old: {
+                doCheck = false;
+              }))
+              (nu-type-fmt.overrideAttrs (old: {
                 doCheck = false;
               }))
             ]

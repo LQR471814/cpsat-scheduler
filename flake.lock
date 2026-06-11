@@ -53,8 +53,8 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1781045731,
-        "narHash": "sha256-a3Nuevkf6q1SZl5eRsTtnQf6OntLuszTl0EuUvhp458=",
+        "lastModified": 1781216743,
+        "narHash": "sha256-oNQWGfUaLUZIux4m9XWNIMshlMS4+KJA0e4QorKIneg=",
         "path": "/home/lqr471814/go/src/nu-type-alias",
         "type": "path"
       },
