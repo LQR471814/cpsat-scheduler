@@ -22,8 +22,15 @@ let pert_field: record<id: string, display_name: string, desc: string, group: st
     write: true
     validate: (
       {||
-        if ($in | is-empty) {
+        let rng = $in
+        if ($rng | is-empty) {
           "PERT cannot be unset"
+        }
+        if $rng.opt > $rng.exp {
+          "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
+        }
+        if $rng.exp > $rng.pes {
+          "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
         }
       } | callback from closure
     )
@@ -84,12 +91,12 @@ let fields: list<record<id: string, display_name: string, desc: string, group: s
 # @type list<form.InteractiveField>
 let fields_ordering: list<record<field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>, interact: record<expr: string>>> = [
   {
-    field: $deadline_field
-    interact: ($deadline_field | field cmd interact set callback)
-  }
-  {
     field: $cost_field
     interact: ($cost_field | field cmd interact set callback)
+  }
+  {
+    field: $deadline_field
+    interact: ($deadline_field | field cmd interact set callback)
   }
   {
     field: $pert_field

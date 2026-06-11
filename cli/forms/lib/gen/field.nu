@@ -167,19 +167,19 @@ def "default interact setter" [desc: string --multiline]: oneof<record<type: str
   let body: string = match $type {
     string => {
       if $multiline {
-        $"util input multiline '($desc)'"
+        $"util input multiline ($desc | to json)"
       } else {
-        $"util input text '($desc)'"
+        $"util input text ($desc | to json)"
       }
     }
     int => {
-      $"util input int '($desc)'"
+      $"util input int ($desc | to json)"
     }
     float | number => {
-      $"util input float '($desc)'"
+      $"util input float ($desc | to json)"
     }
     bool => {
-      $"util confirm --prompt '($desc)'"
+      $"util confirm --prompt ($desc | to json)"
     }
     datetime => {
       # TODO: add desc support to datepicker
@@ -300,7 +300,7 @@ export def "cmd interact list add" [callback: record<expr: string>]: record<id: 
     group: $field.group
     aliases: []
     def: {
-      name: $"add ($field.id)"
+      name: ($field | cmd interact list add name)
       params: []
       body: $"let orig = ($field | cmd read name)
 let chosen = $orig | ($callback | callback run)
@@ -314,6 +314,12 @@ $orig
       export: false
     }
   }
+}
+
+# @input types.Field
+# @output string
+export def "cmd interact list add name" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
+  $"add ($in.id)"
 }
 
 # @input types.Field
@@ -347,7 +353,7 @@ let chosen = $orig
 	| each {|row|
 		\($row | ($entry | callback run)\)
 	}
-	| util choose table --header 'Remove: ($field.desc)'
+	| util choose table --header \('Remove: ' + ($field.desc | to json)\)
 if $chosen == null { return }
 if not \(util confirm --prompt $\"Are you sure you wish to remove \($chosen.name\)?\"\) { return }
 $orig
@@ -409,7 +415,7 @@ export def "cmd interact list edit" [entry: record<expr: string> edit: record<ex
 
 let chosen = $orig
 	| get entry
-	| util choose table --header 'Edit: ($field.desc)'
+	| util choose table --header \('Edit: ' + ($field.desc | to json)\)
 if $chosen == null { return }
 
 let new_row = $orig
@@ -452,7 +458,7 @@ def "default display value callback" []: oneof<record<type: string, positional: 
           let expr = $typedef
             | default display value callback
             | get expr
-          $"'($typedef.type)' => { $in | do ($expr) }"
+          $"($typedef.type | to json) => { $in | do ($expr) }"
         }
         | str join "\n"
 

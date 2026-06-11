@@ -185,7 +185,7 @@ def "spin pipe" []: string -> string {
 
 def "spin waiter script" []: string -> string {
   $"#!/bin/sh
-cat '($in | spin pipe)' > /dev/null"
+cat ($in | spin pipe | to json) > /dev/null"
 }
 
 # spin start starts a spinner asynchronously and returns its id

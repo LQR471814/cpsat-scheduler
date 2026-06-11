@@ -226,10 +226,11 @@ $new"
         callback make [] "$in | index form task-duration"
       )
     )
-    # (
-    # $children_cfg_field | field cmd interact set --callback (
-    # )
-    # )
+    (
+      $children_cfg_field | field cmd interact set --callback (
+        callback make [] "$in | index form task-children-configs"
+      )
+    )
 
     (form cmd cancel --before $remove_tmp_task)
     ($fields | form cmd done --output $output)

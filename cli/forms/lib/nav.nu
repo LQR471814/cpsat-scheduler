@@ -16,7 +16,7 @@ export def "exec form" [script: path params: any]: nothing -> any {
       )
       params: $params
     } | to nuon | save $env.p_in # nu-lint-ignore: catch_builtin_error_try
-    nu -e $"source '($script)'"
+    nu -e $"source ($script | to json)"
     let res = open $env.p_out | from nuon # nu-lint-ignore: catch_builtin_error_try
     try {
       rm $env.p_in

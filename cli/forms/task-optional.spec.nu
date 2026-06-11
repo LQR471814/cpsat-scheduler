@@ -213,7 +213,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
 }
 | api.gen API ListPossibleRelatives
 | get entries
-| util choose table --header 'Choose a ($reqtype) to add:'"
+| util choose table --header \('Choose a ' + ($reqtype | to json) + ' to add:'\)"
         )
       }
     )

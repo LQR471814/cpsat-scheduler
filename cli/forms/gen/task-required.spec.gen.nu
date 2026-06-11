@@ -45,15 +45,15 @@ let timescales: table<id: int, name: string> = [
 ]
     
 
-def 'prompt prefix' []: nothing -> string {
-$"($prompt_prefix) \(task-required\)"
+def "prompt prefix" []: nothing -> string {
+$"($prompt_prefix) \(" + "task-required" + "\)"
 }
 
-def --env 'read name' []: nothing -> oneof<string, nothing> {
+def --env "read name" []: nothing -> oneof<string, nothing> {
 $env.__state_name
 }
 
-def --env 'write name' [--skipval(-s)]: oneof<string, nothing> -> nothing {
+def --env "write name" [--skipval(-s)]: oneof<string, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_name = $new
@@ -71,7 +71,7 @@ if $err != null {
 $env.__state_name = $new
 }
 
-def --env 'validate name' []: nothing -> oneof<string, nothing> {
+def --env "validate name" []: nothing -> oneof<string, nothing> {
 read name | do --env {||
         if ($in | is-empty) {
           "name cannot be empty"
@@ -79,11 +79,11 @@ read name | do --env {||
       }
 }
 
-def --env 'read desc' []: nothing -> oneof<string, nothing> {
+def --env "read desc" []: nothing -> oneof<string, nothing> {
 $env.__state_desc
 }
 
-def --env 'write desc' [--skipval(-s)]: oneof<string, nothing> -> nothing {
+def --env "write desc" [--skipval(-s)]: oneof<string, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_desc = $new
@@ -101,7 +101,7 @@ if $err != null {
 $env.__state_desc = $new
 }
 
-def --env 'validate desc' []: nothing -> oneof<string, nothing> {
+def --env "validate desc" []: nothing -> oneof<string, nothing> {
 read desc | do --env {||
         if ($in == null) {
           "description should not be null"
@@ -109,11 +109,11 @@ read desc | do --env {||
       }
 }
 
-def --env 'read timescale' []: nothing -> oneof<int, nothing> {
+def --env "read timescale" []: nothing -> oneof<int, nothing> {
 $env.__state_timescale
 }
 
-def --env 'write timescale' [--skipval(-s)]: oneof<int, nothing> -> nothing {
+def --env "write timescale" [--skipval(-s)]: oneof<int, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_timescale = $new
@@ -135,7 +135,7 @@ if $err != null {
 $env.__state_timescale = $new
 }
 
-def --env 'validate timescale' []: nothing -> oneof<string, nothing> {
+def --env "validate timescale" []: nothing -> oneof<string, nothing> {
 read timescale | do --env {|| 
 let unit: int = $in
 if ($unit == null) {
@@ -147,19 +147,19 @@ if not ($unit in $possible) {
 } }
 }
 
-def --env 'set name' []: nothing -> nothing {
-let new = read name | do --env {|| do --env {|| util input text 'The name of the task.' } }
+def --env "set name" []: nothing -> nothing {
+let new = read name | do --env {|| do --env {|| util input text "The name of the task." } }
 if $new == null { return }
 $new | write name 
 }
 
-def --env 'set desc' []: nothing -> nothing {
-let new = read desc | do --env {|| do --env {|| util input multiline 'The description of the task.' } }
+def --env "set desc" []: nothing -> nothing {
+let new = read desc | do --env {|| do --env {|| util input multiline "The description of the task." } }
 if $new == null { return }
 $new | write desc 
 }
 
-def --env 'set timescale' []: nothing -> nothing {
+def --env "set timescale" []: nothing -> nothing {
 let new = read timescale | do --env {|| $timescales
 | util choose table --header 'Timescale unit (upper-bound for task duration):'
 | get id? }
@@ -167,21 +167,21 @@ if $new == null { return }
 $new | write timescale 
 }
 
-def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
+def --env "cancel" [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
 
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
 }
 
-def --env 'done' []: nothing -> nothing {
+def --env "done" []: nothing -> nothing {
 let err = read name | do --env {||
         if ($in | is-empty) {
           "name cannot be empty"
         }
       }
 if $err != null {
-  util print label 'Name:'
+  util print label "Name"
 	util print error $err
   return
 }
@@ -191,7 +191,7 @@ let err = read desc | do --env {||
         }
       }
 if $err != null {
-  util print label 'Description:'
+  util print label "Description"
 	util print error $err
   return
 }
@@ -205,23 +205,23 @@ if not ($unit in $possible) {
   $"the given timescale is not one of the possible timescales: ($possible)"
 } }
 if $err != null {
-  util print label 'Timescale Unit:'
+  util print label "Timescale Unit"
 	util print error $err
   return
 }
-{'name': (read name)
-'desc': (read desc)
-'timescale': (read timescale)} | nav save form output
+{"name": (read name)
+"desc": (read desc)
+"timescale": (read timescale)} | nav save form output
 
 exit
 }
 
-def --env 'status' []: nothing -> nothing {
-util print label 'Name'
-util print desc 'The name of the task.'
+def --env "status" []: nothing -> nothing {
+util print label "Name"
+util print desc "The name of the task."
 read name | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-'string' => { $in | do {|| print $in } }
-'nothing' => { $in | do {|| print } }
+"string" => { $in | do {|| print $in } }
+"nothing" => { $in | do {|| print } }
 } } | print
 let err = read name | do --env {||
         if ($in | is-empty) {
@@ -232,11 +232,11 @@ if $err != null {
 	util print error $err
 }
 print ''
-util print label 'Description'
-util print desc 'The description of the task.'
+util print label "Description"
+util print desc "The description of the task."
 read desc | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-'string' => { $in | do {|| print $in } }
-'nothing' => { $in | do {|| print } }
+"string" => { $in | do {|| print $in } }
+"nothing" => { $in | do {|| print } }
 } } | print
 let err = read desc | do --env {||
         if ($in == null) {
@@ -247,11 +247,11 @@ if $err != null {
 	util print error $err
 }
 print ''
-util print label 'Timescale Unit'
-util print desc 'Should be the upper-bound for task duration.'
+util print label "Timescale Unit"
+util print desc "Should be the upper-bound for task duration."
 read timescale | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-'int' => { $in | do {|| util print number $in } }
-'nothing' => { $in | do {|| print } }
+"int" => { $in | do {|| util print number $in } }
+"nothing" => { $in | do {|| print } }
 } } | print
 let err = read timescale | do --env {|| 
 let unit: int = $in
@@ -268,7 +268,7 @@ if $err != null {
 print ''
 }
 
-def --env 'next' []: nothing -> bool {
+def --env "next" []: nothing -> bool {
 if (validate name) != null {
 	do --env {|| set name }
 	let err = validate name
@@ -296,7 +296,7 @@ if (validate timescale) != null {
 return true
 }
 
-def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
+def --env "cmds" []: nothing -> table<group: string, name: string, aliases: string, desc: string> {
 [[group name aliases desc];["","read name","","Get the value of name."]
 ["","write name","","Set the value of name."]
 ["","validate name","","Check if the current value of name has any errors."]
@@ -315,7 +315,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["control","next","n","Fill in the next unfilled fields interactively."]]
 }
 
-util print section title 'task-required'
+util print section title "task-required"
 cmds | table -e | print
 $env.__state_name = do --env {|| $params.name }
 $env.__state_desc = do --env {|| $params.desc }

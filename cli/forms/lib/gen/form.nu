@@ -23,7 +23,7 @@ export def "cmd done" [--output: record<expr: string>]: list<record<id: string, 
       let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
       $"let err = ($field | field cmd read name) | ($field.ops.validate | callback run)
 if $err != null {
-  util print label '($field.display_name):'
+  util print label ($field.display_name | to json)
 	util print error $err
   return
 }"
@@ -36,7 +36,7 @@ if $err != null {
     | each {|field|
       # @type types.Field
       let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $field
-      $"'($field.id)': \(($field | field cmd read name)\)"
+      $"($field.id | to json): \(($field | field cmd read name)\)"
     }
     | str join "\n"
     $"{($object_body)}"
@@ -120,11 +120,11 @@ if $err != null {
       }
       [
         (if ($field.group | is-not-empty) {
-          $"util print label '($field.display_name) [($field.group)]'"
+          $"util print label \(($field.display_name | to json) + ' [' + ($field.group | to json) + ']'\)"
         } else {
-          $"util print label '($field.display_name)'"
+          $"util print label ($field.display_name | to json)"
         })
-        $"util print desc '($field.desc)'"
+        $"util print desc ($field.desc | to json)"
         $"($field | field cmd read name) | ($field | field display value callback | callback run) | print"
         $valid
         "print ''"
@@ -204,7 +204,7 @@ def "cmd prompt prefix" []: record<name: string, params: oneof<record<type: stri
   {
     name: (cmd prompt prefix name)
     params: []
-    body: $"$\"\($prompt_prefix\) \\\(($in.name)\\\)\""
+    body: $"$\"\($prompt_prefix\) \\\(\" + ($in.name | to json) + \"\\\)\""
     in: {type: "nothing"}
     out: {type: string}
     env: false
@@ -320,7 +320,7 @@ def "init after cmds" []: record<name: string, params: oneof<record<type: string
   # @type types.Form
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = $in
 
-  $"util print section title '($form.name)'
+  $"util print section title ($form.name | to json)
 cmds | table -e | print\n($form.init.after_cmds)"
 }
 
@@ -346,7 +346,7 @@ export def "render command def" []: record<name: string, params: list<record<key
     | types render
   let body = $cmd.body
 
-  $"($export)def ($envflag)'($cmd.name)' [($params)]: ($in_type) -> ($out_type) {\n($body)\n}"
+  $"($export)def ($envflag)($cmd.name | to json) [($params)]: ($in_type) -> ($out_type) {\n($body)\n}"
 }
 
 # @input types.Form
@@ -356,7 +356,7 @@ export def render []: record<name: string, params: oneof<record<type: string, po
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = $in
 
   let uses = $form.use
-    | each { $"use '($in)'" }
+    | each { $"use ($in | to json)" }
     | str join "\n"
   let cmds: string = $form.commands
     | each { $in.def | render command def }
@@ -399,10 +399,11 @@ use ../../lib/proto/apipb/api.gen.nu"
 export def call []: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> -> record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool> {
   # @type types.Form
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = $in
+  let path = $"./gen/($form.name).spec.gen.nu"
   {
     name: $"form ($form.name)"
     params: []
-    body: $"nav exec form './gen/($form.name).spec.gen.nu' $in"
+    body: $"nav exec form ($path | to json) $in"
     in: $form.params
     out: $form.returns
     env: true
