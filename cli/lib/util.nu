@@ -238,5 +238,5 @@ export def timescales []: nothing -> table<id: int, name: string> {
 export def "choose timescale" []: nothing -> int {
   timescales
   | choose table --header "Choose a timescale unit value:"
-  | get id
+  | get id?
 }

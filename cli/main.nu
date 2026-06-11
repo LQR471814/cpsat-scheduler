@@ -8,11 +8,8 @@ use forms/gen/index.nu
 
 let cmd = $env.PROMPT_COMMAND
 
-$env.PROMPT_COMMAND = {|| $"(prompt prefix) (do $cmd)" }
-
-def "prompt prefix" []: nothing -> string {
-  "(scheduler)"
-}
+$env.prompt_prefix = {|| "(scheduler)" }
+$env.PROMPT_COMMAND = {|| $"(do $env.prompt_prefix) (do $cmd)" }
 
 # @input nothing
 # @output record<

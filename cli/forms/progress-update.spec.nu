@@ -140,7 +140,9 @@ let chosen = {
   end: \($end | default \($now + 1wk\)\)
 } | ($fetch_scheduled_pipe) | ($choose_task_pipe)
 if $chosen == null { return }
-$chosen | get id | ($update_task.def.name)"
+$chosen
+| get id
+| ($update_task.def.name)"
     env: true
     export: true
   }
