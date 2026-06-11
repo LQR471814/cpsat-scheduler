@@ -189,7 +189,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     type: record
     fields: [
       [key value];
-      [state {type: record fields: $task_type.fields}]
+      [state ({type: record fields: $task_type.fields} | types optional)]
       [id ({type: int} | types optional)]
       [profile_id {type: int}]
     ]
@@ -239,7 +239,18 @@ $new"
   ]
   init: {
     before_cmds: "let is_creating = $params.id == null"
-    after_cmds: $"($fields | form fields init)
+    after_cmds: $"let params = $params | default {
+  name: null
+  desc: null
+  timescale: null
+  duration_cfg: null
+  children_cfgs: []
+  prereqs: []
+  postreqs: []
+  parent: null
+  start: null
+  end: null
+} state\n\n($fields | form fields init)
 
 $params.id | (write tmp task id run)
 

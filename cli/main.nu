@@ -1,5 +1,9 @@
+# @usetype "./lib/proto/apipb/api.gen.nu"
+
 use lib/proto/apipb/api.gen.nu
 use lib/util.nu
+use lib/schedule.nu
+use lib/profile.nu
 use forms/gen/index.nu
 
 let cmd = $env.PROMPT_COMMAND
@@ -10,42 +14,62 @@ def "prompt prefix" []: nothing -> string {
   "(scheduler)"
 }
 
-def --env reschedule [--start (-s): datetime --end (-e): datetime]: nothing -> nothing {
-  let start = $start | default $env.schedule_start? | default (date now)
-  let end = $end | default $env.schedule_end? | default ((date now) + 4wk)
+# @input nothing
+# @output record<
+#   created: list<string>
+#   updated: list<string>
+#   deleted: list<string>
+# >
+def "edit profiles" []: nothing -> record<created: list<string>, updated: list<string>, deleted: list<string>> {
+  let orig = {}
+    | api.gen API ListProfiles
+    | get entries
+  let new = $orig
+    | index form profile-list
 
-  # recompute schedule
-  let spinner = util spin start
-  job spawn {
-    try {
-      {
-        profile: $env.profile
-        horizon: {
-          start: $start
-          end: $end
-        }
-      } | api.gen API RecomputeSchedule
-      $spinner | util spin stop
-    } catch {|err|
-      $spinner | util spin stop
-      print ""
-      print $err.msg
+  let created = $new
+    | where id == null
+    | each {
+      let prof = $in
+      $prof
+      | reject id
+      | api.gen API CreateProfile
+      $prof.name
     }
-  }
-  $spinner | util spin show 'Recomputing schedule...'
-}
 
-def profiles []: nothing -> nothing {
+  let changed = $new
+    | where id != null
+    | each { {id: $in.id orig: $in} }
+    | join --right (
+      $orig | each { {id: $in.id new: $in} }
+    ) id
+
+  let updated = $changed
+    | where new != null
+
+  let deleted = $changed
+    | where new == null
+    | each {
+      let prof = $in
+      let delete = util confirm --prompt $"Do you wish to delete profile ($prof.name)?"
+      if not $delete { return }
+      $prof
+      | reject id
+      | api.gen API RemoveProfile
+      $prof.name
+    }
+
   {
-    prompt_prefix: (prompt prefix)
-    state: null
-  } | index form profiles
+    created: $created
+    updated: $updated
+    deleted: $deleted
+  }
 }
 
-def --env "switch profile" []: nothing -> bool {
+def --env "profile switch" []: nothing -> bool {
   let profile_list = {} | api.gen API ListProfiles | get entries
   if ($profile_list | is-empty) {
-    profiles
+    edit profiles
     return true
   }
 
@@ -55,104 +79,92 @@ def --env "switch profile" []: nothing -> bool {
   if $profile == null {
     return false
   }
-  $env.profile = $profile.id
+
+  $profile.id | profile write
   true
 }
 
 def --env "new task" []: nothing -> nothing {
   let task_state = {
-    prompt_prefix: (prompt prefix)
-    state: {
-      profile: $env.profile
-      payload: null
-    }
+    id: null
+    profile_id: (profile read)
+    state: null
   } | index form task
+
   if $task_state == null { return }
 
   {
     id: null
-    profile_id: $env.profile
+    profile_id: (profile read)
     state: $task_state
   } | api.gen API SaveTask
 
-  reschedule
+  schedule recompute
   null
 }
 
 def --env "progress update" []: nothing -> nothing {
   {
     prompt_prefix: (prompt prefix)
-    state: {profile: $env.profile}
+    state: {profile: (profile read)}
   } | index form progress
-  reschedule
+
+  schedule recompute
 }
 
-def --env "print segment tasks" []: datetime -> nothing {
-  let time = $in
+# @input nothing
+# @output list<apigen.ListScheduledTasksResponseScheduledTask>
+def --env now []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
   util print label "Current segment (±4 hour period)"
-  {
-    profile_id: $env.profile
-    timescale: 16
-    start: ($time - 4hr)
-    end: ($time + 4hr)
-  } | api.gen API ListScheduledTasks | get entries
+  date now | schedule in segment
 }
 
-def --env "print date tasks" []: datetime -> nothing {
-  let start_of_day = $in | format date %Y-%m-%d | into datetime
-  let end_of_day = $in + 1day | format date %Y-%m-%d | into datetime
+# @input nothing
+# @output list<apigen.ListScheduledTasksResponseScheduledTask>
+def --env today []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
   util print label "Today's tasks"
-  {
-    profile_id: $env.profile
-    timescale: 96
-    start: $start_of_day
-    end: $end_of_day
-  } | api.gen API ListScheduledTasks | get entries
+  date now | schedule in segment
 }
 
-def --env now [] {
-  date now | print segment tasks
+# @input nothing
+# @output list<apigen.ListScheduledTasksResponseScheduledTask>
+def --env tomorrow []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
+  (date now) + 1day | schedule in segment
 }
 
-def --env today [] {
-  date now | print date tasks
-}
-
-def --env tomorrow [] {
-  (date now) + 1day | print date tasks
-}
-
-def --env yesterday [] {
-  (date now) - 1day | print date tasks
+# @input nothing
+# @output list<apigen.ListScheduledTasksResponseScheduledTask>
+def --env yesterday []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
+  (date now) - 1day | schedule in segment
 }
 
 def help []: nothing -> nothing {
-  print [
-    [cmd help];
-    [profiles "Manage profiles"]
-    ['switch profile, sp' "Switch to a different profile"]
-    ['new task, nt' "Create a task"]
-    ['progress update, pu' "Update task progress"]
-    ['today, td' "Show today's tasks"]
-    ['tomorrow, tm' "Show tomorrow's tasks"]
-    ['yesterday, ys' "Show yesterday's tasks"]
-    ['reschedule, re' "Reschedule tasks"]
-  ]
+  [
+    [cmd aliases help];
+    [profiles [] "Manage profiles"]
+    ['profile switch' [ps] "Switch to a different profile"]
+    ['new task' [nt] "Create a task"]
+    ['progress update' [pu] "Update task progress"]
+    [today [td] "Show today's tasks"]
+    [tomorrow [tm] "Show tomorrow's tasks"]
+    [yesterday [ys] "Show yesterday's tasks"]
+    ['schedule recompute' [re] "Reschedule tasks"]
+  ] | table --expand | print
 }
 
-if not (switch profile) {
+if not (profile switch) {
   print exiting!
   exit
 }
 
 alias c = exit
 alias d = exit
-alias sp = switch profile
+alias ps = profile switch
 alias nt = new task
 alias pu = progress update
 alias td = today
 alias tm = tomorrow
 alias ys = yesterday
-alias re = reschedule
+alias re = schedule recompute
 
 help
