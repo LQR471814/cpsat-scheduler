@@ -113,10 +113,7 @@ let dur_cfg_field: record<id: string, display_name: string, desc: string, group:
   display_name: "Explicit Duration"
   desc: "If set, the duration of the task will be determined solely by a PERT distribution. If this is set, children cannot be set."
   group: duration
-  type: {
-    type: record
-    fields: ($task_type.fields | where key == duration_cfg)
-  }
+  type: ($task_type | types get field duration_cfg)
   display_value: null
   init: (
     callback make [] $"$params.state | get duration_cfg"
@@ -134,10 +131,7 @@ let children_cfg_field: record<id: string, display_name: string, desc: string, g
   display_name: "Children Duration"
   desc: "If not empty, the duration of the task will be determined by the sum of the durations chosen by the children. If this is set, explicit duration cannot be set."
   group: duration
-  type: {
-    type: record
-    fields: ($task_type.fields | where key == children_cfgs)
-  }
+  type: ($task_type | types get field children_cfgs)
   display_value: null
   init: (
     callback make [] $"$params.state | get children_cfgs"
@@ -227,10 +221,11 @@ $new"
 } | index form task-optional"
       )
     )
-    # (
-    # $dur_cfg_field | field cmd interact set --callback (
-    # )
-    # )
+    (
+      $dur_cfg_field | field cmd interact set --callback (
+        callback make [] "$in | index form task-duration"
+      )
+    )
     # (
     # $children_cfg_field | field cmd interact set --callback (
     # )

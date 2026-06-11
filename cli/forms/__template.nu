@@ -29,7 +29,10 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields | form cmd status)
     ($fields_ordering | form cmd next)
   ]
-  init: $""
+  init: {
+    before_cmds: ""
+    after_cmds: $"($fields | form fields init)"
+  }
 }
 
 $form | to nuon --raw

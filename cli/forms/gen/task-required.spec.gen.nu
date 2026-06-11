@@ -219,7 +219,7 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Name'
 util print desc 'The name of the task.'
-read name | do --env {|| match ($in | describe) {
+read name | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 'string' => { $in | do {|| print $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
@@ -234,7 +234,7 @@ if $err != null {
 print ''
 util print label 'Description'
 util print desc 'The description of the task.'
-read desc | do --env {|| match ($in | describe) {
+read desc | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 'string' => { $in | do {|| print $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
@@ -249,7 +249,7 @@ if $err != null {
 print ''
 util print label 'Timescale Unit'
 util print desc 'Should be the upper-bound for task duration.'
-read timescale | do --env {|| match ($in | describe) {
+read timescale | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 'int' => { $in | do {|| util print number $in } }
 'nothing' => { $in | do {|| print } }
 } } | print

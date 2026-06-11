@@ -348,7 +348,7 @@ exit
 def --env 'status' []: nothing -> nothing {
 util print label 'Parent [relationships]'
 util print desc 'Parent task'
-read parent | do --env {|| match ($in | describe) {
+read parent | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 'record' => { $in | do {|| table -e | print } }
 'nothing' => { $in | do {|| print } }
 } } | print
@@ -383,7 +383,7 @@ if $err != null {
 print ''
 util print label 'Start [explicit_range]'
 util print desc 'An explicit time which the task must start after.'
-read start | do --env {|| match ($in | describe) {
+read start | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 'datetime' => { $in | do {|| util print date $in } }
 'nothing' => { $in | do {|| print } }
 } } | print
@@ -402,7 +402,7 @@ if $err != null {
 print ''
 util print label 'End [explicit_range]'
 util print desc 'An explicit time which the task must start before.'
-read end | do --env {|| match ($in | describe) {
+read end | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 'datetime' => { $in | do {|| util print date $in } }
 'nothing' => { $in | do {|| print } }
 } } | print

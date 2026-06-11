@@ -102,6 +102,37 @@ export def "entry table" []: nothing -> oneof<record<type: string, positional: l
   }
 }
 
+# gets the type of a field in a type with type arguments
+#
+# @param key string
+# @input TypeDef
+# @output oneof<TypeDef, nothing>
+export def "get field" [key: string]: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> oneof<oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, nothing> {
+  get fields | where key == $key | get --optional 0.value?
+}
+
+# converts all fields of the given table or record to optional
+#
+# @input TypeDef
+# @output TypeDef
+export def "fields optional" []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
+  # @type TypeDef
+  let def: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> = $in
+  match $def.type {
+    record | table => { }
+    _ => {
+      error make {
+        msg: $"`fields optional` only supports record or table types"
+        label: {
+          text: value
+          span: (metadata $def).span
+        }
+      }
+    }
+  }
+  $def | update fields { each { update value { optional } } }
+}
+
 # @input TypeDef
 # @output string
 export def render []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> string {

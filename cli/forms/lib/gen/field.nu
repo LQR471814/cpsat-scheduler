@@ -456,7 +456,7 @@ def "default display value callback" []: oneof<record<type: string, positional: 
         }
         | str join "\n"
 
-      $"match \($in | describe\) {\n($cases)\n}"
+      $"match \($in | describe | parse -r `^\(?<type>\\w+\)` | get 0.type\) {\n($cases)\n}"
     }
     _ => {
       error make {

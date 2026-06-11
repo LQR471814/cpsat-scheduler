@@ -148,11 +148,11 @@ def --env 'validate optional' []: nothing -> oneof<string, nothing> {
 read optional | do --env {|| null }
 }
 
-def --env 'read duration' []: nothing -> record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>> {
+def --env 'read duration' []: nothing -> oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>> {
 $env.__state_duration
 }
 
-def --env 'write duration' [--skipval(-s)]: record<duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>> -> nothing {
+def --env 'write duration' [--skipval(-s)]: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_duration = $new
@@ -176,11 +176,11 @@ if (read duration) == null and (read children) == null {
 } }
 }
 
-def --env 'read children' []: nothing -> record<children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> {
+def --env 'read children' []: nothing -> list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> {
 $env.__state_children
 }
 
-def --env 'write children' [--skipval(-s)]: record<children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> -> nothing {
+def --env 'write children' [--skipval(-s)]: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_children = $new
@@ -223,6 +223,12 @@ let new = read optional | do --env {|| $in | merge {
 } | index form task-optional }
 if $new == null { return }
 $new | write optional 
+}
+
+def --env 'set duration' []: nothing -> nothing {
+let new = read duration | do --env {|| $in | index form task-duration }
+if $new == null { return }
+$new | write duration 
 }
 
 def --env 'cancel' [--no-prompt(-y)]: nothing -> nothing {
@@ -365,7 +371,10 @@ if $err != null {
 print ''
 util print label 'Explicit Duration [duration]'
 util print desc 'If set, the duration of the task will be determined solely by a PERT distribution. If this is set, children cannot be set.'
-read duration | do --env {|| table -e | print } | print
+read duration | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+'nothing' => { $in | do {|| print } }
+'record' => { $in | do {|| table -e | print } }
+} } | print
 let err = read duration | do --env {|| 
 if (read duration) == null and (read children) == null {
   'either an explicit duration configuration or at least one child configuration must be set'
@@ -430,6 +439,7 @@ def --env 'cmds' []: nothing -> table<group: string, name: string, aliases: stri
 ["duration","validate children","","Check if the current value of children has any errors."]
 ["","set required","","Set required interactively."]
 ["","set optional","","Set optional interactively."]
+["duration","set duration","","Set duration interactively."]
 ["control","cancel","c","Abort submission and discard changes."]
 ["control","done","d","Validate and submit form."]
 ["control","status","s","Show the current form status."]

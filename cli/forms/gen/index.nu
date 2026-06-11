@@ -4,6 +4,10 @@ export def --env 'form task-required' []: record<name: oneof<string, nothing>, d
 nav exec form './gen/task-required.spec.gen.nu' $in
 }
 
+export def --env 'form task-duration' []: oneof<record<pert: oneof<oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, nothing>, deadline: oneof<oneof<nothing, datetime>, nothing>, total_cost: oneof<oneof<nothing, int>, nothing>>, nothing> -> record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>> {
+nav exec form './gen/task-duration.spec.gen.nu' $in
+}
+
 export def --env 'form profile-list' []: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> {
 nav exec form './gen/profile-list.spec.gen.nu' $in
 }
