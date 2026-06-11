@@ -104,10 +104,9 @@ def --env "new task" []: nothing -> nothing {
 }
 
 def --env "progress update" []: nothing -> nothing {
-  let res = {
-    profile_id: (profile read)
-  }
+  let res = {profile_id: (profile read)}
     | index form progress-update
+  if $res == null { return }
 
   {
     profile: (profile read)

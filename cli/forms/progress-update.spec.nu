@@ -66,7 +66,7 @@ let choose_task_pipe = "util choose table --header 'Choose a task:' | get id?"
 let update_task = {
   desc: "Update a task."
   group: ""
-  aliases: [ps]
+  aliases: []
   def: {
     name: "update task"
     params: []
@@ -96,7 +96,8 @@ let pick_scheduled: record<desc: string, group: string, aliases: list<string>, d
     params: []
     in: {type: "nothing"}
     out: {type: "nothing"}
-    body: $"let last_ckpt = fetch last checkpoint
+    body: $"let last_ckpt = {profile: ($profile_id_access)} | api.gen API GetLastCheckpoint
+  | get time
 if $last_ckpt == null {
   error make {msg: 'last checkpoint does not exist'}
 }

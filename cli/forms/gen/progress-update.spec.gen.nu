@@ -76,7 +76,8 @@ read modified
 }
 
 def --env "pick scheduled" []: nothing -> nothing {
-let last_ckpt = fetch last checkpoint
+let last_ckpt = {profile: $params.profile_id} | api.gen API GetLastCheckpoint
+  | get time
 if $last_ckpt == null {
   error make {msg: 'last checkpoint does not exist'}
 }
@@ -170,7 +171,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 [[group name aliases desc];["","read modified","","Get the value of modified."]
 ["","write modified","","Set the value of modified."]
 ["","validate modified","","Check if the current value of modified has any errors."]
-["","update task","ps","Update a task."]
+["","update task","","Update a task."]
 ["","pick scheduled","ps","Pick a task scheduled in the time since the last progress update."]
 ["","pick task","pt","Pick any task within 1 week (or specifiable) window of the current time."]
 ["","progress log","","Compute the progress log message for the modifications made to tasks."]
@@ -184,7 +185,6 @@ util print section title "progress-update"
 cmds | table -e | print
 $env.__state_modified = do --env {|| [] }
 
-alias ps = update task
 alias ps = pick scheduled
 alias pt = pick task
 alias c = cancel
