@@ -161,7 +161,7 @@ def --env yesterday []: nothing -> list<record<id: oneof<nothing, int>, name: on
   (date now) - 1day | schedule in segment
 }
 
-def help []: nothing -> nothing {
+def cmds []: nothing -> nothing {
   [
     [cmd aliases help];
     [profiles [] "Manage profiles"]
@@ -172,7 +172,7 @@ def help []: nothing -> nothing {
     [tomorrow [tm] "Show tomorrow's tasks"]
     [yesterday [ys] "Show yesterday's tasks"]
     ['schedule recompute' [re] "Reschedule tasks"]
-  ] | table --expand | print
+  ] | update aliases { str join ", " } | table --expand | print
 }
 
 if not (profile switch) {
@@ -190,4 +190,4 @@ alias tm = tomorrow
 alias ys = yesterday
 alias re = schedule recompute
 
-help
+cmds

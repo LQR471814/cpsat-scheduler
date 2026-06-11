@@ -43,7 +43,7 @@ $forms
 | get obj
 | index generate ($dir_self | path join gen)
 
-let errors = ls ./gen/*.nu
+let errors = ls ($dir_self | path join ./gen/*.nu | into glob)
   | each {
     let entry = $in
     try {

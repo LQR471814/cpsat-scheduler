@@ -101,7 +101,6 @@ let chosen = {
   timescale: $timescale
   start: ($start | default ($now - 1wk))
   end: ($end | default ($now + 1wk))
-
 } | api.gen API ListScheduledTasks | get entries | util choose table --header 'Choose a task:' | get id?
 if $chosen == null { return }
 $chosen | get id | update task
