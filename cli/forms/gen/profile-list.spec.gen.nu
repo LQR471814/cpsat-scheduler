@@ -75,12 +75,13 @@ read profile | append {
 def --env "remove profile" []: nothing -> nothing {
 let orig = read profile
 let chosen = $orig
+  | enumerate
 	| each {|row|
-		($row | do --env {||
+		$row.item | do --env {||
           # @type apigen.Profile
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
           $profile | select id name
-        })
+        } $row.index
 	}
 	| util choose table --header ('Remove: ' + "List of existing profiles.")
 if $chosen == null { return }
@@ -96,14 +97,15 @@ $orig
 
 def --env "edit profile" []: nothing -> nothing {
 let orig = read profile
+  | enumerate
 	| each {|row|
 		{
-			row: $row
-			entry: ($row | do --env {||
+			row: $row.item
+			entry: ($row.item | do --env {||
           # @type apigen.Profile
           let profile: record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>> = $in
           $profile | select id name
-        })
+        } $row.index)
 		}
 	}
 

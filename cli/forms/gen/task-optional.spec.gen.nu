@@ -249,8 +249,9 @@ $orig
 def --env "remove prereqs" []: nothing -> nothing {
 let orig = read prereqs
 let chosen = $orig
+  | enumerate
 	| each {|row|
-		($row | do --env {|| $in })
+		$row.item | do --env {|| $in } $row.index
 	}
 	| util choose table --header ('Remove: ' + "Tasks that must be scheduled before this task.")
 if $chosen == null { return }
@@ -263,8 +264,9 @@ $orig
 def --env "remove postreqs" []: nothing -> nothing {
 let orig = read postreqs
 let chosen = $orig
+  | enumerate
 	| each {|row|
-		($row | do --env {|| $in })
+		$row.item | do --env {|| $in } $row.index
 	}
 	| util choose table --header ('Remove: ' + "Tasks that must be scheduled after this task.")
 if $chosen == null { return }

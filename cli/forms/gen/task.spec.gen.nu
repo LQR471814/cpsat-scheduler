@@ -232,7 +232,10 @@ $new | write duration
 }
 
 def --env "set children" []: nothing -> nothing {
-let new = read children | do --env {|| $in | index form task-children-configs }
+let new = read children | do --env {|| {
+  task_id: $env.__tmp_task_id
+  children: $in
+} | index form task-children-configs }
 if $new == null { return }
 $new | write children 
 }

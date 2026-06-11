@@ -32,11 +32,11 @@ def "prompt prefix" []: nothing -> string {
 $"($prompt_prefix) \(" + "task-child-config" + "\)"
 }
 
-def --env "read desc" []: nothing -> oneof<nothing, string> {
+def --env "read desc" []: nothing -> oneof<oneof<nothing, string>, nothing> {
 $env.__state_desc
 }
 
-def --env "write desc" [--skipval(-s)]: oneof<nothing, string> -> nothing {
+def --env "write desc" [--skipval(-s)]: oneof<oneof<nothing, string>, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_desc = $new
@@ -133,7 +133,7 @@ read children | do --env {|| if ($in | is-empty) {
 }
 
 def --env "set desc" []: nothing -> nothing {
-let new = read desc | do --env {|| do --env {|| util input text "Description of this possible set of children." } }
+let new = read desc | do --env {|| do --env {|| do --env {|| util input text "Description of this possible set of children." } } }
 if $new == null { return }
 $new | write desc 
 }
@@ -156,7 +156,7 @@ let chosen = do --env {|| {
   type: CHILD
   task_id: $params.task_id
 }
-| api.gen API ListRelatives
+| api.gen API ListPossibleRelatives
 | get entries
 | util choose table --header 'Choose a child to add:' }
 if $chosen == null { return }
@@ -168,8 +168,9 @@ $orig
 def --env "remove children" []: nothing -> nothing {
 let orig = read children
 let chosen = $orig
+  | enumerate
 	| each {|row|
-		($row | do --env {|| $in })
+		$row.item | do --env {|| $in } $row.index
 	}
 	| util choose table --header ('Remove: ' + "The children that are part of this configuration. They must be scheduled within the bounds of the parent's scheduled timescale instance.")
 if $chosen == null { return }
@@ -229,8 +230,11 @@ def --env "status" []: nothing -> nothing {
 util print label "Description"
 util print desc "Description of this possible set of children."
 read desc | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+"oneof" => { $in | do {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
 "string" => { $in | do {|| print $in } }
+} } }
+"nothing" => { $in | do {|| print } }
 } } | print
 let err = read desc | do --env {|| if $in == null {
   'description cannot be null'

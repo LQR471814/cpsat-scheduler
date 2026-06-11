@@ -17,7 +17,7 @@ let desc_field: record<id: string, display_name: string, desc: string, group: st
   display_name: Description
   desc: "Description of this possible set of children."
   group: ""
-  type: ($child_config_type | types get field desc)
+  type: ($child_config_type | types get field desc | types optional)
   display_value: null
   init: (callback make [] "$params.desc")
   ops: {
@@ -144,7 +144,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   type: CHILD
   task_id: $params.task_id
 }
-| api.gen API ListRelatives
+| api.gen API ListPossibleRelatives
 | get entries
 | util choose table --header 'Choose a child to add:'"
       )

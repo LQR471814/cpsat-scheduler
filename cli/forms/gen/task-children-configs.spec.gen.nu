@@ -18,10 +18,10 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> = $__input.params
+let params: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
@@ -56,7 +56,13 @@ read children | do --env {|| null }
 
 def --env "add children" []: nothing -> nothing {
 let orig = read children
-let chosen = do --env {|| index form task-child-config }
+let chosen = do --env {|| {
+  task_id: $params.task_id
+  desc: null
+  deadline: null
+  exp_cost: null
+  children: []
+} | index form task-child-config }
 if $chosen == null { return }
 $orig
 	| append $chosen
@@ -66,14 +72,19 @@ $orig
 def --env "remove children" []: nothing -> nothing {
 let orig = read children
 let chosen = $orig
+  | enumerate
 	| each {|row|
-		($row | do --env {|| $in })
+		$row.item | do --env {|idx|
+          {id: $idx name: $in.desc}
+        } $row.index
 	}
 	| util choose table --header ('Remove: ' + "List of children configurations.")
 if $chosen == null { return }
 if not (util confirm --prompt $"Are you sure you wish to remove ($chosen.name)?") { return }
 $orig
-	| where ($it | do --env {|| $in } | get id) != $chosen.id
+	| where ($it | do --env {|idx|
+          {id: $idx name: $in.desc}
+        } | get id) != $chosen.id
 	| write children 
 }
 
@@ -91,7 +102,7 @@ if $err != null {
 	util print error $err
   return
 }
-{"children": (read children)} | nav save form output
+do --env {|| read children } | nav save form output
 
 exit
 }
@@ -133,7 +144,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-children-configs"
 cmds | table -e | print
-$env.__state_children = do --env {|| $params }
+$env.__state_children = do --env {|| $params.children }
 
 alias c = cancel
 alias d = done

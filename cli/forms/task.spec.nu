@@ -228,7 +228,10 @@ $new"
     )
     (
       $children_cfg_field | field cmd interact set --callback (
-        callback make [] "$in | index form task-children-configs"
+        callback make [] $"{
+  task_id: (access tmp task id)
+  children: $in
+} | index form task-children-configs"
       )
     )
 

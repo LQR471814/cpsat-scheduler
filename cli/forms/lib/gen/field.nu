@@ -327,6 +327,8 @@ export def "cmd interact list add name" []: record<id: string, display_name: str
 # @param entry callback.Callback
 #
 # if it returns null, it means to cancel
+#
+# entry (1st param is index of entry): list_entry -> record<id: primitive, name: string>
 export def "cmd interact list remove" [entry: record<expr: string>]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
   # @type types.Field
   let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
@@ -350,8 +352,9 @@ export def "cmd interact list remove" [entry: record<expr: string>]: record<id: 
       params: []
       body: $"let orig = ($field | cmd read name)
 let chosen = $orig
+  | enumerate
 	| each {|row|
-		\($row | ($entry | callback run)\)
+		$row.item | ($entry | callback run) $row.index
 	}
 	| util choose table --header \('Remove: ' + ($field.desc | to json)\)
 if $chosen == null { return }
@@ -393,7 +396,7 @@ export def "cmd interact list list" []: record<id: string, display_name: string,
 # @param entry callback.Callback
 # @param edit callback.Callback
 #
-# entry: list_entry -> record<id: primitive, name: string>
+# entry (1st param is index of entry): list_entry -> record<id: primitive, name: string>
 # edit: list_entry -> oneof<list_entry, nothing>
 export def "cmd interact list edit" [entry: record<expr: string> edit: record<expr: string>]: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> {
   # @type types.Field
@@ -406,10 +409,11 @@ export def "cmd interact list edit" [entry: record<expr: string> edit: record<ex
       name: $"edit ($field.id)"
       params: []
       body: $"let orig = ($field | cmd read name)
+  | enumerate
 	| each {|row|
 		{
-			row: $row
-			entry: \($row | ($entry | callback run)\)
+			row: $row.item
+			entry: \($row.item | ($entry | callback run) $row.index\)
 		}
 	}
 

@@ -23,7 +23,7 @@ let children_field: record<id: string, display_name: string, desc: string, group
   group: ""
   type: $children_type
   display_value: null
-  init: (callback make [] "$params")
+  init: (callback make [] "$params.children")
   ops: {
     read: true
     write: true
@@ -49,7 +49,14 @@ let fields_ordering: list<record<field: record<id: string, display_name: string,
 # @type types.Form
 let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = {
   name: task-children-configs
-  params: $children_type
+  params: {
+    type: record
+    fields: [
+      [key value];
+      [task_id {type: int}]
+      [children $children_type]
+    ]
+  }
   returns: $children_type
   use: []
   commands: [
@@ -57,17 +64,25 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
 
     (
       $children_field | field cmd interact list add (
-        callback make [] "index form task-child-config"
+        callback make [] "{
+  task_id: $params.task_id
+  desc: null
+  deadline: null
+  exp_cost: null
+  children: []
+} | index form task-child-config"
       )
     )
     (
       $children_field | field cmd interact list remove (
-        {|| $in } | callback from closure
+        {|idx|
+          {id: $idx name: $in.desc}
+        } | callback from closure
       )
     )
 
     (form cmd cancel)
-    ($fields | form cmd done)
+    ($fields | form cmd done --output (callback make [] ($children_field | field cmd read name)))
     ($fields | form cmd status)
     ($fields_ordering | form cmd next)
   ]
