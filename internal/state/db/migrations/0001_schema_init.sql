@@ -1,3 +1,5 @@
+-- +goose Up
+
 -- Scheduling profile, namespace for timescales, tasks, and everything else
 create table profile (
 	id integer primary key autoincrement,
@@ -12,6 +14,7 @@ create table profile (
 -- Task
 create table task (
 	id integer primary key autoincrement,
+	last_modified timestamp not null,
 	profile integer not null references profile (id) on update cascade on delete cascade,
 
 	unit integer not null,

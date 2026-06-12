@@ -3,17 +3,21 @@ package db
 import (
 	"context"
 	"database/sql"
+	"embed"
+	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/url"
 	"path/filepath"
 
 	_ "embed"
 
+	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite"
 )
 
-//go:embed schema.sql
-var schema string
+//go:embed migrations/*.sql
+var migrations embed.FS
 
 var sqlite_options = url.Values{
 	"_pragma": {
@@ -33,30 +37,42 @@ func configureSQLite(driver *sql.DB) (err error) {
 	return
 }
 
+type gooseLogger struct {
+	logger *slog.Logger
+}
+
+func (l gooseLogger) fmt(msg string) string {
+	return fmt.Sprintf("[goose] %s", msg)
+}
+
+func (l gooseLogger) Printf(format string, v ...any) {
+	l.logger.Info(l.fmt(fmt.Sprintf(format, v...)))
+}
+
+func (l gooseLogger) Fatalf(format string, v ...any) {
+	l.logger.Error(l.fmt(fmt.Sprintf(format, v...)))
+}
+
 func migrateSQLite(ctx context.Context, logger *slog.Logger, driver *sql.DB) (err error) {
-	tx, err := driver.BeginTx(ctx, nil)
+	subfs, err := fs.Sub(migrations, "migrations")
 	if err != nil {
 		return
 	}
-	defer tx.Rollback()
-
-	res, err := tx.QueryContext(ctx, `SELECT name 
-FROM sqlite_master
-WHERE type='table' AND name='profile'`)
+	gooseProv, err := goose.NewProvider(
+		goose.DialectSQLite3,
+		driver,
+		subfs,
+		goose.WithLogger(gooseLogger{logger: logger}),
+	)
 	if err != nil {
+		err = fmt.Errorf("init goose: %w", err)
 		return
 	}
-	defer res.Close()
-
-	if !res.Next() {
-		_, err = tx.ExecContext(ctx, schema)
-		if err != nil {
-			return
-		}
-		logger.Info("schema migrated")
-		err = tx.Commit()
+	_, err = gooseProv.Up(ctx)
+	if err != nil {
+		err = fmt.Errorf("migrate: %w", err)
+		return
 	}
-
 	return
 }
 
