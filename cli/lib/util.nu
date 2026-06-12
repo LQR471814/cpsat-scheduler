@@ -141,12 +141,23 @@ export def confirm [--prompt: string]: nothing -> bool {
   } catch { false }
 }
 
+def "clamp dur" [--min: duration --max: duration]: duration -> duration {
+  let input: duration = $in
+  if $min != null and $input < $min {
+    return $min
+  }
+  if $max != null and $input > $max {
+    return $max
+  }
+  $input
+}
+
 # range shift amount translates the range by a given amount
 export def "range shift amount" [value: duration]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
   {
-    opt: ($in.opt + $value)
-    exp: ($in.exp + $value)
-    pes: ($in.pes + $value)
+    opt: ($in.opt + $value | clamp dur --min 0sec)
+    exp: ($in.exp + $value | clamp dur --min 0sec)
+    pes: ($in.pes + $value | clamp dur --min 0sec)
   }
 }
 
@@ -165,12 +176,13 @@ export def "range widen" [percentage_delta: float]: record<opt: duration, exp: d
 
 # range scale scales a range by a given factor (ex. 2x)
 export def "range scale" [factor: float]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
-  let opt_rel = $in.opt - $in.exp
-  let pes_rel = $in.pes - $in.exp
+  let rng = $in
+  let opt_rel = $rng.opt - $rng.exp
+  let pes_rel = $rng.pes - $rng.exp
   {
-    opt: ($in.exp + ($opt_rel * $factor))
-    exp: $in.exp
-    pes: ($in.exp + ($pes_rel * $factor))
+    opt: ($rng.exp + ($opt_rel * $factor) | clamp dur --min 0sec)
+    exp: $rng.exp
+    pes: ($rng.exp + ($pes_rel * $factor))
   }
 }
 

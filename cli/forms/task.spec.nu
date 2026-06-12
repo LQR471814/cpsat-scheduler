@@ -258,7 +258,9 @@ $new"
 
 $params.id | (write tmp task id run)
 
-set required
+if \(($req_fields_field | field cmd validate name)\) != null {
+  set required
+}
 
 if \(($req_fields_field | field cmd validate name)\) != null {
   (form cmd cancel name -y)

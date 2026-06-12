@@ -63,7 +63,7 @@ let fetch_scheduled_pipe = "api.gen API ListScheduledTasks | get entries"
 let choose_task_pipe = "util choose table --header 'Choose a task:' | get id?"
 
 # @type types.Command
-let update_task = {
+let update_task: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = {
   desc: "Update a task."
   group: ""
   aliases: []
@@ -145,7 +145,7 @@ $chosen | ($update_task.def.name)"
 }
 
 # @type types.Command
-let progress_log = {
+let progress_log: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = {
   desc: "Compute the progress log message for the modifications made to tasks."
   group: ""
   aliases: []

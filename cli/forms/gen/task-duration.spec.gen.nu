@@ -86,11 +86,7 @@ if $skipval {
   $env.__state_deadline = $new
   return
 }
-let err = $new | do --env {||
-        if ($in | is-empty) {
-          "deadline cannot be empty"
-        }
-      }
+let err = $new | do --env {|| null }
 if $err != null {
   util print error $err
   return
@@ -99,11 +95,7 @@ $env.__state_deadline = $new
 }
 
 def --env "validate deadline" []: nothing -> oneof<string, nothing> {
-read deadline | do --env {||
-        if ($in | is-empty) {
-          "deadline cannot be empty"
-        }
-      }
+read deadline | do --env {|| null }
 }
 
 def --env "read total_cost" []: nothing -> int {
@@ -177,11 +169,7 @@ if $err != null {
 	util print error $err
   return
 }
-let err = read deadline | do --env {||
-        if ($in | is-empty) {
-          "deadline cannot be empty"
-        }
-      }
+let err = read deadline | do --env {|| null }
 if $err != null {
   util print label "Deadline"
 	util print error $err
@@ -233,11 +221,7 @@ read deadline | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | 
 "datetime" => { $in | do {|| util print date $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
-let err = read deadline | do --env {||
-        if ($in | is-empty) {
-          "deadline cannot be empty"
-        }
-      }
+let err = read deadline | do --env {|| null }
 if $err != null {
 	util print error $err
 }

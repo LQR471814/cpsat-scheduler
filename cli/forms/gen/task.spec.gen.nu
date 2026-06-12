@@ -473,7 +473,9 @@ $env.__state_children = do --env {|| $params.state | get children_cfgs }
 
 $params.id | do --env {|| $env.__tmp_task_id = $in }
 
-set required
+if (validate required) != null {
+  set required
+}
 
 if (validate required) != null {
   cancel -y

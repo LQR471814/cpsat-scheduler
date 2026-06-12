@@ -50,11 +50,7 @@ let deadline_field: record<id: string, display_name: string, desc: string, group
     read: true
     write: true
     validate: (
-      {||
-        if ($in | is-empty) {
-          "deadline cannot be empty"
-        }
-      } | callback from closure
+      {|| null } | callback from closure
     )
   }
 }
