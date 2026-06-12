@@ -132,19 +132,18 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (i
 }
 
 const createProgressLog = `-- name: CreateProgressLog :one
-insert into progress_log (profile, time, desc)
-values (?, ?, ?)
+insert into progress_log (profile, time)
+values (?, ?)
 returning id
 `
 
 type CreateProgressLogParams struct {
 	Profile int64
 	Time    time.Time
-	Desc    string
 }
 
 func (q *Queries) CreateProgressLog(ctx context.Context, arg CreateProgressLogParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createProgressLog, arg.Profile, arg.Time, arg.Desc)
+	row := q.db.QueryRowContext(ctx, createProgressLog, arg.Profile, arg.Time)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -180,18 +179,30 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (int64, 
 }
 
 const createUpdatedTask = `-- name: CreateUpdatedTask :exec
-insert into updated_task (progress_log, task, desc)
-values (?, ?, ?)
+insert into updated_task (progress_log, id, unit, name, desc, start, end)
+values (?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateUpdatedTaskParams struct {
 	ProgressLog int64
-	Task        int64
+	ID          int64
+	Unit        int64
+	Name        string
 	Desc        string
+	Start       sql.NullTime
+	End         sql.NullTime
 }
 
 func (q *Queries) CreateUpdatedTask(ctx context.Context, arg CreateUpdatedTaskParams) error {
-	_, err := q.db.ExecContext(ctx, createUpdatedTask, arg.ProgressLog, arg.Task, arg.Desc)
+	_, err := q.db.ExecContext(ctx, createUpdatedTask,
+		arg.ProgressLog,
+		arg.ID,
+		arg.Unit,
+		arg.Name,
+		arg.Desc,
+		arg.Start,
+		arg.End,
+	)
 	return err
 }
 
@@ -573,7 +584,7 @@ func (q *Queries) ListProfiles(ctx context.Context) ([]Profile, error) {
 }
 
 const listProgressLog = `-- name: ListProgressLog :many
-select id, profile, time, "desc" from progress_log
+select id, profile, time from progress_log
 where profile = ? and time >= ?2 and time < ?3
 `
 
@@ -592,12 +603,7 @@ func (q *Queries) ListProgressLog(ctx context.Context, arg ListProgressLogParams
 	var items []ProgressLog
 	for rows.Next() {
 		var i ProgressLog
-		if err := rows.Scan(
-			&i.ID,
-			&i.Profile,
-			&i.Time,
-			&i.Desc,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.Profile, &i.Time); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -790,16 +796,13 @@ func (q *Queries) ListTasks(ctx context.Context, profile int64) ([]Task, error) 
 }
 
 const listUpdatedTask = `-- name: ListUpdatedTask :many
-select u.task, u.desc, t.name as task_name from updated_task u
-inner join task t
-	on u.task = t.id
+select id, name from updated_task
 where progress_log = ?
 `
 
 type ListUpdatedTaskRow struct {
-	Task     int64
-	Desc     string
-	TaskName string
+	ID   int64
+	Name string
 }
 
 func (q *Queries) ListUpdatedTask(ctx context.Context, progressLog int64) ([]ListUpdatedTaskRow, error) {
@@ -811,7 +814,7 @@ func (q *Queries) ListUpdatedTask(ctx context.Context, progressLog int64) ([]Lis
 	var items []ListUpdatedTaskRow
 	for rows.Next() {
 		var i ListUpdatedTaskRow
-		if err := rows.Scan(&i.Task, &i.Desc, &i.TaskName); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

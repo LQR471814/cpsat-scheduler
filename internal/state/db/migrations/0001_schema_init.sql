@@ -18,7 +18,6 @@ create table task (
 	profile integer not null references profile (id) on update cascade on delete cascade,
 
 	unit integer not null,
-
 	name text not null,
 	desc text not null,
 	start timestamp,
@@ -96,8 +95,7 @@ on scheduled_task (profile, task);
 create table progress_log (
 	id integer primary key autoincrement,
 	profile integer not null references profile (id) on update cascade on delete cascade,
-	time timestamp not null,
-	desc text not null
+	time timestamp not null
 );
 
 create index idx_progress_log
@@ -106,9 +104,13 @@ on progress_log (profile, id);
 -- Updated task
 create table updated_task (
 	progress_log integer not null references progress_log (id) on update cascade on delete cascade,
-	task integer not null references task (id) on update cascade on delete cascade,
+	id integer not null references task (id) on update cascade on delete cascade,
+	unit integer not null,
+	name text not null,
 	desc text not null,
-	primary key (progress_log, task)
+	start timestamp,
+	end timestamp,
+	primary key (progress_log, id)
 );
 
 -- Event

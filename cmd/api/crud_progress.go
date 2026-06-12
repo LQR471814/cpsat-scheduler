@@ -3,58 +3,12 @@ package main
 import (
 	"context"
 	"cpsat-scheduler/internal/proto/apipb"
-	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-func (s server) ListProgressUpdates(ctx context.Context, req *apipb.ListProgressUpdatesRequest) (res *apipb.ListProgressUpdatesResponse, err error) {
-	tx, err := s.driver.BeginTx(ctx, &sql.TxOptions{
-		ReadOnly: true,
-	})
-	if err != nil {
-		return
-	}
-	defer tx.Rollback()
-	txqry := s.db.WithTx(tx)
-
-	logs, err := txqry.ListProgressLog(ctx, db.ListProgressLogParams{
-		Start: req.GetStart().AsTime(),
-		End:   req.GetEnd().AsTime(),
-	})
-	if err != nil {
-		return
-	}
-	res = &apipb.ListProgressUpdatesResponse{
-		Logs: make([]*apipb.ListProgressUpdatesResponse_ProgressLog, len(logs)),
-	}
-	for i, l := range logs {
-		var updated []db.ListUpdatedTaskRow
-		updated, err = txqry.ListUpdatedTask(ctx, l.ID)
-		if err != nil {
-			return
-		}
-		res.Logs[i] = &apipb.ListProgressUpdatesResponse_ProgressLog{
-			Desc:    l.Desc,
-			Time:    timestamppb.New(l.Time),
-			Updates: make([]*apipb.ListProgressUpdatesResponse_ProgressLog_UpdatedTask, len(updated)),
-		}
-		for j, u := range updated {
-			res.Logs[j].Updates[j] = &apipb.ListProgressUpdatesResponse_ProgressLog_UpdatedTask{
-				Desc: u.Desc,
-				Task: &commonpb.Entry{
-					Id:   u.Task,
-					Name: u.TaskName,
-				},
-			}
-		}
-	}
-	return
-}
 
 func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateRequest) (res *apipb.ProgressUpdateResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
@@ -67,16 +21,25 @@ func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateReq
 	id, err := txqry.CreateProgressLog(ctx, db.CreateProgressLogParams{
 		Profile: req.GetProfile(),
 		Time:    req.GetTime().AsTime(),
-		Desc:    req.GetDesc(),
 	})
 	if err != nil {
 		return
 	}
-	for _, update := range req.GetUpdates() {
+	for _, taskID := range req.GetUpdatedTasks() {
+		var task db.Task
+		task, err = txqry.GetTask(ctx, taskID)
+		if err != nil {
+			return
+		}
+
 		err = txqry.CreateUpdatedTask(ctx, db.CreateUpdatedTaskParams{
 			ProgressLog: id,
-			Task:        update.GetTask(),
-			Desc:        update.GetDesc(),
+			ID:          taskID,
+			Name:        task.Name,
+			Unit:        task.Unit,
+			Desc:        task.Desc,
+			Start:       task.Start,
+			End:         task.End,
 		})
 		if err != nil {
 			return
@@ -88,64 +51,6 @@ func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateReq
 		return
 	}
 	res = &apipb.ProgressUpdateResponse{Id: id}
-	return
-}
-
-func (s server) EditProgressLog(ctx context.Context, req *apipb.EditProgressLogRequest) (res *apipb.EditProgressLogResponse, err error) {
-	tx, err := s.driver.BeginTx(ctx, nil)
-	if err != nil {
-		return
-	}
-	defer tx.Rollback()
-	txqry := s.db.WithTx(tx)
-
-	profile, err := txqry.GetProgressLog(ctx, req.GetId())
-	if errors.Is(err, sql.ErrNoRows) {
-		err = fmt.Errorf("edit progress: progress log of id '%d' does not exist", req.GetId())
-		return
-	}
-	if err != nil {
-		return
-	}
-
-	err = txqry.DeleteProgressLog(ctx, req.GetId())
-	if err != nil {
-		return
-	}
-
-	id, err := txqry.CreateProgressLog(ctx, db.CreateProgressLogParams{
-		Profile: profile,
-		Time:    req.GetTime().AsTime(),
-		Desc:    req.GetDesc(),
-	})
-	if err != nil {
-		return
-	}
-	for _, update := range req.GetUpdates() {
-		err = txqry.CreateUpdatedTask(ctx, db.CreateUpdatedTaskParams{
-			ProgressLog: id,
-			Task:        update.GetTask(),
-			Desc:        update.GetDesc(),
-		})
-		if err != nil {
-			return
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		return
-	}
-
-	res = &apipb.EditProgressLogResponse{}
-	return
-}
-
-func (s server) DeleteProgressLog(ctx context.Context, req *apipb.DeleteProgressLogRequest) (res *apipb.DeleteProgressLogResponse, err error) {
-	err = s.db.DeleteProgressLog(ctx, req.GetId())
-	if err != nil {
-		return
-	}
-	res = &apipb.DeleteProgressLogResponse{}
 	return
 }
 

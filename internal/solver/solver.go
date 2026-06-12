@@ -93,6 +93,19 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 		return
 	}
 
+	switch res.Status {
+	case solverpb.SolveStatus_FEASIBLE:
+		s.logger.Warn("got feasible but suboptimal solution")
+	case solverpb.SolveStatus_INFEASIBLE:
+		s.logger.Error("got infeasible model!")
+	case solverpb.SolveStatus_MODEL_INVALID:
+		s.logger.Error("got invalid model!")
+	case solverpb.SolveStatus_OPTIMAL:
+		s.logger.Info("optimal solution found")
+	case solverpb.SolveStatus_UNKNOWN:
+		s.logger.Error("got unknown model status!")
+	}
+
 	// filter event segments out of solution
 	var solution []*solverpb.SolvedTask
 	for _, scheduled := range res.Solution {

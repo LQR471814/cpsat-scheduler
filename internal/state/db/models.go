@@ -64,7 +64,6 @@ type ProgressLog struct {
 	ID      int64
 	Profile int64
 	Time    time.Time
-	Desc    string
 }
 
 type ScheduledTask struct {
@@ -88,6 +87,10 @@ type Task struct {
 
 type UpdatedTask struct {
 	ProgressLog int64
-	Task        int64
+	ID          int64
+	Unit        int64
+	Name        string
 	Desc        string
+	Start       sql.NullTime
+	End         sql.NullTime
 }

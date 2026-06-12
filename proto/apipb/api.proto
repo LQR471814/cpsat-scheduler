@@ -132,59 +132,15 @@ message ListPossibleRelativesResponse {
   repeated Entry entries = 1;
 }
 
-// ListProgressUpdates
-message ListProgressUpdatesRequest {
-  int64 profile = 1;
-  google.protobuf.Timestamp start = 2;
-  google.protobuf.Timestamp end = 3;
-}
-message ListProgressUpdatesResponse {
-  message ProgressLog {
-    message UpdatedTask {
-      Entry task = 1;
-      string desc = 2;
-    }
-    int64 id = 1;
-    google.protobuf.Timestamp time = 2;
-    string desc = 3;
-    repeated UpdatedTask updates = 4;
-  }
-  repeated ProgressLog logs = 1;
-}
-
 // ProgressUpdate
 message ProgressUpdateRequest {
-  message UpdatedTask {
-    int64 task = 1;
-    string desc = 2;
-  }
   int64 profile = 1;
   google.protobuf.Timestamp time = 2;
-  string desc = 3;
-  repeated UpdatedTask updates = 4;
+  repeated int64 updated_tasks = 3;
 }
 message ProgressUpdateResponse {
   int64 id = 1;
 }
-
-// EditProgressLog
-message EditProgressLogRequest {
-  message UpdatedTask {
-    int64 task = 1;
-    string desc = 2;
-  }
-  int64 id = 1;
-  google.protobuf.Timestamp time = 2;
-  string desc = 3;
-  repeated UpdatedTask updates = 4;
-}
-message EditProgressLogResponse {}
-
-// DeleteProgressLog
-message DeleteProgressLogRequest {
-  int64 id = 1;
-}
-message DeleteProgressLogResponse {}
 
 // GetLastCheckpoint
 message GetLastCheckpointRequest {
@@ -259,10 +215,7 @@ service API {
   rpc RecomputeSchedule(RecomputeScheduleRequest) returns (RecomputeScheduleResponse);
   rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
 
-  rpc ListProgressUpdates(ListProgressUpdatesRequest) returns (ListProgressUpdatesResponse);
   rpc ProgressUpdate(ProgressUpdateRequest) returns (ProgressUpdateResponse);
-  rpc EditProgressLog(EditProgressLogRequest) returns (EditProgressLogResponse);
-  rpc DeleteProgressLog(DeleteProgressLogRequest) returns (DeleteProgressLogResponse);
   rpc GetLastCheckpoint(GetLastCheckpointRequest) returns (GetLastCheckpointResponse);
 
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);

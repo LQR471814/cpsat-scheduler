@@ -138,21 +138,19 @@ select * from progress_log
 where profile = ? and time >= sqlc.arg('start') and time < sqlc.arg('end');
 
 -- name: CreateProgressLog :one
-insert into progress_log (profile, time, desc)
-values (?, ?, ?)
+insert into progress_log (profile, time)
+values (?, ?)
 returning id;
 
 -- name: DeleteProgressLog :exec
 delete from progress_log where id = ?;
 
 -- name: CreateUpdatedTask :exec
-insert into updated_task (progress_log, task, desc)
-values (?, ?, ?);
+insert into updated_task (progress_log, id, unit, name, desc, start, end)
+values (?, ?, ?, ?, ?, ?, ?);
 
 -- name: ListUpdatedTask :many
-select u.task, u.desc, t.name as task_name from updated_task u
-inner join task t
-	on u.task = t.id
+select id, name from updated_task
 where progress_log = ?;
 
 -- name: GetLastCheckpoint :one

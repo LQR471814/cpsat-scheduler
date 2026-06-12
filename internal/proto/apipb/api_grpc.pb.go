@@ -29,10 +29,7 @@ const (
 	API_ListPossibleRelatives_FullMethodName = "/API/ListPossibleRelatives"
 	API_RecomputeSchedule_FullMethodName     = "/API/RecomputeSchedule"
 	API_ListScheduledTasks_FullMethodName    = "/API/ListScheduledTasks"
-	API_ListProgressUpdates_FullMethodName   = "/API/ListProgressUpdates"
 	API_ProgressUpdate_FullMethodName        = "/API/ProgressUpdate"
-	API_EditProgressLog_FullMethodName       = "/API/EditProgressLog"
-	API_DeleteProgressLog_FullMethodName     = "/API/DeleteProgressLog"
 	API_GetLastCheckpoint_FullMethodName     = "/API/GetLastCheckpoint"
 	API_CreateEvent_FullMethodName           = "/API/CreateEvent"
 	API_ReadEvent_FullMethodName             = "/API/ReadEvent"
@@ -55,10 +52,7 @@ type APIClient interface {
 	ListPossibleRelatives(ctx context.Context, in *ListPossibleRelativesRequest, opts ...grpc.CallOption) (*ListPossibleRelativesResponse, error)
 	RecomputeSchedule(ctx context.Context, in *RecomputeScheduleRequest, opts ...grpc.CallOption) (*RecomputeScheduleResponse, error)
 	ListScheduledTasks(ctx context.Context, in *ListScheduledTasksRequest, opts ...grpc.CallOption) (*ListScheduledTasksResponse, error)
-	ListProgressUpdates(ctx context.Context, in *ListProgressUpdatesRequest, opts ...grpc.CallOption) (*ListProgressUpdatesResponse, error)
 	ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error)
-	EditProgressLog(ctx context.Context, in *EditProgressLogRequest, opts ...grpc.CallOption) (*EditProgressLogResponse, error)
-	DeleteProgressLog(ctx context.Context, in *DeleteProgressLogRequest, opts ...grpc.CallOption) (*DeleteProgressLogResponse, error)
 	GetLastCheckpoint(ctx context.Context, in *GetLastCheckpointRequest, opts ...grpc.CallOption) (*GetLastCheckpointResponse, error)
 	CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*CreateEventResponse, error)
 	ReadEvent(ctx context.Context, in *ReadEventRequest, opts ...grpc.CallOption) (*ReadEventResponse, error)
@@ -175,40 +169,10 @@ func (c *aPIClient) ListScheduledTasks(ctx context.Context, in *ListScheduledTas
 	return out, nil
 }
 
-func (c *aPIClient) ListProgressUpdates(ctx context.Context, in *ListProgressUpdatesRequest, opts ...grpc.CallOption) (*ListProgressUpdatesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListProgressUpdatesResponse)
-	err := c.cc.Invoke(ctx, API_ListProgressUpdates_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *aPIClient) ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProgressUpdateResponse)
 	err := c.cc.Invoke(ctx, API_ProgressUpdate_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *aPIClient) EditProgressLog(ctx context.Context, in *EditProgressLogRequest, opts ...grpc.CallOption) (*EditProgressLogResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EditProgressLogResponse)
-	err := c.cc.Invoke(ctx, API_EditProgressLog_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *aPIClient) DeleteProgressLog(ctx context.Context, in *DeleteProgressLogRequest, opts ...grpc.CallOption) (*DeleteProgressLogResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteProgressLogResponse)
-	err := c.cc.Invoke(ctx, API_DeleteProgressLog_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -289,10 +253,7 @@ type APIServer interface {
 	ListPossibleRelatives(context.Context, *ListPossibleRelativesRequest) (*ListPossibleRelativesResponse, error)
 	RecomputeSchedule(context.Context, *RecomputeScheduleRequest) (*RecomputeScheduleResponse, error)
 	ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error)
-	ListProgressUpdates(context.Context, *ListProgressUpdatesRequest) (*ListProgressUpdatesResponse, error)
 	ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error)
-	EditProgressLog(context.Context, *EditProgressLogRequest) (*EditProgressLogResponse, error)
-	DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error)
 	GetLastCheckpoint(context.Context, *GetLastCheckpointRequest) (*GetLastCheckpointResponse, error)
 	CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error)
 	ReadEvent(context.Context, *ReadEventRequest) (*ReadEventResponse, error)
@@ -339,17 +300,8 @@ func (UnimplementedAPIServer) RecomputeSchedule(context.Context, *RecomputeSched
 func (UnimplementedAPIServer) ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListScheduledTasks not implemented")
 }
-func (UnimplementedAPIServer) ListProgressUpdates(context.Context, *ListProgressUpdatesRequest) (*ListProgressUpdatesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListProgressUpdates not implemented")
-}
 func (UnimplementedAPIServer) ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ProgressUpdate not implemented")
-}
-func (UnimplementedAPIServer) EditProgressLog(context.Context, *EditProgressLogRequest) (*EditProgressLogResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method EditProgressLog not implemented")
-}
-func (UnimplementedAPIServer) DeleteProgressLog(context.Context, *DeleteProgressLogRequest) (*DeleteProgressLogResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteProgressLog not implemented")
 }
 func (UnimplementedAPIServer) GetLastCheckpoint(context.Context, *GetLastCheckpointRequest) (*GetLastCheckpointResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLastCheckpoint not implemented")
@@ -570,24 +522,6 @@ func _API_ListScheduledTasks_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _API_ListProgressUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListProgressUpdatesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).ListProgressUpdates(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: API_ListProgressUpdates_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).ListProgressUpdates(ctx, req.(*ListProgressUpdatesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _API_ProgressUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProgressUpdateRequest)
 	if err := dec(in); err != nil {
@@ -602,42 +536,6 @@ func _API_ProgressUpdate_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(APIServer).ProgressUpdate(ctx, req.(*ProgressUpdateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _API_EditProgressLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EditProgressLogRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).EditProgressLog(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: API_EditProgressLog_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).EditProgressLog(ctx, req.(*EditProgressLogRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _API_DeleteProgressLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteProgressLogRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).DeleteProgressLog(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: API_DeleteProgressLog_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).DeleteProgressLog(ctx, req.(*DeleteProgressLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -798,20 +696,8 @@ var API_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _API_ListScheduledTasks_Handler,
 		},
 		{
-			MethodName: "ListProgressUpdates",
-			Handler:    _API_ListProgressUpdates_Handler,
-		},
-		{
 			MethodName: "ProgressUpdate",
 			Handler:    _API_ProgressUpdate_Handler,
-		},
-		{
-			MethodName: "EditProgressLog",
-			Handler:    _API_EditProgressLog_Handler,
-		},
-		{
-			MethodName: "DeleteProgressLog",
-			Handler:    _API_DeleteProgressLog_Handler,
 		},
 		{
 			MethodName: "GetLastCheckpoint",

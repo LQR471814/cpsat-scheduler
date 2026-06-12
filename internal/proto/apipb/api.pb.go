@@ -1299,125 +1299,19 @@ func (x *ListPossibleRelativesResponse) GetEntries() []*commonpb.Entry {
 	return nil
 }
 
-// ListProgressUpdates
-type ListProgressUpdatesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Profile       int64                  `protobuf:"varint,1,opt,name=profile,proto3" json:"profile,omitempty"`
-	Start         *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
-	End           *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListProgressUpdatesRequest) Reset() {
-	*x = ListProgressUpdatesRequest{}
-	mi := &file_apipb_api_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListProgressUpdatesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListProgressUpdatesRequest) ProtoMessage() {}
-
-func (x *ListProgressUpdatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListProgressUpdatesRequest.ProtoReflect.Descriptor instead.
-func (*ListProgressUpdatesRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *ListProgressUpdatesRequest) GetProfile() int64 {
-	if x != nil {
-		return x.Profile
-	}
-	return 0
-}
-
-func (x *ListProgressUpdatesRequest) GetStart() *timestamppb.Timestamp {
-	if x != nil {
-		return x.Start
-	}
-	return nil
-}
-
-func (x *ListProgressUpdatesRequest) GetEnd() *timestamppb.Timestamp {
-	if x != nil {
-		return x.End
-	}
-	return nil
-}
-
-type ListProgressUpdatesResponse struct {
-	state         protoimpl.MessageState                     `protogen:"open.v1"`
-	Logs          []*ListProgressUpdatesResponse_ProgressLog `protobuf:"bytes,1,rep,name=logs,proto3" json:"logs,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListProgressUpdatesResponse) Reset() {
-	*x = ListProgressUpdatesResponse{}
-	mi := &file_apipb_api_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListProgressUpdatesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListProgressUpdatesResponse) ProtoMessage() {}
-
-func (x *ListProgressUpdatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListProgressUpdatesResponse.ProtoReflect.Descriptor instead.
-func (*ListProgressUpdatesResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *ListProgressUpdatesResponse) GetLogs() []*ListProgressUpdatesResponse_ProgressLog {
-	if x != nil {
-		return x.Logs
-	}
-	return nil
-}
-
 // ProgressUpdate
 type ProgressUpdateRequest struct {
-	state         protoimpl.MessageState               `protogen:"open.v1"`
-	Profile       int64                                `protobuf:"varint,1,opt,name=profile,proto3" json:"profile,omitempty"`
-	Time          *timestamppb.Timestamp               `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
-	Desc          string                               `protobuf:"bytes,3,opt,name=desc,proto3" json:"desc,omitempty"`
-	Updates       []*ProgressUpdateRequest_UpdatedTask `protobuf:"bytes,4,rep,name=updates,proto3" json:"updates,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       int64                  `protobuf:"varint,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
+	UpdatedTasks  []int64                `protobuf:"varint,3,rep,packed,name=updated_tasks,json=updatedTasks,proto3" json:"updated_tasks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ProgressUpdateRequest) Reset() {
 	*x = ProgressUpdateRequest{}
-	mi := &file_apipb_api_proto_msgTypes[25]
+	mi := &file_apipb_api_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1429,7 +1323,7 @@ func (x *ProgressUpdateRequest) String() string {
 func (*ProgressUpdateRequest) ProtoMessage() {}
 
 func (x *ProgressUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[25]
+	mi := &file_apipb_api_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1442,7 +1336,7 @@ func (x *ProgressUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProgressUpdateRequest.ProtoReflect.Descriptor instead.
 func (*ProgressUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{25}
+	return file_apipb_api_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ProgressUpdateRequest) GetProfile() int64 {
@@ -1459,16 +1353,9 @@ func (x *ProgressUpdateRequest) GetTime() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ProgressUpdateRequest) GetDesc() string {
+func (x *ProgressUpdateRequest) GetUpdatedTasks() []int64 {
 	if x != nil {
-		return x.Desc
-	}
-	return ""
-}
-
-func (x *ProgressUpdateRequest) GetUpdates() []*ProgressUpdateRequest_UpdatedTask {
-	if x != nil {
-		return x.Updates
+		return x.UpdatedTasks
 	}
 	return nil
 }
@@ -1482,7 +1369,7 @@ type ProgressUpdateResponse struct {
 
 func (x *ProgressUpdateResponse) Reset() {
 	*x = ProgressUpdateResponse{}
-	mi := &file_apipb_api_proto_msgTypes[26]
+	mi := &file_apipb_api_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1494,7 +1381,7 @@ func (x *ProgressUpdateResponse) String() string {
 func (*ProgressUpdateResponse) ProtoMessage() {}
 
 func (x *ProgressUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[26]
+	mi := &file_apipb_api_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1507,7 +1394,7 @@ func (x *ProgressUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProgressUpdateResponse.ProtoReflect.Descriptor instead.
 func (*ProgressUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{26}
+	return file_apipb_api_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ProgressUpdateResponse) GetId() int64 {
@@ -1515,192 +1402,6 @@ func (x *ProgressUpdateResponse) GetId() int64 {
 		return x.Id
 	}
 	return 0
-}
-
-// EditProgressLog
-type EditProgressLogRequest struct {
-	state         protoimpl.MessageState                `protogen:"open.v1"`
-	Id            int64                                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Time          *timestamppb.Timestamp                `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
-	Desc          string                                `protobuf:"bytes,3,opt,name=desc,proto3" json:"desc,omitempty"`
-	Updates       []*EditProgressLogRequest_UpdatedTask `protobuf:"bytes,4,rep,name=updates,proto3" json:"updates,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EditProgressLogRequest) Reset() {
-	*x = EditProgressLogRequest{}
-	mi := &file_apipb_api_proto_msgTypes[27]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EditProgressLogRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EditProgressLogRequest) ProtoMessage() {}
-
-func (x *EditProgressLogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[27]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EditProgressLogRequest.ProtoReflect.Descriptor instead.
-func (*EditProgressLogRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *EditProgressLogRequest) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *EditProgressLogRequest) GetTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.Time
-	}
-	return nil
-}
-
-func (x *EditProgressLogRequest) GetDesc() string {
-	if x != nil {
-		return x.Desc
-	}
-	return ""
-}
-
-func (x *EditProgressLogRequest) GetUpdates() []*EditProgressLogRequest_UpdatedTask {
-	if x != nil {
-		return x.Updates
-	}
-	return nil
-}
-
-type EditProgressLogResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EditProgressLogResponse) Reset() {
-	*x = EditProgressLogResponse{}
-	mi := &file_apipb_api_proto_msgTypes[28]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EditProgressLogResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EditProgressLogResponse) ProtoMessage() {}
-
-func (x *EditProgressLogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[28]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EditProgressLogResponse.ProtoReflect.Descriptor instead.
-func (*EditProgressLogResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{28}
-}
-
-// DeleteProgressLog
-type DeleteProgressLogRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteProgressLogRequest) Reset() {
-	*x = DeleteProgressLogRequest{}
-	mi := &file_apipb_api_proto_msgTypes[29]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteProgressLogRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteProgressLogRequest) ProtoMessage() {}
-
-func (x *DeleteProgressLogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[29]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteProgressLogRequest.ProtoReflect.Descriptor instead.
-func (*DeleteProgressLogRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{29}
-}
-
-func (x *DeleteProgressLogRequest) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-type DeleteProgressLogResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteProgressLogResponse) Reset() {
-	*x = DeleteProgressLogResponse{}
-	mi := &file_apipb_api_proto_msgTypes[30]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteProgressLogResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteProgressLogResponse) ProtoMessage() {}
-
-func (x *DeleteProgressLogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[30]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteProgressLogResponse.ProtoReflect.Descriptor instead.
-func (*DeleteProgressLogResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{30}
 }
 
 // GetLastCheckpoint
@@ -1713,7 +1414,7 @@ type GetLastCheckpointRequest struct {
 
 func (x *GetLastCheckpointRequest) Reset() {
 	*x = GetLastCheckpointRequest{}
-	mi := &file_apipb_api_proto_msgTypes[31]
+	mi := &file_apipb_api_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1725,7 +1426,7 @@ func (x *GetLastCheckpointRequest) String() string {
 func (*GetLastCheckpointRequest) ProtoMessage() {}
 
 func (x *GetLastCheckpointRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[31]
+	mi := &file_apipb_api_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1738,7 +1439,7 @@ func (x *GetLastCheckpointRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLastCheckpointRequest.ProtoReflect.Descriptor instead.
 func (*GetLastCheckpointRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{31}
+	return file_apipb_api_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetLastCheckpointRequest) GetProfile() int64 {
@@ -1757,7 +1458,7 @@ type GetLastCheckpointResponse struct {
 
 func (x *GetLastCheckpointResponse) Reset() {
 	*x = GetLastCheckpointResponse{}
-	mi := &file_apipb_api_proto_msgTypes[32]
+	mi := &file_apipb_api_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1769,7 +1470,7 @@ func (x *GetLastCheckpointResponse) String() string {
 func (*GetLastCheckpointResponse) ProtoMessage() {}
 
 func (x *GetLastCheckpointResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[32]
+	mi := &file_apipb_api_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1782,7 +1483,7 @@ func (x *GetLastCheckpointResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLastCheckpointResponse.ProtoReflect.Descriptor instead.
 func (*GetLastCheckpointResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{32}
+	return file_apipb_api_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetLastCheckpointResponse) GetTime() *timestamppb.Timestamp {
@@ -1805,7 +1506,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_apipb_api_proto_msgTypes[33]
+	mi := &file_apipb_api_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1817,7 +1518,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[33]
+	mi := &file_apipb_api_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1830,7 +1531,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{33}
+	return file_apipb_api_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *Event) GetProfile() int64 {
@@ -1878,7 +1579,7 @@ type CreateEventRequest struct {
 
 func (x *CreateEventRequest) Reset() {
 	*x = CreateEventRequest{}
-	mi := &file_apipb_api_proto_msgTypes[34]
+	mi := &file_apipb_api_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1890,7 +1591,7 @@ func (x *CreateEventRequest) String() string {
 func (*CreateEventRequest) ProtoMessage() {}
 
 func (x *CreateEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[34]
+	mi := &file_apipb_api_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1903,7 +1604,7 @@ func (x *CreateEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateEventRequest.ProtoReflect.Descriptor instead.
 func (*CreateEventRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{34}
+	return file_apipb_api_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *CreateEventRequest) GetEvent() []*Event {
@@ -1921,7 +1622,7 @@ type CreateEventResponse struct {
 
 func (x *CreateEventResponse) Reset() {
 	*x = CreateEventResponse{}
-	mi := &file_apipb_api_proto_msgTypes[35]
+	mi := &file_apipb_api_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1933,7 +1634,7 @@ func (x *CreateEventResponse) String() string {
 func (*CreateEventResponse) ProtoMessage() {}
 
 func (x *CreateEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[35]
+	mi := &file_apipb_api_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1946,7 +1647,7 @@ func (x *CreateEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateEventResponse.ProtoReflect.Descriptor instead.
 func (*CreateEventResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{35}
+	return file_apipb_api_proto_rawDescGZIP(), []int{29}
 }
 
 // ReadEvent
@@ -1959,7 +1660,7 @@ type ReadEventRequest struct {
 
 func (x *ReadEventRequest) Reset() {
 	*x = ReadEventRequest{}
-	mi := &file_apipb_api_proto_msgTypes[36]
+	mi := &file_apipb_api_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1971,7 +1672,7 @@ func (x *ReadEventRequest) String() string {
 func (*ReadEventRequest) ProtoMessage() {}
 
 func (x *ReadEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[36]
+	mi := &file_apipb_api_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1984,7 +1685,7 @@ func (x *ReadEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadEventRequest.ProtoReflect.Descriptor instead.
 func (*ReadEventRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{36}
+	return file_apipb_api_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ReadEventRequest) GetId() int64 {
@@ -2003,7 +1704,7 @@ type ReadEventResponse struct {
 
 func (x *ReadEventResponse) Reset() {
 	*x = ReadEventResponse{}
-	mi := &file_apipb_api_proto_msgTypes[37]
+	mi := &file_apipb_api_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2015,7 +1716,7 @@ func (x *ReadEventResponse) String() string {
 func (*ReadEventResponse) ProtoMessage() {}
 
 func (x *ReadEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[37]
+	mi := &file_apipb_api_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2028,7 +1729,7 @@ func (x *ReadEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadEventResponse.ProtoReflect.Descriptor instead.
 func (*ReadEventResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{37}
+	return file_apipb_api_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ReadEventResponse) GetEvent() *Event {
@@ -2049,7 +1750,7 @@ type UpdateEventRequest struct {
 
 func (x *UpdateEventRequest) Reset() {
 	*x = UpdateEventRequest{}
-	mi := &file_apipb_api_proto_msgTypes[38]
+	mi := &file_apipb_api_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2061,7 +1762,7 @@ func (x *UpdateEventRequest) String() string {
 func (*UpdateEventRequest) ProtoMessage() {}
 
 func (x *UpdateEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[38]
+	mi := &file_apipb_api_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2074,7 +1775,7 @@ func (x *UpdateEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateEventRequest.ProtoReflect.Descriptor instead.
 func (*UpdateEventRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{38}
+	return file_apipb_api_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UpdateEventRequest) GetId() int64 {
@@ -2099,7 +1800,7 @@ type UpdateEventResponse struct {
 
 func (x *UpdateEventResponse) Reset() {
 	*x = UpdateEventResponse{}
-	mi := &file_apipb_api_proto_msgTypes[39]
+	mi := &file_apipb_api_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2111,7 +1812,7 @@ func (x *UpdateEventResponse) String() string {
 func (*UpdateEventResponse) ProtoMessage() {}
 
 func (x *UpdateEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[39]
+	mi := &file_apipb_api_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2124,7 +1825,7 @@ func (x *UpdateEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateEventResponse.ProtoReflect.Descriptor instead.
 func (*UpdateEventResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{39}
+	return file_apipb_api_proto_rawDescGZIP(), []int{33}
 }
 
 // ListEvent
@@ -2137,7 +1838,7 @@ type ListEventRequest struct {
 
 func (x *ListEventRequest) Reset() {
 	*x = ListEventRequest{}
-	mi := &file_apipb_api_proto_msgTypes[40]
+	mi := &file_apipb_api_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2149,7 +1850,7 @@ func (x *ListEventRequest) String() string {
 func (*ListEventRequest) ProtoMessage() {}
 
 func (x *ListEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[40]
+	mi := &file_apipb_api_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2162,7 +1863,7 @@ func (x *ListEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEventRequest.ProtoReflect.Descriptor instead.
 func (*ListEventRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{40}
+	return file_apipb_api_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListEventRequest) GetProfile() int64 {
@@ -2181,7 +1882,7 @@ type ListEventResponse struct {
 
 func (x *ListEventResponse) Reset() {
 	*x = ListEventResponse{}
-	mi := &file_apipb_api_proto_msgTypes[41]
+	mi := &file_apipb_api_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2193,7 +1894,7 @@ func (x *ListEventResponse) String() string {
 func (*ListEventResponse) ProtoMessage() {}
 
 func (x *ListEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[41]
+	mi := &file_apipb_api_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2206,7 +1907,7 @@ func (x *ListEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEventResponse.ProtoReflect.Descriptor instead.
 func (*ListEventResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{41}
+	return file_apipb_api_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListEventResponse) GetEntries() []*commonpb.Entry {
@@ -2226,7 +1927,7 @@ type RemoveEventRequest struct {
 
 func (x *RemoveEventRequest) Reset() {
 	*x = RemoveEventRequest{}
-	mi := &file_apipb_api_proto_msgTypes[42]
+	mi := &file_apipb_api_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2238,7 +1939,7 @@ func (x *RemoveEventRequest) String() string {
 func (*RemoveEventRequest) ProtoMessage() {}
 
 func (x *RemoveEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[42]
+	mi := &file_apipb_api_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2251,7 +1952,7 @@ func (x *RemoveEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveEventRequest.ProtoReflect.Descriptor instead.
 func (*RemoveEventRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{42}
+	return file_apipb_api_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *RemoveEventRequest) GetId() int64 {
@@ -2269,7 +1970,7 @@ type RemoveEventResponse struct {
 
 func (x *RemoveEventResponse) Reset() {
 	*x = RemoveEventResponse{}
-	mi := &file_apipb_api_proto_msgTypes[43]
+	mi := &file_apipb_api_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2281,7 +1982,7 @@ func (x *RemoveEventResponse) String() string {
 func (*RemoveEventResponse) ProtoMessage() {}
 
 func (x *RemoveEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[43]
+	mi := &file_apipb_api_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2294,7 +1995,7 @@ func (x *RemoveEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveEventResponse.ProtoReflect.Descriptor instead.
 func (*RemoveEventResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{43}
+	return file_apipb_api_proto_rawDescGZIP(), []int{37}
 }
 
 // ListTasks
@@ -2307,7 +2008,7 @@ type ListTasksRequest struct {
 
 func (x *ListTasksRequest) Reset() {
 	*x = ListTasksRequest{}
-	mi := &file_apipb_api_proto_msgTypes[44]
+	mi := &file_apipb_api_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2319,7 +2020,7 @@ func (x *ListTasksRequest) String() string {
 func (*ListTasksRequest) ProtoMessage() {}
 
 func (x *ListTasksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[44]
+	mi := &file_apipb_api_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2332,7 +2033,7 @@ func (x *ListTasksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTasksRequest.ProtoReflect.Descriptor instead.
 func (*ListTasksRequest) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{44}
+	return file_apipb_api_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListTasksRequest) GetProfile() int64 {
@@ -2351,7 +2052,7 @@ type ListTasksResponse struct {
 
 func (x *ListTasksResponse) Reset() {
 	*x = ListTasksResponse{}
-	mi := &file_apipb_api_proto_msgTypes[45]
+	mi := &file_apipb_api_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2363,7 +2064,7 @@ func (x *ListTasksResponse) String() string {
 func (*ListTasksResponse) ProtoMessage() {}
 
 func (x *ListTasksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[45]
+	mi := &file_apipb_api_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2376,7 +2077,7 @@ func (x *ListTasksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTasksResponse.ProtoReflect.Descriptor instead.
 func (*ListTasksResponse) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{45}
+	return file_apipb_api_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ListTasksResponse) GetTasks() []*commonpb.Entry {
@@ -2397,7 +2098,7 @@ type ListScheduledTasksResponse_ScheduledTask struct {
 
 func (x *ListScheduledTasksResponse_ScheduledTask) Reset() {
 	*x = ListScheduledTasksResponse_ScheduledTask{}
-	mi := &file_apipb_api_proto_msgTypes[46]
+	mi := &file_apipb_api_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2409,7 +2110,7 @@ func (x *ListScheduledTasksResponse_ScheduledTask) String() string {
 func (*ListScheduledTasksResponse_ScheduledTask) ProtoMessage() {}
 
 func (x *ListScheduledTasksResponse_ScheduledTask) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[46]
+	mi := &file_apipb_api_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2444,230 +2145,6 @@ func (x *ListScheduledTasksResponse_ScheduledTask) GetDuration() *durationpb.Dur
 		return x.Duration
 	}
 	return nil
-}
-
-type ListProgressUpdatesResponse_ProgressLog struct {
-	state         protoimpl.MessageState                                 `protogen:"open.v1"`
-	Id            int64                                                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Time          *timestamppb.Timestamp                                 `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
-	Desc          string                                                 `protobuf:"bytes,3,opt,name=desc,proto3" json:"desc,omitempty"`
-	Updates       []*ListProgressUpdatesResponse_ProgressLog_UpdatedTask `protobuf:"bytes,4,rep,name=updates,proto3" json:"updates,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) Reset() {
-	*x = ListProgressUpdatesResponse_ProgressLog{}
-	mi := &file_apipb_api_proto_msgTypes[47]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListProgressUpdatesResponse_ProgressLog) ProtoMessage() {}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[47]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListProgressUpdatesResponse_ProgressLog.ProtoReflect.Descriptor instead.
-func (*ListProgressUpdatesResponse_ProgressLog) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{24, 0}
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) GetId() int64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) GetTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.Time
-	}
-	return nil
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) GetDesc() string {
-	if x != nil {
-		return x.Desc
-	}
-	return ""
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog) GetUpdates() []*ListProgressUpdatesResponse_ProgressLog_UpdatedTask {
-	if x != nil {
-		return x.Updates
-	}
-	return nil
-}
-
-type ListProgressUpdatesResponse_ProgressLog_UpdatedTask struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Task          *commonpb.Entry        `protobuf:"bytes,1,opt,name=task,proto3" json:"task,omitempty"`
-	Desc          string                 `protobuf:"bytes,2,opt,name=desc,proto3" json:"desc,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) Reset() {
-	*x = ListProgressUpdatesResponse_ProgressLog_UpdatedTask{}
-	mi := &file_apipb_api_proto_msgTypes[48]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListProgressUpdatesResponse_ProgressLog_UpdatedTask) ProtoMessage() {}
-
-func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[48]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListProgressUpdatesResponse_ProgressLog_UpdatedTask.ProtoReflect.Descriptor instead.
-func (*ListProgressUpdatesResponse_ProgressLog_UpdatedTask) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{24, 0, 0}
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) GetTask() *commonpb.Entry {
-	if x != nil {
-		return x.Task
-	}
-	return nil
-}
-
-func (x *ListProgressUpdatesResponse_ProgressLog_UpdatedTask) GetDesc() string {
-	if x != nil {
-		return x.Desc
-	}
-	return ""
-}
-
-type ProgressUpdateRequest_UpdatedTask struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Task          int64                  `protobuf:"varint,1,opt,name=task,proto3" json:"task,omitempty"`
-	Desc          string                 `protobuf:"bytes,2,opt,name=desc,proto3" json:"desc,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ProgressUpdateRequest_UpdatedTask) Reset() {
-	*x = ProgressUpdateRequest_UpdatedTask{}
-	mi := &file_apipb_api_proto_msgTypes[49]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ProgressUpdateRequest_UpdatedTask) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ProgressUpdateRequest_UpdatedTask) ProtoMessage() {}
-
-func (x *ProgressUpdateRequest_UpdatedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[49]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ProgressUpdateRequest_UpdatedTask.ProtoReflect.Descriptor instead.
-func (*ProgressUpdateRequest_UpdatedTask) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{25, 0}
-}
-
-func (x *ProgressUpdateRequest_UpdatedTask) GetTask() int64 {
-	if x != nil {
-		return x.Task
-	}
-	return 0
-}
-
-func (x *ProgressUpdateRequest_UpdatedTask) GetDesc() string {
-	if x != nil {
-		return x.Desc
-	}
-	return ""
-}
-
-type EditProgressLogRequest_UpdatedTask struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Task          int64                  `protobuf:"varint,1,opt,name=task,proto3" json:"task,omitempty"`
-	Desc          string                 `protobuf:"bytes,2,opt,name=desc,proto3" json:"desc,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EditProgressLogRequest_UpdatedTask) Reset() {
-	*x = EditProgressLogRequest_UpdatedTask{}
-	mi := &file_apipb_api_proto_msgTypes[50]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EditProgressLogRequest_UpdatedTask) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EditProgressLogRequest_UpdatedTask) ProtoMessage() {}
-
-func (x *EditProgressLogRequest_UpdatedTask) ProtoReflect() protoreflect.Message {
-	mi := &file_apipb_api_proto_msgTypes[50]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EditProgressLogRequest_UpdatedTask.ProtoReflect.Descriptor instead.
-func (*EditProgressLogRequest_UpdatedTask) Descriptor() ([]byte, []int) {
-	return file_apipb_api_proto_rawDescGZIP(), []int{27, 0}
-}
-
-func (x *EditProgressLogRequest_UpdatedTask) GetTask() int64 {
-	if x != nil {
-		return x.Task
-	}
-	return 0
-}
-
-func (x *EditProgressLogRequest_UpdatedTask) GetDesc() string {
-	if x != nil {
-		return x.Desc
-	}
-	return ""
 }
 
 var File_apipb_api_proto protoreflect.FileDescriptor
@@ -2772,43 +2249,13 @@ const file_apipb_api_proto_rawDesc = "" +
 	"\x06PREREQ\x10\x02\x12\v\n" +
 	"\aPOSTREQ\x10\x03\"A\n" +
 	"\x1dListPossibleRelativesResponse\x12 \n" +
-	"\aentries\x18\x01 \x03(\v2\x06.EntryR\aentries\"\x96\x01\n" +
-	"\x1aListProgressUpdatesRequest\x12\x18\n" +
-	"\aprofile\x18\x01 \x01(\x03R\aprofile\x120\n" +
-	"\x05start\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
-	"\x03end\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"\xce\x02\n" +
-	"\x1bListProgressUpdatesResponse\x12<\n" +
-	"\x04logs\x18\x01 \x03(\v2(.ListProgressUpdatesResponse.ProgressLogR\x04logs\x1a\xf0\x01\n" +
-	"\vProgressLog\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12.\n" +
-	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\tR\x04desc\x12N\n" +
-	"\aupdates\x18\x04 \x03(\v24.ListProgressUpdatesResponse.ProgressLog.UpdatedTaskR\aupdates\x1a=\n" +
-	"\vUpdatedTask\x12\x1a\n" +
-	"\x04task\x18\x01 \x01(\v2\x06.EntryR\x04task\x12\x12\n" +
-	"\x04desc\x18\x02 \x01(\tR\x04desc\"\xea\x01\n" +
+	"\aentries\x18\x01 \x03(\v2\x06.EntryR\aentries\"\x86\x01\n" +
 	"\x15ProgressUpdateRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\x03R\aprofile\x12.\n" +
-	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\tR\x04desc\x12<\n" +
-	"\aupdates\x18\x04 \x03(\v2\".ProgressUpdateRequest.UpdatedTaskR\aupdates\x1a5\n" +
-	"\vUpdatedTask\x12\x12\n" +
-	"\x04task\x18\x01 \x01(\x03R\x04task\x12\x12\n" +
-	"\x04desc\x18\x02 \x01(\tR\x04desc\"(\n" +
+	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12#\n" +
+	"\rupdated_tasks\x18\x03 \x03(\x03R\fupdatedTasks\"(\n" +
 	"\x16ProgressUpdateResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\xe2\x01\n" +
-	"\x16EditProgressLogRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12.\n" +
-	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\x12\x12\n" +
-	"\x04desc\x18\x03 \x01(\tR\x04desc\x12=\n" +
-	"\aupdates\x18\x04 \x03(\v2#.EditProgressLogRequest.UpdatedTaskR\aupdates\x1a5\n" +
-	"\vUpdatedTask\x12\x12\n" +
-	"\x04task\x18\x01 \x01(\x03R\x04task\x12\x12\n" +
-	"\x04desc\x18\x02 \x01(\tR\x04desc\"\x19\n" +
-	"\x17EditProgressLogResponse\"*\n" +
-	"\x18DeleteProgressLogRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\x1b\n" +
-	"\x19DeleteProgressLogResponse\"4\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"4\n" +
 	"\x18GetLastCheckpointRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\x03R\aprofile\"Y\n" +
 	"\x19GetLastCheckpointResponse\x123\n" +
@@ -2841,8 +2288,7 @@ const file_apipb_api_proto_rawDesc = "" +
 	"\x10ListTasksRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\x03R\aprofile\"1\n" +
 	"\x11ListTasksResponse\x12\x1c\n" +
-	"\x05tasks\x18\x01 \x03(\v2\x06.EntryR\x05tasks2\x8b\n" +
-	"\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x06.EntryR\x05tasks2\xa7\b\n" +
 	"\x03API\x12;\n" +
 	"\fListProfiles\x12\x14.ListProfilesRequest\x1a\x15.ListProfilesResponse\x12>\n" +
 	"\rCreateProfile\x12\x15.CreateProfileRequest\x1a\x16.CreateProfileResponse\x12>\n" +
@@ -2854,11 +2300,8 @@ const file_apipb_api_proto_rawDesc = "" +
 	"DeleteTask\x12\x12.DeleteTaskRequest\x1a\x13.DeleteTaskResponse\x12V\n" +
 	"\x15ListPossibleRelatives\x12\x1d.ListPossibleRelativesRequest\x1a\x1e.ListPossibleRelativesResponse\x12J\n" +
 	"\x11RecomputeSchedule\x12\x19.RecomputeScheduleRequest\x1a\x1a.RecomputeScheduleResponse\x12M\n" +
-	"\x12ListScheduledTasks\x12\x1a.ListScheduledTasksRequest\x1a\x1b.ListScheduledTasksResponse\x12P\n" +
-	"\x13ListProgressUpdates\x12\x1b.ListProgressUpdatesRequest\x1a\x1c.ListProgressUpdatesResponse\x12A\n" +
-	"\x0eProgressUpdate\x12\x16.ProgressUpdateRequest\x1a\x17.ProgressUpdateResponse\x12D\n" +
-	"\x0fEditProgressLog\x12\x17.EditProgressLogRequest\x1a\x18.EditProgressLogResponse\x12J\n" +
-	"\x11DeleteProgressLog\x12\x19.DeleteProgressLogRequest\x1a\x1a.DeleteProgressLogResponse\x12J\n" +
+	"\x12ListScheduledTasks\x12\x1a.ListScheduledTasksRequest\x1a\x1b.ListScheduledTasksResponse\x12A\n" +
+	"\x0eProgressUpdate\x12\x16.ProgressUpdateRequest\x1a\x17.ProgressUpdateResponse\x12J\n" +
 	"\x11GetLastCheckpoint\x12\x19.GetLastCheckpointRequest\x1a\x1a.GetLastCheckpointResponse\x128\n" +
 	"\vCreateEvent\x12\x13.CreateEventRequest\x1a\x14.CreateEventResponse\x122\n" +
 	"\tReadEvent\x12\x11.ReadEventRequest\x1a\x12.ReadEventResponse\x128\n" +
@@ -2879,157 +2322,132 @@ func file_apipb_api_proto_rawDescGZIP() []byte {
 }
 
 var file_apipb_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_apipb_api_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
+var file_apipb_api_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_apipb_api_proto_goTypes = []any{
 	(ListPossibleRelativesRequest_RelativeType)(0), // 0: ListPossibleRelativesRequest.RelativeType
-	(*PERT)(nil),                                                // 1: PERT
-	(*DurState)(nil),                                            // 2: DurState
-	(*ChildrenConfigState)(nil),                                 // 3: ChildrenConfigState
-	(*TaskState)(nil),                                           // 4: TaskState
-	(*CreateProfileRequest)(nil),                                // 5: CreateProfileRequest
-	(*CreateProfileResponse)(nil),                               // 6: CreateProfileResponse
-	(*Profile)(nil),                                             // 7: Profile
-	(*ListProfilesRequest)(nil),                                 // 8: ListProfilesRequest
-	(*ListProfilesResponse)(nil),                                // 9: ListProfilesResponse
-	(*RemoveProfileRequest)(nil),                                // 10: RemoveProfileRequest
-	(*RemoveProfileResponse)(nil),                               // 11: RemoveProfileResponse
-	(*ReadTaskRequest)(nil),                                     // 12: ReadTaskRequest
-	(*ReadTaskResponse)(nil),                                    // 13: ReadTaskResponse
-	(*SaveTaskRequest)(nil),                                     // 14: SaveTaskRequest
-	(*SaveTaskResponse)(nil),                                    // 15: SaveTaskResponse
-	(*DeleteTaskRequest)(nil),                                   // 16: DeleteTaskRequest
-	(*DeleteTaskResponse)(nil),                                  // 17: DeleteTaskResponse
-	(*RecomputeScheduleRequest)(nil),                            // 18: RecomputeScheduleRequest
-	(*RecomputeScheduleResponse)(nil),                           // 19: RecomputeScheduleResponse
-	(*ListScheduledTasksRequest)(nil),                           // 20: ListScheduledTasksRequest
-	(*ListScheduledTasksResponse)(nil),                          // 21: ListScheduledTasksResponse
-	(*ListPossibleRelativesRequest)(nil),                        // 22: ListPossibleRelativesRequest
-	(*ListPossibleRelativesResponse)(nil),                       // 23: ListPossibleRelativesResponse
-	(*ListProgressUpdatesRequest)(nil),                          // 24: ListProgressUpdatesRequest
-	(*ListProgressUpdatesResponse)(nil),                         // 25: ListProgressUpdatesResponse
-	(*ProgressUpdateRequest)(nil),                               // 26: ProgressUpdateRequest
-	(*ProgressUpdateResponse)(nil),                              // 27: ProgressUpdateResponse
-	(*EditProgressLogRequest)(nil),                              // 28: EditProgressLogRequest
-	(*EditProgressLogResponse)(nil),                             // 29: EditProgressLogResponse
-	(*DeleteProgressLogRequest)(nil),                            // 30: DeleteProgressLogRequest
-	(*DeleteProgressLogResponse)(nil),                           // 31: DeleteProgressLogResponse
-	(*GetLastCheckpointRequest)(nil),                            // 32: GetLastCheckpointRequest
-	(*GetLastCheckpointResponse)(nil),                           // 33: GetLastCheckpointResponse
-	(*Event)(nil),                                               // 34: Event
-	(*CreateEventRequest)(nil),                                  // 35: CreateEventRequest
-	(*CreateEventResponse)(nil),                                 // 36: CreateEventResponse
-	(*ReadEventRequest)(nil),                                    // 37: ReadEventRequest
-	(*ReadEventResponse)(nil),                                   // 38: ReadEventResponse
-	(*UpdateEventRequest)(nil),                                  // 39: UpdateEventRequest
-	(*UpdateEventResponse)(nil),                                 // 40: UpdateEventResponse
-	(*ListEventRequest)(nil),                                    // 41: ListEventRequest
-	(*ListEventResponse)(nil),                                   // 42: ListEventResponse
-	(*RemoveEventRequest)(nil),                                  // 43: RemoveEventRequest
-	(*RemoveEventResponse)(nil),                                 // 44: RemoveEventResponse
-	(*ListTasksRequest)(nil),                                    // 45: ListTasksRequest
-	(*ListTasksResponse)(nil),                                   // 46: ListTasksResponse
-	(*ListScheduledTasksResponse_ScheduledTask)(nil),            // 47: ListScheduledTasksResponse.ScheduledTask
-	(*ListProgressUpdatesResponse_ProgressLog)(nil),             // 48: ListProgressUpdatesResponse.ProgressLog
-	(*ListProgressUpdatesResponse_ProgressLog_UpdatedTask)(nil), // 49: ListProgressUpdatesResponse.ProgressLog.UpdatedTask
-	(*ProgressUpdateRequest_UpdatedTask)(nil),                   // 50: ProgressUpdateRequest.UpdatedTask
-	(*EditProgressLogRequest_UpdatedTask)(nil),                  // 51: EditProgressLogRequest.UpdatedTask
-	(*durationpb.Duration)(nil),                                 // 52: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),                               // 53: google.protobuf.Timestamp
-	(*commonpb.Entry)(nil),                                      // 54: Entry
-	(*commonpb.Interval)(nil),                                   // 55: Interval
+	(*PERT)(nil),                                     // 1: PERT
+	(*DurState)(nil),                                 // 2: DurState
+	(*ChildrenConfigState)(nil),                      // 3: ChildrenConfigState
+	(*TaskState)(nil),                                // 4: TaskState
+	(*CreateProfileRequest)(nil),                     // 5: CreateProfileRequest
+	(*CreateProfileResponse)(nil),                    // 6: CreateProfileResponse
+	(*Profile)(nil),                                  // 7: Profile
+	(*ListProfilesRequest)(nil),                      // 8: ListProfilesRequest
+	(*ListProfilesResponse)(nil),                     // 9: ListProfilesResponse
+	(*RemoveProfileRequest)(nil),                     // 10: RemoveProfileRequest
+	(*RemoveProfileResponse)(nil),                    // 11: RemoveProfileResponse
+	(*ReadTaskRequest)(nil),                          // 12: ReadTaskRequest
+	(*ReadTaskResponse)(nil),                         // 13: ReadTaskResponse
+	(*SaveTaskRequest)(nil),                          // 14: SaveTaskRequest
+	(*SaveTaskResponse)(nil),                         // 15: SaveTaskResponse
+	(*DeleteTaskRequest)(nil),                        // 16: DeleteTaskRequest
+	(*DeleteTaskResponse)(nil),                       // 17: DeleteTaskResponse
+	(*RecomputeScheduleRequest)(nil),                 // 18: RecomputeScheduleRequest
+	(*RecomputeScheduleResponse)(nil),                // 19: RecomputeScheduleResponse
+	(*ListScheduledTasksRequest)(nil),                // 20: ListScheduledTasksRequest
+	(*ListScheduledTasksResponse)(nil),               // 21: ListScheduledTasksResponse
+	(*ListPossibleRelativesRequest)(nil),             // 22: ListPossibleRelativesRequest
+	(*ListPossibleRelativesResponse)(nil),            // 23: ListPossibleRelativesResponse
+	(*ProgressUpdateRequest)(nil),                    // 24: ProgressUpdateRequest
+	(*ProgressUpdateResponse)(nil),                   // 25: ProgressUpdateResponse
+	(*GetLastCheckpointRequest)(nil),                 // 26: GetLastCheckpointRequest
+	(*GetLastCheckpointResponse)(nil),                // 27: GetLastCheckpointResponse
+	(*Event)(nil),                                    // 28: Event
+	(*CreateEventRequest)(nil),                       // 29: CreateEventRequest
+	(*CreateEventResponse)(nil),                      // 30: CreateEventResponse
+	(*ReadEventRequest)(nil),                         // 31: ReadEventRequest
+	(*ReadEventResponse)(nil),                        // 32: ReadEventResponse
+	(*UpdateEventRequest)(nil),                       // 33: UpdateEventRequest
+	(*UpdateEventResponse)(nil),                      // 34: UpdateEventResponse
+	(*ListEventRequest)(nil),                         // 35: ListEventRequest
+	(*ListEventResponse)(nil),                        // 36: ListEventResponse
+	(*RemoveEventRequest)(nil),                       // 37: RemoveEventRequest
+	(*RemoveEventResponse)(nil),                      // 38: RemoveEventResponse
+	(*ListTasksRequest)(nil),                         // 39: ListTasksRequest
+	(*ListTasksResponse)(nil),                        // 40: ListTasksResponse
+	(*ListScheduledTasksResponse_ScheduledTask)(nil), // 41: ListScheduledTasksResponse.ScheduledTask
+	(*durationpb.Duration)(nil),                      // 42: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),                    // 43: google.protobuf.Timestamp
+	(*commonpb.Entry)(nil),                           // 44: Entry
+	(*commonpb.Interval)(nil),                        // 45: Interval
 }
 var file_apipb_api_proto_depIdxs = []int32{
-	52, // 0: PERT.pes:type_name -> google.protobuf.Duration
-	52, // 1: PERT.exp:type_name -> google.protobuf.Duration
-	52, // 2: PERT.opt:type_name -> google.protobuf.Duration
+	42, // 0: PERT.pes:type_name -> google.protobuf.Duration
+	42, // 1: PERT.exp:type_name -> google.protobuf.Duration
+	42, // 2: PERT.opt:type_name -> google.protobuf.Duration
 	1,  // 3: DurState.pert:type_name -> PERT
-	53, // 4: DurState.deadline:type_name -> google.protobuf.Timestamp
-	53, // 5: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
-	54, // 6: ChildrenConfigState.children:type_name -> Entry
+	43, // 4: DurState.deadline:type_name -> google.protobuf.Timestamp
+	43, // 5: ChildrenConfigState.deadline:type_name -> google.protobuf.Timestamp
+	44, // 6: ChildrenConfigState.children:type_name -> Entry
 	2,  // 7: TaskState.duration_cfg:type_name -> DurState
 	3,  // 8: TaskState.children_cfgs:type_name -> ChildrenConfigState
-	54, // 9: TaskState.prereqs:type_name -> Entry
-	54, // 10: TaskState.postreqs:type_name -> Entry
-	54, // 11: TaskState.parent:type_name -> Entry
-	53, // 12: TaskState.start:type_name -> google.protobuf.Timestamp
-	53, // 13: TaskState.end:type_name -> google.protobuf.Timestamp
-	52, // 14: CreateProfileRequest.atomic_timescale:type_name -> google.protobuf.Duration
-	53, // 15: CreateProfileRequest.universe_start:type_name -> google.protobuf.Timestamp
-	52, // 16: Profile.atomic_timescale:type_name -> google.protobuf.Duration
-	53, // 17: Profile.universe_start:type_name -> google.protobuf.Timestamp
+	44, // 9: TaskState.prereqs:type_name -> Entry
+	44, // 10: TaskState.postreqs:type_name -> Entry
+	44, // 11: TaskState.parent:type_name -> Entry
+	43, // 12: TaskState.start:type_name -> google.protobuf.Timestamp
+	43, // 13: TaskState.end:type_name -> google.protobuf.Timestamp
+	42, // 14: CreateProfileRequest.atomic_timescale:type_name -> google.protobuf.Duration
+	43, // 15: CreateProfileRequest.universe_start:type_name -> google.protobuf.Timestamp
+	42, // 16: Profile.atomic_timescale:type_name -> google.protobuf.Duration
+	43, // 17: Profile.universe_start:type_name -> google.protobuf.Timestamp
 	7,  // 18: ListProfilesResponse.entries:type_name -> Profile
 	4,  // 19: ReadTaskResponse.state:type_name -> TaskState
 	4,  // 20: SaveTaskRequest.state:type_name -> TaskState
-	55, // 21: RecomputeScheduleRequest.horizon:type_name -> Interval
-	53, // 22: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
-	53, // 23: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
-	47, // 24: ListScheduledTasksResponse.entries:type_name -> ListScheduledTasksResponse.ScheduledTask
+	45, // 21: RecomputeScheduleRequest.horizon:type_name -> Interval
+	43, // 22: ListScheduledTasksRequest.start:type_name -> google.protobuf.Timestamp
+	43, // 23: ListScheduledTasksRequest.end:type_name -> google.protobuf.Timestamp
+	41, // 24: ListScheduledTasksResponse.entries:type_name -> ListScheduledTasksResponse.ScheduledTask
 	0,  // 25: ListPossibleRelativesRequest.type:type_name -> ListPossibleRelativesRequest.RelativeType
-	54, // 26: ListPossibleRelativesResponse.entries:type_name -> Entry
-	53, // 27: ListProgressUpdatesRequest.start:type_name -> google.protobuf.Timestamp
-	53, // 28: ListProgressUpdatesRequest.end:type_name -> google.protobuf.Timestamp
-	48, // 29: ListProgressUpdatesResponse.logs:type_name -> ListProgressUpdatesResponse.ProgressLog
-	53, // 30: ProgressUpdateRequest.time:type_name -> google.protobuf.Timestamp
-	50, // 31: ProgressUpdateRequest.updates:type_name -> ProgressUpdateRequest.UpdatedTask
-	53, // 32: EditProgressLogRequest.time:type_name -> google.protobuf.Timestamp
-	51, // 33: EditProgressLogRequest.updates:type_name -> EditProgressLogRequest.UpdatedTask
-	53, // 34: GetLastCheckpointResponse.time:type_name -> google.protobuf.Timestamp
-	53, // 35: Event.start:type_name -> google.protobuf.Timestamp
-	53, // 36: Event.end:type_name -> google.protobuf.Timestamp
-	34, // 37: CreateEventRequest.event:type_name -> Event
-	34, // 38: ReadEventResponse.event:type_name -> Event
-	34, // 39: UpdateEventRequest.event:type_name -> Event
-	54, // 40: ListEventResponse.entries:type_name -> Entry
-	54, // 41: ListTasksResponse.tasks:type_name -> Entry
-	52, // 42: ListScheduledTasksResponse.ScheduledTask.duration:type_name -> google.protobuf.Duration
-	53, // 43: ListProgressUpdatesResponse.ProgressLog.time:type_name -> google.protobuf.Timestamp
-	49, // 44: ListProgressUpdatesResponse.ProgressLog.updates:type_name -> ListProgressUpdatesResponse.ProgressLog.UpdatedTask
-	54, // 45: ListProgressUpdatesResponse.ProgressLog.UpdatedTask.task:type_name -> Entry
-	8,  // 46: API.ListProfiles:input_type -> ListProfilesRequest
-	5,  // 47: API.CreateProfile:input_type -> CreateProfileRequest
-	10, // 48: API.RemoveProfile:input_type -> RemoveProfileRequest
-	45, // 49: API.ListTasks:input_type -> ListTasksRequest
-	12, // 50: API.ReadTask:input_type -> ReadTaskRequest
-	14, // 51: API.SaveTask:input_type -> SaveTaskRequest
-	16, // 52: API.DeleteTask:input_type -> DeleteTaskRequest
-	22, // 53: API.ListPossibleRelatives:input_type -> ListPossibleRelativesRequest
-	18, // 54: API.RecomputeSchedule:input_type -> RecomputeScheduleRequest
-	20, // 55: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
-	24, // 56: API.ListProgressUpdates:input_type -> ListProgressUpdatesRequest
-	26, // 57: API.ProgressUpdate:input_type -> ProgressUpdateRequest
-	28, // 58: API.EditProgressLog:input_type -> EditProgressLogRequest
-	30, // 59: API.DeleteProgressLog:input_type -> DeleteProgressLogRequest
-	32, // 60: API.GetLastCheckpoint:input_type -> GetLastCheckpointRequest
-	35, // 61: API.CreateEvent:input_type -> CreateEventRequest
-	37, // 62: API.ReadEvent:input_type -> ReadEventRequest
-	39, // 63: API.UpdateEvent:input_type -> UpdateEventRequest
-	41, // 64: API.ListEvent:input_type -> ListEventRequest
-	43, // 65: API.RemoveEvent:input_type -> RemoveEventRequest
-	9,  // 66: API.ListProfiles:output_type -> ListProfilesResponse
-	6,  // 67: API.CreateProfile:output_type -> CreateProfileResponse
-	11, // 68: API.RemoveProfile:output_type -> RemoveProfileResponse
-	46, // 69: API.ListTasks:output_type -> ListTasksResponse
-	13, // 70: API.ReadTask:output_type -> ReadTaskResponse
-	15, // 71: API.SaveTask:output_type -> SaveTaskResponse
-	17, // 72: API.DeleteTask:output_type -> DeleteTaskResponse
-	23, // 73: API.ListPossibleRelatives:output_type -> ListPossibleRelativesResponse
-	19, // 74: API.RecomputeSchedule:output_type -> RecomputeScheduleResponse
-	21, // 75: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
-	25, // 76: API.ListProgressUpdates:output_type -> ListProgressUpdatesResponse
-	27, // 77: API.ProgressUpdate:output_type -> ProgressUpdateResponse
-	29, // 78: API.EditProgressLog:output_type -> EditProgressLogResponse
-	31, // 79: API.DeleteProgressLog:output_type -> DeleteProgressLogResponse
-	33, // 80: API.GetLastCheckpoint:output_type -> GetLastCheckpointResponse
-	36, // 81: API.CreateEvent:output_type -> CreateEventResponse
-	38, // 82: API.ReadEvent:output_type -> ReadEventResponse
-	40, // 83: API.UpdateEvent:output_type -> UpdateEventResponse
-	42, // 84: API.ListEvent:output_type -> ListEventResponse
-	44, // 85: API.RemoveEvent:output_type -> RemoveEventResponse
-	66, // [66:86] is the sub-list for method output_type
-	46, // [46:66] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	44, // 26: ListPossibleRelativesResponse.entries:type_name -> Entry
+	43, // 27: ProgressUpdateRequest.time:type_name -> google.protobuf.Timestamp
+	43, // 28: GetLastCheckpointResponse.time:type_name -> google.protobuf.Timestamp
+	43, // 29: Event.start:type_name -> google.protobuf.Timestamp
+	43, // 30: Event.end:type_name -> google.protobuf.Timestamp
+	28, // 31: CreateEventRequest.event:type_name -> Event
+	28, // 32: ReadEventResponse.event:type_name -> Event
+	28, // 33: UpdateEventRequest.event:type_name -> Event
+	44, // 34: ListEventResponse.entries:type_name -> Entry
+	44, // 35: ListTasksResponse.tasks:type_name -> Entry
+	42, // 36: ListScheduledTasksResponse.ScheduledTask.duration:type_name -> google.protobuf.Duration
+	8,  // 37: API.ListProfiles:input_type -> ListProfilesRequest
+	5,  // 38: API.CreateProfile:input_type -> CreateProfileRequest
+	10, // 39: API.RemoveProfile:input_type -> RemoveProfileRequest
+	39, // 40: API.ListTasks:input_type -> ListTasksRequest
+	12, // 41: API.ReadTask:input_type -> ReadTaskRequest
+	14, // 42: API.SaveTask:input_type -> SaveTaskRequest
+	16, // 43: API.DeleteTask:input_type -> DeleteTaskRequest
+	22, // 44: API.ListPossibleRelatives:input_type -> ListPossibleRelativesRequest
+	18, // 45: API.RecomputeSchedule:input_type -> RecomputeScheduleRequest
+	20, // 46: API.ListScheduledTasks:input_type -> ListScheduledTasksRequest
+	24, // 47: API.ProgressUpdate:input_type -> ProgressUpdateRequest
+	26, // 48: API.GetLastCheckpoint:input_type -> GetLastCheckpointRequest
+	29, // 49: API.CreateEvent:input_type -> CreateEventRequest
+	31, // 50: API.ReadEvent:input_type -> ReadEventRequest
+	33, // 51: API.UpdateEvent:input_type -> UpdateEventRequest
+	35, // 52: API.ListEvent:input_type -> ListEventRequest
+	37, // 53: API.RemoveEvent:input_type -> RemoveEventRequest
+	9,  // 54: API.ListProfiles:output_type -> ListProfilesResponse
+	6,  // 55: API.CreateProfile:output_type -> CreateProfileResponse
+	11, // 56: API.RemoveProfile:output_type -> RemoveProfileResponse
+	40, // 57: API.ListTasks:output_type -> ListTasksResponse
+	13, // 58: API.ReadTask:output_type -> ReadTaskResponse
+	15, // 59: API.SaveTask:output_type -> SaveTaskResponse
+	17, // 60: API.DeleteTask:output_type -> DeleteTaskResponse
+	23, // 61: API.ListPossibleRelatives:output_type -> ListPossibleRelativesResponse
+	19, // 62: API.RecomputeSchedule:output_type -> RecomputeScheduleResponse
+	21, // 63: API.ListScheduledTasks:output_type -> ListScheduledTasksResponse
+	25, // 64: API.ProgressUpdate:output_type -> ProgressUpdateResponse
+	27, // 65: API.GetLastCheckpoint:output_type -> GetLastCheckpointResponse
+	30, // 66: API.CreateEvent:output_type -> CreateEventResponse
+	32, // 67: API.ReadEvent:output_type -> ReadEventResponse
+	34, // 68: API.UpdateEvent:output_type -> UpdateEventResponse
+	36, // 69: API.ListEvent:output_type -> ListEventResponse
+	38, // 70: API.RemoveEvent:output_type -> RemoveEventResponse
+	54, // [54:71] is the sub-list for method output_type
+	37, // [37:54] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_apipb_api_proto_init() }
@@ -3043,14 +2461,14 @@ func file_apipb_api_proto_init() {
 	file_apipb_api_proto_msgTypes[6].OneofWrappers = []any{}
 	file_apipb_api_proto_msgTypes[13].OneofWrappers = []any{}
 	file_apipb_api_proto_msgTypes[19].OneofWrappers = []any{}
-	file_apipb_api_proto_msgTypes[32].OneofWrappers = []any{}
+	file_apipb_api_proto_msgTypes[26].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_apipb_api_proto_rawDesc), len(file_apipb_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   51,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
