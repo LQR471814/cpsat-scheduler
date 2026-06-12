@@ -151,7 +151,8 @@ func (q *Queries) CreateProgressLog(ctx context.Context, arg CreateProgressLogPa
 }
 
 const createTask = `-- name: CreateTask :one
-insert into task (profile, unit, name, desc, start, end) values (?, ?, ?, ?, ?, ?)
+insert into task (profile, unit, name, desc, start, end, last_modified)
+values (?, ?, ?, ?, ?, ?, datetime('now'))
 returning id
 `
 
@@ -292,7 +293,7 @@ func (q *Queries) GetLastCheckpoint(ctx context.Context, profile int64) (time.Ti
 }
 
 const getParent = `-- name: GetParent :one
-select t.id, t.profile, t.unit, t.name, t."desc", t.start, t."end" from task as t
+select t.id, t.last_modified, t.profile, t.unit, t.name, t."desc", t.start, t."end" from task as t
 inner join children_config as c on
 	t.id = c.task
 inner join children_config_child cc on
@@ -306,6 +307,7 @@ func (q *Queries) GetParent(ctx context.Context, child int64) (Task, error) {
 	var i Task
 	err := row.Scan(
 		&i.ID,
+		&i.LastModified,
 		&i.Profile,
 		&i.Unit,
 		&i.Name,
@@ -345,7 +347,7 @@ func (q *Queries) GetProgressLog(ctx context.Context, id int64) (int64, error) {
 }
 
 const getTask = `-- name: GetTask :one
-select id, profile, unit, name, "desc", start, "end" from task where id = ?
+select id, last_modified, profile, unit, name, "desc", start, "end" from task where id = ?
 `
 
 func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
@@ -353,6 +355,7 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 	var i Task
 	err := row.Scan(
 		&i.ID,
+		&i.LastModified,
 		&i.Profile,
 		&i.Unit,
 		&i.Name,
@@ -716,8 +719,42 @@ func (q *Queries) ListScheduledTasksInTimescale(ctx context.Context, arg ListSch
 	return items, nil
 }
 
+const listTaskEntries = `-- name: ListTaskEntries :many
+select id, name from task
+where profile = ?
+order by last_modified desc
+`
+
+type ListTaskEntriesRow struct {
+	ID   int64
+	Name string
+}
+
+func (q *Queries) ListTaskEntries(ctx context.Context, profile int64) ([]ListTaskEntriesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTaskEntries, profile)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTaskEntriesRow
+	for rows.Next() {
+		var i ListTaskEntriesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTasks = `-- name: ListTasks :many
-select id, profile, unit, name, "desc", start, "end" from task where profile = ?
+select id, last_modified, profile, unit, name, "desc", start, "end" from task where profile = ?
 `
 
 func (q *Queries) ListTasks(ctx context.Context, profile int64) ([]Task, error) {
@@ -731,6 +768,7 @@ func (q *Queries) ListTasks(ctx context.Context, profile int64) ([]Task, error) 
 		var i Task
 		if err := rows.Scan(
 			&i.ID,
+			&i.LastModified,
 			&i.Profile,
 			&i.Unit,
 			&i.Name,
@@ -897,7 +935,8 @@ update task set
 	name = ?,
 	desc = ?,
 	start = ?,
-	end = ?
+	end = ?,
+	last_modified = datetime('now')
 where id = ?
 `
 

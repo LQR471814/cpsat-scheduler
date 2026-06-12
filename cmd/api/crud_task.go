@@ -156,3 +156,20 @@ where cc.child = t.id
 
 	return
 }
+
+func (s server) ListTasks(ctx context.Context, req *apipb.ListTasksRequest) (res *apipb.ListTasksResponse, err error) {
+	tasks, err := s.db.ListTaskEntries(ctx, req.GetProfile())
+	if err != nil {
+		return
+	}
+	res = &apipb.ListTasksResponse{
+		Tasks: make([]*commonpb.Entry, len(tasks)),
+	}
+	for i, t := range tasks {
+		res.Tasks[i] = &commonpb.Entry{
+			Id:   t.ID,
+			Name: t.Name,
+		}
+	}
+	return
+}

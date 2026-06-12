@@ -76,13 +76,14 @@ type ScheduledTask struct {
 }
 
 type Task struct {
-	ID      int64
-	Profile int64
-	Unit    int64
-	Name    string
-	Desc    string
-	Start   sql.NullTime
-	End     sql.NullTime
+	ID           int64
+	LastModified time.Time
+	Profile      int64
+	Unit         int64
+	Name         string
+	Desc         string
+	Start        sql.NullTime
+	End          sql.NullTime
 }
 
 type UpdatedTask struct {

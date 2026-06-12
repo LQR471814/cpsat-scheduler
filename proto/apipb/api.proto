@@ -237,11 +237,20 @@ message RemoveEventRequest {
 }
 message RemoveEventResponse {}
 
+// ListTasks
+message ListTasksRequest {
+  int64 profile = 1;
+}
+message ListTasksResponse {
+  repeated Entry tasks = 1;
+}
+
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
   rpc RemoveProfile(RemoveProfileRequest) returns (RemoveProfileResponse);
 
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
   rpc ReadTask(ReadTaskRequest) returns (ReadTaskResponse);
   rpc SaveTask(SaveTaskRequest) returns (SaveTaskResponse);
   rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);

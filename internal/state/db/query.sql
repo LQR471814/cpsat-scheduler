@@ -16,11 +16,17 @@ delete from profile where id = ?;
 -- name: ListTasks :many
 select * from task where profile = ?;
 
+-- name: ListTaskEntries :many
+select id, name from task
+where profile = ?
+order by last_modified desc;
+
 -- name: GetTask :one
 select * from task where id = ?;
 
 -- name: CreateTask :one
-insert into task (profile, unit, name, desc, start, end) values (?, ?, ?, ?, ?, ?)
+insert into task (profile, unit, name, desc, start, end, last_modified)
+values (?, ?, ?, ?, ?, ?, datetime('now'))
 returning id;
 
 -- name: UpdateTask :exec
@@ -29,7 +35,8 @@ update task set
 	name = ?,
 	desc = ?,
 	start = ?,
-	end = ?
+	end = ?,
+	last_modified = datetime('now')
 where id = ?;
 
 -- name: DeleteTask :exec

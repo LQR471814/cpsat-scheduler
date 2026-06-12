@@ -22,6 +22,7 @@ const (
 	API_ListProfiles_FullMethodName          = "/API/ListProfiles"
 	API_CreateProfile_FullMethodName         = "/API/CreateProfile"
 	API_RemoveProfile_FullMethodName         = "/API/RemoveProfile"
+	API_ListTasks_FullMethodName             = "/API/ListTasks"
 	API_ReadTask_FullMethodName              = "/API/ReadTask"
 	API_SaveTask_FullMethodName              = "/API/SaveTask"
 	API_DeleteTask_FullMethodName            = "/API/DeleteTask"
@@ -47,6 +48,7 @@ type APIClient interface {
 	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error)
 	RemoveProfile(ctx context.Context, in *RemoveProfileRequest, opts ...grpc.CallOption) (*RemoveProfileResponse, error)
+	ListTasks(ctx context.Context, in *ListTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error)
 	ReadTask(ctx context.Context, in *ReadTaskRequest, opts ...grpc.CallOption) (*ReadTaskResponse, error)
 	SaveTask(ctx context.Context, in *SaveTaskRequest, opts ...grpc.CallOption) (*SaveTaskResponse, error)
 	DeleteTask(ctx context.Context, in *DeleteTaskRequest, opts ...grpc.CallOption) (*DeleteTaskResponse, error)
@@ -97,6 +99,16 @@ func (c *aPIClient) RemoveProfile(ctx context.Context, in *RemoveProfileRequest,
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RemoveProfileResponse)
 	err := c.cc.Invoke(ctx, API_RemoveProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListTasks(ctx context.Context, in *ListTasksRequest, opts ...grpc.CallOption) (*ListTasksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTasksResponse)
+	err := c.cc.Invoke(ctx, API_ListTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +282,7 @@ type APIServer interface {
 	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
 	CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error)
 	RemoveProfile(context.Context, *RemoveProfileRequest) (*RemoveProfileResponse, error)
+	ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponse, error)
 	ReadTask(context.Context, *ReadTaskRequest) (*ReadTaskResponse, error)
 	SaveTask(context.Context, *SaveTaskRequest) (*SaveTaskResponse, error)
 	DeleteTask(context.Context, *DeleteTaskRequest) (*DeleteTaskResponse, error)
@@ -304,6 +317,9 @@ func (UnimplementedAPIServer) CreateProfile(context.Context, *CreateProfileReque
 }
 func (UnimplementedAPIServer) RemoveProfile(context.Context, *RemoveProfileRequest) (*RemoveProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveProfile not implemented")
+}
+func (UnimplementedAPIServer) ListTasks(context.Context, *ListTasksRequest) (*ListTasksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTasks not implemented")
 }
 func (UnimplementedAPIServer) ReadTask(context.Context, *ReadTaskRequest) (*ReadTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReadTask not implemented")
@@ -424,6 +440,24 @@ func _API_RemoveProfile_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(APIServer).RemoveProfile(ctx, req.(*RemoveProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTasksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListTasks(ctx, req.(*ListTasksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -734,6 +768,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveProfile",
 			Handler:    _API_RemoveProfile_Handler,
+		},
+		{
+			MethodName: "ListTasks",
+			Handler:    _API_ListTasks_Handler,
 		},
 		{
 			MethodName: "ReadTask",
