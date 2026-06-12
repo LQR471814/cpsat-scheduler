@@ -76,6 +76,19 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 		return
 	}
 
+	for _, task := range tasks {
+		s.logger.Debug(
+			"task",
+			"id", task.Id,
+			"prereqs", task.Prereqs,
+			"unit", task.Unit,
+			"start", task.Start,
+			"end", task.End,
+			"duration", task.DurCfgs,
+			"children", task.ChildrenCfgs,
+		)
+	}
+
 	s.logger.Debug(
 		"generated event tasks, solving...",
 		"tasks", len(tasks),

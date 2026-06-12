@@ -158,7 +158,7 @@ func LookupProfileState(c Context, profile db.Profile, horizon Horizon, out *[]*
 	}
 
 	choices := int64(4)
-	if profile.PertGenChoices.Valid {
+	if profile.PertGenChoices.Valid && profile.PertGenChoices.Int64 > 0 {
 		choices = profile.PertGenChoices.Int64
 	}
 
