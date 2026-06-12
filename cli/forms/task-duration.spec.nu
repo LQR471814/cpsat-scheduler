@@ -24,13 +24,13 @@ let pert_field: record<id: string, display_name: string, desc: string, group: st
       {||
         let rng = $in
         if ($rng | is-empty) {
-          "PERT cannot be unset"
+          return "PERT cannot be unset"
         }
         if $rng.opt > $rng.exp {
-          "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
+          return "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
         }
         if $rng.exp > $rng.pes {
-          "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
+          return "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
         }
       } | callback from closure
     )

@@ -45,13 +45,13 @@ if $skipval {
 let err = $new | do --env {||
         let rng = $in
         if ($rng | is-empty) {
-          "PERT cannot be unset"
+          return "PERT cannot be unset"
         }
         if $rng.opt > $rng.exp {
-          "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
+          return "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
         }
         if $rng.exp > $rng.pes {
-          "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
+          return "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
         }
       }
 if $err != null {
@@ -65,13 +65,13 @@ def --env "validate pert" []: nothing -> oneof<string, nothing> {
 read pert | do --env {||
         let rng = $in
         if ($rng | is-empty) {
-          "PERT cannot be unset"
+          return "PERT cannot be unset"
         }
         if $rng.opt > $rng.exp {
-          "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
+          return "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
         }
         if $rng.exp > $rng.pes {
-          "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
+          return "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
         }
       }
 }
@@ -155,13 +155,13 @@ def --env "done" []: nothing -> nothing {
 let err = read pert | do --env {||
         let rng = $in
         if ($rng | is-empty) {
-          "PERT cannot be unset"
+          return "PERT cannot be unset"
         }
         if $rng.opt > $rng.exp {
-          "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
+          return "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
         }
         if $rng.exp > $rng.pes {
-          "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
+          return "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
         }
       }
 if $err != null {
@@ -202,13 +202,13 @@ read pert | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 
 let err = read pert | do --env {||
         let rng = $in
         if ($rng | is-empty) {
-          "PERT cannot be unset"
+          return "PERT cannot be unset"
         }
         if $rng.opt > $rng.exp {
-          "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
+          return "PERT optimistic estimate (minimum duration) must be less than its expected estimate (average duration)"
         }
         if $rng.exp > $rng.pes {
-          "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
+          return "PERT expected estimate (average duration) must be less than its pessimistic estimate (maximum duration)"
         }
       }
 if $err != null {

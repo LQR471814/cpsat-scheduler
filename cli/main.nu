@@ -67,6 +67,14 @@ def --env "profile switch" []: nothing -> bool {
   let profile_list = {} | api.gen API ListProfiles | get entries
   if ($profile_list | is-empty) {
     edit profiles
+
+    {}
+    | api.gen API ListProfiles
+    | get entries
+    | first
+    | get id
+    | profile write
+
     return true
   }
 
@@ -105,18 +113,11 @@ def --env "progress update" []: nothing -> nothing {
     | index form progress-update
   if $res == null { return }
 
+  let updated: list<int> = $res.modified | get id
   {
     profile: (profile read)
     time: (date now)
-    desc: $res.progress_log
-    updates: (
-      $res.modified | each {|row|
-        {
-          task: $row.id
-          desc: null
-        }
-      }
-    )
+    updated_tasks: $updated
   } | api.gen API ProgressUpdate
 
   $res.modified
