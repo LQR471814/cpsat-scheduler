@@ -26,7 +26,7 @@ let params: oneof<record<pert: oneof<oneof<nothing, record<pes: oneof<nothing, d
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
-
+let params = $params | default {}
 
 def "prompt prefix" []: nothing -> string {
 $"($prompt_prefix) \(" + "task-duration" + "\)"
@@ -98,18 +98,18 @@ def --env "validate deadline" []: nothing -> oneof<string, nothing> {
 read deadline | do --env {|| null }
 }
 
-def --env "read total_cost" []: nothing -> int {
+def --env "read total_cost" []: nothing -> oneof<int, nothing> {
 $env.__state_total_cost
 }
 
-def --env "write total_cost" [--skipval(-s)]: int -> nothing {
+def --env "write total_cost" [--skipval(-s)]: oneof<int, nothing> -> nothing {
 let new = $in
 if $skipval {
   $env.__state_total_cost = $new
   return
 }
 let err = $new | do --env {||
-        if ($in == 0) {
+        if ($in == null) {
           "cost cannot be null"
         }
       }
@@ -122,7 +122,7 @@ $env.__state_total_cost = $new
 
 def --env "validate total_cost" []: nothing -> oneof<string, nothing> {
 read total_cost | do --env {||
-        if ($in == 0) {
+        if ($in == null) {
           "cost cannot be null"
         }
       }
@@ -135,7 +135,7 @@ $new | write deadline
 }
 
 def --env "set total_cost" []: nothing -> nothing {
-let new = read total_cost | do --env {|| util input int "The cost of the task, the optimizer will try to minimize total amount of cost." }
+let new = read total_cost | do --env {|| do --env {|| util input int "The cost of the task, the optimizer will try to minimize total amount of cost." } }
 if $new == null { return }
 $new | write total_cost 
 }
@@ -176,7 +176,7 @@ if $err != null {
   return
 }
 let err = read total_cost | do --env {||
-        if ($in == 0) {
+        if ($in == null) {
           "cost cannot be null"
         }
       }
@@ -228,9 +228,12 @@ if $err != null {
 print ''
 util print label "Cost"
 util print desc "The cost of the task, the optimizer will try to minimize total amount of cost."
-read total_cost | do --env {|| util print number $in } | print
+read total_cost | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+"int" => { $in | do {|| util print number $in } }
+"nothing" => { $in | do {|| print } }
+} } | print
 let err = read total_cost | do --env {||
-        if ($in == 0) {
+        if ($in == null) {
           "cost cannot be null"
         }
       }
@@ -291,7 +294,7 @@ util print section title "task-duration"
 cmds | table -e | print
 $env.__state_pert = do --env {|| $params.pert? }
 $env.__state_deadline = do --env {|| $params.deadline? }
-$env.__state_total_cost = do --env {|| $params.cost? | default 0 }
+$env.__state_total_cost = do --env {|| $params.total_cost? }
 
 alias c = cancel
 alias d = done

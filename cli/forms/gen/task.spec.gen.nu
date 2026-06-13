@@ -51,6 +51,10 @@ if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
 
+if not $is_creating {
+  return
+}
+
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
   deadline: null
@@ -91,6 +95,10 @@ if ($v.name? | is-empty) {
 }
 if $v.timescale? == null {
   return 'timescale cannot be empty'
+}
+
+if not $is_creating {
+  return
 }
 
 let default_dur_cfg = {
@@ -200,9 +208,9 @@ if (read duration) == null and (read children) == null {
 
 def --env "set required" []: nothing -> nothing {
 let new = read required | do --env {|| 
-let new = $in | merge {
-  task_id: $env.__tmp_task_id
-} | index form task-required
+let new = $in
+  | merge {task_id: ($env.__tmp_task_id? | default $params.id)}
+  | index form task-required
 if $new == null {
   cancel -y
 }
@@ -212,9 +220,9 @@ $new | write required
 }
 
 def --env "set optional" []: nothing -> nothing {
-let new = read optional | do --env {|| $in | merge {
-  task_id: $env.__tmp_task_id
-} | index form task-optional }
+let new = read optional | do --env {|| $in
+| merge {task_id: ($env.__tmp_task_id? | default $params.id)}
+| index form task-optional }
 if $new == null { return }
 $new | write optional 
 }
@@ -227,7 +235,7 @@ $new | write duration
 
 def --env "set children" []: nothing -> nothing {
 let new = read children | do --env {|| {
-  task_id: $env.__tmp_task_id
+  task_id: ($env.__tmp_task_id? | default $params.id)
   children: $in
 } | index form task-children-configs }
 if $new == null { return }
@@ -236,8 +244,8 @@ $new | write children
 
 def --env "cancel" [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
-do --env {|| if $is_creating and $env.__tmp_task_id != null {
-  {id: $env.__tmp_task_id} | api.gen API DeleteTask
+do --env {|| if $is_creating and $env.__tmp_task_id? != null {
+  {id: $env.__tmp_task_id?} | api.gen API DeleteTask
 } }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
@@ -251,6 +259,10 @@ if ($v.name? | is-empty) {
 }
 if $v.timescale? == null {
   return 'timescale cannot be empty'
+}
+
+if not $is_creating {
+  return
 }
 
 let default_dur_cfg = {
@@ -307,15 +319,18 @@ if $err != null {
 	util print error $err
   return
 }
-do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id != null {
-  {id: $env.__tmp_task_id} | api.gen API DeleteTask
+do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id? != null {
+  {id: $env.__tmp_task_id?} | api.gen API DeleteTask
 } }
 read required
 | merge (read optional)
 | merge {
   duration_cfg: (read duration)
   children_cfgs: (read children)
-} } | nav save form output
+}
+| do {let value = $in
+$value | table -e | print
+$value} } | nav save form output
 
 exit
 }
@@ -331,6 +346,10 @@ if ($v.name? | is-empty) {
 }
 if $v.timescale? == null {
   return 'timescale cannot be empty'
+}
+
+if not $is_creating {
+  return
 }
 
 let default_dur_cfg = {
@@ -470,8 +489,6 @@ $env.__state_optional = do --env {|| $params.state
 | select start end prereqs postreqs parent }
 $env.__state_duration = do --env {|| $params.state | get duration_cfg }
 $env.__state_children = do --env {|| $params.state | get children_cfgs }
-
-$params.id | do --env {|| $env.__tmp_task_id = $in }
 
 if (validate required) != null {
   set required

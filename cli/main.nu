@@ -180,12 +180,40 @@ def cmds []: nothing -> nothing {
 # type PERT = record<pes: duration, exp: duration, opt: duration>
 
 # @input nothing
-# @output oneof<apigen.Entry, nothing>
+# @output oneof<apigen.TaskState, nothing>
 def "pick task" []: nothing -> oneof<record<id: oneof<nothing, int>, name: oneof<nothing, string>>, nothing> {
   {profile: (profile read)}
   | api.gen API ListTasks
   | get tasks
   | util choose table --header "Choose a task (last modified at the top):"
+}
+
+# @input oneof<apigen.TaskState, int64>
+# @output nothing
+def "edit task" []: oneof<record<id: oneof<nothing, int>, name: oneof<nothing, string>>> -> nothing {
+  let id: int = if ($in | describe | str starts-with record) {
+    $in.id
+  } else {
+    $in
+  }
+
+  let result = {id: $id}
+    | api.gen API ReadTask
+    | merge {id: $id profile_id: (profile read)}
+    | index form task
+  if $result == null { return }
+  print {
+    id: $id
+    profile_id: (profile read)
+    state: $result
+  }
+  {
+    id: $id
+    profile_id: (profile read)
+    state: $result
+  }
+  | api.gen API SaveTask
+  null
 }
 
 # @input int

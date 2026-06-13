@@ -17,7 +17,7 @@ let required_fields = task-common required fields
 let optional_fields = task-common optional fields
 
 def "access tmp task id" []: nothing -> string {
-  "$env.__tmp_task_id"
+  "$env.__tmp_task_id?"
 }
 
 # @input nothing
@@ -53,6 +53,10 @@ if $v.timescale? == null {
   return 'timescale cannot be empty'
 }
 
+if not $is_creating {
+  return
+}
+
 let default_dur_cfg = {
   pert: {pes: 90min, exp: 1hr, opt: 30min}
   deadline: null
@@ -60,7 +64,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: (access tmp task id)?
+  id: (access tmp task id)
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -160,7 +164,10 @@ let output: record<expr: string> = callback make [] $"($remove_tmp_task | callba
 | merge {
   duration_cfg: \(($dur_cfg_field | field cmd read name)\)
   children_cfgs: \(($children_cfg_field | field cmd read name)\)
-}"
+}
+| do {let value = $in
+$value | table -e | print
+$value}"
 
 # @type list<types.Field>
 let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
@@ -186,6 +193,8 @@ let fields_ordering: list<record<field: record<id: string, display_name: string,
   }
 ]
 
+let access_task_id = $"\((access tmp task id) | default $params.id\)"
+
 # @type types.Form
 let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = {
   name: task
@@ -206,9 +215,9 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     (
       $req_fields_field | field cmd interact set --callback (
         callback make [] $"
-let new = $in | merge {
-  task_id: (access tmp task id)
-} | index form task-required
+let new = $in
+  | merge {task_id: ($access_task_id)}
+  | index form task-required
 if $new == null {
   (form cmd cancel name -y)
 }
@@ -217,9 +226,9 @@ $new"
     )
     (
       $opt_fields_field | field cmd interact set --callback (
-        callback make [] $"$in | merge {
-  task_id: (access tmp task id)
-} | index form task-optional"
+        callback make [] $"$in
+| merge {task_id: ($access_task_id)}
+| index form task-optional"
       )
     )
     (
@@ -230,7 +239,7 @@ $new"
     (
       $children_cfg_field | field cmd interact set --callback (
         callback make [] $"{
-  task_id: (access tmp task id)
+  task_id: ($access_task_id)
   children: $in
 } | index form task-children-configs"
       )
@@ -255,8 +264,6 @@ $new"
   start: null
   end: null
 } state\n\n($fields | form fields init)
-
-$params.id | (write tmp task id run)
 
 if \(($req_fields_field | field cmd validate name)\) != null {
   set required

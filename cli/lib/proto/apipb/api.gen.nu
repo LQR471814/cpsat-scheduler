@@ -774,7 +774,7 @@ def "serialize .RemoveEventRequest" []: record<id: oneof<nothing, int>, > -> any
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type CreateEventResponse' [] {
+export def 'type CreateEventResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -782,7 +782,7 @@ export def 'type CreateEventResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type RemoveEventRequest' [] {
+export def 'type RemoveEventRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -790,7 +790,7 @@ export def 'type RemoveEventRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ReadTaskRequest' [] {
+export def 'type ReadTaskRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -798,7 +798,7 @@ export def 'type ReadTaskRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ChildrenConfigState' [] {
+export def 'type ChildrenConfigState' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'exp_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'children' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]}
 }
 
@@ -806,7 +806,7 @@ export def 'type ChildrenConfigState' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ReadTaskResponse' [] {
+export def 'type ReadTaskResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'state' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'duration_cfg' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pert' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pes' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'exp' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'opt' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'total_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]} ]}} {key: 'children_cfgs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'exp_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'children' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]} ]}} {key: 'prereqs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'postreqs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'parent' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]} ]}} ]}
 }
 
@@ -814,7 +814,7 @@ export def 'type ReadTaskResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type Interval' [] {
+export def 'type Interval' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]}
 }
 
@@ -822,7 +822,7 @@ export def 'type Interval' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListEventResponse' [] {
+export def 'type ListEventResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'entries' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]}
 }
 
@@ -830,7 +830,7 @@ export def 'type ListEventResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type CreateProfileResponse' [] {
+export def 'type CreateProfileResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -838,7 +838,7 @@ export def 'type CreateProfileResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type RemoveProfileRequest' [] {
+export def 'type RemoveProfileRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -846,7 +846,7 @@ export def 'type RemoveProfileRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type GetLastCheckpointResponse' [] {
+export def 'type GetLastCheckpointResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'time' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]}
 }
 
@@ -854,7 +854,7 @@ export def 'type GetLastCheckpointResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ReadEventResponse' [] {
+export def 'type ReadEventResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'event' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]} ]}} ]}
 }
 
@@ -862,7 +862,7 @@ export def 'type ReadEventResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type RemoveEventResponse' [] {
+export def 'type RemoveEventResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -870,7 +870,7 @@ export def 'type RemoveEventResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListScheduledTasksResponse' [] {
+export def 'type ListScheduledTasksResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'entries' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'duration' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]} ]}} ]}
 }
 
@@ -878,7 +878,7 @@ export def 'type ListScheduledTasksResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type CreateProfileRequest' [] {
+export def 'type CreateProfileRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'atomic_timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'universe_start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'gen_pert_choices' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -886,7 +886,7 @@ export def 'type CreateProfileRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListPossibleRelativesResponse' [] {
+export def 'type ListPossibleRelativesResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'entries' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]}
 }
 
@@ -894,7 +894,7 @@ export def 'type ListPossibleRelativesResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListScheduledTasksRequest' [] {
+export def 'type ListScheduledTasksRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile_id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]}
 }
 
@@ -902,7 +902,7 @@ export def 'type ListScheduledTasksRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListProfilesRequest' [] {
+export def 'type ListProfilesRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -910,7 +910,7 @@ export def 'type ListProfilesRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type TaskState' [] {
+export def 'type TaskState' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'duration_cfg' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pert' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pes' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'exp' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'opt' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'total_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]} ]}} {key: 'children_cfgs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'exp_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'children' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]} ]}} {key: 'prereqs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'postreqs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'parent' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]}
 }
 
@@ -918,7 +918,7 @@ export def 'type TaskState' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type SaveTaskResponse' [] {
+export def 'type SaveTaskResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -926,7 +926,7 @@ export def 'type SaveTaskResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListScheduledTasksResponseScheduledTask' [] {
+export def 'type ListScheduledTasksResponseScheduledTask' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'duration' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]}
 }
 
@@ -934,7 +934,7 @@ export def 'type ListScheduledTasksResponseScheduledTask' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ProgressUpdateRequest' [] {
+export def 'type ProgressUpdateRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'time' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'updated_tasks' value: {type: 'list' positional: [{type: 'int'} ]}} ]}
 }
 
@@ -942,7 +942,7 @@ export def 'type ProgressUpdateRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type GetLastCheckpointRequest' [] {
+export def 'type GetLastCheckpointRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -950,7 +950,7 @@ export def 'type GetLastCheckpointRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type UpdateEventRequest' [] {
+export def 'type UpdateEventRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'event' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]} ]}} ]}
 }
 
@@ -958,7 +958,7 @@ export def 'type UpdateEventRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListTasksResponse' [] {
+export def 'type ListTasksResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'tasks' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]}
 }
 
@@ -966,7 +966,7 @@ export def 'type ListTasksResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type DeleteTaskRequest' [] {
+export def 'type DeleteTaskRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -974,7 +974,7 @@ export def 'type DeleteTaskRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type UpdateEventResponse' [] {
+export def 'type UpdateEventResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -982,7 +982,7 @@ export def 'type UpdateEventResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListTasksRequest' [] {
+export def 'type ListTasksRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -990,7 +990,7 @@ export def 'type ListTasksRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type DurState' [] {
+export def 'type DurState' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'pert' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pes' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'exp' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'opt' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'total_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -998,7 +998,7 @@ export def 'type DurState' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type RecomputeScheduleRequest' [] {
+export def 'type RecomputeScheduleRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'horizon' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]} ]}} ]}
 }
 
@@ -1006,7 +1006,7 @@ export def 'type RecomputeScheduleRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type Event' [] {
+export def 'type Event' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]}
 }
 
@@ -1014,7 +1014,7 @@ export def 'type Event' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ReadEventRequest' [] {
+export def 'type ReadEventRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -1022,7 +1022,7 @@ export def 'type ReadEventRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type Profile' [] {
+export def 'type Profile' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'atomic_timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'universe_start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'gen_pert_choices' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -1030,7 +1030,7 @@ export def 'type Profile' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListProfilesResponse' [] {
+export def 'type ListProfilesResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'entries' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'atomic_timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'universe_start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'gen_pert_choices' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]} ]}} ]}
 }
 
@@ -1038,7 +1038,7 @@ export def 'type ListProfilesResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type RemoveProfileResponse' [] {
+export def 'type RemoveProfileResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -1046,7 +1046,7 @@ export def 'type RemoveProfileResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type Entry' [] {
+export def 'type Entry' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]}
 }
 
@@ -1054,7 +1054,7 @@ export def 'type Entry' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type PERT' [] {
+export def 'type PERT' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'pes' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'exp' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'opt' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]}
 }
 
@@ -1062,7 +1062,7 @@ export def 'type PERT' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListPossibleRelativesRequest' [] {
+export def 'type ListPossibleRelativesRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'type' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'task_id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -1070,7 +1070,7 @@ export def 'type ListPossibleRelativesRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ProgressUpdateResponse' [] {
+export def 'type ProgressUpdateResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -1078,7 +1078,7 @@ export def 'type ProgressUpdateResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type ListEventRequest' [] {
+export def 'type ListEventRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]}
 }
 
@@ -1086,7 +1086,7 @@ export def 'type ListEventRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type SaveTaskRequest' [] {
+export def 'type SaveTaskRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'profile_id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'state' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'timescale' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'duration_cfg' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pert' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'pes' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'exp' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} {key: 'opt' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'duration'} ]}} ]} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'total_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} ]} ]}} {key: 'children_cfgs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'deadline' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'exp_cost' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'children' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} ]} ]}} {key: 'prereqs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'postreqs' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'parent' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'record' fields: [{key: 'id' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} ]} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]} ]}} ]}
 }
 
@@ -1094,7 +1094,7 @@ export def 'type SaveTaskRequest' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type DeleteTaskResponse' [] {
+export def 'type DeleteTaskResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -1102,7 +1102,7 @@ export def 'type DeleteTaskResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type RecomputeScheduleResponse' [] {
+export def 'type RecomputeScheduleResponse' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record'}
 }
 
@@ -1110,7 +1110,7 @@ export def 'type RecomputeScheduleResponse' [] {
 #
 # @input nothing
 # @output types.TypeDef
-export def 'type CreateEventRequest' [] {
+export def 'type CreateEventRequest' []: nothing -> oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> {
 	{type: 'record' fields: [{key: 'event' value: {type: 'list' positional: [{type: 'record' fields: [{key: 'profile' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'int'} ]}} {key: 'name' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'desc' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'string'} ]}} {key: 'start' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} {key: 'end' value: {type: 'oneof' positional: [{type: 'nothing'} {type: 'datetime'} ]}} ]} ]}} ]}
 }
 

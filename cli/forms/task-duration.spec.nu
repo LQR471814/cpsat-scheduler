@@ -61,15 +61,15 @@ let cost_field: record<id: string, display_name: string, desc: string, group: st
   display_name: Cost
   desc: "The cost of the task, the optimizer will try to minimize total amount of cost."
   group: ""
-  type: {type: int}
+  type: ({type: int} | types optional)
   display_value: null
-  init: (callback make [] "$params.cost? | default 0")
+  init: (callback make [] "$params.total_cost?")
   ops: {
     read: true
     write: true
     validate: (
       {||
-        if ($in == 0) {
+        if ($in == null) {
           "cost cannot be null"
         }
       } | callback from closure
@@ -140,7 +140,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($fields_ordering | form cmd next)
   ]
   init: {
-    before_cmds: ""
+    before_cmds: "let params = $params | default {}"
     after_cmds: $"($fields | form fields init)"
   }
 }
