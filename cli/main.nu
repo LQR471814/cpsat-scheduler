@@ -141,19 +141,19 @@ def --env now []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<no
 # @output list<apigen.ListScheduledTasksResponseScheduledTask>
 def --env today []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
   util print label "Today's tasks"
-  date now | schedule in segment
+  date now | schedule in date
 }
 
 # @input nothing
 # @output list<apigen.ListScheduledTasksResponseScheduledTask>
 def --env tomorrow []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
-  (date now) + 1day | schedule in segment
+  (date now) + 1day | schedule in date
 }
 
 # @input nothing
 # @output list<apigen.ListScheduledTasksResponseScheduledTask>
 def --env yesterday []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
-  (date now) - 1day | schedule in segment
+  (date now) - 1day | schedule in date
 }
 
 def cmds []: nothing -> nothing {
