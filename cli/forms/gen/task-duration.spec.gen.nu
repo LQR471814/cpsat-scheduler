@@ -2,6 +2,7 @@
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu
 
@@ -197,6 +198,8 @@ def --env "status" []: nothing -> nothing {
 util print label "PERT"
 util print desc "An estimation of the range of times "
 read pert | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
+"record" => { $in | do {|| table --expand | print } }
+"record" => { $in | do {|| table --expand | print } }
 "record" => { $in | do {|| table --expand | print } }
 "nothing" => { $in | do {|| print } }
 } } | print

@@ -2,6 +2,7 @@
 
 use util.nu
 use proto/apipb/api.gen.nu
+use profile.nu
 
 # @input nothing
 # @output nothing
@@ -14,7 +15,7 @@ export def --env recompute [--start (-s): datetime --end (-e): datetime]: nothin
   job spawn {
     try {
       {
-        profile: $env.profile
+        profile: (profile read)
         horizon: {
           start: $start
           end: $end
@@ -34,7 +35,7 @@ export def --env recompute [--start (-s): datetime --end (-e): datetime]: nothin
 export def --env "in segment" []: datetime -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, duration: oneof<nothing, duration>>> {
   let time = $in
   {
-    profile_id: $env.profile
+    profile_id: (profile read)
     timescale: 16
     start: ($time - 4hr)
     end: ($time + 4hr)
@@ -47,7 +48,7 @@ export def --env "in date" []: datetime -> list<record<id: oneof<nothing, int>, 
   let start_of_day = $in | format date %Y-%m-%d | into datetime
   let end_of_day = $start_of_day + 1day
   {
-    profile_id: $env.profile
+    profile_id: (profile read)
     timescale: 96
     start: $start_of_day
     end: $end_of_day

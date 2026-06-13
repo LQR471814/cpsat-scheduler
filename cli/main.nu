@@ -92,7 +92,6 @@ def --env "profile switch" []: nothing -> bool {
 def --env "new task" []: nothing -> nothing {
   let task_state = {
     id: null
-    profile_id: (profile read)
     state: null
   } | index form task
 
@@ -109,8 +108,7 @@ def --env "new task" []: nothing -> nothing {
 }
 
 def --env "progress update" []: nothing -> nothing {
-  let res = {profile_id: (profile read)}
-    | index form progress-update
+  let res = index form progress-update
   if $res == null { return }
 
   let updated: list<int> = $res.modified | get id
@@ -203,7 +201,7 @@ def "edit task" []: oneof<int, nothing> -> nothing {
 
   let result = {id: $id}
     | api.gen API ReadTask
-    | merge {id: $id profile_id: (profile read)}
+    | merge {id: $id}
     | index form task
   if $result == null { return }
   {

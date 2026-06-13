@@ -2,6 +2,7 @@
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu
 
@@ -18,10 +19,10 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int, profile_id: int>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int, profile_id: int> = $__input.params
+let params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
@@ -155,14 +156,13 @@ def --env "new child" []: nothing -> nothing {
 
 let result = {
   id: null
-  profile_id: $params.profile_id
   state: null
 } | index form task
 if $result == null { return }
 
 let id = {
   id: null
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   state: $result
 } | api.gen API SaveTask | get id
 read children
@@ -256,10 +256,8 @@ def --env "status" []: nothing -> nothing {
 util print label "Description"
 util print desc "Description of this possible set of children."
 read desc | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
-"oneof" => { $in | do {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
 "string" => { $in | do {|| print $in } }
-} } }
 "nothing" => { $in | do {|| print } }
 } } | print
 let err = read desc | do --env {|| if $in == null {
@@ -283,10 +281,8 @@ print ''
 util print label "Expected Cost"
 util print desc "The expected cost to be added to the global sum if the parent task is scheduled after the deadline."
 read exp_cost | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
-"oneof" => { $in | do {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
 "int" => { $in | do {|| util print number $in } }
-} } }
 "nothing" => { $in | do {|| print } }
 } } | print
 let err = read exp_cost | do --env {|| if ($in == null) {

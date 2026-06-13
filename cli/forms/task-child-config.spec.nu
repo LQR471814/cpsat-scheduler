@@ -90,7 +90,7 @@ let children_field: record<id: string, display_name: string, desc: string, group
 }
 
 # @type types.Command
-let new_child_cmd = {
+let new_child_cmd: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = {
   desc: "Create a new task and add it to the list of children."
   group: ""
   aliases: [nc]
@@ -104,14 +104,13 @@ let new_child_cmd = {
     body: $"
 let result = {
   id: null
-  profile_id: $params.profile_id
   state: null
 } | index form task
 if $result == null { return }
 
 let id = {
   id: null
-  profile_id: $params.profile_id
+  profile_id: \(profile read\)
   state: $result
 } | api.gen API SaveTask | get id\n($children_field | field cmd read name)
 | append {
@@ -162,10 +161,6 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
       append [
         {
           key: task_id
-          value: {type: int}
-        }
-        {
-          key: profile_id
           value: {type: int}
         }
       ]

@@ -65,7 +65,7 @@ let default_dur_cfg = {
 
 {
   id: (access tmp task id)
-  profile_id: $params.profile_id
+  profile_id: \(profile read\)
   state: {
     name: $v.name
     desc: \($v.desc | default ''\)
@@ -204,7 +204,6 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
       [key value];
       [state ({type: record fields: $task_type.fields} | types optional)]
       [id ({type: int} | types optional)]
-      [profile_id {type: int}]
     ]
   }
   returns: $task_type
@@ -240,7 +239,6 @@ $new"
       $children_cfg_field | field cmd interact set --callback (
         callback make [] $"{
   task_id: ($access_task_id)
-  profile_id: $params.profile_id
   children: $in
 } | index form task-children-configs"
       )

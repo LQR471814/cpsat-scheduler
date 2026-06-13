@@ -2,6 +2,7 @@
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu
 
@@ -18,10 +19,10 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: record<task_id: int, profile_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<task_id: int, profile_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> = $__input.params
+let params: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
@@ -59,7 +60,6 @@ def --env "add configs" []: nothing -> nothing {
 let orig = read configs
 let chosen = do --env {|| {
   task_id: $params.task_id
-  profile_id: $params.profile_id
   desc: null
   deadline: null
   exp_cost: null

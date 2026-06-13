@@ -2,6 +2,7 @@
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu
 
@@ -352,6 +353,7 @@ def --env "status" []: nothing -> nothing {
 util print label ("Parent" + ' [' + "relationships" + ']')
 util print desc "Parent task"
 read parent | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
+"record" => { $in | do {|| table --expand | print } }
 "record" => { $in | do {|| table --expand | print } }
 "nothing" => { $in | do {|| print } }
 } } | print

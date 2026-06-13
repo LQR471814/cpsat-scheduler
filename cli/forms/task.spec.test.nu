@@ -2,8 +2,9 @@ use ./gen/index.nu
 
 $env.prompt_prefix = {|| "(main)" }
 
+$env.cpsat-profile = 1
+
 {
-  profile_id: 1
   id: null
   state: {
     name: null

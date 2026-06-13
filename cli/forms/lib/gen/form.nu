@@ -382,6 +382,7 @@ export def render []: record<name: string, params: oneof<record<type: string, po
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu"
     $uses

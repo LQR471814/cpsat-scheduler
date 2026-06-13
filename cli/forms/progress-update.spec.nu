@@ -58,7 +58,6 @@ let fields_ordering: list<record<field: record<id: string, display_name: string,
   }
 ]
 
-let profile_id_access = "$params.profile_id"
 let fetch_scheduled_pipe = "api.gen API ListScheduledTasks | get entries"
 let choose_task_pipe = "util choose table --header 'Choose a task:' | get id?"
 
@@ -75,7 +74,6 @@ let update_task: record<desc: string, group: string, aliases: list<string>, def:
     body: $"let updated = {
   id: $in
   state: \({id: $in} | api.gen API ReadTask | get state\)
-  profile_id: ($profile_id_access)
 } | index form task
 
 if $updated == null { return }\n($modified_field | field cmd read name)
@@ -96,14 +94,14 @@ let pick_scheduled: record<desc: string, group: string, aliases: list<string>, d
     params: []
     in: {type: "nothing"}
     out: {type: "nothing"}
-    body: $"let last_ckpt = {profile: ($profile_id_access)} | api.gen API GetLastCheckpoint
+    body: $"let last_ckpt = {profile: \(profile read\)} | api.gen API GetLastCheckpoint
   | get time
 if $last_ckpt == null {
   error make {msg: 'last checkpoint does not exist'}
 }
 let timescale = util choose timescale
 let chosen = {
-  profile_id: ($profile_id_access)
+  profile_id: \(profile read\)
   timescale: $timescale
   start: $last_ckpt
   end: \(date now\)
@@ -132,7 +130,7 @@ let pick_task: record<desc: string, group: string, aliases: list<string>, def: r
     body: $"let timescale = util choose timescale
 let now = date now
 let chosen = {
-  profile_id: ($profile_id_access)
+  profile_id: \(profile read\)
   timescale: $timescale
   start: \($start | default \($now - 1wk\)\)
   end: \($end | default \($now + 1wk\)\)
@@ -168,13 +166,7 @@ let progress_log: record<desc: string, group: string, aliases: list<string>, def
 # @type types.Form
 let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = {
   name: progress-update
-  params: {
-    type: record
-    fields: [
-      [key value];
-      [profile_id {type: int}]
-    ]
-  }
+  params: {type: "nothing"}
   returns: {
     type: record
     fields: [

@@ -2,6 +2,7 @@
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu
 
@@ -18,10 +19,10 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: record<profile_id: int>> = nav get form params
+let __input: record<prompt_prefix: string, params: nothing> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<profile_id: int> = $__input.params
+let params: nothing = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
@@ -67,7 +68,6 @@ def --env "update task" []: int -> nothing {
 let updated = {
   id: $in
   state: ({id: $in} | api.gen API ReadTask | get state)
-  profile_id: $params.profile_id
 } | index form task
 
 if $updated == null { return }
@@ -77,14 +77,14 @@ read modified
 }
 
 def --env "pick scheduled" []: nothing -> nothing {
-let last_ckpt = {profile: $params.profile_id} | api.gen API GetLastCheckpoint
+let last_ckpt = {profile: (profile read)} | api.gen API GetLastCheckpoint
   | get time
 if $last_ckpt == null {
   error make {msg: 'last checkpoint does not exist'}
 }
 let timescale = util choose timescale
 let chosen = {
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   timescale: $timescale
   start: $last_ckpt
   end: (date now)
@@ -97,7 +97,7 @@ export def --env "pick task" [--start(-s): datetime --end(-e): datetime]: nothin
 let timescale = util choose timescale
 let now = date now
 let chosen = {
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   timescale: $timescale
   start: ($start | default ($now - 1wk))
   end: ($end | default ($now + 1wk))

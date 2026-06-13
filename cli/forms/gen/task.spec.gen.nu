@@ -2,6 +2,7 @@
 
 use index.nu
 use ../lib/nav.nu
+use ../../lib/profile.nu
 use ../../lib/util.nu
 use ../../lib/proto/apipb/api.gen.nu
 
@@ -18,10 +19,10 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: record<state: oneof<record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, nothing>, id: oneof<int, nothing>, profile_id: int>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<state: oneof<record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, nothing>, id: oneof<int, nothing>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<state: oneof<record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, nothing>, id: oneof<int, nothing>, profile_id: int> = $__input.params
+let params: record<state: oneof<record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>, nothing>, id: oneof<int, nothing>> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
@@ -64,7 +65,7 @@ let default_dur_cfg = {
 
 {
   id: $env.__state.tmp_task_id?
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   state: {
     name: $v.name
     desc: ($v.desc | default '')
@@ -110,7 +111,7 @@ let default_dur_cfg = {
 
 {
   id: $env.__state.tmp_task_id?
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   state: {
     name: $v.name
     desc: ($v.desc | default '')
@@ -237,7 +238,6 @@ $new | write duration
 def --env "set children" []: nothing -> nothing {
 let new = read children | do --env {|| {
   task_id: ($env.__state.tmp_task_id? | default $params.id)
-  profile_id: $params.profile_id
   children: $in
 } | index form task-children-configs }
 if $new == null { return }
@@ -275,7 +275,7 @@ let default_dur_cfg = {
 
 {
   id: $env.__state.tmp_task_id?
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   state: {
     name: $v.name
     desc: ($v.desc | default '')
@@ -362,7 +362,7 @@ let default_dur_cfg = {
 
 {
   id: $env.__state.tmp_task_id?
-  profile_id: $params.profile_id
+  profile_id: (profile read)
   state: {
     name: $v.name
     desc: ($v.desc | default '')
@@ -395,6 +395,8 @@ util print label ("Explicit Duration" + ' [' + "duration" + ']')
 util print desc "If set, the duration of the task will be determined solely by a PERT distribution. If this is set, children cannot be set."
 read duration | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
+"record" => { $in | do {|| table --expand | print } }
+"record" => { $in | do {|| table --expand | print } }
 "record" => { $in | do {|| table --expand | print } }
 } } | print
 let err = read duration | do --env {|| 

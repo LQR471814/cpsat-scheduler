@@ -452,6 +452,37 @@ $orig
   }
 }
 
+# oneof choices gives a list of all of the choices for a oneof, unwrapping
+# nested oneofs such that the returned list should not include any typedefs
+# with type == oneof
+#
+# @input types.TypeDef
+# @output list<types.TypeDef>
+def "oneof choices" []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> list<oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>> {
+  let oneof = $in
+  if $oneof.type != oneof {
+    error make {
+      msg: "input type must be a oneof"
+      label: {
+        text: "type definition"
+        span: (metadata $oneof).span
+      }
+    }
+  }
+  $oneof.positional
+  | each {|choice|
+    match $choice.type {
+      oneof => {
+        $choice | oneof choices
+      }
+      _ => {
+        $choice
+      }
+    }
+  }
+  | flatten
+}
+
 # @input types.TypeDef
 # @output callback.Callback
 def "default display value callback" []: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>> -> record<expr: string> {
@@ -466,7 +497,8 @@ def "default display value callback" []: oneof<record<type: string, positional: 
     record | list | table => { "table --expand | print" }
     "nothing" => { "print" }
     oneof => {
-      let cases = $typedef.positional
+      let cases = $typedef
+        | oneof choices
         | each {
           let typedef = $in
           let expr = $typedef
