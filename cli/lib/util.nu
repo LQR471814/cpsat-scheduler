@@ -152,7 +152,16 @@ def "clamp dur" [--min: duration --max: duration]: duration -> duration {
   $input
 }
 
+# export type PERT = record<
+#   opt: duration
+#   exp: duration
+#   pes: duration
+# >
+
 # range shift amount translates the range by a given amount
+#
+# @input PERT
+# @output PERT
 export def "range shift amount" [value: duration]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
   {
     opt: ($in.opt + $value | clamp dur --min 0sec)
@@ -162,31 +171,56 @@ export def "range shift amount" [value: duration]: record<opt: duration, exp: du
 }
 
 # range shift amount translates the range by a given % of the expected value
+#
+# @input PERT
+# @output PERT
 export def "range shift percent" [percent: float]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
   range shift amount ($in.exp * ($percent / 100.0))
 }
 
-# range widen increases the width of a range by a given %, this is the
+# range widen amount increases the width of a range by 2 * the given value
+#
+# @input PERT
+# @output PERT
+export def "range widen amount" [value: duration]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
+  let rng = $in
+  {
+    opt: ($rng.opt - $value | clamp dur --min 0sec --max $rng.exp)
+    exp: ($rng.exp)
+    pes: ($rng.pes + $value | clamp dur --min $rng.exp)
+  }
+}
+
+# range widen percent increases the width of a range by a given %, this is the
 # equivalent of scaling by (100 + %) / 100 times
-export def "range widen" [percentage_delta: float]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
+#
+# @input PERT
+# @output PERT
+export def "range widen percent" [percentage_delta: float]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
   let range = $in
   let factor = (100.0 + $percentage_delta) / 100.0
   $range | range scale $factor
 }
 
 # range scale scales a range by a given factor (ex. 2x)
+#
+# @input PERT
+# @output PERT
 export def "range scale" [factor: float]: record<opt: duration, exp: duration, pes: duration> -> record<opt: duration, exp: duration, pes: duration> {
   let rng = $in
   let opt_rel = $rng.opt - $rng.exp
   let pes_rel = $rng.pes - $rng.exp
   {
-    opt: ($rng.exp + ($opt_rel * $factor) | clamp dur --min 0sec)
+    opt: ($rng.exp + ($opt_rel * $factor) | clamp dur --min 0sec --max $rng.exp)
     exp: $rng.exp
-    pes: ($rng.exp + ($pes_rel * $factor))
+    pes: ($rng.exp + ($pes_rel * $factor) | clamp dur --min $rng.exp)
   }
 }
 
 # format pert converts a PERT into a string
+#
+# @input PERT
+# @output string
 export def "range format" []: record<opt: duration, exp: duration, pes: duration> -> string {
   $"\(($in.opt), ($in.exp), ($in.pes)\)"
 }

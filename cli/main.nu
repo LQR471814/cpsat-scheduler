@@ -169,44 +169,43 @@ def cmds []: nothing -> nothing {
     [tomorrow [tm] "Show tomorrow's tasks"]
     [yesterday [ys] "Show yesterday's tasks"]
     ['schedule recompute' [re] "Reschedule tasks"]
-    ['scale pert' [] "Set a task's PERT range to a percentage of its current values."]
-    ['widen pert' [] "Widen a task's PERT range by a percentage."]
-    ['shrink pert' [] "Shrink a task's PERT range by a percentage."]
-    ['add pert' [] "Add a task's PERT range by a percent or duration."]
-    ['sub pert' [] "Subtract from a task's PERT range by a percent or duration."]
+    ['widen var factor' [] "Increase/decrease a range's variability by a factor (ex. 2x)."]
+    ['widen var' [] "Increase a range's variability."]
+    ['shrink var' [] "Decrease a range's variability."]
+    ['add dur' [] "Increase a range's estimated duration without changing variability."]
+    ['sub dur' [] "Decrease a range's estimated duration without changing variability."]
   ] | update aliases { str join ", " } | table --expand | print
 }
 
 # type PERT = record<pes: duration, exp: duration, opt: duration>
 
 # @input nothing
-# @output oneof<apigen.TaskState, nothing>
-def "pick task" []: nothing -> oneof<record<id: oneof<nothing, int>, name: oneof<nothing, string>>, nothing> {
+# @output oneof<int, nothing>
+def "pick task" []: nothing -> oneof<int, nothing> {
   {profile: (profile read)}
   | api.gen API ListTasks
   | get tasks
   | util choose table --header "Choose a task (last modified at the top):"
+  | get id?
 }
 
-# @input oneof<apigen.TaskState, int64>
+# @input int
+# @output apigen.TaskState
+def "show task" []: int -> record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> {
+  {id: $in} | api.gen API ReadTask | get state | table --expand
+}
+
+# @input oneof<int, nothing>
 # @output nothing
-def "edit task" []: oneof<record<id: oneof<nothing, int>, name: oneof<nothing, string>>> -> nothing {
-  let id: int = if ($in | describe | str starts-with record) {
-    $in.id
-  } else {
-    $in
-  }
+def "edit task" []: oneof<int, nothing> -> nothing {
+  let id = $in
+  if $id == null { return }
 
   let result = {id: $id}
     | api.gen API ReadTask
     | merge {id: $id profile_id: (profile read)}
     | index form task
   if $result == null { return }
-  print {
-    id: $id
-    profile_id: (profile read)
-    state: $result
-  }
   {
     id: $id
     profile_id: (profile read)
@@ -241,12 +240,16 @@ def "set pert" [pes: duration exp: duration opt: duration]: oneof<nothing, int> 
   $task | update pert headless {|| {pes: $pes exp: $exp opt: $opt} }
 }
 
-def "scale pert percent" [percent_delta: float] {
-  update pert headless {|| util range scale $percent_delta }
+def "scale pert factor" [factor: float] {
+  update pert headless {|| util range scale $factor }
 }
 
 def "widen pert percent" [percent_delta: float] {
-  update pert headless {|| util range widen $percent_delta }
+  update pert headless {|| util range widen percent $percent_delta }
+}
+
+def "widen pert amount" [amount: duration] {
+  update pert headless {|| util range widen amount $amount }
 }
 
 def "shift pert duration" [amount: duration]: int -> nothing {
@@ -263,34 +266,53 @@ def "parse percent" []: string -> float {
   | into float
 }
 
-def "scale pert" [percent: string]: oneof<nothing, int> -> nothing {
-  let task: oneof<int, nothing> = $in | default { pick task }
+def "widen var factor" [factor: float]: oneof<nothing, int> -> oneof<nothing, int> {
+  let task = $in | default { pick task }
   if $task == null { return }
-  let percent = $percent | parse percent
-  $task | scale pert percent $percent
+  $task | scale pert factor $factor
+  $task
 }
 
-def "expand pert" [percent: string]: oneof<nothing, int> -> nothing {
+def "widen var" [value: oneof<string, duration>]: oneof<nothing, int> -> oneof<nothing, int> {
   let task: oneof<int, nothing> = $in | default { pick task }
   if $task == null { return }
-  let percent = $percent | parse percent
-  $task | widen pert percent $percent
+
+  match ($value | describe) {
+    duration => {
+      $task | widen pert amount $value
+    }
+    string => {
+      let value = $value | parse percent
+      $task | widen pert percent $value
+    }
+  }
+
+  $task
 }
 
-def "shrink pert" [percent: string]: oneof<nothing, int> -> nothing {
+def "shrink var" [value: oneof<duration, string>]: oneof<nothing, int> -> oneof<int, nothing> {
   let task: oneof<int, nothing> = $in | default { pick task }
   if $task == null { return }
-  let percent = $percent | parse percent
-  $task | widen pert percent (-1 * $percent)
+  match ($value | describe) {
+    duration => {
+      let value: duration = $value
+      $task | widen pert amount (-1 * $value)
+    }
+    string => {
+      let value = $value | parse percent
+      $task | widen pert percent (-1 * $value)
+    }
+  }
+  $task
 }
 
 # expand pert 45%
 # expand pert 30min
-def "add pert" [amount: oneof<string, duration>]: oneof<nothing, int> -> nothing {
+def "add dur" [amount: oneof<string, duration>]: oneof<nothing, int> -> oneof<int, nothing> {
   let task = $in | default { pick task }
   if $task == null { return }
 
-  match $amount {
+  match ($amount | describe) {
     string => {
       $task | shift pert percent ($amount | parse percent)
     }
@@ -308,11 +330,13 @@ def "add pert" [amount: oneof<string, duration>]: oneof<nothing, int> -> nothing
       }
     }
   }
+
+  $task
 }
 
 # shrink pert 45%
 # shrink pert 30min
-def "sub pert" [amount: oneof<string, duration>]: oneof<nothing, int> -> nothing {
+def "sub dur" [amount: oneof<string, duration>]: oneof<nothing, int> -> oneof<int, nothing> {
   let task: oneof<int, nothing> = $in | default { pick task }
   if $task == null { return }
 
@@ -334,6 +358,8 @@ def "sub pert" [amount: oneof<string, duration>]: oneof<nothing, int> -> nothing
       }
     }
   }
+
+  $task
 }
 
 if not (profile switch) {
