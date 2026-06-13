@@ -110,7 +110,7 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "Children Configs"
 util print desc "List of children configurations."
-read configs | do --env {|| table -e | print } | print
+read configs | do --env {|| table --expand | print } | print
 let err = read configs | do --env {|| null }
 if $err != null {
 	util print error $err
@@ -143,7 +143,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "task-children-configs"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_configs = do --env {|| $params.children }
 
 alias c = cancel

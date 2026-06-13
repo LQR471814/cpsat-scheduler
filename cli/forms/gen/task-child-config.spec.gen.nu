@@ -229,8 +229,8 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "Description"
 util print desc "Description of this possible set of children."
-read desc | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-"oneof" => { $in | do {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read desc | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
+"oneof" => { $in | do {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
 "string" => { $in | do {|| print $in } }
 } } }
@@ -245,7 +245,7 @@ if $err != null {
 print ''
 util print label "Deadline"
 util print desc "If the parent is scheduled after the deadline, the expected cost will be added to the total cost."
-read deadline | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read deadline | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
 "datetime" => { $in | do {|| util print date $in } }
 } } | print
@@ -256,8 +256,8 @@ if $err != null {
 print ''
 util print label "Expected Cost"
 util print desc "The expected cost to be added to the global sum if the parent task is scheduled after the deadline."
-read exp_cost | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-"oneof" => { $in | do {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read exp_cost | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
+"oneof" => { $in | do {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
 "int" => { $in | do {|| util print number $in } }
 } } }
@@ -272,7 +272,7 @@ if $err != null {
 print ''
 util print label "Children"
 util print desc "The children that are part of this configuration. They must be scheduled within the bounds of the parent's scheduled timescale instance."
-read children | do --env {|| table -e | print } | print
+read children | do --env {|| table --expand | print } | print
 let err = read children | do --env {|| if ($in | is-empty) {
   'cannot have a children config that contains no children. if you wish to specify a task with 0 duration, consider adding a child with explicit PERT range of (opt: 0, exp: 0, pes: 0).'
 } }
@@ -343,7 +343,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "task-child-config"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_desc = do --env {|| $params.desc }
 $env.__state_deadline = do --env {|| $params.deadline }
 $env.__state_exp_cost = do --env {|| $params.exp_cost }

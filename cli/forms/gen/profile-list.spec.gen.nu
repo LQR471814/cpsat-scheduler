@@ -156,7 +156,7 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label ("Profiles" + ' [' + "field" + ']')
 util print desc "List of existing profiles."
-read profile | do --env {|| table -e | print } | print
+read profile | do --env {|| table --expand | print } | print
 let err = read profile | do --env {||
         if ($in | is-empty) {
           "you must have at least one profile created"
@@ -196,7 +196,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "profile-list"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_profile = do --env {|| $params }
 
 alias ap = add profile

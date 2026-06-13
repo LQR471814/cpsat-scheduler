@@ -350,8 +350,8 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label ("Parent" + ' [' + "relationships" + ']')
 util print desc "Parent task"
-read parent | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-"record" => { $in | do {|| table -e | print } }
+read parent | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
+"record" => { $in | do {|| table --expand | print } }
 "nothing" => { $in | do {|| print } }
 } } | print
 let err = read parent | do --env {|| null }
@@ -361,7 +361,7 @@ if $err != null {
 print ''
 util print label ("Prerequisites" + ' [' + "relationships" + ']')
 util print desc "Tasks that must be scheduled before this task."
-read prereqs | do --env {|| table -e | print } | print
+read prereqs | do --env {|| table --expand | print } | print
 let err = read prereqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
@@ -373,7 +373,7 @@ if $err != null {
 print ''
 util print label ("Postrequisites" + ' [' + "relationships" + ']')
 util print desc "Tasks that must be scheduled after this task."
-read postreqs | do --env {|| table -e | print } | print
+read postreqs | do --env {|| table --expand | print } | print
 let err = read postreqs | do --env {||
         # TODO: add actual logic checking for impossible situations here
         # ex. no cycles (though maybe this is handled server-side, check later)
@@ -385,7 +385,7 @@ if $err != null {
 print ''
 util print label ("Start" + ' [' + "explicit_range" + ']')
 util print desc "An explicit time which the task must start after."
-read start | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read start | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "datetime" => { $in | do {|| util print date $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -404,7 +404,7 @@ if $err != null {
 print ''
 util print label ("End" + ' [' + "explicit_range" + ']')
 util print desc "An explicit time which the task must start before."
-read end | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read end | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "datetime" => { $in | do {|| util print date $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -497,7 +497,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "task-optional"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_parent = do --env {|| $params.parent }
 $env.__state_prereqs = do --env {|| $params.prereqs }
 $env.__state_postreqs = do --env {|| $params.postreqs }

@@ -158,7 +158,7 @@ export def render []: oneof<record<type: string, positional: list<any>>, record<
     $type.positional
     | each {
       if ($in | describe) == string {
-        $type | table -e | print
+        $type | table --expand | print
       }
       $in | render
     }

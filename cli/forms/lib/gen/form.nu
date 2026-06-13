@@ -261,7 +261,7 @@ def "cmd cmds" []: record<name: string, params: oneof<record<type: string, posit
     | each {|cmd|
       # @type types.Command
       let cmd: record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>> = $cmd
-      [$cmd.group $cmd.def.name ($cmd.aliases | str join ', ') $cmd.desc] | to json -r
+      [$cmd.group $cmd.def.name ($cmd.aliases | str join ', ') $cmd.desc] | to json --raw
     }
     | str join "\n"
 
@@ -321,7 +321,7 @@ def "init after cmds" []: record<name: string, params: oneof<record<type: string
   let form: record<name: string, params: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, returns: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, use: list<string>, commands: list<record<desc: string, group: string, aliases: list<string>, def: record<name: string, params: list<record<key: string, value: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>>>, body: string, in: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, out: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, env: bool, export: bool>>>, init: record<before_cmds: oneof<string, nothing>, after_cmds: oneof<string, nothing>>> = $in
 
   $"util print section title ($form.name | to json)
-cmds | table -e | print\n($form.init.after_cmds)"
+cmds | table --expand | print\n($form.init.after_cmds)"
 }
 
 # @input types.CommandDef

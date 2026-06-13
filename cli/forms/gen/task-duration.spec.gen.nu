@@ -195,8 +195,8 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "PERT"
 util print desc "An estimation of the range of times "
-read pert | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
-"record" => { $in | do {|| table -e | print } }
+read pert | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
+"record" => { $in | do {|| table --expand | print } }
 "nothing" => { $in | do {|| print } }
 } } | print
 let err = read pert | do --env {||
@@ -217,7 +217,7 @@ if $err != null {
 print ''
 util print label "Deadline"
 util print desc "The task deadline, after which, cost will apply."
-read deadline | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read deadline | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "datetime" => { $in | do {|| util print date $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -228,7 +228,7 @@ if $err != null {
 print ''
 util print label "Cost"
 util print desc "The cost of the task, the optimizer will try to minimize total amount of cost."
-read total_cost | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read total_cost | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "int" => { $in | do {|| util print number $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -291,7 +291,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "task-duration"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_pert = do --env {|| $params.pert? }
 $env.__state_deadline = do --env {|| $params.deadline? }
 $env.__state_total_cost = do --env {|| $params.total_cost? }

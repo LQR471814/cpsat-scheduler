@@ -329,7 +329,7 @@ read required
   children_cfgs: (read children)
 }
 | do {let value = $in
-$value | table -e | print
+$value | table --expand | print
 $value} } | nav save form output
 
 exit
@@ -338,7 +338,7 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "Required Fields"
 util print desc "Required task fields."
-read required | do --env {|| table -e | print } | print
+read required | do --env {|| table --expand | print } | print
 let err = read required | do --env {|| 
 let v = $in
 if ($v.name? | is-empty) {
@@ -383,7 +383,7 @@ if $err != null {
 print ''
 util print label "Optional Fields"
 util print desc "Optional task fields."
-read optional | do --env {|| table -e | print } | print
+read optional | do --env {|| table --expand | print } | print
 let err = read optional | do --env {|| null }
 if $err != null {
 	util print error $err
@@ -391,9 +391,9 @@ if $err != null {
 print ''
 util print label ("Explicit Duration" + ' [' + "duration" + ']')
 util print desc "If set, the duration of the task will be determined solely by a PERT distribution. If this is set, children cannot be set."
-read duration | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read duration | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "nothing" => { $in | do {|| print } }
-"record" => { $in | do {|| table -e | print } }
+"record" => { $in | do {|| table --expand | print } }
 } } | print
 let err = read duration | do --env {|| 
 if (read duration) == null and (read children) == null {
@@ -405,7 +405,7 @@ if $err != null {
 print ''
 util print label ("Children Duration" + ' [' + "duration" + ']')
 util print desc "If not empty, the duration of the task will be determined by the sum of the durations chosen by the children. If this is set, explicit duration cannot be set."
-read children | do --env {|| table -e | print } | print
+read children | do --env {|| table --expand | print } | print
 let err = read children | do --env {|| 
 if (read duration) == null and (read children) == null {
   'either an explicit duration configuration or at least one child configuration must be set'
@@ -468,7 +468,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "task"
-cmds | table -e | print
+cmds | table --expand | print
 let params = $params | default {
   name: null
   desc: null

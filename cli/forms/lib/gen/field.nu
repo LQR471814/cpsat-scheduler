@@ -104,7 +104,7 @@ export def "cmd write optional" [--skipval (-s)]: record<id: string, display_nam
   # @type types.Field
   let field: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> = $in
   let call = $field | if $skipval {
-      cmd write name -s
+      cmd write name --skipval
     } else {
       cmd write name
     }
@@ -382,7 +382,7 @@ export def "cmd interact list list" []: record<id: string, display_name: string,
     def: {
       name: $"list ($field.id)"
       params: []
-      body: $"($field | cmd read name) | table -e | print"
+      body: $"($field | cmd read name) | table --expand | print"
       in: {type: "nothing"}
       out: {type: "nothing"}
       env: true
@@ -453,7 +453,7 @@ def "default display value callback" []: oneof<record<type: string, positional: 
     bool => { "util print bool $in" }
     datetime => { "util print date $in" }
     duration => { "util print duration $in" }
-    record | list | table => { "table -e | print" }
+    record | list | table => { "table --expand | print" }
     "nothing" => { "print" }
     oneof => {
       let cases = $typedef.positional
@@ -466,7 +466,7 @@ def "default display value callback" []: oneof<record<type: string, positional: 
         }
         | str join "\n"
 
-      $"match \($in | describe | parse -r `^\(?<type>\\w+\)` | get 0.type\) {\n($cases)\n}"
+      $"match \($in | describe | parse --regex `^\(?<type>\\w+\)` | get 0.type\) {\n($cases)\n}"
     }
     _ => {
       error make {

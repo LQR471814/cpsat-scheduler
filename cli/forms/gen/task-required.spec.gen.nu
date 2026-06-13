@@ -202,7 +202,7 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "Name"
 util print desc "The name of the task."
-read name | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read name | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "string" => { $in | do {|| print $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -217,7 +217,7 @@ if $err != null {
 print ''
 util print label "Description"
 util print desc "The description of the task."
-read desc | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read desc | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "string" => { $in | do {|| print $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -232,7 +232,7 @@ if $err != null {
 print ''
 util print label "Timescale Unit"
 util print desc "Should be the upper-bound for task duration."
-read timescale | do --env {|| match ($in | describe | parse -r `^(?<type>\w+)` | get 0.type) {
+read timescale | do --env {|| match ($in | describe | parse --regex `^(?<type>\w+)` | get 0.type) {
 "int" => { $in | do {|| util print number $in } }
 "nothing" => { $in | do {|| print } }
 } } | print
@@ -299,7 +299,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "task-required"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_name = do --env {|| $params.name }
 $env.__state_desc = do --env {|| $params.desc }
 $env.__state_timescale = do --env {|| $params.timescale }

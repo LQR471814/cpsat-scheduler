@@ -166,7 +166,7 @@ let output: record<expr: string> = callback make [] $"($remove_tmp_task | callba
   children_cfgs: \(($children_cfg_field | field cmd read name)\)
 }
 | do {let value = $in
-$value | table -e | print
+$value | table --expand | print
 $value}"
 
 # @type list<types.Field>

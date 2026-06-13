@@ -141,7 +141,7 @@ exit
 def --env "status" []: nothing -> nothing {
 util print label "Modified Tasks"
 util print desc "The tasks that have been modified during this progress update."
-read modified | do --env {|| table -e | print } | print
+read modified | do --env {|| table --expand | print } | print
 let err = read modified | do --env {||
         if ($in | is-empty) {
           'must modify at least one task in a progress update'
@@ -180,7 +180,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 }
 
 util print section title "progress-update"
-cmds | table -e | print
+cmds | table --expand | print
 $env.__state_modified = do --env {|| [] }
 
 alias ps = pick scheduled
