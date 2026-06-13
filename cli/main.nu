@@ -161,19 +161,19 @@ def --env yesterday []: nothing -> list<record<id: oneof<nothing, int>, name: on
 def cmds []: nothing -> nothing {
   [
     [cmd aliases help];
-    [profiles [] "Manage profiles"]
-    ['profile switch' [ps] "Switch to a different profile"]
-    ['new task' [nt] "Create a task"]
-    ['progress update' [pu] "Update task progress"]
+    ["edit profiles" [] "Manage profiles"]
+    ["profile switch" [ps] "Switch to a different profile"]
+    ["new task" [nt] "Create a task"]
+    ["progress update" [pu] "Update task progress"]
     [today [td] "Show today's tasks"]
     [tomorrow [tm] "Show tomorrow's tasks"]
     [yesterday [ys] "Show yesterday's tasks"]
-    ['schedule recompute' [re] "Reschedule tasks"]
-    ['widen var factor' [] "Increase/decrease a range's variability by a factor (ex. 2x)."]
-    ['widen var' [] "Increase a range's variability."]
-    ['shrink var' [] "Decrease a range's variability."]
-    ['add dur' [] "Increase a range's estimated duration without changing variability."]
-    ['sub dur' [] "Decrease a range's estimated duration without changing variability."]
+    ["schedule recompute" [re] "Reschedule tasks"]
+    ["widen var factor" [] "Increase/decrease a range's variability by a factor (ex. 2x)."]
+    ["widen var" [] "Increase a range's variability."]
+    ["shrink var" [] "Decrease a range's variability."]
+    ["add dur" [] "Increase a range's estimated duration without changing variability."]
+    ["sub dur" [] "Decrease a range's estimated duration without changing variability."]
   ] | update aliases { str join ", " } | table --expand | print
 }
 
