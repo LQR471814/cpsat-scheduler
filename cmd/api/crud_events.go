@@ -29,7 +29,7 @@ func (s server) CreateEvent(ctx context.Context, req *apipb.CreateEventRequest) 
 			End:     ev.GetEnd().AsTime(),
 		})
 		if err != nil {
-			err = fmt.Errorf("db create event: %w", err)
+			err = fmt.Errorf("db CreateEvent: %w", err)
 			return
 		}
 	}
@@ -79,7 +79,7 @@ func (s server) UpdateEvent(ctx context.Context, in *apipb.UpdateEventRequest) (
 		Start:   in.GetEvent().GetStart().AsTime(),
 	})
 	if err != nil {
-		err = fmt.Errorf("db update event: %w", err)
+		err = fmt.Errorf("db UpdateEvent: %w", err)
 		return
 	}
 	res = &apipb.UpdateEventResponse{}

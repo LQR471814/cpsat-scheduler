@@ -40,7 +40,7 @@ func (s server) CreateProfile(ctx context.Context, in *apipb.CreateProfileReques
 		PertGenChoices:          sql.NullInt64{Valid: true, Int64: in.GenPertChoices},
 	})
 	if err != nil {
-		err = fmt.Errorf("db create profile: %w", err)
+		err = fmt.Errorf("db CreateProfile: %w", err)
 		return
 	}
 	res = &apipb.CreateProfileResponse{}

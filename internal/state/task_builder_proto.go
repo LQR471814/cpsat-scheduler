@@ -37,7 +37,7 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	} else if err != nil {
-		err = fmt.Errorf("db get dur cfg: %w", err)
+		err = fmt.Errorf("db GetDurCfg: %w", err)
 		return err
 	} else {
 		s.DurationCfg = &apipb.DurState{

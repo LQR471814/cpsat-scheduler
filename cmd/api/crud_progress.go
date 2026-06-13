@@ -25,7 +25,7 @@ func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateReq
 		Time:    req.GetTime().AsTime(),
 	})
 	if err != nil {
-		err = fmt.Errorf("db create progress log: %w", err)
+		err = fmt.Errorf("db CreateProgressLog: %w", err)
 		return
 	}
 	for _, taskID := range req.GetUpdatedTasks() {
@@ -46,7 +46,7 @@ func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateReq
 			End:         task.End,
 		})
 		if err != nil {
-			err = fmt.Errorf("db create updated task: %w", err)
+			err = fmt.Errorf("db CreateUpdatedTask: %w", err)
 			return
 		}
 	}

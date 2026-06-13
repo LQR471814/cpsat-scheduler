@@ -8,7 +8,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 )
 
@@ -393,7 +392,6 @@ type ListChildrenConfigChildrenRow struct {
 func (q *Queries) ListChildrenConfigChildren(ctx context.Context, cfg int64) ([]ListChildrenConfigChildrenRow, error) {
 	rows, err := q.db.QueryContext(ctx, listChildrenConfigChildren, cfg)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -421,7 +419,6 @@ select id, task, "desc", deadline, exp_cost, total_cost from children_config whe
 func (q *Queries) ListChildrenConfigs(ctx context.Context, task int64) ([]ChildrenConfig, error) {
 	rows, err := q.db.QueryContext(ctx, listChildrenConfigs, task)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -456,7 +453,6 @@ select id, profile, name, "desc", start, "end" from event where profile = ?
 func (q *Queries) ListEvent(ctx context.Context, profile int64) ([]Event, error) {
 	rows, err := q.db.QueryContext(ctx, listEvent, profile)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -499,7 +495,6 @@ type ListPostreqRow struct {
 func (q *Queries) ListPostreq(ctx context.Context, prereq int64) ([]ListPostreqRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPostreq, prereq)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -535,7 +530,6 @@ type ListPrereqRow struct {
 func (q *Queries) ListPrereq(ctx context.Context, postreq int64) ([]ListPrereqRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPrereq, postreq)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -563,7 +557,6 @@ select id, name, atomic_timescale_duration, universe_start, pert_gen_choices fro
 func (q *Queries) ListProfiles(ctx context.Context) ([]Profile, error) {
 	rows, err := q.db.QueryContext(ctx, listProfiles)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -604,7 +597,6 @@ type ListProgressLogParams struct {
 func (q *Queries) ListProgressLog(ctx context.Context, arg ListProgressLogParams) ([]ProgressLog, error) {
 	rows, err := q.db.QueryContext(ctx, listProgressLog, arg.Profile, arg.Start, arg.End)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -649,7 +641,6 @@ type ListScheduledTasksRow struct {
 func (q *Queries) ListScheduledTasks(ctx context.Context, arg ListScheduledTasksParams) ([]ListScheduledTasksRow, error) {
 	rows, err := q.db.QueryContext(ctx, listScheduledTasks, arg.Start, arg.End, arg.Profile)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -748,7 +739,6 @@ type ListTaskEntriesRow struct {
 func (q *Queries) ListTaskEntries(ctx context.Context, profile int64) ([]ListTaskEntriesRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTaskEntries, profile)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -776,7 +766,6 @@ select id, last_modified, profile, unit, name, "desc", start, "end" from task wh
 func (q *Queries) ListTasks(ctx context.Context, profile int64) ([]Task, error) {
 	rows, err := q.db.QueryContext(ctx, listTasks, profile)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -819,7 +808,6 @@ type ListUpdatedTaskRow struct {
 func (q *Queries) ListUpdatedTask(ctx context.Context, progressLog int64) ([]ListUpdatedTaskRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUpdatedTask, progressLog)
 	if err != nil {
-		err = fmt.Errorf("db QueryContext: %w", err)
 		return nil, err
 	}
 	defer rows.Close()

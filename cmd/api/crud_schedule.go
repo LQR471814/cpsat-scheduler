@@ -37,7 +37,7 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			Unit:    req.GetTimescale(),
 		})
 		if err != nil {
-			err = fmt.Errorf("db list scheduled tasks in timescale: %w", err)
+			err = fmt.Errorf("db ListScheduledTasksInTimescale: %w", err)
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
@@ -58,7 +58,7 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			Profile: req.ProfileId,
 		})
 		if err != nil {
-			err = fmt.Errorf("db list scheduled tasks: %w", err)
+			err = fmt.Errorf("db ListScheduledTasks: %w", err)
 
 			return nil, err
 		}
@@ -170,7 +170,7 @@ func replaceSchedule(
 			Duration: solved.Duration.Value,
 		})
 		if err != nil {
-			err = fmt.Errorf("db save scheduled task: %w", err)
+			err = fmt.Errorf("db SaveScheduledTask: %w", err)
 			return
 		}
 	}
