@@ -118,7 +118,7 @@ if $chosen == null { return }
 
 let new_row = $orig
 	| where entry == $chosen
-	| get row
+	| get row.0
 	| do --env {||
           index form profile
         }

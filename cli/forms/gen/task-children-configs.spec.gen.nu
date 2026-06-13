@@ -71,6 +71,37 @@ $orig
 	| write configs 
 }
 
+def --env "edit configs" []: nothing -> nothing {
+let orig = read configs
+  | enumerate
+	| each {|row|
+		{
+			row: $row.item
+			entry: ($row.item | do --env {|idx| {id: $idx name: $in.desc} } $row.index)
+		}
+	}
+
+let chosen = $orig
+	| get entry
+	| util choose table --header ('Edit: ' + "List of children configurations.")
+if $chosen == null { return }
+
+let new_row = $orig
+	| where entry == $chosen
+	| get row.0
+	| do --env {|| $in
+| merge {task_id: $params.task_id}
+| index form task-child-config }
+
+if $new_row == null { return }
+
+$orig
+	| each {|row|
+		if $in.entry == $chosen { $new_row } else { $row }
+	}
+	| write configs 
+}
+
 def --env "remove configs" []: nothing -> nothing {
 let orig = read configs
 let chosen = $orig
@@ -137,6 +168,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 ["","write configs","","Set the value of configs."]
 ["","validate configs","","Check if the current value of configs has any errors."]
 ["","add configs","","Add a value to list configs interactively."]
+["","edit configs","","Choose a value of configs to edit."]
 ["","remove configs","","Remove a value from list configs interactively."]
 ["control","cancel","c","Abort submission and discard changes."]
 ["control","done","d","Validate and submit form."]

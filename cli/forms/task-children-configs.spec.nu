@@ -74,6 +74,15 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
       )
     )
     (
+      $children_field | field cmd interact list edit (
+        {|idx| {id: $idx name: $in.desc} } | callback from closure
+      ) (
+        callback make [] "$in
+| merge {task_id: $params.task_id}
+| index form task-child-config"
+      )
+    )
+    (
       $children_field | field cmd interact list remove (
         {|idx|
           {id: $idx name: $in.desc}
