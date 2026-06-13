@@ -119,31 +119,48 @@ class ConfigBuilder:
             self._detect_cycles(t, visited, [], 0)
 
     def __ensure_parents(self):
+        # from largest -> smallest
         scales = sorted(self.timescales, reverse=True)
-        max_timescale = scales[0]
-        temporary: dict[int, Task] = {}
-        children: dict[int, list[Task]] = {}
 
-        original_tasks = list(self.tasks.values())
-        for task in original_tasks:
+        # since scales are dynamically computed from given tasks, then sorted
+        # from largest -> smallest, scales[0] must be the largest timescale
+        max_timescale = scales[0]
+
+        # fill in parents to the max timescale for each task without parent
+        # with timescale < max_timescale
+
+        tasks = list(self.tasks.values())
+        for task in tasks:
+            # skip tasks with parents and root tasks
             if len(task._parent_cfgs) > 0:
                 continue
             if task.unit == max_timescale:
                 continue
-            # task index must be > 0 since max_timescale = scales[0]
-            parent_unit = scales[scales.index(task.unit) - 1]
-            if parent_unit not in temporary:
-                t = Task(self, parent_unit)
-                temporary[parent_unit] = t
-                self.temp_tasks.add(t.id)
-                children[parent_unit] = []
-            children[parent_unit].append(task)
 
-        for task_id, temp_task in temporary.items():
-            temp_task.add_cost_config_children(
-                # INT_MAX not supported so we do INT_MAX-1
+            assert task.unit < max_timescale
+
+            prev: Task | None = None
+            # we create all parents starting from right above the task ->
+            # max_timescale
+            for i in range(0, scales.index(task.unit)):
+                unit = scales[i]
+                tmp = Task(self, unit)
+                self.temp_tasks.add(tmp.id)
+
+                if prev is not None:
+                    prev.add_cost_config_children(
+                        [CostInterval((atomic_unit(0), atomic_unit(maxsize - 1)), 0)],
+                        [tmp],
+                    )
+                prev = tmp
+
+            # since task timescale cannot be index 0
+            assert prev is not None
+
+            # the last prev will be the parent closest to the task timescale
+            prev.add_cost_config_children(
                 [CostInterval((atomic_unit(0), atomic_unit(maxsize - 1)), 0)],
-                children[task_id],
+                [task],
             )
 
     def build(self) -> Config:

@@ -38,8 +38,8 @@ class SolverServicer(grpcpb.SolverServicer):
             builder = ConfigBuilder(horizon)
 
             task_map: dict[int, pb.Task] = {}
-            for solved in request.tasks:
-                task_map[solved.id] = solved
+            for t in request.tasks:
+                task_map[t.id] = t
 
             def __convert_cost_intv(
                 intervals: _containers.RepeatedCompositeFieldContainer[pb.CostInterval],
@@ -102,6 +102,9 @@ class SolverServicer(grpcpb.SolverServicer):
 
             solution_conv: list[pb.SolvedTask] = []
             for solved in solution:
+                if solved.task_id in builder.temp_tasks:
+                    continue
+
                 task = id_task_map[solved.task_id]
 
                 obj = pb.SolvedTask(
