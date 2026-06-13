@@ -57,17 +57,27 @@ func pertDurCfgs(
 	choices int64,
 	durcfg db.DurConfig,
 ) (out []*solverpb.DurConfig, err error) {
-	totalCost := int64(0)
-	if durcfg.TotalCost.Valid {
-		totalCost = durcfg.TotalCost.Int64
+	totalCost := durcfg.TotalCost
+
+	if !durcfg.Deadline.Valid {
+		// if deadline is null, we don't really have any cost at all, so we use
+		// a single no-cost interval
+		out = append(out, &solverpb.DurConfig{
+			Intervals: []*solverpb.CostInterval{
+				{
+					Start: &commonpb.AtomicUnit{Value: 0},
+					End:   &commonpb.AtomicUnit{Value: math.MaxInt64 - 1},
+					Cost:  0,
+				},
+			},
+			Duration: &commonpb.AtomicUnit{Value: 0},
+		})
+		return
 	}
 
-	// no real issue if deadline is null, will just default to 0, which will lead to intv like:
-	// [0, 0] \cup [1, "\infty"]
 	deadline := &commonpb.AtomicUnit{
 		Value: RealNullTimeToProfileTime(durcfg.Deadline, profile).Int64,
 	}
-
 	for i := range choices {
 		// we distribute probability stops via cube-root power fn
 		// (x/n)^(1/3)

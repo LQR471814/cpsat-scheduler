@@ -35,7 +35,7 @@ type DurConfig struct {
 	Exp       int64
 	Opt       int64
 	Deadline  sql.NullTime
-	TotalCost sql.NullInt64
+	TotalCost int64
 }
 
 type Event struct {

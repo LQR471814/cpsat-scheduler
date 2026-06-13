@@ -45,7 +45,7 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 				Exp: SQLDurationToProto(cfg.Exp),
 				Opt: SQLDurationToProto(cfg.Opt),
 			},
-			TotalCost: SQLInt64ToProto(cfg.TotalCost),
+			TotalCost: cfg.TotalCost,
 		}
 	}
 
@@ -180,7 +180,7 @@ func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 			Exp:       ProtoToSQLDuration(s.DurationCfg.Pert.Exp),
 			Opt:       ProtoToSQLDuration(s.DurationCfg.Pert.Opt),
 			Deadline:  ProtoTimeToSQL(s.DurationCfg.Deadline),
-			TotalCost: ProtoInt64ToSQL(s.DurationCfg.TotalCost),
+			TotalCost: s.DurationCfg.TotalCost,
 		}); err != nil {
 			return err
 		}

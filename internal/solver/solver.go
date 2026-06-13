@@ -77,6 +77,9 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 	}
 
 	for _, task := range tasks {
+		for _, cfg := range task.DurCfgs {
+			s.logger.Debug("task", "duration", cfg.Duration, "intvs", cfg.Intervals)
+		}
 		s.logger.Debug(
 			"task",
 			"id", task.Id,
@@ -84,8 +87,8 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 			"unit", task.Unit,
 			"start", task.Start,
 			"end", task.End,
-			"duration", task.DurCfgs,
-			"children", task.ChildrenCfgs,
+			"dur_cfgs", len(task.DurCfgs),
+			"child_cfgs", len(task.ChildrenCfgs),
 		)
 	}
 

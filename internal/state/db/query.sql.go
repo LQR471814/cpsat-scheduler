@@ -64,7 +64,7 @@ type CreateDurConfigParams struct {
 	Exp       int64
 	Opt       int64
 	Deadline  sql.NullTime
-	TotalCost sql.NullInt64
+	TotalCost int64
 }
 
 func (q *Queries) CreateDurConfig(ctx context.Context, arg CreateDurConfigParams) error {
