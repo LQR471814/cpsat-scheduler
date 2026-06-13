@@ -4,6 +4,8 @@ import (
 	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state/db"
+	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 )
@@ -219,12 +221,15 @@ func lookupTask(
 		prereqs[i] = r.ID
 	}
 
-	var durCfg db.DurConfig
-	durCfg, err = c.db.GetDurConfig(c.ctx, t.ID)
-	if err != nil {
+	var durCfg *db.DurConfig
+	cfg, err := c.db.GetDurConfig(c.ctx, t.ID)
+	if err == nil {
+		durCfg = &cfg
+	} else if !errors.Is(err, sql.ErrNoRows) {
 		err = fmt.Errorf("db GetDurConfig: %w", err)
 		return
 	}
+
 	task := &solverpb.Task{
 		Id:      t.ID,
 		Unit:    &commonpb.AtomicUnit{Value: t.Unit},
@@ -232,18 +237,20 @@ func lookupTask(
 		End:     end,
 		Prereqs: prereqs,
 	}
-	task.DurCfgs, err = pertDurCfgs(profile, choices, durCfg)
-	if err != nil {
-		err = fmt.Errorf("pert dur configs: %w", err)
-		return
+	if durCfg != nil {
+		task.DurCfgs, err = pertDurCfgs(profile, choices, *durCfg)
+		if err != nil {
+			err = fmt.Errorf("pert dur configs: %w", err)
+			return
+		}
 	}
 
 	task.ChildrenCfgs, err = lookupChildCfgs(c, profile, t)
 	if err != nil {
 		err = fmt.Errorf("lookup child cfgs: %w", err)
-
 		return
 	}
+
 	out = task
 	return
 }
