@@ -6,6 +6,7 @@ import (
 	"cpsat-scheduler/internal/solver"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"fmt"
 	"log/slog"
 )
 
@@ -28,6 +29,7 @@ func newServer(
 	logger = logger.WithGroup("server")
 	solv, err := solver.NewSolver(ctx, logger, solverPath)
 	if err != nil {
+		err = fmt.Errorf("new solver: %w", err)
 		return
 	}
 	serv = server{

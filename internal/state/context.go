@@ -4,6 +4,7 @@ import (
 	"context"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"fmt"
 	"log/slog"
 )
 
@@ -22,6 +23,7 @@ func NewContext(
 ) (c Context, err error) {
 	tx, err := driver.BeginTx(ctx, opts)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	c = Context{

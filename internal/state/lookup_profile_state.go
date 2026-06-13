@@ -4,6 +4,7 @@ import (
 	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state/db"
+	"fmt"
 	"math"
 )
 
@@ -139,6 +140,7 @@ func GenerateEventTasks(c Context, profile db.Profile, horizon Horizon, out *[]*
 	txqry := c.db.WithTx(c.tx)
 	events, err = txqry.ListEvent(c.ctx, profile.ID)
 	if err != nil {
+		err = fmt.Errorf("db ListEvent: %w", err)
 		return
 	}
 	id := int64(-1)
@@ -154,6 +156,7 @@ func LookupProfileState(c Context, profile db.Profile, horizon Horizon, out *[]*
 
 	tasks, err := c.db.ListTasks(ctx, profile.ID)
 	if err != nil {
+		err = fmt.Errorf("db ListTasks: %w", err)
 		return
 	}
 
@@ -166,6 +169,7 @@ func LookupProfileState(c Context, profile db.Profile, horizon Horizon, out *[]*
 	for _, t := range tasks {
 		task, err = lookupTask(c, profile, t, choices)
 		if err != nil {
+			err = fmt.Errorf("lookup task: %w", err)
 			return
 		}
 
@@ -207,6 +211,7 @@ func lookupTask(
 	var rows []db.ListPrereqRow
 	rows, err = c.db.ListPrereq(c.ctx, t.ID)
 	if err != nil {
+		err = fmt.Errorf("db ListPrereq: %w", err)
 		return
 	}
 	prereqs := make([]int64, len(rows))
@@ -217,6 +222,7 @@ func lookupTask(
 	var durCfg db.DurConfig
 	durCfg, err = c.db.GetDurConfig(c.ctx, t.ID)
 	if err != nil {
+		err = fmt.Errorf("db GetDurConfig: %w", err)
 		return
 	}
 	task := &solverpb.Task{
@@ -228,11 +234,14 @@ func lookupTask(
 	}
 	task.DurCfgs, err = pertDurCfgs(profile, choices, durCfg)
 	if err != nil {
+		err = fmt.Errorf("pert dur configs: %w", err)
 		return
 	}
 
 	task.ChildrenCfgs, err = lookupChildCfgs(c, profile, t)
 	if err != nil {
+		err = fmt.Errorf("lookup child cfgs: %w", err)
+
 		return
 	}
 	out = task
@@ -244,12 +253,14 @@ func lookupChildCfgs(c Context, profile db.Profile, task db.Task) (out []*solver
 	var childrenCfgs []db.ChildrenConfig
 	childrenCfgs, err = c.db.ListChildrenConfigs(ctx, task.ID)
 	if err != nil {
+		err = fmt.Errorf("db ListChildrenConfigs: %w", err)
 		return
 	}
 	for _, childCfg := range childrenCfgs {
 		var rows []db.ListChildrenConfigChildrenRow
 		rows, err = c.db.ListChildrenConfigChildren(ctx, childCfg.ID)
 		if err != nil {
+			err = fmt.Errorf("db ListChildrenConfigChildren: %w", err)
 			return
 		}
 		children := make([]int64, len(rows))

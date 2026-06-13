@@ -8,6 +8,7 @@ import (
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"fmt"
 
 	"google.golang.org/protobuf/types/known/durationpb"
 )
@@ -15,6 +16,7 @@ import (
 func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduledTasksRequest) (res *apipb.ListScheduledTasksResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -22,6 +24,7 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 
 	profile, err := txqry.GetProfile(ctx, req.ProfileId)
 	if err != nil {
+		err = fmt.Errorf("db GetProfile: %w", err)
 		return
 	}
 
@@ -34,6 +37,7 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			Unit:    req.GetTimescale(),
 		})
 		if err != nil {
+			err = fmt.Errorf("db list scheduled tasks in timescale: %w", err)
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
@@ -54,6 +58,8 @@ func (s server) ListScheduledTasks(ctx context.Context, req *apipb.ListScheduled
 			Profile: req.ProfileId,
 		})
 		if err != nil {
+			err = fmt.Errorf("db list scheduled tasks: %w", err)
+
 			return nil, err
 		}
 		res = &apipb.ListScheduledTasksResponse{
@@ -78,6 +84,7 @@ func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeSched
 		ReadOnly: true,
 	})
 	if err != nil {
+		err = fmt.Errorf("new state context: %w", err)
 		return
 	}
 	defer statectx.Tx().Rollback()
@@ -85,6 +92,7 @@ func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeSched
 
 	profile, err := txqry.GetProfile(ctx, req.GetProfile())
 	if err != nil {
+		err = fmt.Errorf("db GetProfile: %w", err)
 		return
 	}
 
@@ -96,6 +104,7 @@ func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeSched
 	}
 	solveRes, err := s.solver.SolveProfile(statectx, profile, horizon)
 	if err != nil {
+		err = fmt.Errorf("solve profile: %w", err)
 		return
 	}
 
@@ -106,10 +115,12 @@ func (s server) RecomputeSchedule(ctx context.Context, req *apipb.RecomputeSched
 
 		err = replaceSchedule(ctx, txqry, profile, solveRes)
 		if err != nil {
+			err = fmt.Errorf("replace schedule: %w", err)
 			return
 		}
 		err = statectx.Tx().Commit()
 		if err != nil {
+			err = fmt.Errorf("commit tx: %w", err)
 			return
 		}
 	}
@@ -126,6 +137,7 @@ func replaceSchedule(
 ) (err error) {
 	err = txqry.DeleteSchedule(ctx, profile.ID)
 	if err != nil {
+		err = fmt.Errorf("db DeleteSchedule: %w", err)
 		return
 	}
 
@@ -133,6 +145,7 @@ func replaceSchedule(
 		var task db.Task
 		task, err = txqry.GetTask(ctx, solved.Id)
 		if err != nil {
+			err = fmt.Errorf("db GetTask: %w", err)
 			return
 		}
 
@@ -157,6 +170,7 @@ func replaceSchedule(
 			Duration: solved.Duration.Value,
 		})
 		if err != nil {
+			err = fmt.Errorf("db save scheduled task: %w", err)
 			return
 		}
 	}

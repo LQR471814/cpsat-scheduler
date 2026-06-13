@@ -6,6 +6,7 @@ import (
 	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -13,6 +14,7 @@ import (
 func (s server) CreateEvent(ctx context.Context, req *apipb.CreateEventRequest) (res *apipb.CreateEventResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -27,11 +29,13 @@ func (s server) CreateEvent(ctx context.Context, req *apipb.CreateEventRequest) 
 			End:     ev.GetEnd().AsTime(),
 		})
 		if err != nil {
+			err = fmt.Errorf("db create event: %w", err)
 			return
 		}
 	}
 	err = tx.Commit()
 	if err != nil {
+		err = fmt.Errorf("commit tx: %w", err)
 		return
 	}
 	res = &apipb.CreateEventResponse{}
@@ -43,6 +47,7 @@ func (s server) ReadEvent(ctx context.Context, in *apipb.ReadEventRequest) (res 
 		ReadOnly: true,
 	})
 	if err != nil {
+		err = fmt.Errorf("begin tx (readonly): %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -50,6 +55,7 @@ func (s server) ReadEvent(ctx context.Context, in *apipb.ReadEventRequest) (res 
 
 	ev, err := txqry.ReadEvent(ctx, in.GetId())
 	if err != nil {
+		err = fmt.Errorf("db ReadEvent: %w", err)
 		return
 	}
 	res = &apipb.ReadEventResponse{
@@ -73,6 +79,7 @@ func (s server) UpdateEvent(ctx context.Context, in *apipb.UpdateEventRequest) (
 		Start:   in.GetEvent().GetStart().AsTime(),
 	})
 	if err != nil {
+		err = fmt.Errorf("db update event: %w", err)
 		return
 	}
 	res = &apipb.UpdateEventResponse{}
@@ -82,6 +89,7 @@ func (s server) UpdateEvent(ctx context.Context, in *apipb.UpdateEventRequest) (
 func (s server) ListEvent(ctx context.Context, in *apipb.ListEventRequest) (res *apipb.ListEventResponse, err error) {
 	events, err := s.db.ListEvent(ctx, in.GetProfile())
 	if err != nil {
+		err = fmt.Errorf("db ListEvent: %w", err)
 		return
 	}
 	res = &apipb.ListEventResponse{
@@ -99,6 +107,7 @@ func (s server) ListEvent(ctx context.Context, in *apipb.ListEventRequest) (res 
 func (s server) RemoveEvent(ctx context.Context, in *apipb.RemoveEventRequest) (res *apipb.RemoveEventResponse, err error) {
 	err = s.db.DeleteEvent(ctx, in.GetId())
 	if err != nil {
+		err = fmt.Errorf("db DeleteEvent: %w", err)
 		return
 	}
 	res = &apipb.RemoveEventResponse{}

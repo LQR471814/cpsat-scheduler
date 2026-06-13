@@ -6,6 +6,7 @@ import (
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -13,6 +14,7 @@ import (
 func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateRequest) (res *apipb.ProgressUpdateResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -23,12 +25,14 @@ func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateReq
 		Time:    req.GetTime().AsTime(),
 	})
 	if err != nil {
+		err = fmt.Errorf("db create progress log: %w", err)
 		return
 	}
 	for _, taskID := range req.GetUpdatedTasks() {
 		var task db.Task
 		task, err = txqry.GetTask(ctx, taskID)
 		if err != nil {
+			err = fmt.Errorf("db GetTask: %w", err)
 			return
 		}
 
@@ -42,12 +46,14 @@ func (s server) ProgressUpdate(ctx context.Context, req *apipb.ProgressUpdateReq
 			End:         task.End,
 		})
 		if err != nil {
+			err = fmt.Errorf("db create updated task: %w", err)
 			return
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		err = fmt.Errorf("commit tx: %w", err)
 		return
 	}
 	res = &apipb.ProgressUpdateResponse{Id: id}

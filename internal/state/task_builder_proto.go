@@ -17,6 +17,7 @@ func loadProtoTask(
 ) (*apipb.TaskState, error) {
 	t, err := txqry.GetTask(ctx, task)
 	if err != nil {
+		err = fmt.Errorf("db GetTask: %w", err)
 		return nil, err
 	}
 
@@ -36,6 +37,7 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	} else if err != nil {
+		err = fmt.Errorf("db get dur cfg: %w", err)
 		return err
 	} else {
 		s.DurationCfg = &apipb.DurState{
@@ -51,6 +53,7 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 
 	configs, err := txqry.ListChildrenConfigs(ctx, task)
 	if err != nil {
+		err = fmt.Errorf("db ListChildrenConfigs: %w", err)
 		return err
 	}
 
@@ -58,6 +61,7 @@ func loadProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 	for i, c := range configs {
 		children, err := txqry.ListChildrenConfigChildren(ctx, c.ID)
 		if err != nil {
+			err = fmt.Errorf("db ListChildrenConfigChildren: %w", err)
 			return err
 		}
 		childrenEntries := make([]*commonpb.Entry, len(children))
@@ -84,6 +88,7 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 
 	prereqs, err := txqry.ListPrereq(ctx, task)
 	if err != nil {
+		err = fmt.Errorf("db ListPrereq: %w", err)
 		return err
 	}
 	s.Prereqs = make([]*commonpb.Entry, len(prereqs))
@@ -96,6 +101,7 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 
 	postreqs, err := txqry.ListPostreq(ctx, task)
 	if err != nil {
+		err = fmt.Errorf("db ListPostreq: %w", err)
 		return err
 	}
 	s.Postreqs = make([]*commonpb.Entry, len(postreqs))
@@ -111,6 +117,7 @@ func loadProtoConstraints(ctx context.Context, txqry *db.Queries, task int64, s 
 		return nil
 	}
 	if err != nil {
+		err = fmt.Errorf("db GetParent: %w", err)
 		return err
 	}
 
@@ -128,6 +135,7 @@ func LoadProtoTaskState(
 ) (*apipb.TaskState, error) {
 	s, err := loadProtoTask(ctx, txqry, task)
 	if err != nil {
+		err = fmt.Errorf("load proto task: %w", err)
 		return nil, err
 	}
 	if err = loadProtoConfigs(ctx, txqry, task, s); err != nil {
@@ -198,6 +206,7 @@ func saveProtoConfigs(ctx context.Context, txqry *db.Queries, task int64, s *api
 			ExpCost:  ProtoInt64ToSQL(cfg.ExpCost),
 		})
 		if err != nil {
+			err = fmt.Errorf("db CreateChildrenConfig: %w", err)
 			return err
 		}
 
@@ -264,17 +273,24 @@ func SaveProtoTaskState(
 
 	id, err = saveProtoTask(ctx, txqry, task, profile, state)
 	if err != nil {
+		err = fmt.Errorf("save proto task: %w", err)
 		return
 	}
 	if task != nil {
-		if err = deletePreviousProtoConfigs(ctx, txqry, id); err != nil {
+		err = deletePreviousProtoConfigs(ctx, txqry, id)
+		if err != nil {
+			err = fmt.Errorf("delete previous proto cfgs: %w", err)
 			return
 		}
 	}
-	if err = saveProtoConfigs(ctx, txqry, id, state); err != nil {
+	err = saveProtoConfigs(ctx, txqry, id, state)
+	if err != nil {
+		err = fmt.Errorf("save proto cfgs: %w", err)
 		return
 	}
-	if err = saveProtoConstraints(ctx, txqry, id, state); err != nil {
+	err = saveProtoConstraints(ctx, txqry, id, state)
+	if err != nil {
+		err = fmt.Errorf("save proto constraints: %w", err)
 		return
 	}
 	return

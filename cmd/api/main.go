@@ -5,6 +5,7 @@ import (
 	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/state/db"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -20,10 +21,12 @@ func listenServer(ctx context.Context, server *grpc.Server) (err error) {
 	_ = os.Remove(socket_path)
 	listener, err := net.Listen("unix", socket_path)
 	if err != nil {
+		err = fmt.Errorf("listen unix socket: %w", err)
 		return
 	}
 	err = os.Chmod(socket_path, 0600)
 	if err != nil {
+		err = fmt.Errorf("chmod unix socket: %w", err)
 		return
 	}
 	go func() {

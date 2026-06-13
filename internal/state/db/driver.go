@@ -56,6 +56,7 @@ func (l gooseLogger) Fatalf(format string, v ...any) {
 func migrateSQLite(ctx context.Context, logger *slog.Logger, driver *sql.DB) (err error) {
 	subfs, err := fs.Sub(migrations, "migrations")
 	if err != nil {
+		err = fmt.Errorf("fs sub (./migrations): %w", err)
 		return
 	}
 	gooseProv, err := goose.NewProvider(
@@ -79,6 +80,7 @@ func migrateSQLite(ctx context.Context, logger *slog.Logger, driver *sql.DB) (er
 func OpenDB(ctx context.Context, logger *slog.Logger, file string) (driver *sql.DB, err error) {
 	abspath, err := filepath.Abs(file)
 	if err != nil {
+		err = fmt.Errorf("filepath abs (%s): %w", file, err)
 		return
 	}
 	var openUrl string
@@ -94,20 +96,25 @@ func OpenDB(ctx context.Context, logger *slog.Logger, file string) (driver *sql.
 	}
 	driver, err = sql.Open("sqlite", openUrl)
 	if err != nil {
+		err = fmt.Errorf("sql open (%s): %w", openUrl, err)
 		return
 	}
 
 	err = driver.PingContext(ctx)
 	if err != nil {
+		err = fmt.Errorf("sql driver ping: %w", err)
 		return
 	}
 
 	err = configureSQLite(driver)
 	if err != nil {
+		err = fmt.Errorf("config sqlite: %w", err)
 		return
 	}
 	err = migrateSQLite(ctx, logger, driver)
 	if err != nil {
+		err = fmt.Errorf("migrate sqlite: %w", err)
+
 		return
 	}
 

@@ -23,6 +23,7 @@ func LoadContext() (ctx Context, err error) {
 	}
 	pkgs, err := packages.Load(cfg, ".")
 	if err != nil {
+		err = fmt.Errorf("load go pkg: %w", err)
 		return
 	}
 	ctx.Package = pkgs[0]
@@ -35,6 +36,7 @@ func LoadContext() (ctx Context, err error) {
 func (c Context) Generate(contents *jen.File) (err error) {
 	f, err := os.Create(filepath.Join(".", fmt.Sprintf("%s_gen.go", c.Filename)))
 	if err != nil {
+		err = fmt.Errorf("fs create: %w", err)
 		return
 	}
 	defer f.Close()

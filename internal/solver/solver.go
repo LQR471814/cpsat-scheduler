@@ -6,6 +6,7 @@ import (
 	"cpsat-scheduler/internal/proto/solverpb"
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/url"
@@ -30,6 +31,7 @@ func NewSolver(ctx context.Context, logger *slog.Logger, daemonPath string) (sol
 	cmd := exec.CommandContext(ctx, daemonPath)
 	err = cmd.Start()
 	if err != nil {
+		err = fmt.Errorf("exec daemon bin: %w", err)
 		return
 	}
 
@@ -45,6 +47,7 @@ func NewSolver(ctx context.Context, logger *slog.Logger, daemonPath string) (sol
 		}),
 	)
 	if err != nil {
+		err = fmt.Errorf("new grpc client: %w", err)
 		return
 	}
 	solver = Solver{
@@ -67,12 +70,14 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 	s.logger.Debug("loading profile state")
 	err = state.LookupProfileState(c, profile, horizon, &tasks)
 	if err != nil {
+		err = fmt.Errorf("lookup profile state: %w", err)
 		return
 	}
 
 	s.logger.Debug("loaded profile state, generating event tasks...", "tasks", len(tasks))
 	_, err = state.GenerateEventTasks(c, profile, horizon, &tasks)
 	if err != nil {
+		err = fmt.Errorf("gen event tasks: %w", err)
 		return
 	}
 
@@ -106,6 +111,7 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 		},
 	})
 	if err != nil {
+		err = fmt.Errorf("grpc solve req: %w", err)
 		return
 	}
 

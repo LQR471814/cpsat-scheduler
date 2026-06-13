@@ -6,6 +6,7 @@ import (
 	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state"
 	"database/sql"
+	"fmt"
 	"strings"
 )
 
@@ -14,12 +15,14 @@ func (s server) ReadTask(ctx context.Context, in *apipb.ReadTaskRequest) (res *a
 		ReadOnly: true,
 	})
 	if err != nil {
+		err = fmt.Errorf("begin tx (readonly): %w", err)
 		return
 	}
 	defer tx.Rollback()
 	txqry := s.db.WithTx(tx)
 	taskState, err := state.LoadProtoTaskState(ctx, txqry, in.Id)
 	if err != nil {
+		err = fmt.Errorf("load task state: %w", err)
 		return
 	}
 	res = &apipb.ReadTaskResponse{State: taskState}
@@ -29,6 +32,7 @@ func (s server) ReadTask(ctx context.Context, in *apipb.ReadTaskRequest) (res *a
 func (s server) SaveTask(ctx context.Context, in *apipb.SaveTaskRequest) (res *apipb.SaveTaskResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -36,10 +40,12 @@ func (s server) SaveTask(ctx context.Context, in *apipb.SaveTaskRequest) (res *a
 	var id int64
 	id, err = state.SaveProtoTaskState(ctx, txqry, in.Id, in.ProfileId, in.State)
 	if err != nil {
+		err = fmt.Errorf("save task state: %w", err)
 		return
 	}
 	err = tx.Commit()
 	if err != nil {
+		err = fmt.Errorf("commit tx: %w", err)
 		return
 	}
 	res = &apipb.SaveTaskResponse{Id: id}
@@ -49,6 +55,7 @@ func (s server) SaveTask(ctx context.Context, in *apipb.SaveTaskRequest) (res *a
 func (s server) DeleteTask(ctx context.Context, in *apipb.DeleteTaskRequest) (res *apipb.DeleteTaskResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -56,19 +63,23 @@ func (s server) DeleteTask(ctx context.Context, in *apipb.DeleteTaskRequest) (re
 
 	err = txqry.DeleteTask(ctx, in.Id)
 	if err != nil {
+		err = fmt.Errorf("db DeleteTask: %w", err)
 		return
 	}
 	err = txqry.DeleteDurConfig(ctx, in.Id)
 	if err != nil {
+		err = fmt.Errorf("db DeleteDurConfig: %w", err)
 		return
 	}
 	err = txqry.DeleteChildrenConfigs(ctx, in.Id)
 	if err != nil {
+		err = fmt.Errorf("db DeleteChildrenConfigs: %w", err)
 		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		err = fmt.Errorf("commit tx: %w", err)
 		return
 	}
 	res = &apipb.DeleteTaskResponse{}
@@ -78,6 +89,7 @@ func (s server) DeleteTask(ctx context.Context, in *apipb.DeleteTaskRequest) (re
 func (s server) ListPossibleRelatives(ctx context.Context, in *apipb.ListPossibleRelativesRequest) (res *apipb.ListPossibleRelativesResponse, err error) {
 	tx, err := s.driver.BeginTx(ctx, nil)
 	if err != nil {
+		err = fmt.Errorf("begin tx: %w", err)
 		return
 	}
 	defer tx.Rollback()
@@ -85,6 +97,7 @@ func (s server) ListPossibleRelatives(ctx context.Context, in *apipb.ListPossibl
 
 	task, err := txqry.GetTask(ctx, in.TaskId)
 	if err != nil {
+		err = fmt.Errorf("db GetTask: %w", err)
 		return
 	}
 
@@ -140,6 +153,12 @@ where cc.child = t.id
 
 	rows, err := tx.Query(query.String(), args...)
 	if err != nil {
+		err = fmt.Errorf(
+			"db query (%s) (%v): %w",
+			query.String(),
+			args,
+			err,
+		)
 		return
 	}
 	defer rows.Close()
@@ -149,6 +168,7 @@ where cc.child = t.id
 		entry := &commonpb.Entry{}
 		err = rows.Scan(&entry.Id, &entry.Name)
 		if err != nil {
+			err = fmt.Errorf("row scan commonpb.Entry: %w", err)
 			return
 		}
 		items = append(items, entry)
@@ -160,6 +180,7 @@ where cc.child = t.id
 func (s server) ListTasks(ctx context.Context, req *apipb.ListTasksRequest) (res *apipb.ListTasksResponse, err error) {
 	tasks, err := s.db.ListTaskEntries(ctx, req.GetProfile())
 	if err != nil {
+		err = fmt.Errorf("db ListTaskEntries: %w", err)
 		return
 	}
 	res = &apipb.ListTasksResponse{

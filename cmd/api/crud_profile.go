@@ -6,11 +6,13 @@ import (
 	"cpsat-scheduler/internal/state"
 	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"fmt"
 )
 
 func (s server) ListProfiles(ctx context.Context, in *apipb.ListProfilesRequest) (res *apipb.ListProfilesResponse, err error) {
 	profiles, err := s.db.ListProfiles(ctx)
 	if err != nil {
+		err = fmt.Errorf("db ListProfiles: %w", err)
 		return
 	}
 	res = &apipb.ListProfilesResponse{
@@ -38,6 +40,7 @@ func (s server) CreateProfile(ctx context.Context, in *apipb.CreateProfileReques
 		PertGenChoices:          sql.NullInt64{Valid: true, Int64: in.GenPertChoices},
 	})
 	if err != nil {
+		err = fmt.Errorf("db create profile: %w", err)
 		return
 	}
 	res = &apipb.CreateProfileResponse{}
@@ -47,6 +50,7 @@ func (s server) CreateProfile(ctx context.Context, in *apipb.CreateProfileReques
 func (s server) RemoveProfile(ctx context.Context, in *apipb.RemoveProfileRequest) (res *apipb.RemoveProfileResponse, err error) {
 	err = s.db.DeleteProfile(ctx, in.Id)
 	if err != nil {
+		err = fmt.Errorf("db DeleteProfile: %w", err)
 		return
 	}
 	res = &apipb.RemoveProfileResponse{}
