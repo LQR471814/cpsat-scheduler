@@ -54,6 +54,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     fields: [
       [key value];
       [task_id {type: int}]
+      [profile_id {type: int}]
       [children $children_configs_type]
     ]
   }
@@ -66,6 +67,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
       $children_field | field cmd interact list add (
         callback make [] "{
   task_id: $params.task_id
+  profile_id: $params.profile_id
   desc: null
   deadline: null
   exp_cost: null

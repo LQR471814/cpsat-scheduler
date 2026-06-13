@@ -5,6 +5,16 @@
 
 use callback.nu
 
+# state container returns an access expression for the state container
+export def "state container" []: nothing -> string {
+  "$env.__state"
+}
+
+# init state container returns a statement that initializes the state container
+export def "init state container" []: nothing -> string {
+  $"(state container) = {}"
+}
+
 # NOTE: Prefer (cmd read name) and (cmd write name) over this! This
 # should only be used in the *very-rare* event you want to set or access
 # a value but skip all typing!
@@ -13,7 +23,7 @@ use callback.nu
 # @input types.Field
 # @output string
 export def "state access" []: record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>> -> string {
-  $"$env.__state_($in.id)"
+  $"(state container).($in.id)"
 }
 
 # @input types.Field

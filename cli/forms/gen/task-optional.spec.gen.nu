@@ -26,6 +26,7 @@ let params: record<prereqs: list<record<id: oneof<nothing, int>, name: oneof<not
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "task-optional" + "\)"
 }
 
 def --env "read parent" []: nothing -> oneof<record<id: int, name: string>, nothing> {
-$env.__state_parent
+$env.__state.parent
 }
 
 def --env "write parent" [--skipval(-s)]: oneof<record<id: int, name: string>, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_parent = $new
+  $env.__state.parent = $new
   return
 }
 let err = $new | do --env {|| null }
@@ -47,7 +48,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_parent = $new
+$env.__state.parent = $new
 }
 
 def --env "validate parent" []: nothing -> oneof<string, nothing> {
@@ -55,13 +56,13 @@ read parent | do --env {|| null }
 }
 
 def --env "read prereqs" []: nothing -> table<id: int, name: string> {
-$env.__state_prereqs
+$env.__state.prereqs
 }
 
 def --env "write prereqs" [--skipval(-s)]: table<id: int, name: string> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_prereqs = $new
+  $env.__state.prereqs = $new
   return
 }
 let err = $new | do --env {||
@@ -73,7 +74,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_prereqs = $new
+$env.__state.prereqs = $new
 }
 
 def --env "validate prereqs" []: nothing -> oneof<string, nothing> {
@@ -85,13 +86,13 @@ read prereqs | do --env {||
 }
 
 def --env "read postreqs" []: nothing -> table<id: int, name: string> {
-$env.__state_postreqs
+$env.__state.postreqs
 }
 
 def --env "write postreqs" [--skipval(-s)]: table<id: int, name: string> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_postreqs = $new
+  $env.__state.postreqs = $new
   return
 }
 let err = $new | do --env {||
@@ -103,7 +104,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_postreqs = $new
+$env.__state.postreqs = $new
 }
 
 def --env "validate postreqs" []: nothing -> oneof<string, nothing> {
@@ -115,13 +116,13 @@ read postreqs | do --env {||
 }
 
 def --env "read start" []: nothing -> oneof<datetime, nothing> {
-$env.__state_start
+$env.__state.start
 }
 
 def --env "write start" [--skipval(-s)]: oneof<datetime, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_start = $new
+  $env.__state.start = $new
   return
 }
 let err = $new | do --env {|| 
@@ -137,7 +138,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_start = $new
+$env.__state.start = $new
 }
 
 def --env "validate start" []: nothing -> oneof<string, nothing> {
@@ -153,13 +154,13 @@ if $start >= $end {
 }
 
 def --env "read end" []: nothing -> oneof<datetime, nothing> {
-$env.__state_end
+$env.__state.end
 }
 
 def --env "write end" [--skipval(-s)]: oneof<datetime, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_end = $new
+  $env.__state.end = $new
   return
 }
 let err = $new | do --env {|| 
@@ -175,7 +176,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_end = $new
+$env.__state.end = $new
 }
 
 def --env "validate end" []: nothing -> oneof<string, nothing> {
@@ -498,11 +499,11 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-optional"
 cmds | table --expand | print
-$env.__state_parent = do --env {|| $params.parent }
-$env.__state_prereqs = do --env {|| $params.prereqs }
-$env.__state_postreqs = do --env {|| $params.postreqs }
-$env.__state_start = do --env {|| $params.start }
-$env.__state_end = do --env {|| $params.end }
+$env.__state.parent = do --env {|| $params.parent }
+$env.__state.prereqs = do --env {|| $params.prereqs }
+$env.__state.postreqs = do --env {|| $params.postreqs }
+$env.__state.start = do --env {|| $params.start }
+$env.__state.end = do --env {|| $params.end }
 
 alias c = cancel
 alias d = done

@@ -89,6 +89,42 @@ let children_field: record<id: string, display_name: string, desc: string, group
   }
 }
 
+# @type types.Command
+let new_child_cmd = {
+  desc: "Create a new task and add it to the list of children."
+  group: ""
+  aliases: [nc]
+  def: {
+    name: "new child"
+    params: []
+    in: {type: "nothing"}
+    out: {type: "nothing"}
+    env: true
+    export: false
+    body: $"
+let result = {
+  id: null
+  profile_id: $params.profile_id
+  state: null
+} | index form task
+if $result == null { return }
+
+let id = {
+  id: null
+  profile_id: $params.profile_id
+  state: $result
+} | api.gen API SaveTask | get id\n($children_field | field cmd read name)
+| append {
+  id: $id
+  name: $result.name
+}
+| ($children_field | field cmd write name)
+
+null
+    "
+  }
+}
+
 # @type list<types.Field>
 let fields: list<record<id: string, display_name: string, desc: string, group: string, type: oneof<record<type: string, positional: list<any>>, record<type: string, fields: list<record<key: string, value: any>>>, record<type: string>>, display_value: oneof<record<expr: string>, nothing>, init: record<expr: string>, ops: record<read: bool, write: bool, validate: oneof<record<expr: string>, nothing>>>> = [
   $desc_field
@@ -123,10 +159,16 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
   params: (
     $child_config_type
     | update fields {
-      append {
-        key: task_id
-        value: {type: int}
-      }
+      append [
+        {
+          key: task_id
+          value: {type: int}
+        }
+        {
+          key: profile_id
+          value: {type: int}
+        }
+      ]
     }
   )
   returns: $child_config_type
@@ -137,6 +179,7 @@ let form: record<name: string, params: oneof<record<type: string, positional: li
     ($desc_field | field cmd interact set)
     ($exp_cost_field | field cmd interact set)
     ($deadline_field | field cmd interact set)
+    $new_child_cmd
 
     (
       $children_field | field cmd interact list add (

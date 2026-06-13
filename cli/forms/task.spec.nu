@@ -17,13 +17,13 @@ let required_fields = task-common required fields
 let optional_fields = task-common optional fields
 
 def "access tmp task id" []: nothing -> string {
-  "$env.__tmp_task_id?"
+  "$env.__state.tmp_task_id?"
 }
 
 # @input nothing
 # @output string
 def "write tmp task id run" []: nothing -> string {
-  callback make [] "$env.__tmp_task_id = $in"
+  callback make [] "$env.__state.tmp_task_id = $in"
   | callback run
 }
 
@@ -240,6 +240,7 @@ $new"
       $children_cfg_field | field cmd interact set --callback (
         callback make [] $"{
   task_id: ($access_task_id)
+  profile_id: $params.profile_id
   children: $in
 } | index form task-children-configs"
       )

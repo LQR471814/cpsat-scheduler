@@ -26,6 +26,7 @@ let params: record<profile_id: int> = $__input.params
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "progress-update" + "\)"
 }
 
 def --env "read modified" []: nothing -> list<record<id: int, state: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> {
-$env.__state_modified
+$env.__state.modified
 }
 
 def --env "write modified" [--skipval(-s)]: list<record<id: int, state: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>, duration_cfg: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>>, children_cfgs: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>, prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_modified = $new
+  $env.__state.modified = $new
   return
 }
 let err = $new | do --env {||
@@ -51,7 +52,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_modified = $new
+$env.__state.modified = $new
 }
 
 def --env "validate modified" []: nothing -> oneof<string, nothing> {
@@ -181,7 +182,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "progress-update"
 cmds | table --expand | print
-$env.__state_modified = do --env {|| [] }
+$env.__state.modified = do --env {|| [] }
 
 alias ps = pick scheduled
 alias pt = pick task

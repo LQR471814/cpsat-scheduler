@@ -26,6 +26,7 @@ let params: record<name: oneof<string, nothing>, desc: oneof<string, nothing>, t
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "task-required" + "\)"
 }
 
 def --env "read name" []: nothing -> oneof<string, nothing> {
-$env.__state_name
+$env.__state.name
 }
 
 def --env "write name" [--skipval(-s)]: oneof<string, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_name = $new
+  $env.__state.name = $new
   return
 }
 let err = $new | do --env {||
@@ -51,7 +52,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_name = $new
+$env.__state.name = $new
 }
 
 def --env "validate name" []: nothing -> oneof<string, nothing> {
@@ -63,13 +64,13 @@ read name | do --env {||
 }
 
 def --env "read desc" []: nothing -> oneof<string, nothing> {
-$env.__state_desc
+$env.__state.desc
 }
 
 def --env "write desc" [--skipval(-s)]: oneof<string, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_desc = $new
+  $env.__state.desc = $new
   return
 }
 let err = $new | do --env {||
@@ -81,7 +82,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_desc = $new
+$env.__state.desc = $new
 }
 
 def --env "validate desc" []: nothing -> oneof<string, nothing> {
@@ -93,13 +94,13 @@ read desc | do --env {||
 }
 
 def --env "read timescale" []: nothing -> oneof<int, nothing> {
-$env.__state_timescale
+$env.__state.timescale
 }
 
 def --env "write timescale" [--skipval(-s)]: oneof<int, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_timescale = $new
+  $env.__state.timescale = $new
   return
 }
 let err = $new | do --env {|| 
@@ -115,7 +116,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_timescale = $new
+$env.__state.timescale = $new
 }
 
 def --env "validate timescale" []: nothing -> oneof<string, nothing> {
@@ -300,9 +301,9 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-required"
 cmds | table --expand | print
-$env.__state_name = do --env {|| $params.name }
-$env.__state_desc = do --env {|| $params.desc }
-$env.__state_timescale = do --env {|| $params.timescale }
+$env.__state.name = do --env {|| $params.name }
+$env.__state.desc = do --env {|| $params.desc }
+$env.__state.timescale = do --env {|| $params.timescale }
 
 alias c = cancel
 alias d = done

@@ -302,7 +302,7 @@ let params: ($form.params | types render) = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| (cmd prompt prefix name) }
-$env.PROMPT_COMMAND = ($prompt_callback | callback run)\n($form.init.before_cmds)"
+$env.PROMPT_COMMAND = ($prompt_callback | callback run)\n(field init state container)\n($form.init.before_cmds)"
 }
 
 # @input list<types.Field>

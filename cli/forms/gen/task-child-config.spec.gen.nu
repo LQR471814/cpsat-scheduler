@@ -18,14 +18,15 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int, profile_id: int>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int> = $__input.params
+let params: record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, task_id: int, profile_id: int> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "task-child-config" + "\)"
 }
 
 def --env "read desc" []: nothing -> oneof<oneof<nothing, string>, nothing> {
-$env.__state_desc
+$env.__state.desc
 }
 
 def --env "write desc" [--skipval(-s)]: oneof<oneof<nothing, string>, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_desc = $new
+  $env.__state.desc = $new
   return
 }
 let err = $new | do --env {|| if $in == null {
@@ -49,7 +50,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_desc = $new
+$env.__state.desc = $new
 }
 
 def --env "validate desc" []: nothing -> oneof<string, nothing> {
@@ -59,13 +60,13 @@ read desc | do --env {|| if $in == null {
 }
 
 def --env "read deadline" []: nothing -> oneof<nothing, datetime> {
-$env.__state_deadline
+$env.__state.deadline
 }
 
 def --env "write deadline" [--skipval(-s)]: oneof<nothing, datetime> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_deadline = $new
+  $env.__state.deadline = $new
   return
 }
 let err = $new | do --env {|| null }
@@ -73,7 +74,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_deadline = $new
+$env.__state.deadline = $new
 }
 
 def --env "validate deadline" []: nothing -> oneof<string, nothing> {
@@ -81,13 +82,13 @@ read deadline | do --env {|| null }
 }
 
 def --env "read exp_cost" []: nothing -> oneof<oneof<nothing, int>, nothing> {
-$env.__state_exp_cost
+$env.__state.exp_cost
 }
 
 def --env "write exp_cost" [--skipval(-s)]: oneof<oneof<nothing, int>, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_exp_cost = $new
+  $env.__state.exp_cost = $new
   return
 }
 let err = $new | do --env {|| if ($in == null) {
@@ -97,7 +98,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_exp_cost = $new
+$env.__state.exp_cost = $new
 }
 
 def --env "validate exp_cost" []: nothing -> oneof<string, nothing> {
@@ -107,13 +108,13 @@ read exp_cost | do --env {|| if ($in == null) {
 }
 
 def --env "read children" []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>> {
-$env.__state_children
+$env.__state.children
 }
 
 def --env "write children" [--skipval(-s)]: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_children = $new
+  $env.__state.children = $new
   return
 }
 let err = $new | do --env {|| if ($in | is-empty) {
@@ -123,7 +124,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_children = $new
+$env.__state.children = $new
 }
 
 def --env "validate children" []: nothing -> oneof<string, nothing> {
@@ -148,6 +149,31 @@ def --env "set deadline" []: nothing -> nothing {
 let new = read deadline | do --env {|| do --env {|| util choose date } }
 if $new == null { return }
 $new | write deadline 
+}
+
+def --env "new child" []: nothing -> nothing {
+
+let result = {
+  id: null
+  profile_id: $params.profile_id
+  state: null
+} | index form task
+if $result == null { return }
+
+let id = {
+  id: null
+  profile_id: $params.profile_id
+  state: $result
+} | api.gen API SaveTask | get id
+read children
+| append {
+  id: $id
+  name: $result.name
+}
+| write children 
+
+null
+    
 }
 
 def --env "add children" []: nothing -> nothing {
@@ -334,6 +360,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 ["","set desc","","Set desc interactively."]
 ["","set exp_cost","","Set exp_cost interactively."]
 ["","set deadline","","Set deadline interactively."]
+["","new child","nc","Create a new task and add it to the list of children."]
 ["","add children","","Add a value to list children interactively."]
 ["","remove children","","Remove a value from list children interactively."]
 ["control","cancel","c","Abort submission and discard changes."]
@@ -344,11 +371,12 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-child-config"
 cmds | table --expand | print
-$env.__state_desc = do --env {|| $params.desc }
-$env.__state_deadline = do --env {|| $params.deadline }
-$env.__state_exp_cost = do --env {|| $params.exp_cost }
-$env.__state_children = do --env {|| $params.children }
+$env.__state.desc = do --env {|| $params.desc }
+$env.__state.deadline = do --env {|| $params.deadline }
+$env.__state.exp_cost = do --env {|| $params.exp_cost }
+$env.__state.children = do --env {|| $params.children }
 
+alias nc = new child
 alias c = cancel
 alias d = done
 alias s = status

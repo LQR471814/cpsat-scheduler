@@ -26,6 +26,7 @@ let params: record<state: oneof<record<name: oneof<nothing, string>, desc: oneof
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 let is_creating = $params.id == null
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "task" + "\)"
 }
 
 def --env "read required" []: nothing -> record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>> {
-$env.__state_required
+$env.__state.required
 }
 
 def --env "write required" [--skipval(-s)]: record<name: oneof<nothing, string>, desc: oneof<nothing, string>, timescale: oneof<nothing, int>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_required = $new
+  $env.__state.required = $new
   return
 }
 let err = $new | do --env {|| 
@@ -62,7 +63,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: $env.__tmp_task_id?
+  id: $env.__state.tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -79,12 +80,12 @@ let default_dur_cfg = {
 }
 | api.gen API SaveTask
 | get id
-| do --env {|| $env.__tmp_task_id = $in } }
+| do --env {|| $env.__state.tmp_task_id = $in } }
 if $err != null {
   util print error $err
   return
 }
-$env.__state_required = $new
+$env.__state.required = $new
 }
 
 def --env "validate required" []: nothing -> oneof<string, nothing> {
@@ -108,7 +109,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: $env.__tmp_task_id?
+  id: $env.__state.tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -125,17 +126,17 @@ let default_dur_cfg = {
 }
 | api.gen API SaveTask
 | get id
-| do --env {|| $env.__tmp_task_id = $in } }
+| do --env {|| $env.__state.tmp_task_id = $in } }
 }
 
 def --env "read optional" []: nothing -> record<prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> {
-$env.__state_optional
+$env.__state.optional
 }
 
 def --env "write optional" [--skipval(-s)]: record<prereqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, postreqs: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, parent: oneof<nothing, record<id: oneof<nothing, int>, name: oneof<nothing, string>>>, start: oneof<nothing, datetime>, end: oneof<nothing, datetime>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_optional = $new
+  $env.__state.optional = $new
   return
 }
 let err = $new | do --env {|| null }
@@ -143,7 +144,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_optional = $new
+$env.__state.optional = $new
 }
 
 def --env "validate optional" []: nothing -> oneof<string, nothing> {
@@ -151,13 +152,13 @@ read optional | do --env {|| null }
 }
 
 def --env "read duration" []: nothing -> oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>> {
-$env.__state_duration
+$env.__state.duration
 }
 
 def --env "write duration" [--skipval(-s)]: oneof<nothing, record<pert: oneof<nothing, record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>>, deadline: oneof<nothing, datetime>, total_cost: oneof<nothing, int>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_duration = $new
+  $env.__state.duration = $new
   return
 }
 let err = $new | do --env {|| 
@@ -168,7 +169,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_duration = $new
+$env.__state.duration = $new
 }
 
 def --env "validate duration" []: nothing -> oneof<string, nothing> {
@@ -179,13 +180,13 @@ if (read duration) == null and (read children) == null {
 }
 
 def --env "read children" []: nothing -> list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> {
-$env.__state_children
+$env.__state.children
 }
 
 def --env "write children" [--skipval(-s)]: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_children = $new
+  $env.__state.children = $new
   return
 }
 let err = $new | do --env {|| 
@@ -196,7 +197,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_children = $new
+$env.__state.children = $new
 }
 
 def --env "validate children" []: nothing -> oneof<string, nothing> {
@@ -209,7 +210,7 @@ if (read duration) == null and (read children) == null {
 def --env "set required" []: nothing -> nothing {
 let new = read required | do --env {|| 
 let new = $in
-  | merge {task_id: ($env.__tmp_task_id? | default $params.id)}
+  | merge {task_id: ($env.__state.tmp_task_id? | default $params.id)}
   | index form task-required
 if $new == null {
   cancel -y
@@ -221,7 +222,7 @@ $new | write required
 
 def --env "set optional" []: nothing -> nothing {
 let new = read optional | do --env {|| $in
-| merge {task_id: ($env.__tmp_task_id? | default $params.id)}
+| merge {task_id: ($env.__state.tmp_task_id? | default $params.id)}
 | index form task-optional }
 if $new == null { return }
 $new | write optional 
@@ -235,7 +236,8 @@ $new | write duration
 
 def --env "set children" []: nothing -> nothing {
 let new = read children | do --env {|| {
-  task_id: ($env.__tmp_task_id? | default $params.id)
+  task_id: ($env.__state.tmp_task_id? | default $params.id)
+  profile_id: $params.profile_id
   children: $in
 } | index form task-children-configs }
 if $new == null { return }
@@ -244,8 +246,8 @@ $new | write children
 
 def --env "cancel" [--no-prompt(-y)]: nothing -> nothing {
 if not $no_prompt and not (util confirm --prompt 'Are you sure you want to abort? (changes will not be saved)') { return }
-do --env {|| if $is_creating and $env.__tmp_task_id? != null {
-  {id: $env.__tmp_task_id?} | api.gen API DeleteTask
+do --env {|| if $is_creating and $env.__state.tmp_task_id? != null {
+  {id: $env.__state.tmp_task_id?} | api.gen API DeleteTask
 } }
 null | nav save form output
 exit # nu-lint-ignore: exit_only_in_main
@@ -272,7 +274,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: $env.__tmp_task_id?
+  id: $env.__state.tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -289,7 +291,7 @@ let default_dur_cfg = {
 }
 | api.gen API SaveTask
 | get id
-| do --env {|| $env.__tmp_task_id = $in } }
+| do --env {|| $env.__state.tmp_task_id = $in } }
 if $err != null {
   util print label "Required Fields"
 	util print error $err
@@ -319,8 +321,8 @@ if $err != null {
 	util print error $err
   return
 }
-do --env {|| do --env {|| if $is_creating and $env.__tmp_task_id? != null {
-  {id: $env.__tmp_task_id?} | api.gen API DeleteTask
+do --env {|| do --env {|| if $is_creating and $env.__state.tmp_task_id? != null {
+  {id: $env.__state.tmp_task_id?} | api.gen API DeleteTask
 } }
 read required
 | merge (read optional)
@@ -359,7 +361,7 @@ let default_dur_cfg = {
 }
 
 {
-  id: $env.__tmp_task_id?
+  id: $env.__state.tmp_task_id?
   profile_id: $params.profile_id
   state: {
     name: $v.name
@@ -376,7 +378,7 @@ let default_dur_cfg = {
 }
 | api.gen API SaveTask
 | get id
-| do --env {|| $env.__tmp_task_id = $in } }
+| do --env {|| $env.__state.tmp_task_id = $in } }
 if $err != null {
 	util print error $err
 }
@@ -482,13 +484,13 @@ let params = $params | default {
   end: null
 } state
 
-$env.__state_required = do --env {|| $params.state
+$env.__state.required = do --env {|| $params.state
 | select name desc timescale
    }
-$env.__state_optional = do --env {|| $params.state
+$env.__state.optional = do --env {|| $params.state
 | select start end prereqs postreqs parent }
-$env.__state_duration = do --env {|| $params.state | get duration_cfg }
-$env.__state_children = do --env {|| $params.state | get children_cfgs }
+$env.__state.duration = do --env {|| $params.state | get duration_cfg }
+$env.__state.children = do --env {|| $params.state | get children_cfgs }
 
 if (validate required) != null {
   set required

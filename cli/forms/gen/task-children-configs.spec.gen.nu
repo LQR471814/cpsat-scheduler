@@ -18,14 +18,15 @@ $env.config.keybindings = $env.config.keybindings | append {
   }
 }
 
-let __input: record<prompt_prefix: string, params: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>>> = nav get form params
+let __input: record<prompt_prefix: string, params: record<task_id: int, profile_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>>> = nav get form params
 
 let prompt_prefix: string = $__input.prompt_prefix
-let params: record<task_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> = $__input.params
+let params: record<task_id: int, profile_id: int, children: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>>> = $__input.params
 
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "task-children-configs" + "\)"
 }
 
 def --env "read configs" []: nothing -> list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> {
-$env.__state_configs
+$env.__state.configs
 }
 
 def --env "write configs" [--skipval(-s)]: list<record<desc: oneof<nothing, string>, deadline: oneof<nothing, datetime>, exp_cost: oneof<nothing, int>, children: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>>>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_configs = $new
+  $env.__state.configs = $new
   return
 }
 let err = $new | do --env {|| null }
@@ -47,7 +48,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_configs = $new
+$env.__state.configs = $new
 }
 
 def --env "validate configs" []: nothing -> oneof<string, nothing> {
@@ -58,6 +59,7 @@ def --env "add configs" []: nothing -> nothing {
 let orig = read configs
 let chosen = do --env {|| {
   task_id: $params.task_id
+  profile_id: $params.profile_id
   desc: null
   deadline: null
   exp_cost: null
@@ -144,7 +146,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-children-configs"
 cmds | table --expand | print
-$env.__state_configs = do --env {|| $params.children }
+$env.__state.configs = do --env {|| $params.children }
 
 alias c = cancel
 alias d = done

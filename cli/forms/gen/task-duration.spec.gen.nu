@@ -26,6 +26,7 @@ let params: oneof<record<pert: oneof<oneof<nothing, record<pes: oneof<nothing, d
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 let params = $params | default {}
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "task-duration" + "\)"
 }
 
 def --env "read pert" []: nothing -> oneof<record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>, nothing> {
-$env.__state_pert
+$env.__state.pert
 }
 
 def --env "write pert" [--skipval(-s)]: oneof<record<pes: oneof<nothing, duration>, exp: oneof<nothing, duration>, opt: oneof<nothing, duration>>, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_pert = $new
+  $env.__state.pert = $new
   return
 }
 let err = $new | do --env {||
@@ -58,7 +59,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_pert = $new
+$env.__state.pert = $new
 }
 
 def --env "validate pert" []: nothing -> oneof<string, nothing> {
@@ -77,13 +78,13 @@ read pert | do --env {||
 }
 
 def --env "read deadline" []: nothing -> oneof<datetime, nothing> {
-$env.__state_deadline
+$env.__state.deadline
 }
 
 def --env "write deadline" [--skipval(-s)]: oneof<datetime, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_deadline = $new
+  $env.__state.deadline = $new
   return
 }
 let err = $new | do --env {|| null }
@@ -91,7 +92,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_deadline = $new
+$env.__state.deadline = $new
 }
 
 def --env "validate deadline" []: nothing -> oneof<string, nothing> {
@@ -99,13 +100,13 @@ read deadline | do --env {|| null }
 }
 
 def --env "read total_cost" []: nothing -> oneof<int, nothing> {
-$env.__state_total_cost
+$env.__state.total_cost
 }
 
 def --env "write total_cost" [--skipval(-s)]: oneof<int, nothing> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_total_cost = $new
+  $env.__state.total_cost = $new
   return
 }
 let err = $new | do --env {||
@@ -117,7 +118,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_total_cost = $new
+$env.__state.total_cost = $new
 }
 
 def --env "validate total_cost" []: nothing -> oneof<string, nothing> {
@@ -292,9 +293,9 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "task-duration"
 cmds | table --expand | print
-$env.__state_pert = do --env {|| $params.pert? }
-$env.__state_deadline = do --env {|| $params.deadline? }
-$env.__state_total_cost = do --env {|| $params.total_cost? }
+$env.__state.pert = do --env {|| $params.pert? }
+$env.__state.deadline = do --env {|| $params.deadline? }
+$env.__state.total_cost = do --env {|| $params.total_cost? }
 
 alias c = cancel
 alias d = done

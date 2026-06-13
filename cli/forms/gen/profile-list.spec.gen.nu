@@ -26,6 +26,7 @@ let params: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, a
 let default_prompt_prefix: closure = $env.PROMPT_COMMAND
 $env.prompt_prefix = {|| prompt prefix }
 $env.PROMPT_COMMAND = do --env {|| $"(prompt prefix) ($in | do $default_prompt_prefix)" }
+$env.__state = {}
 
 
 def "prompt prefix" []: nothing -> string {
@@ -33,13 +34,13 @@ $"($prompt_prefix) \(" + "profile-list" + "\)"
 }
 
 def --env "read profile" []: nothing -> list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> {
-$env.__state_profile
+$env.__state.profile
 }
 
 def --env "write profile" [--skipval(-s)]: list<record<id: oneof<nothing, int>, name: oneof<nothing, string>, atomic_timescale: oneof<nothing, duration>, universe_start: oneof<nothing, datetime>, gen_pert_choices: oneof<nothing, int>>> -> nothing {
 let new = $in
 if $skipval {
-  $env.__state_profile = $new
+  $env.__state.profile = $new
   return
 }
 let err = $new | do --env {||
@@ -51,7 +52,7 @@ if $err != null {
   util print error $err
   return
 }
-$env.__state_profile = $new
+$env.__state.profile = $new
 }
 
 def --env "validate profile" []: nothing -> oneof<string, nothing> {
@@ -197,7 +198,7 @@ def --env "cmds" []: nothing -> table<group: string, name: string, aliases: stri
 
 util print section title "profile-list"
 cmds | table --expand | print
-$env.__state_profile = do --env {|| $params }
+$env.__state.profile = do --env {|| $params }
 
 alias ap = add profile
 alias c = cancel
