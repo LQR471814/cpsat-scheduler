@@ -342,3 +342,11 @@ the actual "deadline" involved for the task.
    and actual deadline $d$ is
    $\left\lceil\frac{d}{u}\right\rceil$
 
+# Default cost
+
+It is not necessarily trivial to figure out cost.
+
+We use a default cost for all tasks (good enough, usually user
+cares more about logical constraints and can assume all tasks have
+equal cost) e.g. 1000 for every task.
+
