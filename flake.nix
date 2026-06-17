@@ -1,8 +1,8 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # nu-type-alias-flake.url = "git+https://github.com/LQR471814/nu-type-alias";
-    nu-type-alias-flake.url = "path:/home/lqr471814/go/src/nu-type-alias";
+    nu-type-alias-flake.url = "git+https://github.com/LQR471814/nu-type-alias";
+    # nu-type-alias-flake.url = "path:/home/lqr471814/go/src/nu-type-alias";
     topiary-nushell-flake.url = "github:blindFS/topiary-nushell";
   };
   outputs =
