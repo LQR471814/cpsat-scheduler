@@ -192,17 +192,25 @@ class TaskProps:
         start_lb = atomic_unit(start_lb * t.timescale_unit)
         start_ub = atomic_unit(start_ub * t.timescale_unit)
 
+        # we find the minimum and maximum possible value for real_end
+
         min_end: atomic_unit = atomic_unit(sys.maxsize)
         max_end: atomic_unit = atomic_unit(0)
+
         for cfg in t.cost_configs:
             if len(cfg.children) == 0:
                 assert cfg.duration is not None
 
-                end_lb = atomic_unit(start_lb + cfg.duration)
+                # we find the next timescale unit after the starting
+                # lower/upper bound, which are the maximum and minimum values
+                # for the real_end of the task (it cannot be possibly be
+                # scheduled off the grid)
+
+                end_lb = atomic_unit(start_lb + t.timescale_unit)
                 if end_lb < min_end:
                     min_end = end_lb
 
-                end_ub = atomic_unit(start_ub + cfg.duration)
+                end_ub = atomic_unit(start_ub + t.timescale_unit)
                 if end_ub > max_end:
                     max_end = end_ub
 
@@ -425,8 +433,6 @@ class ComputedState:
 
             # O(cost config * task)
 
-            # define real end time end of scheduled time slot for leaf
-            # tasks (assume worst case)
             m.model.add(self.real_end == unit * (start_time + 1)).only_enforce_if(
                 config_active
             ).with_name(f"t{t.id}_real_end_cfg{i}_duration")

@@ -28,6 +28,21 @@ status_map: dict[cp_model.CpSolverStatus, pb.SolveStatus] = {
 }
 
 
+def cost_intv_from_pb(
+    intervals: _containers.RepeatedCompositeFieldContainer[pb.CostInterval],
+) -> list[CostInterval]:
+    return [
+        CostInterval(
+            interval=(
+                atomic_unit(intv.start.value),
+                atomic_unit(intv.end.value),
+            ),
+            cost=intv.cost,
+        )
+        for intv in intervals
+    ]
+
+
 class SolverServicer(grpcpb.SolverServicer):
     def Solve(self, request: pb.SolveRequest, context):
         try:
@@ -37,65 +52,44 @@ class SolverServicer(grpcpb.SolverServicer):
             )
             builder = ConfigBuilder(horizon)
 
-            task_map: dict[int, pb.Task] = {}
-            for t in request.tasks:
-                task_map[t.id] = t
+            intern_id_to_pb_task: dict[int, pb.Task] = {}
+            pb_id_to_intern_task: dict[int, Task] = {}
 
-            def __convert_cost_intv(
-                intervals: _containers.RepeatedCompositeFieldContainer[pb.CostInterval],
-            ) -> list[CostInterval]:
-                return [
-                    CostInterval(
-                        interval=(
-                            atomic_unit(intv.start.value),
-                            atomic_unit(intv.end.value),
-                        ),
-                        cost=intv.cost,
-                    )
-                    for intv in intervals
-                ]
-
-            id_task_map: dict[int, pb.Task] = {}
-
-            def __ensure_task(id: int):
-                task = task_map[id]
-                if id in builder.tasks:
-                    return builder.tasks[id]
-
+            # init all tasks
+            for pb_task in request.tasks:
                 start: task_unit | None = None
-                if task.HasField("start"):
-                    start = task_unit(task.start.value)
+                if pb_task.HasField("start"):
+                    start = task_unit(pb_task.start.value)
 
                 end: task_unit | None = None
-                if task.HasField("end"):
-                    end = task_unit(task.end.value)
+                if pb_task.HasField("end"):
+                    end = task_unit(pb_task.end.value)
 
-                for id in task.prereqs:
-                    __ensure_task(id)
+                unit = atomic_unit(pb_task.unit.value)
 
-                t = Task(
-                    builder=builder,
-                    unit=atomic_unit(task.unit.value),
-                    start=start,
-                    end=end,
-                )
-                id_task_map[t.id] = task
+                intern_task = Task(builder=builder, unit=unit, start=start, end=end)
+                intern_id_to_pb_task[intern_task.id] = pb_task
+                pb_id_to_intern_task[pb_task.id] = intern_task
 
-                for cfg in task.dur_cfgs:
-                    t.add_cost_config_duration(
-                        __convert_cost_intv(cfg.intervals),
+                for cfg in pb_task.dur_cfgs:
+                    intern_task.add_cost_config_duration(
+                        cost_intv_from_pb(cfg.intervals),
                         atomic_unit(cfg.duration.value),
                     )
-                for cfg in task.children_cfgs:
-                    t.add_cost_config_children(
-                        __convert_cost_intv(cfg.intervals),
-                        [__ensure_task(child) for child in cfg.children],
+
+            # add their relationships
+            for pb_task in request.tasks:
+                intern_task = pb_id_to_intern_task[pb_task.id]
+
+                for prereq in pb_task.prereqs:
+                    intern_prereq = pb_id_to_intern_task[prereq]
+                    intern_task.add_prereq(intern_prereq)
+
+                for cfg in pb_task.children_cfgs:
+                    intern_task.add_cost_config_children(
+                        cost_intv_from_pb(cfg.intervals),
+                        [pb_id_to_intern_task[child] for child in cfg.children],
                     )
-
-                return t
-
-            for solved in request.tasks:
-                __ensure_task(solved.id)
 
             model = Model(builder.build())
             status, score, solution = model.solve()
@@ -105,17 +99,17 @@ class SolverServicer(grpcpb.SolverServicer):
                 if solved.task_id in builder.temp_tasks:
                     continue
 
-                task = id_task_map[solved.task_id]
+                pb_task = intern_id_to_pb_task[solved.task_id]
 
                 obj = pb.SolvedTask(
-                    id=task.id,
+                    id=pb_task.id,
                     start=commonpb.TaskUnit(value=solved.start),
                     end=commonpb.AtomicUnit(value=solved.real_end),
                     cost=solved.real_cost,
                     duration=commonpb.AtomicUnit(value=solved.real_duration),
                 )
-                if solved.config >= len(task.dur_cfgs):
-                    obj.children_idx = solved.config - len(task.dur_cfgs)
+                if solved.config >= len(pb_task.dur_cfgs):
+                    obj.children_idx = solved.config - len(pb_task.dur_cfgs)
                 else:
                     obj.dur_idx = solved.config
 
