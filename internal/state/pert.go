@@ -34,6 +34,15 @@ func pertPPF(p, opt, exp, pes float64) float64 {
 }
 
 func deadlineIntervals(deadline *commonpb.AtomicUnit, expCost, totalCost int64) []*solverpb.CostInterval {
+	if expCost == totalCost {
+		return []*solverpb.CostInterval{
+			{
+				Start: &commonpb.AtomicUnit{Value: 0},
+				End:   &commonpb.AtomicUnit{Value: math.MaxInt64 - 1},
+				Cost:  expCost,
+			},
+		}
+	}
 	return []*solverpb.CostInterval{
 		{
 			Start: &commonpb.AtomicUnit{Value: 0},

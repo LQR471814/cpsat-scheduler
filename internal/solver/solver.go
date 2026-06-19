@@ -26,7 +26,7 @@ type Solver struct {
 }
 
 func NewSolver(ctx context.Context, logger *slog.Logger, daemonPath string) (solver Solver, err error) {
-	logger = logger.WithGroup("solver")
+	logger = logger.With("solver", daemonPath)
 
 	cmd := exec.CommandContext(ctx, daemonPath)
 	err = cmd.Start()
@@ -82,9 +82,6 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 	}
 
 	for _, task := range tasks {
-		for _, cfg := range task.DurCfgs {
-			s.logger.Debug("task", "duration", cfg.Duration, "intvs", cfg.Intervals)
-		}
 		s.logger.Debug(
 			"task",
 			"id", task.Id,
@@ -92,9 +89,19 @@ func (s Solver) SolveProfile(c state.Context, profile db.Profile, horizon state.
 			"unit", task.Unit,
 			"start", task.Start,
 			"end", task.End,
-			"dur_cfgs", len(task.DurCfgs),
-			"child_cfgs", len(task.ChildrenCfgs),
 		)
+		for _, cfg := range task.DurCfgs {
+			s.logger.Debug("duration config", "dur", cfg.Duration.Value)
+			for _, intv := range cfg.Intervals {
+				s.logger.Debug("interval", "start", intv.Start.Value, "end", intv.End.Value, "cost", intv.Cost)
+			}
+		}
+		for _, cfg := range task.ChildrenCfgs {
+			s.logger.Debug("children config", "children", cfg.Children)
+			for _, intv := range cfg.Intervals {
+				s.logger.Debug("interval", "start", intv.Start.Value, "end", intv.End.Value, "cost", intv.Cost)
+			}
+		}
 	}
 
 	s.logger.Debug(

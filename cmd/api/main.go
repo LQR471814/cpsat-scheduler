@@ -51,7 +51,6 @@ func main() {
 
 	tintHandle := tint.NewHandler(os.Stderr, &tint.Options{Level: slog.LevelDebug})
 	logger := slog.New(tintHandle)
-	logger = logger.WithGroup("main")
 
 	driver, err := db.OpenDB(ctx, logger, "state.db")
 	if err != nil {

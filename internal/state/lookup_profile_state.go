@@ -29,14 +29,10 @@ var timescales = []AtomicUnits{
 }
 
 var zeroCost = []*solverpb.CostInterval{
-	&solverpb.CostInterval{
-		Start: &commonpb.AtomicUnit{
-			Value: 0,
-		},
-		End: &commonpb.AtomicUnit{
-			Value: math.MaxInt64 - 1,
-		},
-		Cost: 0,
+	{
+		Start: &commonpb.AtomicUnit{Value: 0},
+		End:   &commonpb.AtomicUnit{Value: math.MaxInt64 - 1},
+		Cost:  0,
 	},
 }
 
@@ -45,7 +41,7 @@ type Horizon struct {
 	End   *commonpb.AtomicUnit
 }
 
-func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int64, out *[]*solverpb.Task, ev db.Event) {
+func generateEventTasks(profile db.Profile, horizon Horizon, id *int64, out *[]*solverpb.Task, ev db.Event) {
 	start := RealTimeToProfileTime(ev.Start, profile)
 	end := RealTimeToProfileTime(ev.End, profile)
 
@@ -100,7 +96,7 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 			},
 			Prereqs: nil,
 			DurCfgs: []*solverpb.DurConfig{
-				&solverpb.DurConfig{
+				{
 					Intervals: zeroCost,
 					Duration: &commonpb.AtomicUnit{
 						Value: int64(dur),
@@ -127,7 +123,7 @@ func generateEventTasks(c Context, profile db.Profile, horizon Horizon, id *int6
 		},
 		Prereqs: nil,
 		DurCfgs: []*solverpb.DurConfig{
-			&solverpb.DurConfig{
+			{
 				Intervals: zeroCost,
 				Duration: &commonpb.AtomicUnit{
 					Value: int64(rightDur),
@@ -148,7 +144,7 @@ func GenerateEventTasks(c Context, profile db.Profile, horizon Horizon, out *[]*
 	id := int64(-1)
 	// TODO: remove debugging
 	for _, ev := range events {
-		generateEventTasks(c, profile, horizon, &id, out, ev)
+		generateEventTasks(profile, horizon, &id, out, ev)
 	}
 	return
 }

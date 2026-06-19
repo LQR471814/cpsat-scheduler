@@ -26,7 +26,6 @@ func newServer(
 	driver *sql.DB,
 	solverPath string,
 ) (serv server, err error) {
-	logger = logger.WithGroup("server")
 	solv, err := solver.NewSolver(ctx, logger, solverPath)
 	if err != nil {
 		err = fmt.Errorf("new solver: %w", err)
