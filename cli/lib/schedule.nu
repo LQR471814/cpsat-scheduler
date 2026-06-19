@@ -8,7 +8,7 @@ use profile.nu
 # @output nothing
 export def --env recompute [--start (-s): datetime --end (-e): datetime]: nothing -> nothing {
   let start = $start | default $env.schedule_start? | default (date now) # nu-lint-ignore: check_typed_flag_before_use
-  let end = $end | default $env.schedule_end? | default ((date now) + 4wk) # nu-lint-ignore: check_typed_flag_before_use
+  let end = $end | default $env.schedule_end? | default ((date now) + 24wk) # nu-lint-ignore: check_typed_flag_before_use
 
   # recompute schedule
   let spinner = util spin start
