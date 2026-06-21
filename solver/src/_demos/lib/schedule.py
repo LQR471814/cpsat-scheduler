@@ -8,34 +8,68 @@ from cpsatmodel import (
 )
 from ortools.sat.python import cp_model
 from _demos.lib.units import timescale_names
+from datetime import datetime, timedelta
+from enum import Enum
+from math import ceil
+
+
+atomic_unit_timedelta = timedelta(seconds=15 * 60)
+
+
+class Round(Enum):
+    UP = "up"
+    DOWN = "down"
 
 
 class Schedule:
+    horizon: tuple[datetime, datetime]
     task_names: dict[int, str]
     builder: ConfigBuilder
     timescales: set[atomic_unit]
 
-    def __init__(self, horizon: tuple[atomic_unit, atomic_unit]) -> None:
+    def __init__(self, horizon: tuple[datetime, datetime]) -> None:
+        self.horizon = horizon
         self.task_names = {}
         self.timescales = set()
-        self.builder = ConfigBuilder(horizon)
+        self.builder = ConfigBuilder(
+            (
+                atomic_unit(0),
+                self.horizon_time(horizon[1]),
+            )
+        )
+
+    def horizon_time(self, ts: datetime, round: Round = Round.DOWN) -> atomic_unit:
+        if round == Round.UP:
+            return atomic_unit(
+                ceil((ts - self.horizon[0]).seconds / atomic_unit_timedelta.seconds)
+            )
+        return atomic_unit(
+            (ts - self.horizon[0]).seconds // atomic_unit_timedelta.seconds
+        )
 
     def task(
         self,
         name: str,
         unit: atomic_unit,
-        start_after: atomic_unit | None = None,
-        start_before: atomic_unit | None = None,
+        start_after: datetime | None = None,
+        start_before: datetime | None = None,
     ):
         t = Task(
             self.builder,
             unit,
-            task_unit(start_after // unit) if start_after is not None else None,
-            task_unit(start_before // unit) if start_before is not None else None,
+            task_unit(self.horizon_time(start_after, round=Round.UP) // unit)
+            if start_after is not None
+            else None,
+            task_unit(self.horizon_time(start_before, round=Round.DOWN) // unit)
+            if start_before is not None
+            else None,
         )
         self.task_names[t.id] = name
         self.timescales.add(unit)
         return t
+
+    def event(self, name: str, start: datetime, end: datetime):
+        pass
 
     def solve(self):
         cfg = self.builder.build()
