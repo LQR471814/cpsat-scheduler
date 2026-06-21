@@ -24,10 +24,15 @@ class Schedule:
         self,
         name: str,
         unit: atomic_unit,
-        start_after: task_unit | None = None,
-        start_before: task_unit | None = None,
+        start_after: atomic_unit | None = None,
+        start_before: atomic_unit | None = None,
     ):
-        t = Task(self.builder, unit, start_after, start_before)
+        t = Task(
+            self.builder,
+            unit,
+            task_unit(start_after // unit) if start_after is not None else None,
+            task_unit(start_before // unit) if start_before is not None else None,
+        )
         self.task_names[t.id] = name
         self.timescales.add(unit)
         return t
@@ -76,5 +81,3 @@ class Schedule:
                     print(
                         f"{name}\tid: {s.task_id}\tstart: {s.start}\tcost: {s.real_cost}\tdur: {s.real_duration}\tend: {s.real_end}\tcfg: {s.config}",
                     )
-
-
