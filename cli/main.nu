@@ -177,12 +177,21 @@ def cmds []: nothing -> nothing {
 
 # type PERT = record<pes: duration, exp: duration, opt: duration>
 
+def "list tasks" []: nothing -> table {
+  {profile: (profile read)}
+  | api.gen API ListTaskStates
+  | get tasks
+  | each {|t|
+    $t
+    | reject state
+    | merge ($t | get state)
+  }
+}
+
 # @input nothing
 # @output oneof<int, nothing>
 def "pick task" []: nothing -> oneof<int, nothing> {
-  {profile: (profile read)}
-  | api.gen API ListTasks
-  | get tasks
+  list tasks
   | util choose table --header "Choose a task (last modified at the top):"
   | get id?
 }
