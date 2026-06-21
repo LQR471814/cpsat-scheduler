@@ -52,7 +52,7 @@ class Task:
     def add_cost_config_duration(
         self, costs: list[CostInterval], duration: atomic_unit
     ):
-        assert duration >= 0
+        assert duration >= atomic_unit(0)
         self._configs.append(
             CostConfig(
                 costs=costs,

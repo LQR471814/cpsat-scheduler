@@ -28,7 +28,7 @@ def add_cost_topos(
     for p in pert_fidelity:
         exp_earn = round(p * full_cost)
         exp_duration = atomic_unit(
-            round(pert_ppf(p, opt, exp, pes))
+            round(pert_ppf(p, float(opt), float(exp), float(pes)))
         )
         t.add_cost_config_duration(
             cost_topo.step_fn(

@@ -65,8 +65,14 @@ class Quantity(Generic[TUnit]):
     def __int__(self) -> int:
         return self.value
 
+    def __float__(self) -> float:
+        return float(self.value)
+
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.value})"
+
+    def __hash__(self) -> int:
+        return self.value
 
 
 class AtomicUnit: ...

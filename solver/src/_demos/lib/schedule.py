@@ -13,7 +13,7 @@ from _demos.lib.units import timescale_names
 class Schedule:
     task_names: dict[int, str]
     builder: ConfigBuilder
-    timescales: set[int]
+    timescales: set[atomic_unit]
 
     def __init__(self, horizon: tuple[atomic_unit, atomic_unit]) -> None:
         self.task_names = {}
@@ -52,7 +52,7 @@ class Schedule:
             if len(in_unit) == 0:
                 continue
 
-            groups: dict[int, list[ScheduledTask]] = {}
+            groups: dict[task_unit, list[ScheduledTask]] = {}
             for s in in_unit:
                 if s.start not in groups:
                     groups[s.start] = []
