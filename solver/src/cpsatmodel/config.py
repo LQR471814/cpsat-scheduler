@@ -75,6 +75,7 @@ class Config:
     horizon: tuple[atomic_unit, atomic_unit]
     timescales: list[atomic_unit]
     # margin will not be auto-created, the user is in charge of specifying magin
+    # ids -> TaskConfig
     tasks: dict[int, TaskConfig]
 
 

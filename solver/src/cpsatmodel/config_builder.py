@@ -33,8 +33,8 @@ class Task:
         start: task_unit | None = None,
         end: task_unit | None = None,
     ) -> None:
-        builder.next_id += 1
-        builder.tasks[builder.next_id] = self
+        builder.task_next_id += 1
+        builder.tasks[builder.task_next_id] = self
         builder.timescales.add(unit)
 
         self._configs = []
@@ -43,7 +43,7 @@ class Task:
         self._parent_cfgs = []
         self._builder = builder
 
-        self.id = builder.next_id
+        self.id = builder.task_next_id
         self.unit = unit
         self.start = start
         self.end = end
@@ -82,14 +82,27 @@ class Task:
         assert prereq.id in self._builder.tasks
         self._prerequisites.append(prereq.id)
 
+    def config(self) -> TaskConfig:
+        return TaskConfig(
+            id=self.id,
+            timescale_unit=self.unit,
+            start=self.start,
+            end=self.end,
+            prerequisites=self._prerequisites,
+            cost_configs=self._configs,
+            parent_configs=self._parent_cfgs,
+            parent=self._parent,
+        )
+
 
 class ConfigBuilder:
     def __init__(self, horizon: tuple[atomic_unit, atomic_unit]):
         self.horizon = horizon
-        self.next_id = 0
         self.timescales: set[atomic_unit] = set()
-        # margin will not be auto-created, the user is in charge of specifying magin
+
+        self.task_next_id = 0
         self.tasks: dict[int, Task] = {}
+
         self.temp_tasks: set[int] = set()
 
     def _detect_cycles(self, id: int, visited: set[int], trace: list[int], depth: int):
@@ -118,7 +131,7 @@ class ConfigBuilder:
                 continue
             self._detect_cycles(t, visited, [], 0)
 
-    def __ensure_parents(self):
+    def __create_tmp_parents(self):
         # from largest -> smallest
         scales = sorted(self.timescales, reverse=True)
 
@@ -164,22 +177,14 @@ class ConfigBuilder:
             )
 
     def build(self) -> Config:
-        self.__ensure_parents()
+        self.__create_tmp_parents()
 
         timescales: list[atomic_unit] = list(self.timescales)
+
         task_configs: dict[int, TaskConfig] = {}
-        for id in self.tasks:
-            t = self.tasks[id]
-            task_configs[id] = TaskConfig(
-                id=id,
-                timescale_unit=t.unit,
-                start=t.start,
-                end=t.end,
-                prerequisites=t._prerequisites,
-                cost_configs=t._configs,
-                parent_configs=t._parent_cfgs,
-                parent=t._parent,
-            )
+        for t in self.tasks.values():
+            task_configs[t.id] = t.config()
+
         return Config(
             horizon=self.horizon,
             timescales=timescales,
