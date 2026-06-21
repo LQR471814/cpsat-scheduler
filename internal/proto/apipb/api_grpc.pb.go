@@ -8,7 +8,6 @@ package apipb
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -28,6 +27,7 @@ const (
 	API_SaveTask_FullMethodName              = "/API/SaveTask"
 	API_DeleteTask_FullMethodName            = "/API/DeleteTask"
 	API_ListPossibleRelatives_FullMethodName = "/API/ListPossibleRelatives"
+	API_ListTaskStates_FullMethodName        = "/API/ListTaskStates"
 	API_RecomputeSchedule_FullMethodName     = "/API/RecomputeSchedule"
 	API_ListScheduledTasks_FullMethodName    = "/API/ListScheduledTasks"
 	API_ProgressUpdate_FullMethodName        = "/API/ProgressUpdate"
@@ -51,6 +51,7 @@ type APIClient interface {
 	SaveTask(ctx context.Context, in *SaveTaskRequest, opts ...grpc.CallOption) (*SaveTaskResponse, error)
 	DeleteTask(ctx context.Context, in *DeleteTaskRequest, opts ...grpc.CallOption) (*DeleteTaskResponse, error)
 	ListPossibleRelatives(ctx context.Context, in *ListPossibleRelativesRequest, opts ...grpc.CallOption) (*ListPossibleRelativesResponse, error)
+	ListTaskStates(ctx context.Context, in *ListTaskStatesRequest, opts ...grpc.CallOption) (*ListTaskStatesResponse, error)
 	RecomputeSchedule(ctx context.Context, in *RecomputeScheduleRequest, opts ...grpc.CallOption) (*RecomputeScheduleResponse, error)
 	ListScheduledTasks(ctx context.Context, in *ListScheduledTasksRequest, opts ...grpc.CallOption) (*ListScheduledTasksResponse, error)
 	ProgressUpdate(ctx context.Context, in *ProgressUpdateRequest, opts ...grpc.CallOption) (*ProgressUpdateResponse, error)
@@ -144,6 +145,16 @@ func (c *aPIClient) ListPossibleRelatives(ctx context.Context, in *ListPossibleR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPossibleRelativesResponse)
 	err := c.cc.Invoke(ctx, API_ListPossibleRelatives_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListTaskStates(ctx context.Context, in *ListTaskStatesRequest, opts ...grpc.CallOption) (*ListTaskStatesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTaskStatesResponse)
+	err := c.cc.Invoke(ctx, API_ListTaskStates_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -252,6 +263,7 @@ type APIServer interface {
 	SaveTask(context.Context, *SaveTaskRequest) (*SaveTaskResponse, error)
 	DeleteTask(context.Context, *DeleteTaskRequest) (*DeleteTaskResponse, error)
 	ListPossibleRelatives(context.Context, *ListPossibleRelativesRequest) (*ListPossibleRelativesResponse, error)
+	ListTaskStates(context.Context, *ListTaskStatesRequest) (*ListTaskStatesResponse, error)
 	RecomputeSchedule(context.Context, *RecomputeScheduleRequest) (*RecomputeScheduleResponse, error)
 	ListScheduledTasks(context.Context, *ListScheduledTasksRequest) (*ListScheduledTasksResponse, error)
 	ProgressUpdate(context.Context, *ProgressUpdateRequest) (*ProgressUpdateResponse, error)
@@ -294,6 +306,9 @@ func (UnimplementedAPIServer) DeleteTask(context.Context, *DeleteTaskRequest) (*
 }
 func (UnimplementedAPIServer) ListPossibleRelatives(context.Context, *ListPossibleRelativesRequest) (*ListPossibleRelativesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPossibleRelatives not implemented")
+}
+func (UnimplementedAPIServer) ListTaskStates(context.Context, *ListTaskStatesRequest) (*ListTaskStatesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTaskStates not implemented")
 }
 func (UnimplementedAPIServer) RecomputeSchedule(context.Context, *RecomputeScheduleRequest) (*RecomputeScheduleResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecomputeSchedule not implemented")
@@ -483,6 +498,24 @@ func _API_ListPossibleRelatives_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(APIServer).ListPossibleRelatives(ctx, req.(*ListPossibleRelativesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListTaskStates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTaskStatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListTaskStates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListTaskStates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListTaskStates(ctx, req.(*ListTaskStatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -687,6 +720,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPossibleRelatives",
 			Handler:    _API_ListPossibleRelatives_Handler,
+		},
+		{
+			MethodName: "ListTaskStates",
+			Handler:    _API_ListTaskStates_Handler,
 		},
 		{
 			MethodName: "RecomputeSchedule",

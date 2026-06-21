@@ -79,7 +79,7 @@ func pertDurCfgs(
 					Cost:  0,
 				},
 			},
-			Duration: &commonpb.AtomicUnit{Value: 0},
+			Duration: &commonpb.AtomicUnit{Value: durcfg.Exp},
 		})
 		return
 	}

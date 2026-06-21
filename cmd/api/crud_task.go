@@ -5,7 +5,9 @@ import (
 	"cpsat-scheduler/internal/proto/apipb"
 	"cpsat-scheduler/internal/proto/commonpb"
 	"cpsat-scheduler/internal/state"
+	"cpsat-scheduler/internal/state/db"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -192,5 +194,134 @@ func (s server) ListTasks(ctx context.Context, req *apipb.ListTasksRequest) (res
 			Name: t.Name,
 		}
 	}
+	return
+}
+
+func (s server) ListTaskStates(ctx context.Context, req *apipb.ListTaskStatesRequest) (res *apipb.ListTaskStatesResponse, err error) {
+	tx, err := s.driver.BeginTx(ctx, &sql.TxOptions{
+		ReadOnly: true,
+	})
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
+	txqry := s.db.WithTx(tx)
+
+	tasks, err := txqry.ListTasks(ctx, req.GetProfile())
+	if err != nil {
+		err = fmt.Errorf("db ListTasks: %w", err)
+		return
+	}
+
+	res = &apipb.ListTaskStatesResponse{
+		Tasks: make([]*apipb.ListTaskStatesResponse_Task, len(tasks)),
+	}
+	for i, t := range tasks {
+		resTask := &apipb.ListTaskStatesResponse_Task{
+			Id: t.ID,
+			State: &apipb.TaskState{
+				Name:         t.Name,
+				Desc:         t.Desc,
+				Timescale:    t.Unit,
+				Start:        state.SQLTimeToProto(t.Start),
+				End:          state.SQLTimeToProto(t.End),
+				Parent:       nil,
+				Prereqs:      nil,
+				Postreqs:     nil,
+				DurationCfg:  nil,
+				ChildrenCfgs: nil,
+			},
+		}
+		res.Tasks[i] = resTask
+
+		// set parent
+		var parent db.Task
+		parent, err = txqry.GetParent(ctx, t.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return
+		}
+		if errors.Is(err, sql.ErrNoRows) {
+			resTask.State.Parent = &commonpb.Entry{
+				Id:   parent.ID,
+				Name: parent.Name,
+			}
+		}
+
+		// set prereqs
+		var prereqs []db.ListPrereqRow
+		prereqs, err = txqry.ListPrereq(ctx, t.ID)
+		if err != nil {
+			return
+		}
+		resTask.State.Prereqs = make([]*commonpb.Entry, len(prereqs))
+		for i, p := range prereqs {
+			resTask.State.Prereqs[i] = &commonpb.Entry{
+				Id:   p.ID,
+				Name: p.Name,
+			}
+		}
+
+		// set postreqs
+		var postreqs []db.ListPostreqRow
+		postreqs, err = txqry.ListPostreq(ctx, t.ID)
+		if err != nil {
+			return
+		}
+		resTask.State.Postreqs = make([]*commonpb.Entry, len(postreqs))
+		for i, p := range postreqs {
+			resTask.State.Postreqs[i] = &commonpb.Entry{
+				Id:   p.ID,
+				Name: p.Name,
+			}
+		}
+
+		// set duration
+		var durCfg db.DurConfig
+		durCfg, err = txqry.GetDurConfig(ctx, t.ID)
+		if err == nil {
+			resTask.State.DurationCfg = &apipb.DurState{
+				Pert: &apipb.PERT{
+					Pes: state.SQLDurationToProto(durCfg.Pes),
+					Exp: state.SQLDurationToProto(durCfg.Exp),
+					Opt: state.SQLDurationToProto(durCfg.Opt),
+				},
+				Deadline:  state.SQLTimeToProto(durCfg.Deadline),
+				TotalCost: durCfg.TotalCost,
+			}
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return
+		}
+
+		// set children cfgs
+		var cfgs []db.ChildrenConfig
+		cfgs, err = txqry.ListChildrenConfigs(ctx, t.ID)
+		if err != nil {
+			return
+		}
+		resTask.State.ChildrenCfgs = make([]*apipb.ChildrenConfigState, len(cfgs))
+		for i, cfg := range cfgs {
+			state := &apipb.ChildrenConfigState{
+				Desc:     cfg.Desc,
+				Deadline: state.SQLTimeToProto(cfg.Deadline),
+				ExpCost:  cfg.ExpCost.Int64,
+				Children: nil,
+			}
+			resTask.State.ChildrenCfgs[i] = state
+
+			var children []db.ListChildrenConfigChildrenRow
+			children, err = txqry.ListChildrenConfigChildren(ctx, cfg.ID)
+			if err != nil {
+				return
+			}
+			state.Children = make([]*commonpb.Entry, len(children))
+			for i, c := range children {
+				state.Children[i] = &commonpb.Entry{
+					Id:   c.ID,
+					Name: c.Name,
+				}
+			}
+		}
+	}
+
 	return
 }

@@ -201,6 +201,18 @@ message ListTasksResponse {
   repeated Entry tasks = 1;
 }
 
+// ListTaskStates
+message ListTaskStatesRequest {
+  int64 profile = 1;
+}
+message ListTaskStatesResponse {
+  message Task {
+    int64 id = 1;
+    TaskState state = 2;
+  }
+  repeated Task tasks = 1;
+}
+
 service API {
   rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
@@ -211,6 +223,7 @@ service API {
   rpc SaveTask(SaveTaskRequest) returns (SaveTaskResponse);
   rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
   rpc ListPossibleRelatives(ListPossibleRelativesRequest) returns (ListPossibleRelativesResponse);
+  rpc ListTaskStates(ListTaskStatesRequest) returns (ListTaskStatesResponse);
 
   rpc RecomputeSchedule(RecomputeScheduleRequest) returns (RecomputeScheduleResponse);
   rpc ListScheduledTasks(ListScheduledTasksRequest) returns (ListScheduledTasksResponse);
