@@ -17,13 +17,13 @@ def pert_ppf(p: float, optimistic: float, expected: float, pessimistic: float):
 
 
 # optimistic/expected/pessimistic durations must be in terms of the atomic unit
-def add_cost_topos(
+def cost_topos(
     t: Task,
     full_cost: int,
     deadline: atomic_unit,
     # opt, exp, pes
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
-):
+) -> Task:
     opt, exp, pes = pert
     for p in pert_fidelity:
         exp_earn = round(p * full_cost)
@@ -38,3 +38,4 @@ def add_cost_topos(
             ),
             exp_duration,
         )
+    return t
