@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, NewType
+from typing import Callable
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsatmodel.print import print_vars
 from functools import cache
 import sys
-
-
-atomic_unit = NewType("atomic_unit", int)
-task_unit = NewType("task_unit", int)
+from cpsatmodel.units import atomic_unit, task_unit
 
 
 def guard_bool(
@@ -160,8 +157,8 @@ class TaskProps:
             parent_lb, parent_ub = self.resolve_start_bounds(parent.id)
             parent_unit = self.__props._config.tasks[parent.id].timescale_unit
             parent_bound = (
-                task_unit(parent_lb * parent_unit // t.timescale_unit),
-                task_unit(parent_ub * parent_unit // t.timescale_unit),
+                task_unit(int(parent_lb) * parent_unit // t.timescale_unit),
+                task_unit(int(parent_ub) * parent_unit // t.timescale_unit),
             )
 
         start, end = parent_bound
@@ -189,8 +186,8 @@ class TaskProps:
         start_lb, start_ub = self.resolve_start_bounds(task_id)
 
         # convert start/end in terms of atomic unit
-        start_lb = atomic_unit(start_lb * t.timescale_unit)
-        start_ub = atomic_unit(start_ub * t.timescale_unit)
+        start_lb = int(start_lb) * t.timescale_unit
+        start_ub = int(start_ub) * t.timescale_unit
 
         # we find the minimum and maximum possible value for real_end
 
@@ -206,11 +203,11 @@ class TaskProps:
                 # for the real_end of the task (it cannot be possibly be
                 # scheduled off the grid)
 
-                end_lb = atomic_unit(start_lb + t.timescale_unit)
+                end_lb = start_lb + t.timescale_unit
                 if end_lb < min_end:
                     min_end = end_lb
 
-                end_ub = atomic_unit(start_ub + t.timescale_unit)
+                end_ub = start_ub + t.timescale_unit
                 if end_ub > max_end:
                     max_end = end_ub
 
@@ -264,8 +261,8 @@ class TaskProps:
             max_dur_sum = atomic_unit(0)
             for child in cfg.children:
                 lb, ub = self.resolve_real_dur_bounds(child)
-                min_dur_sum = atomic_unit(min_dur_sum + lb)
-                max_dur_sum = atomic_unit(max_dur_sum + ub)
+                min_dur_sum = min_dur_sum + lb
+                max_dur_sum = max_dur_sum + ub
 
             if min_dur_sum < min_dur:
                 min_dur = min_dur_sum
@@ -294,7 +291,7 @@ class DecisionState:
 
     def __init__(self, model: cp_model.CpModel, props: Props, t: TaskConfig) -> None:
         start_lb, start_ub = props.task.resolve_start_bounds(t.id)
-        self.start = model.new_int_var(start_lb, start_ub, f"t{t.id}_st")
+        self.start = model.new_int_var(int(start_lb), int(start_ub), f"t{t.id}_st")
         self.config_select = model.new_int_var(
             0, len(t.cost_configs) - 1, f"t{t.id}_cfg"
         )
@@ -332,12 +329,14 @@ class ComputedState:
         state = m.decision_vars[t.id]
 
         dur_lb, dur_ub = props.task.resolve_real_dur_bounds(t.id)
-        self.real_duration = model.new_int_var(dur_lb, dur_ub, f"t{t.id}_real_dur")
+        self.real_duration = model.new_int_var(
+            int(dur_lb), int(dur_ub), f"t{t.id}_real_dur"
+        )
 
         # non-leaf task: real end = max{child end times}
         # leaf task: real end = next unit after start
         end_lb, end_ub = props.task.resolve_real_end_bounds(t.id)
-        self.real_end = model.new_int_var(end_lb, end_ub, f"t{t.id}_real_end")
+        self.real_end = model.new_int_var(int(end_lb), int(end_ub), f"t{t.id}_real_end")
 
         # should compute min/max per task
         cost_lb, cost_ub = props.task.resolve_cost_bounds(t.id)
@@ -345,8 +344,8 @@ class ComputedState:
 
         if t.parent is not None:
             # we assume all tasks have parent (except those of max timescale)
-            parent_start_lb: int
-            parent_start_ub: int
+            parent_start_lb: task_unit
+            parent_start_ub: task_unit
             if t.timescale_unit < props.model.max_timescale:
                 parent = props.task.resolve_parent_cfg(t.id)
                 assert parent is not None
@@ -354,12 +353,12 @@ class ComputedState:
                     parent.id
                 )
             else:
-                parent_start_lb = 0
-                parent_start_ub = 0
+                parent_start_lb = task_unit(0)
+                parent_start_ub = task_unit(0)
 
             self.parent_active = model.new_bool_var(f"t{t.id}_parent_active")
             self.parent_start = model.new_int_var(
-                parent_start_lb, parent_start_ub, f"t{t.id}_parent_start"
+                int(parent_start_lb), int(parent_start_ub), f"t{t.id}_parent_start"
             )
         else:
             self.parent_active = None
@@ -406,9 +405,9 @@ class ComputedState:
         scaling_factor = m.props.task.resolve_scaling_factor(t.id)
         assert scaling_factor is not None  # parent is not None
         parent_start_var = m.decision_vars[parent.id].start
-        m.model.add(self.parent_start == parent_start_var * scaling_factor).with_name(
-            f"t{t.id}_parent_start"
-        )
+        m.model.add(
+            self.parent_start == parent_start_var * int(scaling_factor)
+        ).with_name(f"t{t.id}_parent_start")
 
     def __setup_real_end(self, m: Model, t: TaskConfig):
         unit = t.timescale_unit
@@ -433,7 +432,7 @@ class ComputedState:
 
             # O(cost config * task)
 
-            m.model.add(self.real_end == unit * (start_time + 1)).only_enforce_if(
+            m.model.add(self.real_end == int(unit) * (start_time + 1)).only_enforce_if(
                 config_active
             ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
 
@@ -522,7 +521,7 @@ class Model:
         # adding by scaling factor will get the end of the timeframe the parent
         # is scheduled for
         self.model.add(
-            decision.start < computed.parent_start + scaling_factor
+            decision.start < computed.parent_start + int(scaling_factor)
         ).only_enforce_if(computed.parent_active)
 
     def __prereq_constraints(self, t: TaskConfig):
@@ -558,7 +557,7 @@ class Model:
             other_dur_contrib = self.model.new_int_var(
                 # we use 0 because other_dur_contrib could possibly be 0 (if inactive)
                 0,
-                other_dur_ub,
+                int(other_dur_ub),
                 f"t{t.id}_other{other_id}_term",
             )
             other_dur = self.computed_vars[other_id].real_duration
@@ -724,14 +723,15 @@ def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]):
 
 
 def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
-    unit_bucket_durations: dict[int, dict[int, int]] = {}
+    # maps: timescale unit -> timescale instance start dates -> duration filled
+    unit_bucket_durations: dict[atomic_unit, dict[task_unit, atomic_unit]] = {}
 
-    duration_dict: dict[int, int] = {}
+    duration_dict: dict[int, atomic_unit] = {}
     scheduled_dict: dict[int, ScheduledTask] = {}
     for s in scheduled:
         scheduled_dict[s.task_id] = s
 
-    def ensure_duration(id: int) -> int:
+    def ensure_duration(id: int) -> atomic_unit:
         if id in duration_dict:
             return duration_dict[id]
 
@@ -743,14 +743,14 @@ def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
             unit_bucket_durations[unit] = {}
         unit_buckets = unit_bucket_durations[unit]
         if s.start not in unit_buckets:
-            unit_buckets[s.start] = 0
+            unit_buckets[s.start] = atomic_unit(0)
 
         chosen_config = task_cfg.cost_configs[s.config]
         if chosen_config.duration is not None:
             duration_dict[id] = chosen_config.duration
             return chosen_config.duration
 
-        sum = 0
+        sum = atomic_unit(0)
         for child in chosen_config.children:
             sum += ensure_duration(child)
         duration_dict[id] = sum
@@ -758,9 +758,11 @@ def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
 
     for s in scheduled:
         ensure_duration(s.task_id)
+
     for s in scheduled:
         unit = config.tasks[s.task_id].timescale_unit
         unit_bucket_durations[unit][s.start] += duration_dict[s.task_id]
+
     for unit in unit_bucket_durations:
-        for bucket_duration in unit_bucket_durations[unit]:
-            assert bucket_duration <= unit
+        for filled in unit_bucket_durations[unit].values():
+            assert filled <= unit
