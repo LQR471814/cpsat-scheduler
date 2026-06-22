@@ -1,7 +1,6 @@
-from cpsatmodel import Task
+from cpsatmodel import Task, atomic_unit
 from scipy.stats import beta
 import _demos.lib.cost_topo as cost_topo
-from _demos.lib.units import atomic_unit
 
 
 pert_fidelity: list[float] = [0, 0.4, 0.8, 0.9, 0.95, 0.99, 1]

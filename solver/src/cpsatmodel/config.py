@@ -292,7 +292,9 @@ class DecisionState:
 
     def __init__(self, model: cp_model.CpModel, props: Props, t: TaskConfig) -> None:
         start_lb, start_ub = props.task.resolve_start_bounds(t.id)
-        self.start = model.new_int_var(int(start_lb), int(start_ub), f"t{t.id}_st")
+        # we subtract by 1 because new_int_var is inclusive with its end and we
+        # want the ub to be strictly not included
+        self.start = model.new_int_var(int(start_lb), int(start_ub) - 1, f"t{t.id}_st")
         self.config_select = model.new_int_var(
             0, len(t.cost_configs) - 1, f"t{t.id}_cfg"
         )
@@ -529,7 +531,7 @@ class Model:
         start_var = self.decision_vars[t.id].start
         for p in t.prerequisites:
             p_real_end_var = self.computed_vars[p].real_end
-            self.model.add(p_real_end_var <= start_var)
+            self.model.add(p_real_end_var <= start_var * int(t.timescale_unit))
 
     def __timescale_overflow_constraints(self, t: TaskConfig):
         defined = self.computed_vars[t.id].real_duration

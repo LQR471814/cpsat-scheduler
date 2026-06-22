@@ -35,3 +35,5 @@ timescale_names: dict[atomic_unit, str] = {
 }
 
 MAX_TIME = atomic_unit(maxsize - 1)
+
+hour = 4 * minute_15

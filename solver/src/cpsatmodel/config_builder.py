@@ -30,7 +30,9 @@ class Task:
         self,
         builder: ConfigBuilder,
         unit: atomic_unit,
+        # start is inclusive
         start: task_unit | None = None,
+        # end is inclusive
         end: task_unit | None = None,
     ) -> None:
         builder.task_next_id += 1

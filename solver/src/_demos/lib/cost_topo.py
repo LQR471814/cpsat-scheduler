@@ -1,7 +1,4 @@
-from cpsatmodel import (
-    CostInterval,
-    atomic_unit,
-)
+from cpsatmodel import CostInterval, atomic_unit
 from _demos.lib.units import MAX_TIME
 
 
@@ -20,5 +17,3 @@ def step_fn(
         CostInterval((start, step_time), cost_before_step),
         CostInterval((step_time, end), cost_after_step),
     ]
-
-

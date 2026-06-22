@@ -1,13 +1,14 @@
 from __future__ import annotations
-from typing import TypeVar, Generic, overload
+from typing import TypeVar, Generic, overload, get_args, get_origin
 from functools import total_ordering
+
 
 TUnit = TypeVar("TUnit")
 
 
 @total_ordering
 class Quantity(Generic[TUnit]):
-    __slots__ = ("value",)
+    __slots__ = ("value", "__orig_class__")
 
     def __init__(self, value: int) -> None:
         self.value = value
@@ -69,7 +70,10 @@ class Quantity(Generic[TUnit]):
         return float(self.value)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.value})"
+        if getattr(self, "__orig_class__", None) is None:
+            return f"Quantity({self.value})"
+        generic_name = get_args(self.__orig_class__)[0].__name__
+        return f"{generic_name}({self.value})"
 
     def __hash__(self) -> int:
         return self.value
