@@ -26,14 +26,14 @@ class Quantity(Generic[TUnit]):
         return self * scalar
 
     def __mod__(self, other: Quantity[TUnit]) -> Quantity[TUnit]:
-        return Quantity(self.value % other.value)
+        return Quantity[TUnit](self.value % other.value)
 
     def __divmod__(
         self,
         other: Quantity[TUnit],
     ) -> tuple[int, Quantity[TUnit]]:
         q, r = divmod(self.value, other.value)
-        return q, Quantity(r)
+        return q, Quantity[TUnit](r)
 
     @overload
     def __floordiv__(self, other: int) -> Quantity[TUnit]: ...
@@ -44,16 +44,16 @@ class Quantity(Generic[TUnit]):
     def __floordiv__(self, other: int | Quantity[TUnit]) -> Quantity[TUnit] | int:
         if isinstance(other, Quantity):
             return self.value // other.value
-        return Quantity(self.value // other)
+        return Quantity[TUnit](self.value // other)
 
     def __neg__(self) -> Quantity[TUnit]:
-        return Quantity(-self.value)
+        return Quantity[TUnit](-self.value)
 
     def __pos__(self) -> Quantity[TUnit]:
-        return Quantity(+self.value)
+        return Quantity[TUnit](+self.value)
 
     def __abs__(self) -> Quantity[TUnit]:
-        return Quantity(abs(self.value))
+        return Quantity[TUnit](abs(self.value))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Quantity):
