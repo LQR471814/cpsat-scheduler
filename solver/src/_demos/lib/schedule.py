@@ -11,7 +11,7 @@ from ortools.sat.python import cp_model
 from _demos.lib.units import timescale_names, hour_4
 from datetime import datetime, timedelta
 from enum import Enum
-from math import ceil, floor
+from math import ceil
 
 
 atomic_unit_timedelta = timedelta(seconds=15 * 60)
@@ -64,6 +64,11 @@ class Schedule:
         start_after: datetime | None = None,
         start_before: datetime | None = None,
     ):
+        if start_before is not None and start_before < self.horizon[0]:
+            raise Exception("start_before cannot be before horizon lower bound")
+        if start_after is not None and start_after > self.horizon[1]:
+            raise Exception("start_after cannot be after horizon upper bound")
+
         start = (
             # we round up because worst case, we limit to after the true start_after
             task_unit(self.schedule_time(start_after, round=Round.UP) // unit)
@@ -88,48 +93,79 @@ class Schedule:
         return t
 
     def event(self, name: str, start: datetime, end: datetime, unit=hour_4):
+        if end < self.horizon[0]:
+            raise Exception("end cannot be before horizon lower bound")
+        if start > self.horizon[1]:
+            raise Exception("start cannot be after horizon upper bound")
+
+        # --- Sleep start: AtomicUnit(198) end: AtomicUnit(232)
+        # start AtomicUnit(198) ( Quantity(192) Quantity(208) )
+        # end AtomicUnit(232) ( Quantity(224) Quantity(240) )
+        #
+        # --- Breakfast start: AtomicUnit(234) end: AtomicUnit(235)
+        # start AtomicUnit(234) ( Quantity(224) Quantity(240) )
+        #
+        # --- Work start: AtomicUnit(236) end: AtomicUnit(254)
+        # start AtomicUnit(236) ( Quantity(224) Quantity(240) )
+        # end AtomicUnit(254) ( Quantity(240) Quantity(256) )
+
+        # events:
+        # 198 -> 232: A
+        # 234 -> 235: B
+        # 236 -> 254: C
+
+        # blocks:
+        # 192 -> 208 (16): A(10)
+        # 208 -> 224 (16): A(16)
+        # 224 -> 240 (16): A(8) + B(1) + C(4)
+        # 240 -> 256 (16): C(14)
+
         # we calculate the timescale units it occupies and create the
         # appropriate tasks (for the smallest timescale unit)
 
         # this gives the timescale instance which the event starts within
         #
         # we round down, worst case we start before the event actually starts
-        task_time = task_unit(self.schedule_time(start) // unit)
+        task_start = self.schedule_time(start)
 
-        # round up because worst case we want to have more time than is
-        # strictly necessary for the event
-        duration_remaining = self.schedule_duration(end - start, round=Round.UP)
+        # we round down so we don't accidentally make the event longer and
+        # cause overflow that doesn't actually exist
+        task_end = self.schedule_time(end)
 
-        i = 0
-        while duration_remaining > atomic_unit(0):
+        current_inst = task_start - (task_start % unit)
+
+        while current_inst < task_end:
+            next_inst = current_inst + unit
+
+            # we have 4 cases:
+            # start & end both in current instance -> alloc = end - start
+            # start in current instance            -> alloc = next - start
+            # end in current instance              -> alloc = end - current
+            # neither in current instance          -> alloc = unit
+
+            start_in_inst = current_inst < task_start and task_start < next_inst
+            end_in_inst = current_inst < task_end and task_end < next_inst
+
             alloc = unit
-
-            task_current = task_time + task_unit(i)
-            task_next = task_time + task_unit(i + 1)
-
-            instance_start = self.real_time(int(task_current) * unit)
-            instance_end = self.real_time(int(task_next) * unit)
-
-            # if task starts after timescale instance starts
-            if start > instance_start:
-                # we only allocate part after starting (subtract extra prefix)
-                alloc -= self.schedule_duration(start - instance_start)
-            elif instance_end > end:
-                # we only allocate part before ending (subtract extra suffix)
-                alloc -= self.schedule_duration(instance_end - end)
+            if start_in_inst and end_in_inst:
+                alloc = task_end - task_start
+            elif start_in_inst:
+                alloc = next_inst - task_start
+            elif end_in_inst:
+                alloc = task_end - current_inst
 
             t = Task(
                 builder=self.builder,
                 unit=unit,
-                start=task_current,
-                end=task_next,
+                start=task_unit(current_inst // unit),
+                end=task_unit(next_inst // unit),
             )
+
             t.add_cost_config_duration(cost_topo.constant(0), alloc)
             self.task_names[t.id] = name
             self.timescales.add(unit)
 
-            duration_remaining -= alloc
-            i += 1
+            current_inst += unit
 
     def solve(self):
         cfg = self.builder.build()
