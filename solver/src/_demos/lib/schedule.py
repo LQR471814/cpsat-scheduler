@@ -17,6 +17,10 @@ from math import ceil
 atomic_unit_timedelta = timedelta(seconds=15 * 60)
 
 
+def grey_text(text: str) -> str:
+    return f"\033[90m{text}\033[0m"
+
+
 class Round(Enum):
     UP = "up"
     DOWN = "down"
@@ -25,6 +29,7 @@ class Round(Enum):
 class Schedule:
     horizon: tuple[datetime, datetime]
     task_names: dict[int, str]
+    events: set[int]
     builder: ConfigBuilder
     timescales: set[atomic_unit]
 
@@ -32,6 +37,7 @@ class Schedule:
         self.horizon = horizon
         self.task_names = {}
         self.timescales = set()
+        self.events = set()
         self.builder = ConfigBuilder(
             (
                 atomic_unit(0),
@@ -160,6 +166,7 @@ class Schedule:
                 start=task_unit(current_inst // unit),
                 end=task_unit(next_inst // unit),
             )
+            self.events.add(t.id)
 
             t.add_cost_config_duration(cost_topo.constant(0), alloc)
             self.task_names[t.id] = name
@@ -217,16 +224,17 @@ class Schedule:
                     hours, rem = divmod(dur.total_seconds(), 3600)
                     minutes, _ = divmod(rem, 60)
 
+                    line = "\t".join(
+                        [
+                            f"{name}",
+                            f"id: {s.task_id}",
+                            f"start: {start_date} ({s.start})",
+                            f"end: {end_date}",
+                            f"cfg: {s.config}",
+                            f"cost: {s.real_cost}",
+                            f"dur: {int(hours)}:{int(minutes):02}",
+                        ]
+                    )
                     print(
-                        "\t".join(
-                            [
-                                name,
-                                f"id: {s.task_id}",
-                                f"start: {start_date} ({s.start})",
-                                f"end: {end_date}",
-                                f"cfg: {s.config}",
-                                f"cost: {s.real_cost}",
-                                f"dur: {int(hours)}:{int(minutes):02}",
-                            ]
-                        ),
+                        grey_text(line) if task.id in self.events else line,
                     )
