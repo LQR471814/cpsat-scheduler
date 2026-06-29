@@ -350,3 +350,63 @@ We use a default cost for all tasks (good enough, usually user
 cares more about logical constraints and can assume all tasks have
 equal cost) e.g. 1000 for every task.
 
+# Quantizing Events
+
+Often we want to factor in "events" into a schedule, portions of
+time which are blocked off for certain purposes.
+
+Let's suppose an event's unit is $\tau$ s.t. $N\tau=\Upsilon$.
+That is, the atomic unit is greater than the "real time" unit.
+
+If the opposite is true, it becomes trivial to convert an event's
+units into atomic units.
+
+Let the set of all events be $V$.
+
+A particular event is a tuple $(s, e) \in V$ s.t. $e > s$ and
+$e \ (\text{mod}\ \tau)\equiv 0$ and $s \ (\text{mod}\ \tau)\equiv 0$.
+
+A process exists called "quantization" that can convert a set of
+non-overlapping events $V$ into a set of time allocations $A$ of
+unit $u$ s.t. no timescale overflows, the relative order of events
+is reflected in the task, the difference between the starting time
+of the task and event $< u$ and the difference between the total
+task duration and the event duration $< \Upsilon$.
+
+The set of all time allocations is a set $A$. A time allocation is
+a value $(t, d)$ where $ut \ (\text{mod}\ \Upsilon) \equiv 0$ and
+$d \ (\text{mod}\ \Upsilon)\equiv 0$. $t$ representing the
+timescale instance the time allocation pertains to and $d$
+representing the amount of time (in terms of the atomic unit) is
+allocated.
+
+> [!NOTE]
+> A time allocation is a non-movable task. It is essentially the
+> equivalent of a task that must start and end at exactly one
+> timescale instance. Indeed, we can convert the set $A$ into
+> values $\in T$.
+
+$$
+Q : V \to A^{*}
+$$
+
+Where:
+
+$$
+\forall a \in A \left[u_t = u\right]
+$$
+
+[[#Non-overflow constraint]]
+
+$$
+\forall a \in V \forall b \in V \left[a \neq b \land a_s \leq b_s \to Q(a)_t \leq Q(b)_t\right]
+$$
+
+$$
+\forall v \in V \left[Nv_{s} - uQ(v)_t < u\right]
+$$
+
+$$
+\forall v \in V \left[Q(v)_d - (v_{e}-v_{s}) < \Upsilon\right]
+$$
+
