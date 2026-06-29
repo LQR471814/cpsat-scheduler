@@ -210,12 +210,10 @@ class Schedule:
                 for s in groups[starting_time]:
                     task = self.builder.tasks[s.task_id]
 
-                    name = ""
-                    if task.id in self.task_names:
-                        name = self.task_names[task.id]
-                    else:
-                        assert task.id in self.builder.temp_tasks
-                        name = f"__temp_{task.id}__"
+                    if task.id in self.builder.temp_tasks:
+                        continue
+
+                    name = self.task_names[task.id]
 
                     start_date = self.real_time(int(s.start) * unit)
                     end_date = self.real_time(s.real_end)
