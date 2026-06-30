@@ -14,6 +14,7 @@ from enum import Enum
 from math import ceil
 
 
+zero_duration = timedelta()
 atomic_unit_timedelta = timedelta(seconds=15 * 60)
 
 
@@ -210,6 +211,7 @@ class Schedule:
                 for s in groups[starting_time]:
                     task = self.builder.tasks[s.task_id]
 
+                    # don't show temp tasks
                     if task.id in self.builder.temp_tasks:
                         continue
 
@@ -218,6 +220,10 @@ class Schedule:
                     start_date = self.real_time(int(s.start) * unit)
                     end_date = self.real_time(s.real_end)
                     dur = self.real_duration(s.real_duration)
+
+                    # don't show if task has no duration
+                    if dur == zero_duration:
+                        continue
 
                     hours, rem = divmod(dur.total_seconds(), 3600)
                     minutes, _ = divmod(rem, 60)
