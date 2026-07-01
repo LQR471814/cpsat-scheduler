@@ -54,6 +54,8 @@ class Schedule:
         return atomic_unit(dur // atomic_unit_timedelta)
 
     def schedule_time(self, ts: datetime, round: Round = Round.DOWN) -> atomic_unit:
+        assert ts >= self.horizon[0]
+        assert ts <= self.horizon[1]
         if round == Round.UP:
             return atomic_unit(ceil((ts - self.horizon[0]) / atomic_unit_timedelta))
         return atomic_unit((ts - self.horizon[0]) // atomic_unit_timedelta)
@@ -189,9 +191,15 @@ class Schedule:
         for unit in self.timescales:
             unit_name = timescale_names[unit]
             in_unit = [
-                s for s in solution_tasks if self.builder.tasks[s.task_id].unit == unit
+                s
+                for s in solution_tasks
+                # don't show if temp task
+                if s.task_id not in self.builder.temp_tasks
+                # don't show if task has no duration
+                and s.real_duration != zero_duration
+                # only choose tasks of this unit
+                and self.builder.tasks[s.task_id].unit == unit
             ]
-
             if len(in_unit) == 0:
                 continue
 
@@ -211,19 +219,11 @@ class Schedule:
                 for s in groups[starting_time]:
                     task = self.builder.tasks[s.task_id]
 
-                    # don't show temp tasks
-                    if task.id in self.builder.temp_tasks:
-                        continue
-
                     name = self.task_names[task.id]
 
                     start_date = self.real_time(int(s.start) * unit)
                     end_date = self.real_time(s.real_end)
                     dur = self.real_duration(s.real_duration)
-
-                    # don't show if task has no duration
-                    if dur == zero_duration:
-                        continue
 
                     hours, rem = divmod(dur.total_seconds(), 3600)
                     minutes, _ = divmod(rem, 60)
