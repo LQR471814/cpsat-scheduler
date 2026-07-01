@@ -29,6 +29,7 @@ class PERTCosts:
         self.full_cost = full_cost
         self.opt, self.exp, self.pes = pert
         self.i = 0
+        assert self.pes >= self.exp and self.exp >= self.opt
 
     def __iter__(self):
         return self
@@ -47,7 +48,8 @@ class PERTCosts:
         return exp_earn, exp_duration
 
 
-# optimistic/expected/pessimistic durations must be in terms of the atomic unit
+# optimistic/expected/pessimistic durations must be in terms of the
+# atomic unit
 @overload
 def cost_deadline(
     t: Task,
@@ -91,7 +93,14 @@ def cost_deadline(
                     f"{task_name} (block {i + 1})",
                     block_unit,
                 )
+
                 child.add_cost_config_duration(cost_topo.constant(0), block_size)
+
+                if i > 0:
+                    # blocks of lower number must occur before blocks of
+                    # higher number, this reduces # of states
+                    child.add_prereq(child_tasks[i - 1])
+
                 child_tasks.append(child)
 
             remainder = exp_duration % block_size
@@ -100,7 +109,14 @@ def cost_deadline(
                     f"{task_name} (block {exp_duration // block_size + 1})",
                     block_unit,
                 )
+
                 child.add_cost_config_duration(cost_topo.constant(0), remainder)
+
+                if len(child_tasks) > 0:
+                    # blocks of lower number must occur before blocks of
+                    # higher number, this reduces # of states
+                    child.add_prereq(child_tasks[-1])
+
                 child_tasks.append(child)
 
             t.add_cost_config_children(
