@@ -332,8 +332,13 @@ class ComputedState:
         state = m.decision_vars[t.id]
 
         dur_lb, dur_ub = props.task.resolve_real_dur_bounds(t.id)
-        self.real_duration = model.new_int_var(
-            int(dur_lb), int(dur_ub), f"t{t.id}_real_dur"
+        self.real_duration = model.new_int_var_from_domain(
+            # we always include 0 because all real duration has the possibility
+            # of becoming 0 if the parent is not active
+            cp_model.Domain(int(dur_lb), int(dur_ub)).union_with(
+                cp_model.Domain.from_values([0])
+            ),
+            f"t{t.id}_real_dur",
         )
 
         # non-leaf task: real end = max{child end times}
@@ -440,6 +445,12 @@ class ComputedState:
             ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
 
     def __setup_real_dur(self, m: Model, t: TaskConfig):
+        if isinstance(self.parent_active, cmh.IntVar):
+            # set real duration to 0 if task config is orphaned
+            m.model.add(self.real_duration == 0).only_enforce_if(
+                self.parent_active.Not()
+            )
+
         for i, cfg in enumerate(t.cost_configs):
             config_active = self.configs_active[i]
 
@@ -461,12 +472,7 @@ class ComputedState:
             if isinstance(self.parent_active, cmh.IntVar):
                 m.model.add(self.real_duration == cfg.duration).with_name(
                     f"t{t.id}_real_duration_cfg{i}_duration"
-                ).only_enforce_if(config_active, self.parent_active)
-
-                # set real duration to 0 if task config is orphaned
-                m.model.add(self.real_duration == 0).only_enforce_if(
-                    self.parent_active.Not()
-                )
+                ).only_enforce_if(self.parent_active, config_active)
             else:
                 # this is root task, duration always enforced
                 m.model.add(self.real_duration == cfg.duration).with_name(
