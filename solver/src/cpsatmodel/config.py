@@ -625,7 +625,7 @@ class Model:
         self.model.minimize(sum_cost_expr)
 
     # in general, worst case: O(task * cost config * cost interval)
-    def _model(self):
+    def make_cpmodel(self) -> cp_model.CpModel:
         self.model = cp_model.CpModel()
         self.props = Props(self.config)
 
@@ -682,7 +682,7 @@ class Model:
         return self.model
 
     def _debug(self):
-        model = self._model()
+        model = self.make_cpmodel()
         solver = cp_model.CpSolver()
         solver.parameters.log_search_progress = True
         solver.parameters.cp_model_presolve = True
@@ -710,8 +710,10 @@ class Model:
             ],
         )
 
-    def solve(self) -> tuple[cp_model.CpSolverStatus, float, list[ScheduledTask]]:
-        model = self._model()
+    def solve(
+        self,
+        model: cp_model.CpModel,
+    ) -> tuple[cp_model.CpSolverStatus, float, list[ScheduledTask]]:
         solver = cp_model.CpSolver()
         status = solver.solve(model)
         scheduled = [

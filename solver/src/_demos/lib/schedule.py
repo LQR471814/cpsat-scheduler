@@ -180,7 +180,19 @@ class Schedule:
     def solve(self):
         cfg = self.builder.build()
         model = Model(cfg)
-        status, total_cost, solution_tasks = model.solve()
+
+        cpmodel = model.make_cpmodel()
+
+        proto = cpmodel.Proto()
+        print(
+            "solving...",
+            "variables:",
+            len(proto.variables),
+            "constraints:",
+            len(proto.constraints),
+        )
+
+        status, total_cost, solution_tasks = model.solve(cpmodel)
 
         if status != cp_model.OPTIMAL and status != cp_model.FEASIBLE:
             print("failed to solve!", status)
