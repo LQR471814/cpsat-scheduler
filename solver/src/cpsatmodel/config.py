@@ -143,37 +143,42 @@ class TaskProps:
     def __compute_start_bounds(self, task_id: int) -> tuple[task_unit, task_unit]:
         t = self.__get_task_cfg(task_id)
 
-        parent_bound: tuple[task_unit, task_unit]
+        # we derive bounds for this task's start from the parent
+        bound_from_parent: tuple[task_unit, task_unit]
         if t.timescale_unit == self.__props.model.max_timescale:
+            # horizon is parent if task is maximum timescale
             horizon_lb, horizon_ub = self.__props._config.horizon
-            # horizon is in terms of the atomic timescale so we divide by unit
-            parent_bound = (
+            # we bound task start in terms of horizon lb/ub (which are in
+            # terms of atomic unit)
+            bound_from_parent = (
                 task_unit(horizon_lb // t.timescale_unit),
                 task_unit(horizon_ub // t.timescale_unit),
             )
         else:
             parent = self.resolve_parent_cfg(task_id)
-            # we assume there is always a parent (because temp tasks exist)
+            # we assume there is always a parent if below max timescale
+            # (because temp tasks exist)
             assert parent is not None
             parent_lb, parent_ub = self.resolve_start_bounds(parent.id)
             parent_unit = self.__props._config.tasks[parent.id].timescale_unit
-            parent_bound = (
+            # we convert parent's task unit into our task's unit
+            bound_from_parent = (
                 task_unit(int(parent_lb) * parent_unit // t.timescale_unit),
                 task_unit(int(parent_ub) * parent_unit // t.timescale_unit),
             )
 
-        start, end = parent_bound
+        start, end = bound_from_parent
 
         if t.start is not None:
             # explicit start cannot go outside parent bounds
-            assert t.start >= parent_bound[0]
-            assert t.start < parent_bound[1]
+            assert t.start >= bound_from_parent[0]
+            assert t.start < bound_from_parent[1]
             start = t.start
 
         # it is okay to implicitly move the end constraint forward here because
         # technically all it says is that the task *must start* before this
         # date. if parent gives a tighter bound, it must abide
-        if t.end is not None and t.end < parent_bound[1]:
+        if t.end is not None and t.end < bound_from_parent[1]:
             assert t.end > start
             end = t.end
 
@@ -287,6 +292,7 @@ class Props:
 
 
 class DecisionState:
+    # start is in terms of the task's unit
     start: cmh.IntVar
     config_select: cmh.IntVar
 
@@ -309,7 +315,9 @@ class ComputedState:
     real_cost: cmh.IntVar
     # this should be a one hot
     configs_active: list[cmh.IntVar]
+    # this is in terms of the child's task unit
     parent_start: cmh.IntVar | int
+    # this is a boolean
     parent_active: cmh.IntVar | None
 
     def __init__(
@@ -357,9 +365,14 @@ class ComputedState:
             if t.timescale_unit < props.model.max_timescale:
                 parent = props.task.resolve_parent_cfg(t.id)
                 assert parent is not None
+                # this returns both values in terms of parent's task unit
                 parent_start_lb, parent_start_ub = props.task.resolve_start_bounds(
                     parent.id
                 )
+                # therefore we convert both to the child's unit
+                scaling_factor = parent.timescale_unit // t.timescale_unit
+                parent_start_lb *= scaling_factor
+                parent_start_ub *= scaling_factor
             else:
                 parent_start_lb = task_unit(0)
                 parent_start_ub = task_unit(0)
@@ -526,9 +539,10 @@ class Model:
         self.model.add(decision.start >= computed.parent_start).only_enforce_if(
             computed.parent_active
         )
-        # scaling_factor is # of child unit which = 1 parent unit, therefore
-        # adding by scaling factor will get the end of the timeframe the parent
-        # is scheduled for
+
+        # 1. scaling_factor := # of child unit which = 1 parent unit
+        # 2. parent_start is in terms of the child unit
+        # 3. parent_start + scaling_factor = parent_end
         self.model.add(
             decision.start < computed.parent_start + int(scaling_factor)
         ).only_enforce_if(computed.parent_active)
