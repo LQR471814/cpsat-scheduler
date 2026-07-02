@@ -208,7 +208,7 @@ class Schedule:
                 # don't show if temp task
                 if s.task_id not in self.builder.temp_tasks
                 # don't show if task has no duration
-                and s.real_duration != zero_duration
+                and s.real_duration > atomic_unit(0)
                 # only choose tasks of this unit
                 and self.builder.tasks[s.task_id].unit == unit
             ]
