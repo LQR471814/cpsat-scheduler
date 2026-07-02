@@ -1,3 +1,5 @@
+from sys import stderr
+
 from _demos.lib import cost_topo
 from cpsatmodel import (
     ScheduledTask,
@@ -12,6 +14,8 @@ from _demos.lib.units import timescale_names, hour_4
 from datetime import datetime, timedelta
 from enum import Enum
 from math import ceil
+
+from cpsatmodel.config import Solution
 
 
 zero_duration = timedelta()
@@ -177,22 +181,10 @@ class Schedule:
 
             current_inst += unit
 
-    def solve(self):
-        cfg = self.builder.build()
-        model = Model(cfg)
-
-        cpmodel = model.make_cpmodel()
-
-        proto = cpmodel.Proto()
-        print(
-            "solving...",
-            "variables:",
-            len(proto.variables),
-            "constraints:",
-            len(proto.constraints),
-        )
-
-        status, total_cost, solution_tasks = model.solve(cpmodel)
+    def print_solution(self, solution: Solution):
+        status = solution.status
+        total_cost = solution.cost
+        tasks = solution.tasks
 
         if status != cp_model.OPTIMAL and status != cp_model.FEASIBLE:
             print("failed to solve!", status)
@@ -204,7 +196,7 @@ class Schedule:
             unit_name = timescale_names[unit]
             in_unit = [
                 s
-                for s in solution_tasks
+                for s in tasks
                 # don't show if temp task
                 if s.task_id not in self.builder.temp_tasks
                 # don't show if task has no duration
@@ -254,3 +246,49 @@ class Schedule:
                     print(
                         grey_text(line) if task.id in self.events else line,
                     )
+
+    def json_solution(self, solution: Solution):
+        tasks = []
+        for s in solution.tasks:
+            if s.task_id in self.builder.temp_tasks:
+                continue
+            if s.real_duration == atomic_unit(0):
+                continue
+            t = self.builder.tasks[s.task_id]
+            start_date = self.real_time(int(s.start) * t.unit)
+            end_date = self.real_time(s.real_end)
+            dur = self.real_duration(s.real_duration)
+            tasks.append(
+                {
+                    "id": t.id,
+                    "unit": int(timedelta(minutes=15 * int(t.unit)).total_seconds()),
+                    "name": self.task_names[t.id],
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
+                    "duration": int(dur.total_seconds()),
+                    "config": s.config,
+                }
+            )
+        return {
+            "status": solution.status.name,
+            "cost": solution.cost,
+            "tasks": tasks,
+        }
+
+    def solve(self):
+        cfg = self.builder.build()
+        model = Model(cfg)
+
+        cpmodel = model.make_cpmodel()
+
+        proto = cpmodel.Proto()
+        print(
+            "solving...",
+            "variables:",
+            len(proto.variables),
+            "constraints:",
+            len(proto.constraints),
+            file=stderr,
+        )
+
+        return model.solve(cpmodel)

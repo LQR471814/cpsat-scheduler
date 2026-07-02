@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Callable
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsatmodel.print import print_vars
@@ -504,6 +504,13 @@ class ScheduledTask:
     config: int
 
 
+@dataclass
+class Solution:
+    status: cp_model.CpSolverStatus
+    cost: float
+    tasks: list[ScheduledTask]
+
+
 class Model:
     config: Config
 
@@ -710,10 +717,7 @@ class Model:
             ],
         )
 
-    def solve(
-        self,
-        model: cp_model.CpModel,
-    ) -> tuple[cp_model.CpSolverStatus, float, list[ScheduledTask]]:
+    def solve(self, model: cp_model.CpModel) -> Solution:
         solver = cp_model.CpSolver()
         status = solver.solve(model)
         scheduled = [
@@ -731,10 +735,10 @@ class Model:
         ]
         # assert_intrinsic_start_end(self.config, scheduled)
         # assert_non_overflow(self.config, scheduled)
-        return (
-            status,
-            solver.ObjectiveValue(),
-            scheduled,
+        return Solution(
+            status=status,
+            cost=solver.ObjectiveValue(),
+            tasks=scheduled,
         )
 
 
