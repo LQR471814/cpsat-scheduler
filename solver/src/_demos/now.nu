@@ -1,3 +1,7 @@
+def "format dt simple" []: datetime -> string {
+  format date %H:%M
+}
+
 let schedule = open schedule.json
   | update tasks {
     each {|t|
@@ -9,8 +13,17 @@ let schedule = open schedule.json
     }
   }
 
-let start = date now
+let now = date now
 
-$schedule
-| get tasks
-| where $start >= $it.start and unit == 4hr
+let tasks = $schedule
+  | get tasks
+  | where start <= $now and end >= $now and unit == 4hr
+
+if ($tasks | is-empty) {
+  print "nothing to do!"
+  exit
+}
+
+print $"Block  ($tasks.0.start | format dt simple) -> ($tasks.0.end | format dt simple)"
+
+$tasks | reject start end unit config

@@ -13,7 +13,7 @@ let tasks = $schedule | get tasks
 
 $tasks
 | update start {
-  let abs = $in | format date "%Y-%m-%d %H"
+  let abs = $in | format date "%Y-%m-%d %H:%M"
   let rel = $in | date humanize
   $"($abs) \(($rel)\)"
 }
