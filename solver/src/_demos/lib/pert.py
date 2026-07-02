@@ -85,39 +85,60 @@ def cost_deadline(
     if block_size is not None and schedule is not None and block_unit is not None:
         task_name = schedule.task_names[t.id]
 
-        for exp_earn, exp_duration in PERTCosts(pert_fidelity, full_cost, pert):
-            child_tasks: list[Task] = []
+        pert_entries = list(PERTCosts(pert_fidelity, full_cost, pert))
 
-            for i in range(exp_duration // block_size):
-                child = schedule.task(
-                    f"{task_name} (block {i + 1})",
-                    block_unit,
-                )
+        max_dur = atomic_unit(0)
+        for _, exp_dur in pert_entries:
+            if exp_dur > max_dur:
+                max_dur = exp_dur
 
-                child.add_cost_config_duration(cost_topo.constant(0), block_size)
+        # block tasks are all the child tasks with a duration = block_size
+        block_tasks: list[Task] = []
 
-                if i > 0:
-                    # blocks of lower number must occur before blocks of
-                    # higher number, this reduces # of states
-                    child.add_prereq(child_tasks[i - 1])
+        # we create all the necessary block tasks
+        for i in range(max_dur // block_size):
+            child = schedule.task(
+                f"{task_name} (block {i + 1})",
+                block_unit,
+            )
 
-                child_tasks.append(child)
+            child.add_cost_config_duration(cost_topo.constant(0), block_size)
 
-            remainder = exp_duration % block_size
+            if i > 0:
+                # blocks of lower number must occur before blocks of
+                # higher number, this reduces # of states
+                child.add_prereq(block_tasks[-1])
+
+            block_tasks.append(child)
+
+        # we enumerate pert fidelities and add child configs for each fidelity
+        for i, entry in enumerate(pert_entries):
+            exp_earn, exp_dur = entry
+
+            # num_blocks is the number of tasks of duration = block_size
+            # necessary to cover the expected duration
+            num_blocks = exp_dur // block_size
+
+            children = block_tasks[:num_blocks]
+
+            # if there is remaining time left uncovered by tasks of dur =
+            # block_size we create a task of duration < block_size to cover the
+            # remainder
+            remainder = exp_dur % block_size
             if remainder > atomic_unit(0):
                 child = schedule.task(
-                    f"{task_name} (block {exp_duration // block_size + 1})",
+                    f"{task_name} (block {exp_dur // block_size + 1})",
                     block_unit,
                 )
 
                 child.add_cost_config_duration(cost_topo.constant(0), remainder)
 
-                if len(child_tasks) > 0:
+                if len(block_tasks) > 0:
                     # blocks of lower number must occur before blocks of
                     # higher number, this reduces # of states
-                    child.add_prereq(child_tasks[-1])
+                    child.add_prereq(block_tasks[-1])
 
-                child_tasks.append(child)
+                children.append(child)
 
             t.add_cost_config_children(
                 cost_topo.step_fn(
@@ -125,19 +146,19 @@ def cost_deadline(
                     full_cost - exp_earn,
                     full_cost,
                 ),
-                child_tasks,
+                children,
             )
 
         return t
 
-    for exp_earn, exp_duration in PERTCosts(pert_fidelity, full_cost, pert):
+    for exp_earn, exp_dur in PERTCosts(pert_fidelity, full_cost, pert):
         t.add_cost_config_duration(
             cost_topo.step_fn(
                 deadline,
                 full_cost - exp_earn,
                 full_cost,
             ),
-            exp_duration,
+            exp_dur,
         )
 
     return t
