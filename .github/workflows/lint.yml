@@ -31,3 +31,6 @@ jobs:
 
       - name: Run Ruff
         run: uv run ruff check . --fix --exit-non-zero-on-fix
+
+      - name: Run tests
+        run: uv run pytest
