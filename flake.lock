@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1781577229,
-        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
+        "lastModified": 1777268161,
+        "narHash": "sha256-bxrdOn8SCOv8tN4JbTF/TXq7kjo9ag4M+C8yzzIRYbE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
+        "rev": "1c3fe55ad329cbcb28471bb30f05c9827f724c76",
         "type": "github"
       },
       "original": {
@@ -14,82 +14,11 @@
         "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1781577229,
-        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_3": {
-      "locked": {
-        "lastModified": 1763618868,
-        "narHash": "sha256-v5afmLjn/uyD9EQuPBn7nZuaZVV9r+JerayK/4wvdWA=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "a8d610af3f1a5fb71e23e08434d8d61a466fc942",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nu-type-alias-flake": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_2"
-      },
-      "locked": {
-        "lastModified": 1781720614,
-        "narHash": "sha256-MB8n2DImVljb5uMKY9nJr2tyDhnY2uWH3fk+Jupy6wo=",
-        "ref": "refs/heads/main",
-        "rev": "5e2b5d7fda39a49745bdfc6b35c22bcbf54a17ee",
-        "revCount": 82,
-        "submodules": true,
-        "type": "git",
-        "url": "https://github.com/LQR471814/nu-type-alias"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://github.com/LQR471814/nu-type-alias"
       }
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs",
-        "nu-type-alias-flake": "nu-type-alias-flake",
-        "topiary-nushell-flake": "topiary-nushell-flake"
-      }
-    },
-    "topiary-nushell-flake": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_3"
-      },
-      "locked": {
-        "lastModified": 1772590084,
-        "narHash": "sha256-fTfxSnVI7TY6vQhD+GimPBRJ4K0SyyVtoLcLGH3xIPc=",
-        "owner": "blindFS",
-        "repo": "topiary-nushell",
-        "rev": "6e2f9b339a664a46e4015fa5d79e537807fefa39",
-        "type": "github"
-      },
-      "original": {
-        "owner": "blindFS",
-        "repo": "topiary-nushell",
-        "type": "github"
+        "nixpkgs": "nixpkgs"
       }
     }
   },
