@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Callable
 from ortools.sat.python import cp_model, cp_model_helper as cmh
 from cpsatmodel.print import print_vars
 from functools import cache
 import sys
 from cpsatmodel.units import atomic_unit, task_unit
+from math import ceil
 
 
 def guard_bool(
@@ -108,6 +109,7 @@ class TaskProps:
         self.resolve_scaling_factor: Callable[[int], atomic_unit | None] = cache(
             self.__get_scaling_factor
         )
+        # this bounds is [start, end), i.e. the end is exclusive
         self.resolve_start_bounds: Callable[[int], tuple[task_unit, task_unit]] = cache(
             self.__compute_start_bounds
         )
@@ -152,7 +154,8 @@ class TaskProps:
             # terms of atomic unit)
             bound_from_parent = (
                 task_unit(horizon_lb // t.timescale_unit),
-                task_unit(horizon_ub // t.timescale_unit),
+                # we do ceiling here because bound is not inclusive
+                task_unit(ceil(float(horizon_ub) / float(t.timescale_unit))),
             )
         else:
             parent = self.resolve_parent_cfg(task_id)
@@ -171,14 +174,14 @@ class TaskProps:
 
         if t.start is not None:
             # explicit start cannot go outside parent bounds
-            assert t.start >= bound_from_parent[0]
-            assert t.start < bound_from_parent[1]
+            assert t.start >= start
+            assert t.start < end
             start = t.start
 
         # it is okay to implicitly move the end constraint forward here because
         # technically all it says is that the task *must start* before this
         # date. if parent gives a tighter bound, it must abide
-        if t.end is not None and t.end < bound_from_parent[1]:
+        if t.end is not None and t.end < end:
             assert t.end > start
             end = t.end
 
@@ -409,20 +412,52 @@ class ComputedState:
 
         parent_state = m._resolve_computed_state(parent.id)
 
+        parent_parent_active = parent_state.parent_active
+
         # parent active is true when at least one (and in this case, exactly
-        # one) of parent_configs is active
-        par_active_cfgs: list[cmh.Literal] = [
+        # one) of parent_configs is active and the parent's own parent is
+        # also active
+        par_cfg_actives: list[cmh.Literal] = [
             parent_state.configs_active[c] for c in t.parent_configs
         ]
-        m.model.add_bool_or(*par_active_cfgs).with_name(
-            f"t{t.id}_parent_active"
-        ).only_enforce_if(self.parent_active)
-        m.model.add_bool_and(*[v.Not() for v in par_active_cfgs]).only_enforce_if(
-            self.parent_active.Not()
-        ).with_name(f"t{t.id}_parent_inactive")
+
+        if parent_parent_active is not None:
+            # see `_demos/cpsat/only_enforce_if_or.py` for more info
+
+            no_cfg_active = [v.Not() for v in par_cfg_actives]
+
+            parent_one_cfg_active = m.model.new_bool_var(
+                f"t{t.id}_parent_cfg_one_active"
+            )
+            m.model.add_bool_or(par_cfg_actives).with_name(
+                f"t{t.id}_parent_cfg_one_active_true"
+            ).only_enforce_if(parent_one_cfg_active)
+            m.model.add_bool_and(no_cfg_active).with_name(
+                f"t{t.id}_parent_cfg_one_active_false"
+            ).only_enforce_if(parent_one_cfg_active.Not())
+
+            m.model.add_bool_and(parent_parent_active, parent_one_cfg_active).with_name(
+                f"t{t.id}_parent_active_true"
+            ).only_enforce_if(self.parent_active)
+            m.model.add_bool_or(
+                parent_parent_active.Not(), parent_one_cfg_active.Not()
+            ).with_name(f"t{t.id}_parent_active_false").only_enforce_if(
+                self.parent_active.Not()
+            )
+        else:
+            m.model.add_bool_or(par_cfg_actives).with_name(
+                f"t{t.id}_parent_active"
+            ).only_enforce_if(self.parent_active)
+
+            m.model.add_bool_and([v.Not() for v in par_cfg_actives]).only_enforce_if(
+                self.parent_active.Not()
+            ).with_name(f"t{t.id}_parent_inactive")
 
         # parent_start is computed from the parent's decision variable and a
         # constant scaling factor
+        #
+        # this effectively converts parent's start from its units into
+        # task's units
         scaling_factor = m.props.task.resolve_scaling_factor(t.id)
         assert scaling_factor is not None  # parent is not None
         parent_start_var = m.decision_vars[parent.id].start
@@ -472,9 +507,16 @@ class ComputedState:
                 sum_child_dur_expr = 0
                 for c in cfg.children:
                     sum_child_dur_expr += m._resolve_computed_state(c).real_duration
-                m.model.add(self.real_duration == sum_child_dur_expr).with_name(
-                    f"t{t.id}_real_duration_cfg{i}_child"
-                ).only_enforce_if(config_active)
+
+                if isinstance(self.parent_active, cmh.IntVar):
+                    m.model.add(self.real_duration == sum_child_dur_expr).with_name(
+                        f"t{t.id}_real_duration_cfg{i}_child"
+                    ).only_enforce_if(self.parent_active, config_active)
+                else:
+                    m.model.add(self.real_duration == sum_child_dur_expr).with_name(
+                        f"t{t.id}_real_duration_cfg{i}_child"
+                    ).only_enforce_if(config_active)
+
                 continue
 
             # O(cost config * task)
@@ -560,43 +602,47 @@ class Model:
             p_real_end_var = self.computed_vars[p].real_end
             self.model.add(p_real_end_var <= start_var * int(t.timescale_unit))
 
-    def __timescale_overflow_constraints(self, t: TaskConfig):
-        defined = self.computed_vars[t.id].real_duration
-        start_var = self.decision_vars[t.id].start
+    def __timescale_overflow_constraints(self, timescale: atomic_unit):
+        # tasks for this timescale
+        timescale_tasks = [
+            t for t in self.config.tasks.values() if t.timescale_unit == timescale
+        ]
 
-        sum = defined
-        # O(n^2) for n tasks in the same timescale!
-        for other_id, other_task in self.config.tasks.items():
-            if other_id == t.id:
-                continue
-            if other_task.timescale_unit != t.timescale_unit:
-                continue
-
-            key = frozenset((t.id, other_id))
-            if key not in self.computed_pair_aligned_forward:
-                other_start_var = self.decision_vars[other_id].start
-                self.computed_pair_aligned_forward[key] = guard_bool(
-                    self.model,
-                    f"t{t.id}_t{other_id}_same_start",
-                    other_start_var == start_var,
-                    other_start_var != start_var,
-                )
-            is_aligned = self.computed_pair_aligned_forward[key]
-
-            _, other_dur_ub = self.props.task.resolve_real_dur_bounds(other_id)
-            other_dur_contrib = self.model.new_int_var(
-                # we use 0 because other_dur_contrib could possibly be 0 (if inactive)
-                0,
-                int(other_dur_ub),
-                f"t{t.id}_other{other_id}_term",
+        # when these intervals overlap, their demands will be summed and
+        # compared to timescale
+        intervals = [
+            self.model.new_fixed_size_interval_var(
+                start=self.decision_vars[t.id].start,
+                size=1,
+                name=f"t{t.id}_start_interval",
             )
-            other_dur = self.computed_vars[other_id].real_duration
-            self.model.add(other_dur_contrib == other_dur).only_enforce_if(is_aligned)
-            self.model.add(other_dur_contrib == 0).only_enforce_if(is_aligned.Not())
+            for t in timescale_tasks
+        ]
 
-            sum += other_dur_contrib
+        demands = [self.computed_vars[t.id].real_duration for t in timescale_tasks]
 
-        self.model.add(sum <= t.timescale_unit)
+        # - intervals and demands are bijective
+        #
+        # this enforces that:
+        # - for all possible values of time (t):
+        #   - the sum of corresponding demand[i] for all possible intervals (interval[i]):
+        #       - where t \in interval[i]
+        #   - must be <= capacity
+        #
+        # so essentially, for a demand[i] to be "active" and contribute to the sum at a
+        # time t, it must be within the interval[i]
+        #
+        # remember that we want the "size" of an element to become "active" if it is
+        # scheduled to a particular slot number
+        #
+        # therefore for each slot <-> interval [slot num, slot num + 1)
+        #
+        # for element i, "size" = demand[i]
+        self.model.add_cumulative(
+            intervals=intervals,
+            demands=demands,
+            capacity=int(timescale),
+        )
 
     def __computed_costs(self, t: TaskConfig):
         computed = self.computed_vars[t.id]
@@ -676,8 +722,8 @@ class Model:
 
         self.computed_pair_aligned_forward: dict[frozenset[int], cp_model.IntVar] = {}
 
-        for t in self.config.tasks.values():
-            self.__timescale_overflow_constraints(t)
+        for unit in self.config.timescales:
+            self.__timescale_overflow_constraints(unit)
 
         # add computed costs O(cost config * cost interval * task)
         for t in self.config.tasks.values():

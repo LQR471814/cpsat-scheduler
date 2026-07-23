@@ -11,6 +11,9 @@ from cpsatmodel.config import (
 from sys import maxsize
 
 
+ZERO_COST_ALWAYS = [CostInterval((atomic_unit(0), atomic_unit(maxsize - 1)), 0)]
+
+
 class Task:
     id: int
     unit: atomic_unit
@@ -69,8 +72,10 @@ class Task:
             assert c.id in self._builder.tasks
             # child must not already be a child of another task
             assert c._parent is None or c._parent == self.id
+            assert c.unit < self.unit
             c._parent = self.id
             c._parent_cfgs.append(len(self._configs))
+
         self._configs.append(
             CostConfig(
                 costs=costs,
@@ -147,36 +152,86 @@ class ConfigBuilder:
         tasks = list(self.tasks.values())
         for task in tasks:
             # skip tasks with parents and root tasks
-            if len(task._parent_cfgs) > 0:
-                continue
             if task.unit == max_timescale:
                 continue
 
-            assert task.unit < max_timescale
+            task_unit_idx = scales.index(task.unit)
 
-            prev: Task | None = None
-            # we create all parents starting from right above the task ->
-            # max_timescale
-            for i in range(0, scales.index(task.unit)):
-                unit = scales[i]
-                tmp = Task(self, unit)
-                self.temp_tasks.add(tmp.id)
+            parent: Task | None = None
+            parent_unit_idx: int | None = None
+            if task._parent is not None:
+                parent = self.tasks[task._parent]
+                parent_unit_idx = scales.index(parent.unit)
 
-                if prev is not None:
-                    prev.add_cost_config_children(
-                        [CostInterval((atomic_unit(0), atomic_unit(maxsize - 1)), 0)],
-                        [tmp],
-                    )
-                prev = tmp
-
-            # since task timescale cannot be index 0
-            assert prev is not None
-
-            # the last prev will be the parent closest to the task timescale
-            prev.add_cost_config_children(
-                [CostInterval((atomic_unit(0), atomic_unit(maxsize - 1)), 0)],
-                [task],
+            # the difference between the parent and current task index in the
+            # sorted timescale list
+            unit_idx_diff = (
+                abs(parent_unit_idx - task_unit_idx)
+                if parent_unit_idx is not None
+                else -1
             )
+
+            if unit_idx_diff == 0:
+                assert parent is not None
+                raise Exception(f"task {task.id} has a parent {parent.id} with the same unit as it {task.unit}")
+            elif unit_idx_diff == 1:
+                # skip tasks with one direct parent
+                continue
+            elif unit_idx_diff > 1:
+                # add temporary parents inbetween a task and a parent that is
+                # not in the timescale immediately above it
+                #
+                # ex. hour_4 -> week
+                # becomes: hour_4 -> day (temp) -> week
+                assert parent is not None
+
+                # we copy this list because it will be mutated when we run
+                # add_cost_config_children later
+                parent_cfgs = [*task._parent_cfgs]
+
+                # we detach the current's task from original parent
+                task._parent = None
+                task._parent_cfgs = []
+
+                # we add temporary wrappers until reaching parent
+                prev = task
+                for i in range(unit_idx_diff - 1):
+                    tmp_parent_unit = scales[task_unit_idx - i - 1]
+                    tmp = Task(self, tmp_parent_unit)
+                    self.temp_tasks.add(tmp.id)
+
+                    tmp.add_cost_config_children(ZERO_COST_ALWAYS, [prev])
+                    prev = tmp
+
+                # we connect last wrapper to original parent
+                prev._parent = parent.id
+                for idx in parent_cfgs:
+                    cfg = parent._configs[idx]
+                    cfg.children.remove(task.id)
+                    cfg.children.append(prev.id)
+                    prev._parent_cfgs.append(idx)
+            else:
+                # if task has no parents at all and has unit < max_timescale
+                assert task.unit < max_timescale
+                assert task._parent is None
+
+                prev: Task | None = None
+                # we create all parents starting from right above the task ->
+                # max_timescale
+                for i in range(0, task_unit_idx):
+                    unit = scales[i]
+                    tmp = Task(self, unit)
+                    self.temp_tasks.add(tmp.id)
+
+                    if prev is not None:
+                        prev.add_cost_config_children(ZERO_COST_ALWAYS, [tmp])
+                    prev = tmp
+
+                # since task timescale cannot be index 0
+                assert prev is not None
+
+                # the last prev will be the parent closest to the task timescale
+                prev.add_cost_config_children(ZERO_COST_ALWAYS, [task])
 
     def build(self) -> Config:
         self.__create_tmp_parents()

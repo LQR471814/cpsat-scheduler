@@ -22,6 +22,9 @@ class VarArraySolutionPrinter(cp_model.CpSolverSolutionCallback):
         return self.__solution_count
 
 
+def print_model_size(model: cp_model.CpModel):
+    print(f"{len(model.proto.variables)} variables {len(model.proto.constraints)} constraints")
+
 def print_vars(
     model: cp_model.CpModel, solver: cp_model.CpSolver, variables: list[cp_model.IntVar]
 ):
