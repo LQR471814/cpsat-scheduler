@@ -6,10 +6,6 @@ The current codebase is a Python package for building scheduling
 models, expressing costs and constraints, solving them, and
 printing or viewing the resulting schedule.
 
-The docs also describe a larger planned system with a solver
-daemon, backend state management, generated interfaces, and a
-Nushell CLI.
-
 ## Project Layout
 
 - `src/cpsatscheduler/backend/` - core CP-SAT model configuration,
@@ -17,8 +13,7 @@ Nushell CLI.
 - `src/cpsatscheduler/frontend/` - higher-level scheduling helpers
   for real datetimes, time units, PERT-style estimates, and cost
       topology utilities.
-- `examples/` - Nushell scripts for viewing generated schedule
-  JSON.
+- `examples/` - Examples of scheduling scenarios.
 - `tests/` - pytest coverage for CP-SAT behavior demos and
   expected solver output.
 - `docs/` - design notes and reference material for the scheduler
@@ -37,15 +32,8 @@ uv run ty check
 
 ## Important Docs
 
-- [Design](docs/DESIGN.md) - scheduling concepts, task updates,
-  repeated allocations, and planned user flows.
-- [Architecture](docs/ARCHITECTURE.md) - planned solver,
-  backend, and CLI components.
-- [Mathematics](docs/MATHEMATICS.md) - formal model for
-  timescales, tasks, costs, children, and prerequisites.
-- [CLI](docs/CLI.md) - intended interactive CLI workflows and
-  schedule views.
-- [Codegen](docs/CODEGEN.md) - notes on planned generated Go,
-  Python, Nushell, gRPC, and SQLite interfaces.
+- [Design](docs/DESIGN.md) - high level "scheduling philosophy",
+  covers core concepts, design & UX
+- [Mathematics](docs/MATHEMATICS.md) - formal model for scheduling
 - [CP-SAT proto](docs/cp_model.proto) - local copy/reference for
   CP-SAT model protobuf structures.
