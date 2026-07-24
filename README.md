@@ -30,7 +30,7 @@ uv run ruff check
 uv run ty check
 ```
 
-## Important Docs
+## Documentation
 
 - [Design](docs/DESIGN.md) - high level "scheduling philosophy",
   covers core concepts, design & UX
