@@ -7,7 +7,6 @@ models, expressing costs and constraints, solving them, and
 printing or viewing the resulting schedule.
 
 ## Project Layout
-
 - `src/cpsatscheduler/backend/` - core CP-SAT model configuration,
   task builders, unit types, and solution printing helpers.
 - `src/cpsatscheduler/frontend/` - higher-level scheduling helpers
@@ -37,3 +36,9 @@ uv run ty check
 - [Mathematics](docs/MATHEMATICS.md) - formal model for scheduling
 - [CP-SAT proto](docs/cp_model.proto) - local copy/reference for
   CP-SAT model protobuf structures.
+
+## Additional resources
+
+- [CP-SAT Primer](https://github.com/d-krupke/cpsat-primer#search-core) - learn how to use CP-SAT solver
+- [CP-SAT Log Visualizer](https://cpsat-log-analyzer.streamlit.app/) - for performance debugging
+
