@@ -324,12 +324,12 @@ class ComputedState:
         self.t = t
         self.__setup_vars(m, t)
 
-    def setup_constraints(self):
+    def setup_constraints(self) -> None:
         self.__setup_par_constrain(self.m, self.t)
         self.__setup_real_dur(self.m, self.t)
         self.__setup_real_end(self.m, self.t)
 
-    def __setup_vars(self, m: Model, t: TaskConfig):
+    def __setup_vars(self, m: Model, t: TaskConfig) -> None:
         props = m.props
         model = m.model
         state = m.decision_vars[t.id]
@@ -393,7 +393,7 @@ class ComputedState:
             for idx in range(len(t.cost_configs))
         ]
 
-    def __setup_par_constrain(self, m: Model, t: TaskConfig):
+    def __setup_par_constrain(self, m: Model, t: TaskConfig) -> None:
         # both parent_active and parent_start will be constants if parent is null
         parent = m.props.task.resolve_parent_cfg(t.id)
         if parent is None:
@@ -457,7 +457,7 @@ class ComputedState:
             self.parent_start == parent_start_var * int(scaling_factor)
         ).with_name(f"t{t.id}_parent_start")
 
-    def __setup_real_end(self, m: Model, t: TaskConfig):
+    def __setup_real_end(self, m: Model, t: TaskConfig) -> None:
         unit = t.timescale_unit
         decision = m.decision_vars[t.id]
         start_time = decision.start
@@ -484,7 +484,7 @@ class ComputedState:
                 config_active
             ).with_name(f"t{t.id}_real_end_cfg{i}_duration")
 
-    def __setup_real_dur(self, m: Model, t: TaskConfig):
+    def __setup_real_dur(self, m: Model, t: TaskConfig) -> None:
         if isinstance(self.parent_active, cmh.IntVar):
             # set real duration to 0 if task config is orphaned
             m.model.add(self.real_duration == 0).only_enforce_if(
@@ -560,7 +560,7 @@ class Model:
         self.computed_vars[t] = state
         return state
 
-    def __start_end_constraints(self, t: TaskConfig):
+    def __start_end_constraints(self, t: TaskConfig) -> None:
         decision = self.decision_vars[t.id]
         computed = self.computed_vars[t.id]
 
@@ -588,13 +588,13 @@ class Model:
             decision.start < computed.parent_start + int(scaling_factor)
         ).only_enforce_if(computed.parent_active)
 
-    def __prereq_constraints(self, t: TaskConfig):
+    def __prereq_constraints(self, t: TaskConfig) -> None:
         start_var = self.decision_vars[t.id].start
         for p in t.prerequisites:
             p_real_end_var = self.computed_vars[p].real_end
             self.model.add(p_real_end_var <= start_var * int(t.timescale_unit))
 
-    def __timescale_overflow_constraints(self, timescale: atomic_unit):
+    def __timescale_overflow_constraints(self, timescale: atomic_unit) -> None:
         # tasks for this timescale
         timescale_tasks = [
             t for t in self.config.tasks.values() if t.timescale_unit == timescale
@@ -636,7 +636,7 @@ class Model:
             capacity=int(timescale),
         )
 
-    def __computed_costs(self, t: TaskConfig):
+    def __computed_costs(self, t: TaskConfig) -> None:
         computed = self.computed_vars[t.id]
         real_end_time = computed.real_end
         real_cost = computed.real_cost
@@ -663,7 +663,7 @@ class Model:
                     config_active, cost_intv_after_start, cost_intv_before_end
                 )
 
-    def __objective_function(self):
+    def __objective_function(self) -> None:
         sum_cost_expr = 0
         for id in self.config.tasks:
             sum_cost_expr += self.computed_vars[id].real_cost
@@ -780,7 +780,7 @@ class Model:
         )
 
 
-def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]):
+def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]) -> None:
     for s in scheduled:
         task_cfg = config.tasks[s.task_id]
         if task_cfg.start is not None:
@@ -789,7 +789,7 @@ def assert_intrinsic_start_end(config: Config, scheduled: list[ScheduledTask]):
             assert s.start < task_cfg.end
 
 
-def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]):
+def assert_non_overflow(config: Config, scheduled: list[ScheduledTask]) -> None:
     # maps: timescale unit -> timescale instance start dates -> duration filled
     unit_bucket_durations: dict[atomic_unit, dict[task_unit, atomic_unit]] = {}
 

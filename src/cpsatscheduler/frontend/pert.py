@@ -11,7 +11,7 @@ pert_fidelity: list[float] = [0, 0.4, 0.8, 0.9, 0.95, 0.99, 1]
 
 # PPF is the inverse of CDF, here it gives the duration to achieve a given
 # probability
-def pert_ppf(p: float, optimistic: float, expected: float, pessimistic: float):
+def pert_ppf(p: float, optimistic: float, expected: float, pessimistic: float) -> float:
     alpha = 1 + 4 * (expected - optimistic) / (pessimistic - optimistic)
     beta_param = 1 + 4 * (pessimistic - expected) / (pessimistic - optimistic)
     t: float = beta.ppf([p], alpha, beta_param).item()
@@ -169,7 +169,7 @@ def cost_const(
     full_cost: int,
     # opt, exp, pes
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
-):
+) -> Task:
     opt, exp, pes = pert
     for p in pert_fidelity:
         exp_earn = round(p * full_cost)

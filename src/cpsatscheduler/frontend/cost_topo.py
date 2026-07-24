@@ -4,7 +4,7 @@ from cpsatscheduler.frontend.units import MAX_TIME
 ZERO_TIME = atomic_unit(0)
 
 
-def constant(cost: int):
+def constant(cost: int) -> list[CostInterval]:
     return [CostInterval((ZERO_TIME, MAX_TIME), cost)]
 
 
@@ -14,7 +14,7 @@ def step_fn(
     cost_after_step: int,
     start=ZERO_TIME,
     end=MAX_TIME,
-):
+) -> list[CostInterval]:
     return [
         CostInterval((start, step_time), cost_before_step),
         CostInterval((step_time, end), cost_after_step),

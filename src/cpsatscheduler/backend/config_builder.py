@@ -57,7 +57,7 @@ class Task:
 
     def add_cost_config_duration(
         self, costs: list[CostInterval], duration: atomic_unit
-    ):
+    ) -> None:
         assert duration >= atomic_unit(0)
         self._configs.append(
             CostConfig(
@@ -67,7 +67,7 @@ class Task:
             )
         )
 
-    def add_cost_config_children(self, costs: list[CostInterval], children: list[Task]):
+    def add_cost_config_children(self, costs: list[CostInterval], children: list[Task]) -> None:
         for c in children:
             # child must exist
             assert c.id in self._builder.tasks
@@ -85,7 +85,7 @@ class Task:
             )
         )
 
-    def add_prereq(self, prereq: Self):
+    def add_prereq(self, prereq: Self) -> None:
         # prereq must exist
         assert prereq.id in self._builder.tasks
         self._prerequisites.append(prereq.id)
@@ -113,7 +113,7 @@ class ConfigBuilder:
 
         self.temp_tasks: set[int] = set()
 
-    def _detect_cycles(self, id: int, visited: set[int], trace: list[int], depth: int):
+    def _detect_cycles(self, id: int, visited: set[int], trace: list[int], depth: int) -> None:
         trace = trace[:depth]
         trace.append(id)
         if id in visited:
@@ -123,7 +123,7 @@ class ConfigBuilder:
             for child in cfg.children:
                 self._detect_cycles(child, visited, trace, depth + 1)
 
-    def _validate(self):
+    def _validate(self) -> None:
         # ensure that all timescales are multiples of each other
         assert len(self.timescales) > 0
         scales = sorted(self.timescales, reverse=True)
@@ -139,7 +139,7 @@ class ConfigBuilder:
                 continue
             self._detect_cycles(t, visited, [], 0)
 
-    def __create_tmp_parents(self):
+    def __create_tmp_parents(self) -> None:
         # from largest -> smallest
         scales = sorted(self.timescales, reverse=True)
 

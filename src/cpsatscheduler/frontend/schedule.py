@@ -75,7 +75,7 @@ class Schedule:
         unit: atomic_unit,
         start_after: datetime | None = None,
         start_before: datetime | None = None,
-    ):
+    ) -> Task:
         if start_before is not None and start_before < self.horizon[0]:
             raise ValueError("start_before cannot be before horizon lower bound")
         if start_after is not None and start_after > self.horizon[1]:
@@ -104,7 +104,7 @@ class Schedule:
         self.timescales.add(unit)
         return t
 
-    def event(self, name: str, start: datetime, end: datetime, unit=hour_4):
+    def event(self, name: str, start: datetime, end: datetime, unit=hour_4) -> None:
         if end < self.horizon[0]:
             raise ValueError("end cannot be before horizon lower bound")
         if start > self.horizon[1]:
@@ -180,7 +180,7 @@ class Schedule:
 
             current_inst += unit
 
-    def print_solution(self, solution: Solution):
+    def print_solution(self, solution: Solution) -> None:
         status = solution.status
         total_cost = solution.cost
         tasks = solution.tasks
@@ -246,7 +246,7 @@ class Schedule:
                         grey_text(line) if task.id in self.events else line,
                     )
 
-    def json_solution(self, solution: Solution):
+    def json_solution(self, solution: Solution) -> dict:
         tasks = []
         for s in solution.tasks:
             if s.task_id in self.builder.temp_tasks:
@@ -274,7 +274,7 @@ class Schedule:
             "tasks": tasks,
         }
 
-    def solve(self):
+    def solve(self) -> Solution:
         cfg = self.builder.build()
         model = Model(cfg)
 
