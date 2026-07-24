@@ -53,7 +53,7 @@ class PERTCosts:
 # atomic unit
 @overload
 def cost_deadline(
-    t: Task,
+    task: Task,
     full_cost: int,
     deadline: atomic_unit,
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
@@ -62,7 +62,7 @@ def cost_deadline(
 
 @overload
 def cost_deadline(
-    t: Task,
+    task: Task,
     full_cost: int,
     deadline: atomic_unit,
     # opt, exp, pes
@@ -74,7 +74,7 @@ def cost_deadline(
 
 
 def cost_deadline(
-    t: Task,
+    task: Task,
     full_cost: int,
     deadline: atomic_unit,
     # opt, exp, pes
@@ -84,7 +84,7 @@ def cost_deadline(
     schedule: Schedule | None = None,
 ) -> Task:
     if block_size is not None and schedule is not None and block_unit is not None:
-        task_name = schedule.task_names[t.id]
+        task_name = schedule.task_names[task.id]
 
         pert_entries = list(PERTCosts(pert_fidelity, full_cost, pert))
 
@@ -112,7 +112,7 @@ def cost_deadline(
             block_tasks.append(child)
 
         # we enumerate pert fidelities and add child configs for each fidelity
-        for i, entry in enumerate(pert_entries):
+        for entry in pert_entries:
             exp_earn, exp_dur = entry
 
             # num_blocks is the number of tasks of duration = block_size
@@ -140,7 +140,7 @@ def cost_deadline(
 
                 children.append(child)
 
-            t.add_cost_config_children(
+            task.add_cost_config_children(
                 cost_topo.step_fn(
                     deadline,
                     full_cost - exp_earn,
@@ -149,10 +149,10 @@ def cost_deadline(
                 children,
             )
 
-        return t
+        return task
 
     for exp_earn, exp_dur in PERTCosts(pert_fidelity, full_cost, pert):
-        t.add_cost_config_duration(
+        task.add_cost_config_duration(
             cost_topo.step_fn(
                 deadline,
                 full_cost - exp_earn,
@@ -161,11 +161,11 @@ def cost_deadline(
             exp_dur,
         )
 
-    return t
+    return task
 
 
 def cost_const(
-    t: Task,
+    task: Task,
     full_cost: int,
     # opt, exp, pes
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
@@ -176,10 +176,10 @@ def cost_const(
         exp_duration = atomic_unit(
             round(pert_ppf(p, float(opt), float(exp), float(pes)))
         )
-        t.add_cost_config_duration(
+        task.add_cost_config_duration(
             cost_topo.constant(
                 full_cost - exp_earn,
             ),
             exp_duration,
         )
-    return t
+    return task
