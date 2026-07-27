@@ -1,6 +1,7 @@
 from typing import overload
 
 from scipy.stats import beta
+from datetime import datetime
 
 from cpsatscheduler.backend import Task, atomic_unit
 from cpsatscheduler.frontend import cost_topo
@@ -53,36 +54,39 @@ class PERTCosts:
 # atomic unit
 @overload
 def cost_deadline(
+    schedule: Schedule,
     task: Task,
     full_cost: int,
-    deadline: atomic_unit,
+    deadline: datetime,
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
 ) -> Task: ...
 
 
 @overload
 def cost_deadline(
+    schedule: Schedule,
     task: Task,
     full_cost: int,
-    deadline: atomic_unit,
+    deadline: datetime,
     # opt, exp, pes
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
     block_size: atomic_unit,
     block_unit: atomic_unit,
-    schedule: Schedule,
 ) -> Task: ...
 
 
 def cost_deadline(
+    schedule: Schedule,
     task: Task,
     full_cost: int,
-    deadline: atomic_unit,
+    deadline: datetime,
     # opt, exp, pes
     pert: tuple[atomic_unit, atomic_unit, atomic_unit],
     block_size: atomic_unit | None = None,
     block_unit: atomic_unit | None = None,
-    schedule: Schedule | None = None,
 ) -> Task:
+    deadline_sched = schedule.schedule_time(deadline)
+
     if block_size is not None and schedule is not None and block_unit is not None:
         task_name = schedule.task_names[task.id]
 
@@ -142,7 +146,7 @@ def cost_deadline(
 
             task.add_cost_config_children(
                 cost_topo.step_fn(
-                    deadline,
+                    deadline_sched,
                     full_cost - exp_earn,
                     full_cost,
                 ),
@@ -154,7 +158,7 @@ def cost_deadline(
     for exp_earn, exp_dur in PERTCosts(pert_fidelity, full_cost, pert):
         task.add_cost_config_duration(
             cost_topo.step_fn(
-                deadline,
+                deadline_sched,
                 full_cost - exp_earn,
                 full_cost,
             ),
