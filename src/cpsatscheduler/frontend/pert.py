@@ -1,7 +1,7 @@
+from datetime import datetime
 from typing import overload
 
 from scipy.stats import beta
-from datetime import datetime
 
 from cpsatscheduler.backend import Task, atomic_unit
 from cpsatscheduler.frontend import cost_topo
