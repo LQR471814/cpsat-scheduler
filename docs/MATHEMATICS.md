@@ -462,19 +462,32 @@ $$
 \forall v \in V \left[Q(v)_d - (v_{e}-v_{s}) < \Upsilon\right]
 $$
 
-# External factors
+# Process factors
 
-One awkward part of the scheduling with only the above model is
-"finding deadlines" and "finding costs" when they don't exist.
+Now, "result-oriented" scheduling is optimal when you know the
+results of work with certainty. This ceases to be the case when
+the results of work are variable. Consider the following:
 
-Certain tasks are self-defined and do not necessarily come with
-the notion of a deadline, they simply are scheduled "when you're
-free".
+> [!EXAMPLE]
+> You have 2 side-projects active and 2 school projects, one due
+> in one month and the other due in 2 weeks. These two projects
+> are for different classes. The project due in one month is more
+> significant grade-percentage-wise, but you cannot predict with
+> great precision how your grade for those two classes will evolve
+> over time. Furthermore, your side projects may yield insights or
+> practice that will help you with your school projects.
 
-However, there still exist certain schedules that are superior
-over others under uncertainty due to factors relating to human
-psychology and external considerations, these are what we will
-call "external factors".
+There is a lot of uncertainty involved here, if we had enough
+information and a sufficiently sophisticated model along with
+sufficiently powerful compute infrastructure, we may be able to
+predict a few days into the future with acceptable precision. But
+the problem is such that it is more tenable to focus on more
+reliable optimization, such as the effects of human psychology on
+productivity given a schedule, or external considerations on the
+profitability of certain work.
+
+We will call the factors which influence the process of working,
+"process factors".
 
 ## Early biasing
 
