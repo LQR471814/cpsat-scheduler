@@ -17,13 +17,12 @@
 - [Deadlines](#deadlines)
 - [Default cost](#default-cost)
 - [Quantizing Events](#quantizing-events)
-- [Human factors](#human-factors)
+- [External factors](#external-factors)
   - [Early biasing](#early-biasing)
   - [Cognitive performance](#cognitive-performance)
   - [Task cognitive sensitivity](#task-cognitive-sensitivity)
   - [Context-switching](#context-switching)
-  - [Context-switching cost](#context-switching-cost)
-  - [Task priority](#task-priority)
+  - [Encoding context-switching cost](#encoding-context-switching-cost)
 <!--toc:end-->
 
 # Timescale hierarchy
@@ -566,17 +565,21 @@ $$
 
 ## Context-switching
 
-A wealth of research supports the idea that humans have a very
-limited capacity to multitask.
+A wealth of research supports the idea that humans have a limited
+capacity to perform multiple attention-demanding tasks
+concurrently [^6].
 
-Much of what looks like "multitasking" is really just frequent
-context-switching (analogous to single-threaded coroutines). These
-switches incur heavy costs in both the speed and accuracy at which
-tasks are completed. Furthermore, switches in tasks often leave
-lingering "attention residue", which impairs performance on the
-subsequent task. One study finds that individuals require an
-average of 25 minutes to recover prior performance from a single
-interruption.
+Much of what appears to be "multitasking," particularly when tasks
+compete for central attention, involves rapid task switching or
+interference between concurrently active tasks [^6] [^7].
+These switches often make responses slower and more error-prone
+immediately after a task switch [^7]. Furthermore, switching
+from an unfinished task can leave a lingering "attention residue,"
+which impairs performance on the subsequent task [^8]. In one
+field study of information workers, interrupted work that was
+resumed later the same day was resumed after an average of 25
+minutes and 26 seconds, with workers engaging in an average of
+2.26 other work activities before returning to it [^9].
 
 ## Encoding context-switching cost
 
@@ -633,4 +636,21 @@ for is the variability of individual block sizes for tasks that
        Medicine : JCSM : Official Publication of the American
        Academy of Sleep Medicine 9, no. 4 (2013): 353–62.
        https://doi.org/10.5664/jcsm.2588.
+[^6]: Pashler, Harold. “Dual-Task Interference in Simple Tasks:
+       Data and Theory.” Psychological Bulletin (US) 116, no. 2
+       (1994): 220–44.
+       https://doi.org/10.1037/0033-2909.116.2.220.
+[^7]: Monsell, Stephen. “Task Switching.” Trends in Cognitive
+       Sciences 7, no. 3 (2003): 134–40.
+       https://doi.org/10.1016/s1364-6613(03)00028-7.
+[^8]: Leroy, Sophie. “Why Is It so Hard to Do My Work? The
+       Challenge of Attention Residue When Switching between Work
+       Tasks.” Organizational Behavior and Human Decision
+       Processes 109, no. 2 (2009): 168–81.
+       https://doi.org/10.1016/j.obhdp.2009.04.002.
+[^9]: Mark, Gloria, Victor M. Gonzalez, and Justin Harris. “No
+       Task Left behind? Examining the Nature of Fragmented Work.”
+       Proceedings of the SIGCHI Conference on Human Factors in
+       Computing Systems (New York, NY, USA), CHI ’05, April 2,
+       2005, 321–30. https://doi.org/10.1145/1054972.1055017.
 
