@@ -1,3 +1,31 @@
+<!--toc:start-->
+- [Timescale hierarchy](#timescale-hierarchy)
+- [Task](#task)
+  - [Timescale unit](#timescale-unit)
+  - [Cost](#cost)
+    - [Continuous discretization](#continuous-discretization)
+  - [Children](#children)
+    - [Parents](#parents)
+    - [Deactivating orphans](#deactivating-orphans)
+  - [Real task duration](#real-task-duration)
+  - [Start/end constraints](#startend-constraints)
+  - [Real task completion time](#real-task-completion-time)
+  - [Prerequisites](#prerequisites)
+- [Non-overflow constraint](#non-overflow-constraint)
+- [Decision variables](#decision-variables)
+- [Objective function](#objective-function)
+- [Deadlines](#deadlines)
+- [Default cost](#default-cost)
+- [Quantizing Events](#quantizing-events)
+- [Human factors](#human-factors)
+  - [Early biasing](#early-biasing)
+  - [Cognitive performance](#cognitive-performance)
+  - [Task cognitive sensitivity](#task-cognitive-sensitivity)
+  - [Context-switching](#context-switching)
+  - [Context-switching cost](#context-switching-cost)
+  - [Task priority](#task-priority)
+<!--toc:end-->
+
 # Timescale hierarchy
 
 $U \subseteq \mathbb{N}$ is a set of timescale units.
@@ -95,17 +123,19 @@ cost configuration $i \in I_{t}$. (should not contain cycles)
 However, we also want to be able to decide task cost
 configurations independently of each other.
 
-Thus there should never occur a situation where two child
-configurations are selected and the same child appears in both.
+Thus, there should never occur a situation where two child
+configurations are selected, and the same child appears in both.
 
 Therefore, each child must have only one possible parent.
 
 ### Parents
 
-$Pa_{t} = \begin{cases}
+$$
+Pa_{t} = \begin{cases}
 \iota p(t \in Ch_{D_{p}[i]p}), & \exists ! p \in T (t \in Ch_{D_{p}[i]p}) \\
 \emptyset, & \neg\exists p \in T (t \in Ch_{D_{p}[i]p}) \\
-\end{cases}$
+\end{cases}
+$$
 
 $Pa_{t}$ gives the current parent or null of the given task
 $t\in{T}$.
@@ -220,15 +250,38 @@ configuration including the child.
 
 $\theta_{t} : I_{t} \to \text{Set}~\mathbb{N}$ for a $t \in T$
 
+$\sigma_{t}$ is the scaling factor of parent timescale to child
+timescale.
+
+$$
+\sigma_{t} = \frac{u_{Pa_{t}}}{u_{t}}
+$$
+
+$$
+P_{t}[Pa] = Pa_{t} \neq \emptyset \to \left[s \geq \sigma_{t}D_{Pa_{t}}[s] \land s < \sigma_{t}(D_{Pa_{t}}[s]+1) \right]
+$$
+
+$P_{t}[Pa]$ states that the task's scheduled timescale instance
+occurs within the parent's scheduled timescale instance.
+
+$$
+P_{t}[s] = s_{t} \neq \emptyset \to s \geq s_{t}
+$$
+
+$P_{t}[s]$ states that the task's scheduled timescale instance
+occurs at or after the starting time constraint.
+
+$$
+P_{t}[d] = d_{t} \neq \emptyset \to d < d_{t}
+$$
+
+$P_{t}[d]$ states that the task's scheduled timescale instance
+occurs before the ending time constraint.
+
 $$
 \begin{aligned}
-& \theta_{t}(i) = \{s \in \Theta(u_{t})|[ \\
-&     (Pa_{t} \neq \emptyset \to s \geq \frac{u_{Pa_{t}}}{u_{t}}D_{Pa_{t}}[s]) \\
-&     \land (s_{t} \neq \emptyset \to s \geq s_{t}) \\
-& ] \land [ \\
-&     (Pa_{t}\neq \emptyset \to s < \frac{u_{Pa_{t}}}{u_{t}}(D_{Pa_{t}}[s]+1)) \\
-&     \land (d_{t} \neq \emptyset \to s < d_{t}) \\
-& ]\}
+& \theta_{t}(i) = \{s \in \Theta(u_{t})|P_{t}[Pa] \land P_{t}[s]
+\land P_{t}[d]\}
 \end{aligned}
 $$
 
@@ -266,7 +319,7 @@ the task itself. (as that would be circular).
 This can sometimes have unintuitive results (such as multiple
 tasks having the exact same "real" completion time), thus, it may
 be helpful to rename this into something like "most specific
-ending time" in the future. (ex. narrowest completion time)
+ending time" in the future. (ex. the narrowest completion time)
 
 ## Prerequisites
 
@@ -409,4 +462,175 @@ $$
 $$
 \forall v \in V \left[Q(v)_d - (v_{e}-v_{s}) < \Upsilon\right]
 $$
+
+# External factors
+
+One awkward part of the scheduling with only the above model is
+"finding deadlines" and "finding costs" when they don't exist.
+
+Certain tasks are self-defined and do not necessarily come with
+the notion of a deadline, they simply are scheduled "when you're
+free".
+
+However, there still exist certain schedules that are superior
+over others under uncertainty due to factors relating to human
+psychology and external considerations, these are what we will
+call "external factors".
+
+## Early biasing
+
+We want to be able to force the scheduler to avoid regions of
+"empty space" in the middle of the schedule which may arise if
+there are not enough defined tasks to saturate the entire
+scheduling horizon defined.
+
+Furthermore, certain external factors can influence task "urgency"
+(ex. responsibility, profitability), it is reasonable that
+*ceteris paribus*, one should be able to bias more "externally
+important" tasks towards earlier completion and have a schedule
+that incurs less cost overall from changes in deadlines or
+durations.
+
+Thus, The cost $f_{E}(t)$ associated for any task $t$ scales
+linearly with the scheduled time it is in and is parametrized by
+two constants. Namely:
+
+$$
+f_{E}(t) = P_{t} K_{E} D_{t}[s] u_{t}
+$$
+
+Where:
+
+- $K_{E}$ is a constant that scales the size of the early bias
+  cost across all tasks.
+- $P_{t}$ is a constant that scales the size of early bias cost
+  for this particular task.
+
+The complete cost of all tasks due to early biasing is simply the
+sum of all individual task costs.
+
+$$
+F_{E} = \sum_{t \in T} f_{E}(t)
+$$
+
+## Cognitive performance
+
+Humans' cognitive performance (attention, inhibition, and memory,
+measured non-subjectively) varies throughout the day, and is
+highly correlated with circadian rhythm [^1] [^3]. This
+means that cognitive performance will "peak" and "dip" in rhythmic
+fashion throughout the day. The exact times of these "peaks" and
+"troughs" varies between individuals [^2], however, there
+usually occurs two in a 24-hour period, and they alternate with
+each other [^1]. It is postulated that one peak occurs early after
+waking because of lowered SP (sleep propensity) [^4] and the
+other close to bedtime because of the WMZ (wake maintenance zone)
+[^5].
+
+## Task cognitive sensitivity
+
+It follows that tasks more sensitive to attention, inhibition, and
+memory performance should be scheduled in times of peak cognitive
+performance. This will enable such tasks to be completed faster
+and more precisely. Conversely, tasks largely insensitive to
+cognitive performance should be scheduled outside of peak
+performing times, as to not waste this valuable time in the day.
+
+Tasks that are usually more sensitive to cognitive performance
+include the following categories:
+
+- Tasks involving decision-making or judgment.
+- Tasks requiring complex chains of reasoning and large amounts of
+  context.
+- Unfamiliar or "learning" tasks.
+
+Conversely, routine or "simple" tasks are largely insensitive to
+cognitive performance.
+
+We shall model task cognitive sensitivity as a value
+$S_{t}\in[0,1]$ where $[0,1]\subseteq\mathbb{R}$. The cost is
+given by:
+
+$$
+f_{S}(t) = K_{S} S_{t}
+$$
+
+Where $K_{S}$ is a constant scalar.
+
+Similar to [[#Early%20biasing]], the global cost is the sum across
+all tasks.
+
+$$
+F_{S} = \sum_{t \in T} f_{S}(t)
+$$
+
+## Context-switching
+
+A wealth of research supports the idea that humans have a very
+limited capacity to multitask.
+
+Much of what looks like "multitasking" is really just frequent
+context-switching (analogous to single-threaded coroutines). These
+switches incur heavy costs in both the speed and accuracy at which
+tasks are completed. Furthermore, switches in tasks often leave
+lingering "attention residue", which impairs performance on the
+subsequent task. One study finds that individuals require an
+average of 25 minutes to recover prior performance from a single
+interruption.
+
+## Encoding context-switching cost
+
+It is often appealing to multitask when attempting to avoid wasted
+time as a result of blockage (e.g. waiting on a response).
+However, this often leads to slower and less precise work overall,
+due to responses to [[#Context-switching]], in contrast with the
+illusion of productivity it generates. The better alternative is
+to batch interruptions into a single block of time, while keeping
+larger contiguous chunks of work intact.
+
+> [!NOTE]
+> This, of course, implies that you *need to keep track* of all
+> the actual context switches that occurs throughout your work
+> day. This includes all things that may induce context-switching,
+> regardless of how important they are (ex. scrolling social
+> media, messages & email, small "routine" tasks) to have a
+> significant effect on reducing context-switching overhead.
+
+The mitigation of context-switching can be done without any
+additional constructs through the judicious setup of long task
+times for contiguous tasks of the 4-hour timescale unit.
+
+One adjustment to the model that this may provide justification
+for is the variability of individual block sizes for tasks that
+  utilize blocking. This would allow individual task "work blocks"
+  to expand or shrink flexibly, and may allow for less "empty
+  space" in the schedule and the necessity for context switching
+  as a result of [[#Early%20biasing]].
+
+[^1]: Dijk, Derk-Jan, Jeanne F. Duffy, and Charles A. Czeisler.
+       “Circadian and Sleep/Wake Dependent Aspects of Subjective
+       Alertness and Cognitive Performance.” Journal of Sleep
+       Research 1, no. 2 (1992): 112–17.
+       https://doi.org/10.1111/j.1365-2869.1992.tb00021.x.
+[^2]: Munnilari, Madhavi, Tulasiram Bommasamudram, Judy Easow,
+       et al. “Diurnal Variation in Variables Related to Cognitive
+       Performance: A Systematic Review.” Sleep & Breathing =
+       Schlaf & Atmung 28, no. 1 (2024): 495–510.
+       https://doi.org/10.1007/s11325-023-02895-0.
+[^3]: Chauhan, Satyam, Martina Vanova, Umisha Tailor, et al.
+       “Chronotype and Synchrony Effects in Human Cognitive
+       Performance: A Systematic Review.” Chronobiology
+       International 42, no. 4 (2025): 463–99.
+       https://doi.org/10.1080/07420528.2025.2490495.
+[^4]: Bes, Frederik, Marc Jobert, and Hartmut Schulz. “Modeling
+       Napping, Post-Lunch Dip, and Other Variations in Human
+       Sleep Propensity.” Sleep 32, no. 3 (2009): 392–98.
+       https://doi.org/10.1093/sleep/32.3.392.
+[^5]: Shekleton, Julia A., Shantha M. W. Rajaratnam, Joshua J.
+       Gooley, Eliza Van Reen, Charles A. Czeisler, and Steven W.
+       Lockley. “Improved Neurobehavioral Performance during the
+       Wake Maintenance Zone.” Journal of Clinical Sleep
+       Medicine : JCSM : Official Publication of the American
+       Academy of Sleep Medicine 9, no. 4 (2013): 353–62.
+       https://doi.org/10.5664/jcsm.2588.
 
