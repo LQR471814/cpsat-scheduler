@@ -17,12 +17,13 @@
 - [Deadlines](#deadlines)
 - [Default cost](#default-cost)
 - [Quantizing Events](#quantizing-events)
-- [External factors](#external-factors)
+- [Process factors](#process-factors)
   - [Early biasing](#early-biasing)
   - [Cognitive performance](#cognitive-performance)
   - [Task cognitive sensitivity](#task-cognitive-sensitivity)
   - [Context-switching](#context-switching)
   - [Encoding context-switching cost](#encoding-context-switching-cost)
+  - [Tuning Constants](#tuning-constants)
 <!--toc:end-->
 
 # Timescale hierarchy
@@ -89,7 +90,7 @@ other.
 Suppose we are given a PDF of variable $f(x)$, which represents the
 risk of non-completion for a given duration allocated to the task.
 
-Let's suppose the absolute cost of non-completion is $Q$.
+Let's suppose the absolute cost of non-completion is $C$.
 
 Let:
 
@@ -98,7 +99,7 @@ $F(x) = \int_{0}^{x} f(x) dx$
 The expected cost for a given duration allocation $\delta$ is:
 
 $$
-E[\delta] = Q[1-F(\delta)]
+E[\delta] = C[1-F(\delta)]
 $$
 
 We can then choose a finite set of number of values for $\delta$,
@@ -108,7 +109,7 @@ For any $\delta \in \Delta$ and deadline $d$, our cost intervals
 will be:
 
 $$
-C_{it} = \{([0, d), E[\delta]), ([d, \infty), Q)\}
+C_{it} = \{([0, d), E[\delta]), ([d, \infty), C)\}
 $$
 
 ## Children
@@ -508,22 +509,21 @@ linearly with the scheduled time it is in and is parametrized by
 two constants. Namely:
 
 $$
-f_{E}(t) = P_{t} K_{E} D_{t}[s] u_{t}
+f_{E}(t) = P_{t}  D_{t}[s] u_{t}
 $$
 
-Where:
-
-- $K_{E}$ is a constant that scales the size of the early bias
-  cost across all tasks.
-- $P_{t}$ is a constant that scales the size of early bias cost
-  for this particular task.
+Where $P_{t}$ is a constant that scales the size of early bias
+cost for this particular task.
 
 The complete cost of all tasks due to early biasing is simply the
 sum of all individual task costs.
 
 $$
-F_{E} = \sum_{t \in T} f_{E}(t)
+F_{E} = K_{E} \sum_{t \in T} f_{E}(t)
 $$
+
+Where $K_{E}$ is a constant that scales the size of the early bias
+cost across all tasks.
 
 ## Cognitive performance
 
@@ -559,21 +559,29 @@ include the following categories:
 Conversely, routine or "simple" tasks are largely insensitive to
 cognitive performance.
 
+Let $G_{x}$ be the cognitive performance of the user at a
+particular time $x$. $G_{x}\in[0,1]$ where
+$[0,1]\subset\mathbb{R}$.
+
 We shall model task cognitive sensitivity as a value
-$S_{t}\in[0,1]$ where $[0,1]\subseteq\mathbb{R}$. The cost is
-given by:
+$S_{t}\in[0,1]$ where $[0,1]\subset\mathbb{R}$. The specific
+value of $S_{t}$ for a given $t$ can later be estimated via a
+heuristic based on task properties.
+
+The heuristic cost of a task (in the sense that time is being used
+suboptimally) is then proportional to complement of cognitive
+performance weighted by the cognitive sensitivity of the task.
 
 $$
-f_{S}(t) = K_{S} S_{t}
+f_{S}(t) = S_{t} \left(1 - G_{D_{t}[s]}\right)
 $$
 
-Where $K_{S}$ is a constant scalar.
-
-Similar to [[#Early%20biasing]], the global cost is the sum across
-all tasks.
+Similar to [[#Early%20biasing]], the global cost is the sum
+across all tasks scaled by a constant $K_{S}$ which scales the
+size of cognitive sensitivity costs across all tasks.
 
 $$
-F_{S} = \sum_{t \in T} f_{S}(t)
+F_{S} = K_{S} \sum_{t \in T} f_{S}(t)
 $$
 
 ## Context-switching
