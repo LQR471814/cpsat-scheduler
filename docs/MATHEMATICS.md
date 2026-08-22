@@ -28,7 +28,7 @@
 
 # Timescale hierarchy
 
-$U \subseteq \mathbb{N}$ is a set of timescale units.
+$U$ is a set of timescale units s.t. $U \subseteq \mathbb{N}$.
 
 $\forall a \in U \forall b \in U [a \ (\text{mod}\ b) \equiv 0]$
 
@@ -573,15 +573,15 @@ suboptimally) is then proportional to complement of cognitive
 performance weighted by the cognitive sensitivity of the task.
 
 $$
-f_{S}(t) = S_{t} \left(1 - G_{D_{t}[s]}\right)
+f_{S}(t) = K_{S} S_{t} \left(1 - G_{D_{t}[s]}\right)
 $$
 
 Similar to [[#Early%20biasing]], the global cost is the sum
-across all tasks scaled by a constant $K_{S}$ which scales the
+across all tasks scaled by a constant $K_{S}$ which determines the
 size of cognitive sensitivity costs across all tasks.
 
 $$
-F_{S} = K_{S} \sum_{t \in T} f_{S}(t)
+F_{S} = \sum_{t \in T} f_{S}(t)
 $$
 
 ## Context-switching
@@ -630,6 +630,17 @@ for is the variability of individual block sizes for tasks that
   to expand or shrink flexibly, and may allow for less "empty
   space" in the schedule and the necessity for context switching
   as a result of [[#Early%20biasing]].
+
+## Tuning Constants
+
+We will want to tune our process factor constants so that their
+costs form the correct relationships with our tasks' costs.
+
+Let's say we take an arbitrary schedule and compute its costs, all
+else being equal, we move a task back one 4-hour time block.
+
+Then let's say that the increase in costs resulting from
+[[#Early%20biasing]] should equal twice the cost of
 
 [^1]: Dijk, Derk-Jan, Jeanne F. Duffy, and Charles A. Czeisler.
        “Circadian and Sleep/Wake Dependent Aspects of Subjective
