@@ -35,6 +35,7 @@ source = { editable = "." }
 dependencies = [
     { name = "grpcio" },
     { name = "ortools" },
+    { name = "python-dateutil" },
     { name = "scipy" },
 ]
 
@@ -50,6 +51,7 @@ dev = [
 requires-dist = [
     { name = "grpcio", specifier = ">=1.80.0" },
     { name = "ortools", specifier = ">=9.15.6755" },
+    { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "scipy", specifier = ">=1.18.0" },
 ]
 
