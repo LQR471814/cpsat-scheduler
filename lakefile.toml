@@ -1,0 +1,10 @@
+name = "cpsat-scheduler"
+version = "0.1.0"
+defaultTargets = ["cpsat-scheduler"]
+
+[[lean_lib]]
+name = "CpsatScheduler"
+
+[[lean_exe]]
+name = "cpsat-scheduler"
+root = "Main"
