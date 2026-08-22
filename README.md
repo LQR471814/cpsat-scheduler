@@ -31,8 +31,6 @@ uv run ty check
 
 ## Documentation
 
-- [Design](docs/DESIGN.md) - high level "scheduling philosophy",
-  covers core concepts, design & UX
 - [Mathematics](docs/MATHEMATICS.md) - formal model for scheduling
 - [CP-SAT proto](docs/cp_model.proto) - local copy/reference for
   CP-SAT model protobuf structures.
