@@ -1,0 +1,37 @@
+import CpsatScheduler.CpsatSolver.Domain.Domain
+
+namespace CpsatSolver
+
+instance : Coe NonemptyDomain Domain where
+  coe d := d.domain
+
+instance : Membership ℤ NonemptyDomain where
+  mem d x := x ∈ d.domain
+
+@[simp] def NonemptyDomain.hull (d : NonemptyDomain) : Interval :=
+  d.domain.hullOf d.nonempty
+
+theorem NonemptyDomain.mem_hull (d : NonemptyDomain) {x : ℤ}
+    (hx : x ∈ d) : x ∈ d.hull :=
+  Domain.mem_hull d.domain d.nonempty hx
+
+@[simp] def NonemptyDomain.singleton (v : Int64) : NonemptyDomain :=
+  ⟨Domain.singleton v, by simp [Domain.singleton]⟩
+
+@[simp] def NonemptyDomain.interval (i : Interval) : NonemptyDomain :=
+  ⟨Domain.interval i, by simp [Domain.interval]⟩
+
+@[simp] def NonemptyDomain.min (d : NonemptyDomain) : Int64 :=
+  (d.domain.intervals.head d.nonempty).left
+
+@[simp] def NonemptyDomain.max (d : NonemptyDomain) : Int64 :=
+  (d.domain.intervals.getLast d.nonempty).right
+
+theorem NonemptyDomain.hull_interval_eq {i : Interval}
+  (d : NonemptyDomain) (heq : d = NonemptyDomain.interval i) :
+    d.hull = i := by
+      dsimp [NonemptyDomain.hull, Domain.hullOf]
+      rw [heq]
+      dsimp [NonemptyDomain.interval, Domain.interval, List.head]
+
+end CpsatSolver
