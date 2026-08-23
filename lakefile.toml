@@ -1,10 +1,18 @@
-name = "cpsat-scheduler"
+name = "lean-cpsat-scheduler"
 version = "0.1.0"
-defaultTargets = ["cpsat-scheduler"]
+keywords = ["math"]
+defaultTargets = ["LeanCpsatScheduler"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.34.0-rc2"
 
 [[lean_lib]]
-name = "CpsatScheduler"
-
-[[lean_exe]]
-name = "cpsat-scheduler"
-root = "Main"
+name = "LeanCpsatScheduler"
