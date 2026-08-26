@@ -6,6 +6,9 @@ namespace CpsatSolver
 structure BoolVar where
   name : String
 
+def BoolVar.repr (var : BoolVar) :=
+  var.name
+
 -- Intvar is an integer variable bounded to a finite domain
 structure IntVar where
   name : String

@@ -209,15 +209,23 @@ inductive BoolLit where
   | id (v : CpsatSolver.BoolVar)
   | neg (v : CpsatSolver.BoolVar)
 
+#eval
+  let intVarLeft := CpsatSolver.IntVar.mk "hello" { min := -1, max := 3 }
+  let intVarRight := CpsatSolver.IntVar.mk "hello2" { min := -5, max := -2 }
+  let left := LinearExpr.id intVarLeft (of_decide_eq_true rfl);
+  let right := LinearExpr.id intVarRight (of_decide_eq_true rfl);
+  let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
+  multiplied.proof.domain
+
 -- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
 -- (e.g. >, <, ==)
 inductive BoundedLinearExpr where
-  | eq (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | neq (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | gt (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | gte (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | lt (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | lte (a : LinearExpr.Proven) (b : LinearExpr.Proven)
+  | eq (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
+  | neq (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
+  | gt (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
+  | gte (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
+  | lt (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
+  | lte (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
 
 def BoundedLinearExpr.repr (expr : BoundedLinearExpr) : String :=
   match expr with
@@ -230,22 +238,5 @@ def BoundedLinearExpr.repr (expr : BoundedLinearExpr) : String :=
 
 instance : ToString BoundedLinearExpr where
   toString := BoundedLinearExpr.repr
-
-inductive ConstraintEnforcement where
-  | always
-  | onlyWhenAll {n : Nat} (literals : Vector BoolLit (n + 1))
-
-structure Constraint where
-  name : String
-  expr : BoundedLinearExpr
-  enforce : ConstraintEnforcement
-
-#eval
-  let intVarLeft := CpsatSolver.IntVar.mk "hello" { min := -1, max := 3 }
-  let intVarRight := CpsatSolver.IntVar.mk "hello2" { min := -5, max := -2 }
-  let left := LinearExpr.id intVarLeft (of_decide_eq_true rfl);
-  let right := LinearExpr.id intVarRight (of_decide_eq_true rfl);
-  let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
-  multiplied.proof.domain
 
 end CpsatSolver
