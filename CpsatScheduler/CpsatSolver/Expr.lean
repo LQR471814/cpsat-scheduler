@@ -1,4 +1,4 @@
-import LeanCpsatScheduler.CpsatSolver.Var
+import CpsatScheduler.CpsatSolver.Var
 import Mathlib.Data.Int.ConditionallyCompleteOrder
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Algebra.Order.Group.Defs

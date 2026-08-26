@@ -1,4 +1,4 @@
-import LeanCpsatScheduler.CpsatSolver.Int
+import CpsatScheduler.CpsatSolver.Int
 
 namespace CpsatSolver
 
