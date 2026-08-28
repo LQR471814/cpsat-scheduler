@@ -32,6 +32,12 @@ def IntVar.repr (var : IntVar) :=
 instance : ToString IntVar where
   toString := IntVar.repr
 
+def FixedSizeIntervalVar.repr (var : FixedSizeIntervalVar) :=
+  var.name
+
+instance : ToString FixedSizeIntervalVar where
+  toString := FixedSizeIntervalVar.repr
+
 def LinearExpr.Proven.repr (expr : LinearExpr.Proven) : String :=
   match expr with
     | { op := LinearExpr.Op.var var _, proof := _ } => var.name
@@ -43,7 +49,6 @@ def LinearExpr.Proven.repr (expr : LinearExpr.Proven) : String :=
       s!"({left.repr}) - ({right.repr})"
     | { op := LinearExpr.Op.mul left right, proof := _ } =>
       s!"({left.repr}) * ({right.repr})"
-
 termination_by structural expr
 
 instance : ToString LinearExpr.Proven where
@@ -231,6 +236,5 @@ def LinearExpr.mul
   let right := LinearExpr.var intVarRight (of_decide_eq_true rfl);
   let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
   multiplied.proof.domain
-
 
 end CpsatSolver

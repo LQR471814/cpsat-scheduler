@@ -13,6 +13,7 @@ def Int64.Proof (b : ℤ) : Prop :=
 structure Interval where
   min : ℤ
   max : ℤ
+  deriving DecidableEq
 
 def Interval.Proof (it : Interval) :=
   it.min ≤ it.max ∧
@@ -24,12 +25,14 @@ def Interval.Proof (it : Interval) :=
 structure BoolVar where
   name : String
   nameValid : CpsatSolver.Python.ValidID name
+  deriving DecidableEq
 
 
 -- BoolLit is a CpsatSolver.BoolVar or its negation
 inductive BoolLit where
   | var (v : CpsatSolver.BoolVar)
   | neg (v : CpsatSolver.BoolVar)
+  deriving DecidableEq
 
 
 /-- IntVar is an integer variable bounded to a finite domain -/
@@ -38,6 +41,7 @@ structure IntVar where
   name : String
   nameValid : CpsatSolver.Python.ValidID name
   domain : CpsatSolver.Interval
+  deriving DecidableEq
 
 def IntVar.Proof (var : IntVar) :=
   Interval.Proof var.domain
@@ -92,16 +96,16 @@ inductive Constraint.Variant where
   /-- Corresponds to <model>.add -/
   | bounded_linear (expr : CpsatSolver.BoundedLinearExpr)
   /-- Corresponds to <model>.add_max_equality -/
-  | max_equality (target : LinearExpr.Proven) (exprs : List LinearExpr.Proven)
+  | max_equality (target : LinearExpr.Proven) (exprs : Array LinearExpr.Proven)
   /-- Corresponds to <model>.add_cumulative -/
   | cumulative
-    (intervals : List CpsatSolver.Interval)
-    (demands : List LinearExpr.Proven)
+    (intervals : Array CpsatSolver.FixedSizeIntervalVar)
+    (demands : Array LinearExpr.Proven)
     (capacity : LinearExpr.Proven)
   /-- Corresponds to <model>.add_bool_and -/
-  | bool_and (terms : List CpsatSolver.BoolLit)
+  | bool_and (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_bool_or -/
-  | bool_or (terms : List CpsatSolver.BoolLit)
+  | bool_or (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_implication -/
   | implication (src : CpsatSolver.BoolLit) (dst : CpsatSolver.BoolLit)
 
@@ -109,5 +113,11 @@ structure Constraint where
   name : String
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
+
+
+inductive Var where
+  | bool (v : BoolVar)
+  | int (v : IntVar)
+  | fixedSizeInterval (v : FixedSizeIntervalVar)
 
 end CpsatSolver
