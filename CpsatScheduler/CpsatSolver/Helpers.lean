@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Var
+import CpsatScheduler.CpsatSolver.Basic
 import Mathlib.Data.Int.ConditionallyCompleteOrder
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Algebra.Order.Group.Defs
@@ -6,26 +6,62 @@ import Mathlib.Algebra.Order.Group.Int
 
 namespace CpsatSolver
 
-structure LinearExpr.Proof where
-  domain : CpsatSolver.Interval
-  domainValid : CpsatSolver.Interval.Proof domain
+instance : Decidable (Int64.Proof α) :=
+  (inferInstance : Decidable (α ≥ Int64.min ∧ α ≤ Int64.max))
 
-mutual
--- LinearExpr is a linear expr that evaluates to an ℤ
-inductive LinearExpr.Op where
-  | var (value : CpsatSolver.IntVar) (H : CpsatSolver.IntVar.Proof value)
-  | const (value : ℤ) (H : CpsatSolver.Int64.Proof value)
-  | neg (a : LinearExpr.Proven)
-  | add (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | mul (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | sub (a : LinearExpr.Proven) (b : LinearExpr.Proven)
+instance : Decidable (Interval.Proof α) :=
+  (inferInstance : Decidable (
+    α.min ≤ α.max ∧
+    Int64.Proof α.min ∧
+    Int64.Proof α.max
+  ))
 
-structure LinearExpr.Proven where
-  op : LinearExpr.Op
-  proof : LinearExpr.Proof
-end
+instance : Decidable (IntVar.Proof α) :=
+  (inferInstance : Decidable (CpsatSolver.Interval.Proof α.domain))
 
-def LinearExpr.id
+def BoolLit.repr (b : BoolLit) := match b with
+  | BoolLit.var v => v.name
+  | BoolLit.neg v => s!"~{v.name}"
+
+instance : ToString BoolLit where
+  toString := BoolLit.repr
+
+def IntVar.repr (var : IntVar) :=
+  var.name
+
+instance : ToString IntVar where
+  toString := IntVar.repr
+
+def LinearExpr.Proven.repr (expr : LinearExpr.Proven) : String :=
+  match expr with
+    | { op := LinearExpr.Op.var var _, proof := _ } => var.name
+    | { op := LinearExpr.Op.const value _, proof := _ }  => value.repr
+    | { op := LinearExpr.Op.neg e, proof := _ } => s!"- ({e.repr})"
+    | { op := LinearExpr.Op.add left right, proof := _ } =>
+      s!"({left.repr}) + ({right.repr})"
+    | { op := LinearExpr.Op.sub left right, proof := _ } =>
+      s!"({left.repr}) - ({right.repr})"
+    | { op := LinearExpr.Op.mul left right, proof := _ } =>
+      s!"({left.repr}) * ({right.repr})"
+
+termination_by structural expr
+
+instance : ToString LinearExpr.Proven where
+  toString := LinearExpr.Proven.repr
+
+def BoundedLinearExpr.repr (expr : BoundedLinearExpr) : String :=
+  match expr with
+  | BoundedLinearExpr.eq a b => s!"({a.repr}) == ({b.repr})"
+  | BoundedLinearExpr.neq a b => s!"({a.repr}) != ({b.repr})"
+  | BoundedLinearExpr.gt a b => s!"({a.repr}) > ({b.repr})"
+  | BoundedLinearExpr.gte a b => s!"({a.repr}) >= ({b.repr})"
+  | BoundedLinearExpr.lt a b => s!"({a.repr}) < ({b.repr})"
+  | BoundedLinearExpr.lte a b => s!"({a.repr}) <= ({b.repr})"
+
+instance : ToString BoundedLinearExpr where
+  toString := BoundedLinearExpr.repr
+
+def LinearExpr.var
   (value : CpsatSolver.IntVar)
   (H : CpsatSolver.IntVar.Proof value) : LinearExpr.Proven :=
   {
@@ -188,55 +224,13 @@ def LinearExpr.mul
       };
   curried
 
-def LinearExpr.Proven.repr (expr : LinearExpr.Proven) : String :=
-  match expr with
-    | { op := LinearExpr.Op.var var _, proof := _ } => var.name
-    | { op := LinearExpr.Op.const value _, proof := _ }  => value.repr
-    | { op := LinearExpr.Op.neg e, proof := _ } => s!"- ({e.repr})"
-    | { op := LinearExpr.Op.add left right, proof := _ } =>
-      s!"({left.repr}) + ({right.repr})"
-    | { op := LinearExpr.Op.sub left right, proof := _ } =>
-      s!"({left.repr}) - ({right.repr})"
-    | { op := LinearExpr.Op.mul left right, proof := _ } =>
-      s!"({left.repr}) * ({right.repr})"
-termination_by structural expr
-
-instance : ToString LinearExpr.Proven where
-  toString := LinearExpr.Proven.repr
-
--- BoolLit is a CpsatSolver.BoolVar or its negation
-inductive BoolLit where
-  | id (v : CpsatSolver.BoolVar)
-  | neg (v : CpsatSolver.BoolVar)
-
 #eval
-  let intVarLeft := CpsatSolver.IntVar.mk "hello" { min := -1, max := 3 }
-  let intVarRight := CpsatSolver.IntVar.mk "hello2" { min := -5, max := -2 }
-  let left := LinearExpr.id intVarLeft (of_decide_eq_true rfl);
-  let right := LinearExpr.id intVarRight (of_decide_eq_true rfl);
+  let intVarLeft := CpsatSolver.IntVar.mk "hello" (by native_decide) { min := -1, max := 3 }
+  let intVarRight := CpsatSolver.IntVar.mk "hello2" (by native_decide) { min := -5, max := -2 }
+  let left := LinearExpr.var intVarLeft (of_decide_eq_true rfl);
+  let right := LinearExpr.var intVarRight (of_decide_eq_true rfl);
   let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
   multiplied.proof.domain
 
--- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
--- (e.g. >, <, ==)
-inductive BoundedLinearExpr where
-  | eq (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
-  | neq (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
-  | gt (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
-  | gte (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
-  | lt (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
-  | lte (a : CpsatSolver.LinearExpr.Proven) (b : CpsatSolver.LinearExpr.Proven)
-
-def BoundedLinearExpr.repr (expr : BoundedLinearExpr) : String :=
-  match expr with
-  | BoundedLinearExpr.eq a b => s!"({a.repr}) == ({b.repr})"
-  | BoundedLinearExpr.neq a b => s!"({a.repr}) != ({b.repr})"
-  | BoundedLinearExpr.gt a b => s!"({a.repr}) > ({b.repr})"
-  | BoundedLinearExpr.gte a b => s!"({a.repr}) >= ({b.repr})"
-  | BoundedLinearExpr.lt a b => s!"({a.repr}) < ({b.repr})"
-  | BoundedLinearExpr.lte a b => s!"({a.repr}) <= ({b.repr})"
-
-instance : ToString BoundedLinearExpr where
-  toString := BoundedLinearExpr.repr
 
 end CpsatSolver

@@ -14,5 +14,11 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.34.0-rc2"
 
+[[require]]
+name = "Regex"
+git = "https://github.com/pandaman64/lean-regex"
+rev = "v4.32.0"
+subDir = "regex"
+
 [[lean_lib]]
 name = "CpsatScheduler"
