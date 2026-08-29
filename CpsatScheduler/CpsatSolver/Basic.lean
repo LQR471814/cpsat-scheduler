@@ -23,8 +23,7 @@ def Interval.Proof (it : Interval) :=
 
 /-- BoolVar is a boolean variable -/
 structure BoolVar where
-  name : String
-  nameValid : CpsatSolver.Python.ValidID name
+  name : CpsatSolver.Python.ValidName
   deriving DecidableEq
 
 
@@ -38,8 +37,7 @@ inductive BoolLit where
 /-- IntVar is an integer variable bounded to a finite domain -/
 structure IntVar where
   /-- name is the identifier of the variable -/
-  name : String
-  nameValid : CpsatSolver.Python.ValidID name
+  name : CpsatSolver.Python.ValidName
   domain : CpsatSolver.Interval
   deriving DecidableEq
 
@@ -57,24 +55,27 @@ inductive LinearExpr.Op where
   | add (a : LinearExpr.Proven) (b : LinearExpr.Proven)
   | mul (a : LinearExpr.Proven) (b : LinearExpr.Proven)
   | sub (a : LinearExpr.Proven) (b : LinearExpr.Proven)
+  deriving DecidableEq
 
 structure LinearExpr.Proof where
   domain : CpsatSolver.Interval
   domainValid : CpsatSolver.Interval.Proof domain
+  deriving DecidableEq
 
 structure LinearExpr.Proven where
   op : LinearExpr.Op
   proof : LinearExpr.Proof
+  deriving DecidableEq
 
 end
 
 
 structure FixedSizeIntervalVar where
   -- name is also the identifier
-  name : String
-  nameValid : CpsatSolver.Python.ValidID name
+  name : CpsatSolver.Python.ValidName
   start : LinearExpr.Proven
   size : ℕ
+  deriving DecidableEq
 
 
 -- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
@@ -86,11 +87,13 @@ inductive BoundedLinearExpr where
   | gte (a : LinearExpr.Proven) (b : LinearExpr.Proven)
   | lt (a : LinearExpr.Proven) (b : LinearExpr.Proven)
   | lte (a : LinearExpr.Proven) (b : LinearExpr.Proven)
+  deriving DecidableEq
 
 
 inductive Constraint.Enforcement where
   | always
   | onlyWhenAll {n : Nat} (literals : Vector BoolLit (n + 1))
+  deriving DecidableEq
 
 inductive Constraint.Variant where
   /-- Corresponds to <model>.add -/
@@ -108,16 +111,12 @@ inductive Constraint.Variant where
   | bool_or (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_implication -/
   | implication (src : CpsatSolver.BoolLit) (dst : CpsatSolver.BoolLit)
+  deriving DecidableEq
 
 structure Constraint where
-  name : String
+  name : Python.ValidName
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
-
-
-inductive Var where
-  | bool (v : BoolVar)
-  | int (v : IntVar)
-  | fixedSizeInterval (v : FixedSizeIntervalVar)
+  deriving DecidableEq
 
 end CpsatSolver

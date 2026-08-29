@@ -1,119 +1,150 @@
-import CpsatScheduler.CpsatSolver.Basic
 import CpsatScheduler.CpsatSolver.Helpers
-
-import Mathlib.Data.Finset.Defs
-
-import Std.Data.Iterators
-import Lean.Data.Json.Basic
+import Mathlib.Data.Finset.Lattice.Basic
 
 namespace CpsatSolver
 
 namespace ScriptIDs
-private def model := "model"
-private def solution := "solution"
+private def model := Python.ValidName.mk "model" (by native_decide)
+private def solution := Python.ValidName.mk "solution" (by native_decide)
 end ScriptIDs
 
 structure Model where
-  vars : Finset CpsatSolver.Var
+  bools : Finset CpsatSolver.BoolVar
+  ints : Finset CpsatSolver.IntVar
+  fixedSizeIntervals : Finset CpsatSolver.FixedSizeIntervalVar
   constraints : Finset CpsatSolver.Constraint
 
-def Model.isBoolVar (var : CpsatSolver.Var) (boolVar : CpsatSolver.BoolVar) : Prop :=
-  match var with
-  | CpsatSolver.Var.bool v => (v = boolVar)
-  | _ => False
+def Model.union (left : Model) (right : Model) : Model :=
+  {
+    bools := left.bools ∪ right.bools,
+    ints := left.ints ∪ right.ints,
+    fixedSizeIntervals := left.fixedSizeIntervals ∪ right.fixedSizeIntervals,
+    constraints := left.constraints ∪ right.constraints
+  }
 
-instance
-  (var : CpsatSolver.Var)
-  (boolVar : CpsatSolver.BoolVar) : Decidable (Model.isBoolVar var boolVar) :=
-  match var with
-  | CpsatSolver.Var.bool b => (inferInstance : (Decidable (b = boolVar)))
-  | CpsatSolver.Var.int _ => Decidable.isFalse (fun h => h)
-  | CpsatSolver.Var.fixedSizeInterval _ => Decidable.isFalse (fun h => h)
-
-def Model.hasBoolVar (m : Model) (boolVar : CpsatSolver.BoolVar) :=
-  ∃ var ∈ m.vars, Model.isBoolVar var boolVar
-
-instance : Decidable (Model.hasBoolVar α β) :=
-  (inferInstance : Decidable (∃ var ∈ α.vars, Model.isBoolVar var β))
-
-def Model.isIntVar (var : CpsatSolver.Var) (intVar : CpsatSolver.IntVar) : Prop :=
-  match var with
-  | CpsatSolver.Var.int v => (v = intVar)
-  | _ => False
-
-instance
-  (var : CpsatSolver.Var)
-  (intVar : CpsatSolver.IntVar) : Decidable (Model.isIntVar var intVar) :=
-  match var with
-  | CpsatSolver.Var.bool _ => Decidable.isFalse (fun h => h)
-  | CpsatSolver.Var.int i => (inferInstance : (Decidable (i = intVar)))
-  | CpsatSolver.Var.fixedSizeInterval _ => Decidable.isFalse (fun h => h)
-
-def Model.hasIntVar (m : Model) (intVar : CpsatSolver.IntVar) :=
-  ∃ var ∈ m.vars, Model.isIntVar var intVar
-
-instance : Decidable (Model.hasIntVar α β) :=
-  (inferInstance : Decidable (∃ var ∈ α.vars, Model.isIntVar var β))
-
-def Model.repr.boolVarDef
+def Model.repr.boolVar
   (m : Model)
   (var : CpsatSolver.BoolVar)
-  (_ : Model.hasBoolVar m var) :=
-    let name := Lean.Json.compress (Lean.Json.str var.name);
-    s!"{var.name} = {ScriptIDs.model}.new_bool_var({name})"
+  (_ : var ∈ m.bools) : Python.Expr :=
+    Python.Expr.assign (Python.Expr.id var.name) (
+      Python.Expr.call
+        (Python.Expr.dot
+          (Python.Expr.id ScriptIDs.model)
+          (Python.ValidName.mk "new_bool_var" (by native_decide)))
+        #[
+          (Python.Expr.lit (Python.Literal.str var.name.val))
+        ]
+    )
 
-def Model.repr.intVarDef
+def Model.repr.intVar
   (m : Model)
   (var : CpsatSolver.IntVar)
-  (_ : Model.hasIntVar m var) :=
-    let name := Lean.Json.compress (Lean.Json.str var.name);
-    s!"{var.name} = {ScriptIDs.model}.new_int_var({var.domain.min}, {var.domain.max}, {name})"
+  (_ : var ∈ m.ints) :=
+    Python.Expr.assign (Python.Expr.id var.name) (
+      Python.Expr.call
+        (Python.Expr.dot
+          (Python.Expr.id ScriptIDs.model)
+          (Python.ValidName.mk "new_int_var" (by native_decide)))
+        #[
+          (Python.Expr.lit (Python.Literal.int var.domain.min)),
+          (Python.Expr.lit (Python.Literal.int var.domain.max)),
+          (Python.Expr.lit (Python.Literal.str var.name.val)),
+        ]
+    )
 
-def Model.repr.constraintDef
+def Model.repr.fixedSizeIntervalVar
+  (m : Model)
+  (var : CpsatSolver.FixedSizeIntervalVar)
+  (_ : var ∈ m.fixedSizeIntervals) :=
+    Python.Expr.assign (Python.Expr.id var.name) (
+      Python.Expr.call
+        (Python.Expr.dot
+          (Python.Expr.id ScriptIDs.model)
+          (Python.ValidName.mk "new_fixed_size_interval" (by native_decide)))
+        #[
+          var.start.toPythonExpr,
+          (Python.Expr.lit (Python.Literal.int var.size)),
+          (Python.Expr.lit (Python.Literal.str var.name.val)),
+        ]
+    )
+
+def Model.repr.constraint
   (m : Model)
   (cnst : CpsatSolver.Constraint)
   (_ : cnst ∈ m.constraints) :=
-    let joinReprsWithCommas {α : Type} [ToString α] (args : Array α) :=
-      ", ".intercalate (args.map (fun (x : α) => s!"{x}")).toList
-    let constraint := match cnst.variant with
+    let modelDot (attr : Python.ValidName) : Python.Expr :=
+      Python.Expr.dot (Python.Expr.id ScriptIDs.model) attr
+    let constraint : Python.Expr := match cnst.variant with
       | Constraint.Variant.bounded_linear expr =>
-        s!"{ScriptIDs.model}.add({expr.repr})"
+        Python.Expr.call
+          (modelDot (Python.ValidName.mk "add" (by native_decide)))
+          #[ expr.toPythonExpr ]
       | Constraint.Variant.bool_and terms =>
-        s!"{ScriptIDs.model}.add_bool_and({joinReprsWithCommas terms})"
+        Python.Expr.call
+          (modelDot (Python.ValidName.mk "add_bool_and" (by native_decide)))
+          (terms.map (fun t => t.toPythonExpr))
       | Constraint.Variant.bool_or terms =>
-        s!"{ScriptIDs.model}.add_bool_or({joinReprsWithCommas terms})"
+        Python.Expr.call
+          (modelDot (Python.ValidName.mk "add_bool_or" (by native_decide)))
+          (terms.map (fun t => t.toPythonExpr))
       | Constraint.Variant.implication src dst =>
-        s!"{ScriptIDs.model}.add_implication({src}, {dst})"
+        Python.Expr.call
+          (modelDot (Python.ValidName.mk "add_implication" (by native_decide)))
+          #[ src.toPythonExpr, dst.toPythonExpr ]
       | Constraint.Variant.max_equality target exprs =>
-        s!"{ScriptIDs.model}.add_max_equality({target}, {joinReprsWithCommas exprs})"
+        Python.Expr.call
+          (modelDot (Python.ValidName.mk "add_max_equality" (by native_decide)))
+          (Array.append
+            #[ target.toPythonExpr ]
+            (exprs.map (fun e => e.toPythonExpr)))
       | Constraint.Variant.cumulative intervals demands capacity =>
-        s!"{ScriptIDs.model}.add_cumulative(
-            [{joinReprsWithCommas intervals}],
-            [{joinReprsWithCommas demands}],
-            {capacity}
-          )"
+        Python.Expr.call
+          (modelDot (Python.ValidName.mk "add_cumulative" (by native_decide)))
+          #[
+            (Python.Expr.lit (Python.Literal.array
+              (intervals.map (fun e => e.toPythonExpr)))),
+            (Python.Expr.lit (Python.Literal.array
+              (demands.map (fun e => e.toPythonExpr)))),
+            capacity.toPythonExpr,
+          ]
       ;
-    let label :=
-      let nameQuoted := Lean.Json.compress (Lean.Json.str cnst.name);
-      s!".with_label({nameQuoted})";
-    let enforcement := match cnst.enforcement with
-      | Constraint.Enforcement.always => ""
+    let labeled :=
+      Python.Expr.call
+        (Python.Expr.dot
+          constraint
+          (Python.ValidName.mk "with_label" (by native_decide)))
+        #[ (Python.Expr.lit (Python.Literal.str cnst.name.val)) ]
+    let enforced := match cnst.enforcement with
+      | Constraint.Enforcement.always => labeled
       | Constraint.Enforcement.onlyWhenAll literals =>
-        s!".only_enforce_if({joinReprsWithCommas literals.toArray})"
+        Python.Expr.call
+          (Python.Expr.dot
+            labeled
+            (Python.ValidName.mk "only_enforce_if" (by native_decide)))
+          (literals.toArray.map (fun (l : BoolLit) => l.toPythonExpr))
       ;
-    s!"{constraint}{label}{enforcement}"
+    enforced
 
 structure SolveRequest (m : Model) where
-  requestVars : Finset CpsatSolver.Var
-  varsIsSubset : requestVars ⊆ m.vars
+  ints : Finset CpsatSolver.IntVar
+  intsValid : ints ⊆ m.ints
+  -- TODO: implement these later
+  -- bools : Finset CpsatSolver.BoolVar
+  -- boolsValid : bools ⊆ m.bools
+  -- fixedSizeIntervals : Finset CpsatSolver.FixedSizeIntervalVar
+  -- fixedSizeIntervalsValid : fixedSizeIntervals ⊆ m.fixedSizeIntervals
 
-structure SolveResponse (m : Model) where
-
--- TODO: add an "extend model" function that extends a model with additional
--- definitions or constraints
-
--- TODO: add a structure representing a "solve request" along with "queries"
--- for information in the solution
+structure SolveResponse (m : Model) (r : SolveRequest m) where
+  ints : Std.HashMap
+    { key // ∃ var ∈ m.ints, var.name.val = key }
+    { val // CpsatSolver.Int64.Proof val }
+  -- TODO: implement these later
+  -- bools : Std.HashMap
+  --   { key // ∃ var ∈ m.bools, var.name.val = key }
+  --   Bool
+  -- fixedSizeIntervals : Std.HashMap
+  --   { key // ∃ var ∈ m.fixedSizeIntervals, var.name.val = key }
+  --   { val // CpsatSolver.Int64.Proof val }
 
 end CpsatSolver
 

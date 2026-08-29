@@ -1,10 +1,14 @@
 import CpsatScheduler.CpsatSolver.Basic
+import CpsatScheduler.CpsatSolver.Python
+
 import Mathlib.Data.Int.ConditionallyCompleteOrder
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Algebra.Order.Group.Defs
 import Mathlib.Algebra.Order.Group.Int
 
 namespace CpsatSolver
+
+open CpsatSolver
 
 instance : Decidable (Int64.Proof α) :=
   (inferInstance : Decidable (α ≥ Int64.min ∧ α ≤ Int64.max))
@@ -17,58 +21,53 @@ instance : Decidable (Interval.Proof α) :=
   ))
 
 instance : Decidable (IntVar.Proof α) :=
-  (inferInstance : Decidable (CpsatSolver.Interval.Proof α.domain))
+  (inferInstance : Decidable (Interval.Proof α.domain))
 
-def BoolLit.repr (b : BoolLit) := match b with
-  | BoolLit.var v => v.name
-  | BoolLit.neg v => s!"~{v.name}"
+def BoolLit.toPythonExpr (b : BoolLit) : Python.Expr := match b with
+  | BoolLit.var v => Python.Expr.id v.name
+  | BoolLit.neg v => Python.Expr.bitwiseNot (
+    Python.Expr.id v.name
+  )
 
-instance : ToString BoolLit where
-  toString := BoolLit.repr
+def IntVar.toPythonExpr (var : IntVar) : Python.Expr :=
+  Python.Expr.id var.name
 
-def IntVar.repr (var : IntVar) :=
-  var.name
+def FixedSizeIntervalVar.toPythonExpr (var : FixedSizeIntervalVar) : Python.Expr :=
+  Python.Expr.id var.name
 
-instance : ToString IntVar where
-  toString := IntVar.repr
-
-def FixedSizeIntervalVar.repr (var : FixedSizeIntervalVar) :=
-  var.name
-
-instance : ToString FixedSizeIntervalVar where
-  toString := FixedSizeIntervalVar.repr
-
-def LinearExpr.Proven.repr (expr : LinearExpr.Proven) : String :=
+def LinearExpr.Proven.toPythonExpr (expr : LinearExpr.Proven) : Python.Expr :=
   match expr with
-    | { op := LinearExpr.Op.var var _, proof := _ } => var.name
-    | { op := LinearExpr.Op.const value _, proof := _ }  => value.repr
-    | { op := LinearExpr.Op.neg e, proof := _ } => s!"- ({e.repr})"
+    | { op := LinearExpr.Op.var var _, proof := _ } => Python.Expr.id var.name
+    | { op := LinearExpr.Op.const value _, proof := _ }  =>
+      Python.Expr.lit (Python.Literal.int value)
+    | { op := LinearExpr.Op.neg subexpr, proof := _ } =>
+      Python.Expr.neg subexpr.toPythonExpr
     | { op := LinearExpr.Op.add left right, proof := _ } =>
-      s!"({left.repr}) + ({right.repr})"
+      Python.Expr.add left.toPythonExpr right.toPythonExpr
     | { op := LinearExpr.Op.sub left right, proof := _ } =>
-      s!"({left.repr}) - ({right.repr})"
+      Python.Expr.sub left.toPythonExpr right.toPythonExpr
     | { op := LinearExpr.Op.mul left right, proof := _ } =>
-      s!"({left.repr}) * ({right.repr})"
+      Python.Expr.mul left.toPythonExpr right.toPythonExpr
 termination_by structural expr
 
-instance : ToString LinearExpr.Proven where
-  toString := LinearExpr.Proven.repr
-
-def BoundedLinearExpr.repr (expr : BoundedLinearExpr) : String :=
+def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
   match expr with
-  | BoundedLinearExpr.eq a b => s!"({a.repr}) == ({b.repr})"
-  | BoundedLinearExpr.neq a b => s!"({a.repr}) != ({b.repr})"
-  | BoundedLinearExpr.gt a b => s!"({a.repr}) > ({b.repr})"
-  | BoundedLinearExpr.gte a b => s!"({a.repr}) >= ({b.repr})"
-  | BoundedLinearExpr.lt a b => s!"({a.repr}) < ({b.repr})"
-  | BoundedLinearExpr.lte a b => s!"({a.repr}) <= ({b.repr})"
-
-instance : ToString BoundedLinearExpr where
-  toString := BoundedLinearExpr.repr
+  | BoundedLinearExpr.eq a b =>
+    Python.Expr.eq a.toPythonExpr b.toPythonExpr
+  | BoundedLinearExpr.neq a b =>
+    Python.Expr.neq a.toPythonExpr b.toPythonExpr
+  | BoundedLinearExpr.gt a b =>
+    Python.Expr.gt a.toPythonExpr b.toPythonExpr
+  | BoundedLinearExpr.gte a b =>
+    Python.Expr.gte a.toPythonExpr b.toPythonExpr
+  | BoundedLinearExpr.lt a b =>
+    Python.Expr.lt a.toPythonExpr b.toPythonExpr
+  | BoundedLinearExpr.lte a b =>
+    Python.Expr.lte a.toPythonExpr b.toPythonExpr
 
 def LinearExpr.var
-  (value : CpsatSolver.IntVar)
-  (H : CpsatSolver.IntVar.Proof value) : LinearExpr.Proven :=
+  (value : IntVar)
+  (H : IntVar.Proof value) : LinearExpr.Proven :=
   {
     op := LinearExpr.Op.var value H,
     proof := {
@@ -79,7 +78,7 @@ def LinearExpr.var
 
 def LinearExpr.const
   (value : ℤ)
-  (H : CpsatSolver.Int64.Proof value) : LinearExpr.Proven :=
+  (H : Int64.Proof value) : LinearExpr.Proven :=
   {
     op := LinearExpr.Op.const value H,
     proof :=
@@ -100,8 +99,8 @@ def LinearExpr.neg
     max := -a.proof.domain.min
   };
   let curried
-    (Hmin : CpsatSolver.Int64.Proof neg.min)
-    (Hmax : CpsatSolver.Int64.Proof neg.max) : LinearExpr.Proven :=
+    (Hmin : Int64.Proof neg.min)
+    (Hmax : Int64.Proof neg.max) : LinearExpr.Proven :=
     let min_le_max : neg.min ≤ neg.max :=
       neg_le_neg a.proof.domainValid.left;
     {
@@ -123,8 +122,8 @@ def LinearExpr.add
     max := leftDomain.max + rightDomain.max
   };
   let curried
-    (Hmin : CpsatSolver.Int64.Proof added.min)
-    (Hmax : CpsatSolver.Int64.Proof added.max) : LinearExpr.Proven :=
+    (Hmin : Int64.Proof added.min)
+    (Hmax : Int64.Proof added.max) : LinearExpr.Proven :=
     let min_le_max : added.min ≤ added.max :=
       -- a <= a'
       -- b <= b'
@@ -173,8 +172,8 @@ def LinearExpr.sub
     max := leftDomain.max - rightDomain.min
   };
   let curried
-    (Hmin : CpsatSolver.Int64.Proof subtracted.min)
-    (Hmax : CpsatSolver.Int64.Proof subtracted.max) : LinearExpr.Proven :=
+    (Hmin : Int64.Proof subtracted.min)
+    (Hmax : Int64.Proof subtracted.max) : LinearExpr.Proven :=
     let min_le_max : subtracted.min ≤ subtracted.max :=
       let a := leftDomain.min;
       let a' := leftDomain.max;
@@ -204,8 +203,8 @@ def LinearExpr.mul
     max := max (max (max c1 c2) c3) c4
   };
   let curried
-    (Hmin : CpsatSolver.Int64.Proof domain.min)
-    (Hmax : CpsatSolver.Int64.Proof domain.max) : LinearExpr.Proven :=
+    (Hmin : Int64.Proof domain.min)
+    (Hmax : Int64.Proof domain.max) : LinearExpr.Proven :=
       let domainValid : domain.Proof :=
         And.intro (
           (min_le_left _ _).trans (
@@ -230,8 +229,12 @@ def LinearExpr.mul
   curried
 
 #eval
-  let intVarLeft := CpsatSolver.IntVar.mk "hello" (by native_decide) { min := -1, max := 3 }
-  let intVarRight := CpsatSolver.IntVar.mk "hello2" (by native_decide) { min := -5, max := -2 }
+  let intVarLeft := IntVar.mk
+    (Python.ValidName.mk "hello" (by native_decide))
+    { min := -1, max := 3 }
+  let intVarRight := IntVar.mk
+    (Python.ValidName.mk "hello2" (by native_decide))
+    { min := -5, max := -2 }
   let left := LinearExpr.var intVarLeft (of_decide_eq_true rfl);
   let right := LinearExpr.var intVarRight (of_decide_eq_true rfl);
   let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
