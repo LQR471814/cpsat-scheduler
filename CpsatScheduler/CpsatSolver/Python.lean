@@ -128,4 +128,48 @@ end
 instance : ToString Expr where
   toString := Expr.repr
 
+structure NameAs where
+  name : ValidName
+  as : Option ValidName
+
+def NameAs.repr (a : NameAs) : String :=
+  match a.as with
+  | Option.some as => s!"{a.name.val} as {as.val}"
+  | Option.none => a.name.val
+
+inductive Import where
+  | basicForm (pkg : Array ValidName) (as : Option ValidName)
+  | fromForm (pkg : Array ValidName) (names : Array NameAs)
+
+def Import.repr (i : Import) := match i with
+  | basicForm pkg as =>
+    let path := String.intercalate "."
+      (pkg.map (fun (x : ValidName) => x.val)).toList
+    match as with
+    | Option.some asName =>
+      s!"import {path} as {asName.val}"
+    | Option.none =>
+      s!"import {path}"
+  | fromForm pkg importedNames =>
+    let path := String.intercalate "."
+      (pkg.map (fun (x : ValidName) => x.val)).toList
+    let importedNames := String.intercalate ", "
+      (importedNames.map (fun (x : NameAs) => x.repr)).toList
+    s!"from {path} import {importedNames}"
+
+inductive Statement where
+  | importLine (i : Import)
+  | exprLine (e : Expr)
+
+def Statement.repr (s : Statement) := match s with
+  | importLine i => i.repr
+  | exprLine e => e.repr
+
+structure Script where
+  statements : Array Statement
+
+def Script.repr (s : Script) : String :=
+  String.intercalate "\n"
+    (s.statements.map (fun stmt => stmt.repr)).toList
+
 end CpsatSolver.Python
