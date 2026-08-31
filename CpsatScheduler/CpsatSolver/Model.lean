@@ -41,7 +41,7 @@ def Model.union (left : Model) (right : Model)
     constraints := left.constraints ++ right.constraints
   }
 
-def Model.repr.boolVar (var : CpsatSolver.BoolVar) : Python.Statement :=
+def Model.Python.boolVar (var : CpsatSolver.BoolVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
@@ -52,7 +52,7 @@ def Model.repr.boolVar (var : CpsatSolver.BoolVar) : Python.Statement :=
       ]
   ))
 
-def Model.repr.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
+def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
@@ -65,7 +65,7 @@ def Model.repr.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
       ]
   ))
 
-def Model.repr.fixedSizeIntervalVar (var : CpsatSolver.FixedSizeIntervalVar) : Python.Statement :=
+def Model.Python.fixedSizeIntervalVar (var : CpsatSolver.FixedSizeIntervalVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
@@ -78,7 +78,7 @@ def Model.repr.fixedSizeIntervalVar (var : CpsatSolver.FixedSizeIntervalVar) : P
       ]
   ))
 
-def Model.repr.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :=
+def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :=
   let modelDot (attr : Python.ValidName) : Python.Expr :=
     Python.Expr.dot (Python.Expr.id ScriptIDs.model) attr
   let constraint : Python.Expr := match cnst.variant with
@@ -140,18 +140,17 @@ structure SolveResponse (m : Model) (r : SolveRequest m) where
   exprsValid : exprs.length = r.exprs.length
   -- TODO: implement other variables later
 
-private def namePrint := Python.ValidName.mk "print" (by native_decide)
-private def nameJson := Python.ValidName.mk "json" (by native_decide)
-private def nameCpModelLib := Python.ValidName.mk "cp_model" (by native_decide)
-private def nameModel := Python.ValidName.mk "__cpsat_model__" (by native_decide)
-private def nameCpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by native_decide)
-private def nameSolveStatus := Python.ValidName.mk "__solve_status__" (by native_decide)
-private def nameOutput := Python.ValidName.mk "__output__" (by native_decide)
-private def outKeyInts := Python.Literal.str "ints"
-private def outKeyBools := Python.Literal.str "bools"
-private def outKeyExprs := Python.Literal.str "exprs"
+namespace Model.Python.Name
+private def print := Python.ValidName.mk "print" (by native_decide)
+private def json := Python.ValidName.mk "json" (by native_decide)
+private def cpModelLib := Python.ValidName.mk "cp_model" (by native_decide)
+private def model := Python.ValidName.mk "__cpsat_model__" (by native_decide)
+private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by native_decide)
+private def solveStatus := Python.ValidName.mk "__solve_status__" (by native_decide)
+private def output := Python.ValidName.mk "__output__" (by native_decide)
+end Model.Python.Name
 
-def Model.python.imports : Array Python.Statement := #[
+def Model.Python.imports : Array Python.Statement := #[
   -- from ortools.sat.python import cp_model
   (Python.Statement.importLine
     (Python.Import.fromForm
@@ -160,30 +159,30 @@ def Model.python.imports : Array Python.Statement := #[
         (Python.ValidName.mk "sat" (by native_decide)),
         (Python.ValidName.mk "python" (by native_decide)),
       ]
-      #[ (Python.NameAs.unaliased nameCpModelLib) ])),
+      #[ (Python.NameAs.unaliased Model.Python.Name.cpModelLib) ])),
   -- import json
   (Python.Statement.importLine
     (Python.Import.basicForm
-      #[ nameJson ]
+      #[ Model.Python.Name.json ]
       Option.none)),
 ]
 
-def Model.python.modelDef (m : Model) : Array Python.Statement :=
+def Model.Python.modelDef (m : Model) : Array Python.Statement :=
   let frontmatter : Array Python.Statement := #[
     -- model = cp_model.Model()
     (Python.Statement.exprLine (Python.Expr.assign
-      (Python.Expr.id nameModel)
+      (Python.Expr.id Model.Python.Name.model)
       (Python.Expr.call
         (Python.Expr.dot
-          (Python.Expr.id nameCpModelLib)
+          (Python.Expr.id Model.Python.Name.cpModelLib)
           (Python.ValidName.mk "Model" (by native_decide))
         )
         #[])))
   ];
-  let intVars := m.ints.map (Model.repr.intVar ·)
-  let boolVars := m.bools.map (Model.repr.boolVar ·)
-  let fixedSizeIntervalsVars := m.fixedSizeIntervals.map (Model.repr.fixedSizeIntervalVar ·)
-  let constraints := m.constraints.map (Model.repr.constraint ·)
+  let intVars := m.ints.map (Model.Python.intVar ·)
+  let boolVars := m.bools.map (Model.Python.boolVar ·)
+  let fixedSizeIntervalsVars := m.fixedSizeIntervals.map (Model.Python.fixedSizeIntervalVar ·)
+  let constraints := m.constraints.map (Model.Python.constraint ·)
   Array.append
     (Array.append
       (Array.append
@@ -192,42 +191,40 @@ def Model.python.modelDef (m : Model) : Array Python.Statement :=
       fixedSizeIntervalsVars.toArray)
     constraints.toArray
 
-def Model.python.solve (m : Model) (req : SolveRequest m) : Array Python.Statement :=
+def Model.Python.solve (m : Model) (req : SolveRequest m) : Array Python.Statement :=
   #[
     -- solver = cp_model.CpSolver()
     (Python.Statement.exprLine (Python.Expr.assign
-      (Python.Expr.id nameCpsatSolver)
+      (Python.Expr.id Model.Python.Name.cpsatSolver)
       (Python.Expr.call
         (Python.Expr.dot
-          (Python.Expr.id nameCpModelLib)
+          (Python.Expr.id Model.Python.Name.cpModelLib)
           (Python.ValidName.mk "CpSolver" (by native_decide)))
         #[]))),
     -- solver.solve(model)
     (Python.Statement.exprLine (Python.Expr.call
       (Python.Expr.dot
-        (Python.Expr.id nameCpsatSolver)
+        (Python.Expr.id Model.Python.Name.cpsatSolver)
         (Python.ValidName.mk "solve" (by native_decide))
       )
-      #[ (Python.Expr.id nameModel) ])),
+      #[ (Python.Expr.id Model.Python.Name.model) ])),
     -- output = [ solver.value()... ]
     (Python.Statement.exprLine (Python.Expr.assign
-      (Python.Expr.index
-        (Python.Expr.id nameOutput)
-        (Python.Expr.lit outKeyInts))
+      (Python.Expr.id Model.Python.Name.output)
       (Python.Expr.lit (Python.Literal.array
         (req.exprs.map (fun linExpr => Python.Expr.call
           (Python.Expr.dot
-            (Python.Expr.id nameCpsatSolver)
+            (Python.Expr.id Model.Python.Name.cpsatSolver)
             (Python.ValidName.mk "value" (by native_decide)))
           #[ linExpr.toPythonExpr ])).toArray)))),
     -- print(json.dumps(output))
     (Python.Statement.exprLine (Python.Expr.call
-      (Python.Expr.id namePrint)
+      (Python.Expr.id Model.Python.Name.print)
       #[ (Python.Expr.call
           (Python.Expr.dot
-            (Python.Expr.id nameJson)
+            (Python.Expr.id Model.Python.Name.json)
             (Python.ValidName.mk "dumps" (by native_decide)))
-          #[ (Python.Expr.id nameOutput) ]) ]))
+          #[ (Python.Expr.id Model.Python.Name.output) ]) ]))
   ]
 
 end CpsatSolver
