@@ -21,10 +21,17 @@ def Interval.Proof (it : Interval) :=
   Int64.Proof it.max
 
 
+class Var (α : Type) where
+  name (var : α) : CpsatSolver.Python.ValidName
+
+
 /-- BoolVar is a boolean variable -/
 structure BoolVar where
   name : CpsatSolver.Python.ValidName
   deriving DecidableEq
+
+instance : Var BoolVar where
+  name var := var.name
 
 
 -- BoolLit is a CpsatSolver.BoolVar or its negation
@@ -44,6 +51,8 @@ structure IntVar where
 def IntVar.Proof (var : IntVar) :=
   Interval.Proof var.domain
 
+instance : Var IntVar where
+  name var := var.name
 
 mutual
 
@@ -76,6 +85,9 @@ structure FixedSizeIntervalVar where
   start : LinearExpr.Proven
   size : ℕ
   deriving DecidableEq
+
+instance : Var FixedSizeIntervalVar where
+  name var := var.name
 
 
 -- BoundedLinearExpr is LinearExpr with some bounding operators applied on it

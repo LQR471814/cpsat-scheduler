@@ -1,6 +1,8 @@
 import Regex
 import Mathlib.Data.Finset.Defs
 import Mathlib.Data.Finset.Insert
+import Mathlib.Data.String.Basic
+import Mathlib.Order.Defs.PartialOrder
 
 namespace CpsatSolver.Python
 
@@ -132,6 +134,12 @@ structure NameAs where
   name : ValidName
   as : Option ValidName
 
+def NameAs.unaliased (n : ValidName) : NameAs :=
+  { name := n, as := Option.none }
+
+def NameAs.aliased (n : ValidName) (as : ValidName) : NameAs :=
+  { name := n, as := Option.some as }
+
 def NameAs.repr (a : NameAs) : String :=
   match a.as with
   | Option.some as => s!"{a.name.val} as {as.val}"
@@ -164,6 +172,15 @@ inductive Statement where
 def Statement.repr (s : Statement) := match s with
   | importLine i => i.repr
   | exprLine e => e.repr
+
+instance : LE Python.Statement where
+  le a b := a.repr ≤ b.repr
+
+instance : DecidableLE Python.Statement :=
+  fun a b => if h : a.repr ≤ b.repr then
+    Decidable.isTrue h
+  else
+    Decidable.isFalse h
 
 structure Script where
   statements : Array Statement
