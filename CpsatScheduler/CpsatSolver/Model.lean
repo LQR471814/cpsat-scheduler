@@ -1,10 +1,5 @@
 import CpsatScheduler.CpsatSolver.Helpers
-import Mathlib.Data.Finset.Lattice.Basic
-import Mathlib.Data.Finset.Fold
-import Mathlib.Data.Finset.Sort
-import Mathlib.Data.Nat.SuccPred
-import Mathlib.Data.List.Sort
-import Mathlib.Algebra.Order.Ring.Nat
+import Lean.Data.Json.Parser
 
 namespace CpsatSolver
 
@@ -13,17 +8,14 @@ private def model := Python.ValidName.mk "model" (by native_decide)
 private def solution := Python.ValidName.mk "solution" (by native_decide)
 end ScriptIDs
 
-def Var.uniqueNames {α : Type} [Var α] (ls : List α) :=
-  ∀ a b : Fin ls.length, a ≠ b → (Var.name (ls.get a)) ≠ (Var.name (ls.get b))
-
 structure Model where
-  bools : List CpsatSolver.BoolVar
+  bools : Array CpsatSolver.BoolVar
   boolsUniqueNames : Var.uniqueNames bools
-  ints : List CpsatSolver.IntVar
+  ints : Array CpsatSolver.IntVar
   intsUniqueNames : Var.uniqueNames ints
-  fixedSizeIntervals : List CpsatSolver.FixedSizeIntervalVar
+  fixedSizeIntervals : Array CpsatSolver.FixedSizeIntervalVar
   fixedSizeIntervalsUniqueNames : Var.uniqueNames fixedSizeIntervals
-  constraints : List CpsatSolver.Constraint
+  constraints : Array CpsatSolver.Constraint
 
 def Model.union (left : Model) (right : Model)
   (boolsUniqueNames : Var.uniqueNames (left.bools ++ right.bools))
@@ -41,7 +33,7 @@ def Model.union (left : Model) (right : Model)
     constraints := left.constraints ++ right.constraints
   }
 
-def Model.Python.boolVar (var : CpsatSolver.BoolVar) : Python.Statement :=
+private def Model.Python.boolVar (var : CpsatSolver.BoolVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
@@ -52,7 +44,7 @@ def Model.Python.boolVar (var : CpsatSolver.BoolVar) : Python.Statement :=
       ]
   ))
 
-def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
+private def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
@@ -65,7 +57,8 @@ def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
       ]
   ))
 
-def Model.Python.fixedSizeIntervalVar (var : CpsatSolver.FixedSizeIntervalVar) : Python.Statement :=
+private def Model.Python.fixedSizeIntervalVar
+  (var : CpsatSolver.FixedSizeIntervalVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
@@ -78,7 +71,7 @@ def Model.Python.fixedSizeIntervalVar (var : CpsatSolver.FixedSizeIntervalVar) :
       ]
   ))
 
-def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :=
+private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :=
   let modelDot (attr : Python.ValidName) : Python.Expr :=
     Python.Expr.dot (Python.Expr.id ScriptIDs.model) attr
   let constraint : Python.Expr := match cnst.variant with
@@ -128,16 +121,15 @@ def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :
         (Python.Expr.dot
           labeled
           (Python.ValidName.mk "only_enforce_if" (by native_decide)))
-        (literals.toArray.map (fun (l : BoolLit) => l.toPythonExpr)))
+        (literals.map (fun (l : BoolLit) => l.toPythonExpr)).toArray)
     ;
   enforced
 
 structure SolveRequest (m : Model) where
-  exprs : List CpsatSolver.LinearExpr.Proven
+  exprs : Array CpsatSolver.LinearExpr.Proven
 
 structure SolveResponse (m : Model) (r : SolveRequest m) where
-  exprs : List CpsatSolver.Int64.Proven
-  exprsValid : exprs.length = r.exprs.length
+  exprs : Vector CpsatSolver.Int64.Proven r.exprs.size
   -- TODO: implement other variables later
 
 namespace Model.Python.Name
@@ -150,7 +142,7 @@ private def solveStatus := Python.ValidName.mk "__solve_status__" (by native_dec
 private def output := Python.ValidName.mk "__output__" (by native_decide)
 end Model.Python.Name
 
-def Model.Python.imports : Array Python.Statement := #[
+private def Model.Python.imports : Array Python.Statement := #[
   -- from ortools.sat.python import cp_model
   (Python.Statement.importLine
     (Python.Import.fromForm
@@ -167,7 +159,7 @@ def Model.Python.imports : Array Python.Statement := #[
       Option.none)),
 ]
 
-def Model.Python.modelDef (m : Model) : Array Python.Statement :=
+private def Model.Python.modelDef (m : Model) : Array Python.Statement :=
   let frontmatter : Array Python.Statement := #[
     -- model = cp_model.Model()
     (Python.Statement.exprLine (Python.Expr.assign
@@ -186,12 +178,13 @@ def Model.Python.modelDef (m : Model) : Array Python.Statement :=
   Array.append
     (Array.append
       (Array.append
-        (Array.append frontmatter intVars.toArray)
-        boolVars.toArray)
-      fixedSizeIntervalsVars.toArray)
-    constraints.toArray
+        (Array.append frontmatter intVars)
+        boolVars)
+      fixedSizeIntervalsVars)
+    constraints
 
-def Model.Python.solve (m : Model) (req : SolveRequest m) : Array Python.Statement :=
+private def Model.Python.reportSolution
+  (m : Model) (req : SolveRequest m) : Array Python.Statement :=
   #[
     -- solver = cp_model.CpSolver()
     (Python.Statement.exprLine (Python.Expr.assign
@@ -216,7 +209,7 @@ def Model.Python.solve (m : Model) (req : SolveRequest m) : Array Python.Stateme
           (Python.Expr.dot
             (Python.Expr.id Model.Python.Name.cpsatSolver)
             (Python.ValidName.mk "value" (by native_decide)))
-          #[ linExpr.toPythonExpr ])).toArray)))),
+          #[ linExpr.toPythonExpr ])))))),
     -- print(json.dumps(output))
     (Python.Statement.exprLine (Python.Expr.call
       (Python.Expr.id Model.Python.Name.print)
@@ -226,6 +219,40 @@ def Model.Python.solve (m : Model) (req : SolveRequest m) : Array Python.Stateme
             (Python.ValidName.mk "dumps" (by native_decide)))
           #[ (Python.Expr.id Model.Python.Name.output) ]) ]))
   ]
+
+private def Model.parseScriptOutput
+  (m : Model) (r : SolveRequest m) (scriptOutput : String)
+  : Except String (SolveResponse m r) :=
+  match Lean.Json.parse scriptOutput with
+  | .ok json => match json with
+    | .arr elems =>
+      if h : elems.size = r.exprs.size then
+        let results : Except String (Vector Int64.Proven elems.size) :=
+          Vector.mapM (fun el => match el with
+            | Lean.Json.num no =>
+              -- 1. JSON Number's value = mantissa * 10^-exponent
+              -- 2. therefore, we expect all resulting values (which must be
+              -- ints) to have exponent = 0
+              if no.exponent = 0 then
+                let num := no.mantissa;
+                if h : Int64.Proof num then
+                  Except.ok { val := num, proof := h }
+                else
+                  Except.error "Got out-of-bounds integer in resulting array."
+              else
+                Except.error "Got floating value in resulting array."
+            | _ => Except.error "Unexpected type in resulting array.") elems.toVector
+        match results with
+        | Except.ok provenResults =>
+          Except.ok { exprs := {
+            toArray := provenResults.toArray,
+            size_toArray := Eq.subst h provenResults.size_toArray
+          } }
+        | Except.error err => Except.error err
+      else
+        Except.error s!"Unexpected array.size, got {elems.size}, expected {r.exprs.size}."
+    | _ => Except.error "Unexpected JSON type, expected JSON array."
+  | .error err => Except.error err
 
 end CpsatSolver
 

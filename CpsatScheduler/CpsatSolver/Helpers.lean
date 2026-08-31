@@ -240,4 +240,7 @@ def LinearExpr.mul
   let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
   multiplied.proof.domain
 
+def Var.uniqueNames {α : Type} [Var α] (arr : Array α) :=
+  ∀ a b : Fin arr.size, a ≠ b → (Var.name (arr[a])) ≠ (Var.name (arr[b]))
+
 end CpsatSolver
