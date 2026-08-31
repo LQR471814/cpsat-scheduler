@@ -66,6 +66,7 @@ inductive Literal where
   | int (val : ℤ)
   | str (val : String)
   | array (elems : Array Expr)
+  | dict (pairs : Array (Expr × Expr))
 
 inductive Expr where
   | id (name : ValidName)
@@ -101,6 +102,20 @@ def Literal.repr (lit : Literal) : String :=
     let elemStr := elems.map (fun e => e.repr)
     let joined := String.intercalate ", " elemStr.toList
     s!"[{joined}]"
+  | Literal.dict pairs =>
+    let pairsStr := pairs.map (fun pair => s!"{pair.fst.repr}: {pair.snd.repr}");
+    let joined := String.intercalate ", " pairsStr.toList;
+    s!"\{{joined}}"
+termination_by sizeOf lit
+-- TODO: understand this later
+decreasing_by
+  all_goals
+    first
+    | decreasing_trivial
+    | have hpair := Array.sizeOf_lt_of_mem ‹_›
+      cases pair
+      simp_all
+      omega
 
 def Expr.repr (expr : Expr) : String :=
   match expr with
@@ -124,6 +139,7 @@ def Expr.repr (expr : Expr) : String :=
   | Expr.lt left right => s!"{left.repr} < {right.repr}"
   | Expr.lte left right => s!"{left.repr} <= {right.repr}"
   | Expr.assign left right => s!"{left.repr} = {right.repr}"
+termination_by sizeOf expr
 
 end
 

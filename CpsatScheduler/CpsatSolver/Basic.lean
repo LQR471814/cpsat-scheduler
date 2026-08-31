@@ -9,6 +9,9 @@ def Int64.max : ℤ := ((2 : ℤ)^63 - 1)
 def Int64.Proof (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 
+structure Int64.Proven where
+  val : ℤ
+  proof : Int64.Proof val
 
 structure Interval where
   min : ℤ
