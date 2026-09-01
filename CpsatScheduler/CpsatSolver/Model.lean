@@ -136,6 +136,7 @@ inductive SolveStatus where
   | optimal
 
 structure SolveResponse (model : Model) (req : SolveRequest model) where
+  objectiveValue : ℤ
   status : SolveStatus
   exprs : Vector CpsatSolver.Int64.Proven req.exprs.size
 
@@ -152,6 +153,7 @@ end Model.Python.Name
 namespace Model.Python.Literals
 private def exprs := "exprs"
 private def status := "status"
+private def objectiveValue := "objective_value"
 end Model.Python.Literals
 
 private def Model.Python.imports : Array Python.Statement := #[
@@ -213,7 +215,11 @@ private def Model.Python.reportSolution
         (Python.ValidName.mk "solve" (by native_decide))
       )
       #[ (Python.Expr.id Model.Python.Name.model) ])),
-    -- output = {"exprs": [ solver.value()... ], "status": str(status)}
+    -- output = {
+    --   "exprs": [ solver.value()... ]
+    --   "status": str(status)
+    --   "objective_value": solver.objective_value
+    -- }
     (Python.Statement.exprLine (Python.Expr.assign
       (Python.Expr.id Model.Python.Name.output)
       (Python.Expr.lit (Python.Literal.dict
@@ -230,7 +236,12 @@ private def Model.Python.reportSolution
             (Python.Expr.lit (Python.Literal.str Model.Python.Literals.status))
             (Python.Expr.call
               (Python.Expr.id (Python.ValidName.mk "str" (by native_decide)))
-              #[ (Python.Expr.id Model.Python.Name.solveStatus) ]))
+              #[ (Python.Expr.id Model.Python.Name.solveStatus) ])),
+          (Prod.mk
+            (Python.Expr.lit (Python.Literal.str Model.Python.Literals.objectiveValue))
+            (Python.Expr.dot
+              (Python.Expr.id Model.Python.Name.cpsatSolver)
+              (Python.ValidName.mk "objective_value" (by native_decide))))
         ]
       ))
       )),
@@ -244,56 +255,77 @@ private def Model.Python.reportSolution
           #[ (Python.Expr.id Model.Python.Name.output) ]) ]))
   ]
 
+private def parseJsonInteger (json : Lean.Json) : Except String ℤ :=
+  match json with
+  | .num num =>
+    if num.exponent = 0 then
+      Except.ok num.mantissa
+    else
+      Except.error "Expected no decimal numbers."
+  | _ => Except.error "Expected number type."
+
 private def Model.parseScriptOutput
   (model : Model) (req : SolveRequest model) (scriptOutput : String)
   : Except String (SolveResponse model req) :=
-  match Lean.Json.parse scriptOutput with
-  | .ok json => match json with
-    | .obj map => match map.get? Model.Python.Literals.status with
-      | .none => Except.error "Missing key 'status' in resulting object."
-      | .some statusJson => match statusJson with
-        | .str statusStr =>
-          let status := match statusStr with
+  let parseStatus (map : Std.TreeMap.Raw String Lean.Json compare)
+    : Except String SolveStatus :=
+    match map.get? Model.Python.Literals.status with
+    | .none => Except.error "Missing value."
+    | .some statusJson => match statusJson with
+      | .str statusStr =>
+        Except.ok (match statusStr with
           | "INFEASIBLE" => SolveStatus.infeasible
           | "MODEL_INVALID" => SolveStatus.modelInvalid
           | "FEASIBLE" => SolveStatus.feasible
           | "OPTIMAL" => SolveStatus.optimal
-          | _ => SolveStatus.unknown;
-          match map.get? Model.Python.Literals.exprs with
-          | .some exprs => match exprs with
-            | .arr elems => if h : elems.size = req.exprs.size then
-              let results : Except String (Vector Int64.Proven elems.size) :=
-                Vector.mapM (fun el => match el with
-                  | Lean.Json.num no =>
-                    -- 1. JSON Number's value = mantissa * 10^-exponent
-                    -- 2. therefore, we expect all resulting values (which must be
-                    -- ints) to have exponent = 0
-                    if no.exponent = 0 then
-                      let num := no.mantissa;
-                      if h : Int64.Proof num then
-                        Except.ok { val := num, proof := h }
-                      else
-                        Except.error "Got out-of-bounds integer in resulting array."
-                    else
-                      Except.error "Got floating value in resulting array."
-                  | _ => Except.error "Unexpected type in resulting array.") elems.toVector
-                match results with
-                | Except.ok provenResults =>
-                  Except.ok {
-                    status := status
-                    exprs := {
-                      toArray := provenResults.toArray,
-                      size_toArray := Eq.subst h provenResults.size_toArray
-                    }
-                  }
-                | Except.error err => Except.error err
-              else
-                Except.error s!"Unexpected array.size, got {elems.size}, expected {req.exprs.size}."
-            | _ => Except.error "Unexpected JSON type, expected JSON array for key 'exprs'."
-          | .none => Except.error "Missing key 'exprs' in resulting object."
-        | _ => Except.error "Unexpected JSON type, expected string for key 'status'."
+          | _ => SolveStatus.unknown)
+      | _ => Except.error "Expected string.";
+  let parseObjectiveValue (map : Std.TreeMap.Raw String Lean.Json compare)
+    : Except String ℤ :=
+    match map.get? Model.Python.Literals.objectiveValue with
+    | .some objectiveValueJson => match parseJsonInteger objectiveValueJson with
+      | .ok objectiveValue => Except.ok objectiveValue
+      | .error err => Except.error s!"Parse integer: {err}"
+    | .none => Except.error "Missing value."
+  let parseExprs (map : Std.TreeMap.Raw String Lean.Json compare)
+    : Except String (Vector CpsatSolver.Int64.Proven req.exprs.size) :=
+    match map.get? Model.Python.Literals.exprs with
+    | .some exprsJson => match exprsJson with
+      | .arr array =>
+        if h : array.size = req.exprs.size then
+          Vector.mapM
+            (fun el => match parseJsonInteger el with
+              | .ok num =>
+                if h : Int64.Proof num then
+                  Except.ok { val := num, proof := h }
+                else
+                  Except.error "Got out-of-bounds integer in resulting array."
+              | .error err => Except.error s!"Parse Integer: {err}")
+            {
+              toArray := array,
+              size_toArray := h
+            }
+        else
+          Except.error ""
+      | _ => Except.error "Expected array."
+    | .none => Except.error "Missing value."
+  match Lean.Json.parse scriptOutput with
+  | .ok json => match json with
+    | .obj map => match
+      (parseStatus map),
+      (parseObjectiveValue map),
+      (parseExprs map) with
+      | .ok status, .ok objectiveValue, .ok exprs =>
+        Except.ok {
+          status := status
+          objectiveValue := objectiveValue
+          exprs := exprs
+        }
+      | .error err, _, _ => Except.error s!"Parse 'status': {err}"
+      | _, .error err, _ => Except.error s!"Parse 'objective_value': {err}"
+      | _, _, .error err => Except.error s!"Parse 'exprs': {err}"
     | _ => Except.error "Unexpected JSON type, expected JSON object at root."
-  | .error err => Except.error err
+  | .error err => Except.error s!"Parse JSON: {err}"
 
 def Model.solve
   (model : Model)
