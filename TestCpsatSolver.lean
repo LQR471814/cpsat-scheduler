@@ -54,5 +54,26 @@ def runtime : Python.Runtime := {
   path := ".venv/bin/python3"
 }
 
+def req : CpsatSolver.SolveRequest model := {
+  exprs := #[
+    (LinearExpr.var x (by decide)),
+    (LinearExpr.var y (by decide))
+  ]
+}
+
 def main : IO Unit := do
-  sorry
+  IO.println "----- Model"
+  IO.println (model.script req).repr
+  IO.println "----- Result"
+  let solved <- model.solve runtime req
+  match solved with
+  | .ok solution => do
+    match solution.status with
+      | .optimal => IO.println "optimal"
+      | .feasible => IO.println "feasible"
+      | .infeasible => IO.println "infeasible"
+      | .modelInvalid => IO.println "model invalid"
+      | .unknown => IO.println "unknown"
+    IO.println s!"x: {solution.exprs[0].val}"
+    IO.println s!"y: {solution.exprs[1].val}"
+  | .error err => IO.println err

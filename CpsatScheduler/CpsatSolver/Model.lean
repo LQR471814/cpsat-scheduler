@@ -1,12 +1,24 @@
 import CpsatScheduler.CpsatSolver.Helpers
+
 import Lean.Data.Json.Parser
 
 namespace CpsatSolver
 
-namespace ScriptIDs
-private def model := Python.ValidName.mk "model" (by native_decide)
-private def solution := Python.ValidName.mk "solution" (by native_decide)
-end ScriptIDs
+namespace Model.Python.Name
+private def print := Python.ValidName.mk "print" (by native_decide)
+private def json := Python.ValidName.mk "json" (by native_decide)
+private def cpModelLib := Python.ValidName.mk "cp_model" (by native_decide)
+private def model := Python.ValidName.mk "__cpsat_model__" (by native_decide)
+private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by native_decide)
+private def solveStatus := Python.ValidName.mk "__solve_status__" (by native_decide)
+private def output := Python.ValidName.mk "__output__" (by native_decide)
+end Model.Python.Name
+
+namespace Model.Python.Literals
+private def exprs := "exprs"
+private def status := "status"
+private def objectiveValue := "objective_value"
+end Model.Python.Literals
 
 structure Model where
   bools : Array CpsatSolver.BoolVar
@@ -37,7 +49,7 @@ private def Model.Python.boolVar (var : CpsatSolver.BoolVar) : Python.Statement 
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
-        (Python.Expr.id ScriptIDs.model)
+        (Python.Expr.id Model.Python.Name.model)
         (Python.ValidName.mk "new_bool_var" (by native_decide)))
       #[
         (Python.Expr.lit (Python.Literal.str var.name.val))
@@ -48,7 +60,7 @@ private def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
-        (Python.Expr.id ScriptIDs.model)
+        (Python.Expr.id Model.Python.Name.model)
         (Python.ValidName.mk "new_int_var" (by native_decide)))
       #[
         (Python.Expr.lit (Python.Literal.int var.domain.min)),
@@ -62,7 +74,7 @@ private def Model.Python.fixedSizeIntervalVar
   Python.Statement.exprLine (Python.Expr.assign (Python.Expr.id var.name) (
     Python.Expr.call
       (Python.Expr.dot
-        (Python.Expr.id ScriptIDs.model)
+        (Python.Expr.id Model.Python.Name.model)
         (Python.ValidName.mk "new_fixed_size_interval" (by native_decide)))
       #[
         var.start.toPythonExpr,
@@ -73,7 +85,7 @@ private def Model.Python.fixedSizeIntervalVar
 
 private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :=
   let modelDot (attr : Python.ValidName) : Python.Expr :=
-    Python.Expr.dot (Python.Expr.id ScriptIDs.model) attr
+    Python.Expr.dot (Python.Expr.id Model.Python.Name.model) attr
   let constraint : Python.Expr := match cnst.variant with
     | Constraint.Variant.bounded_linear expr =>
       Python.Expr.call
@@ -112,7 +124,7 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
     Python.Expr.call
       (Python.Expr.dot
         constraint
-        (Python.ValidName.mk "with_label" (by native_decide)))
+        (Python.ValidName.mk "with_name" (by native_decide)))
       #[ (Python.Expr.lit (Python.Literal.str cnst.name.val)) ]
   let enforced := match cnst.enforcement with
     | Constraint.Enforcement.always => Python.Statement.exprLine labeled
@@ -136,25 +148,9 @@ inductive SolveStatus where
   | optimal
 
 structure SolveResponse (model : Model) (req : SolveRequest model) where
-  objectiveValue : ℤ
+  objectiveValue : Float
   status : SolveStatus
   exprs : Vector CpsatSolver.Int64.Proven req.exprs.size
-
-namespace Model.Python.Name
-private def print := Python.ValidName.mk "print" (by native_decide)
-private def json := Python.ValidName.mk "json" (by native_decide)
-private def cpModelLib := Python.ValidName.mk "cp_model" (by native_decide)
-private def model := Python.ValidName.mk "__cpsat_model__" (by native_decide)
-private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by native_decide)
-private def solveStatus := Python.ValidName.mk "__solve_status__" (by native_decide)
-private def output := Python.ValidName.mk "__output__" (by native_decide)
-end Model.Python.Name
-
-namespace Model.Python.Literals
-private def exprs := "exprs"
-private def status := "status"
-private def objectiveValue := "objective_value"
-end Model.Python.Literals
 
 private def Model.Python.imports : Array Python.Statement := #[
   -- from ortools.sat.python import cp_model
@@ -181,7 +177,7 @@ private def Model.Python.modelDef (model : Model) : Array Python.Statement :=
       (Python.Expr.call
         (Python.Expr.dot
           (Python.Expr.id Model.Python.Name.cpModelLib)
-          (Python.ValidName.mk "Model" (by native_decide))
+          (Python.ValidName.mk "CpModel" (by native_decide))
         )
         #[])))
   ];
@@ -208,13 +204,14 @@ private def Model.Python.reportSolution
           (Python.Expr.id Model.Python.Name.cpModelLib)
           (Python.ValidName.mk "CpSolver" (by native_decide)))
         #[]))),
-    -- solver.solve(model)
-    (Python.Statement.exprLine (Python.Expr.call
-      (Python.Expr.dot
-        (Python.Expr.id Model.Python.Name.cpsatSolver)
-        (Python.ValidName.mk "solve" (by native_decide))
-      )
-      #[ (Python.Expr.id Model.Python.Name.model) ])),
+    -- status = solver.solve(model)
+    (Python.Statement.exprLine (Python.Expr.assign
+      (Python.Expr.id Model.Python.Name.solveStatus)
+      (Python.Expr.call
+        (Python.Expr.dot
+          (Python.Expr.id Model.Python.Name.cpsatSolver)
+          (Python.ValidName.mk "solve" (by native_decide)))
+        #[ (Python.Expr.id Model.Python.Name.model) ]))),
     -- output = {
     --   "exprs": [ solver.value()... ]
     --   "status": str(status)
@@ -264,6 +261,12 @@ private def parseJsonInteger (json : Lean.Json) : Except String ℤ :=
       Except.error "Expected no decimal numbers."
   | _ => Except.error "Expected number type."
 
+private def parseJsonFloat (json : Lean.Json) : Except String Float :=
+  match json with
+  | .num num =>
+    Except.ok num.toFloat
+  | _ => Except.error "Expected number type."
+
 private def Model.parseScriptOutput
   (model : Model) (req : SolveRequest model) (scriptOutput : String)
   : Except String (SolveResponse model req) :=
@@ -274,18 +277,18 @@ private def Model.parseScriptOutput
     | .some statusJson => match statusJson with
       | .str statusStr =>
         Except.ok (match statusStr with
-          | "INFEASIBLE" => SolveStatus.infeasible
-          | "MODEL_INVALID" => SolveStatus.modelInvalid
-          | "FEASIBLE" => SolveStatus.feasible
-          | "OPTIMAL" => SolveStatus.optimal
+          | "CpSolverStatus.INFEASIBLE" => SolveStatus.infeasible
+          | "CpSolverStatus.MODEL_INVALID" => SolveStatus.modelInvalid
+          | "CpSolverStatus.FEASIBLE" => SolveStatus.feasible
+          | "CpSolverStatus.OPTIMAL" => SolveStatus.optimal
           | _ => SolveStatus.unknown)
       | _ => Except.error "Expected string.";
   let parseObjectiveValue (map : Std.TreeMap.Raw String Lean.Json compare)
-    : Except String ℤ :=
+    : Except String Float :=
     match map.get? Model.Python.Literals.objectiveValue with
-    | .some objectiveValueJson => match parseJsonInteger objectiveValueJson with
+    | .some objectiveValueJson => match parseJsonFloat objectiveValueJson with
       | .ok objectiveValue => Except.ok objectiveValue
-      | .error err => Except.error s!"Parse integer: {err}"
+      | .error err => Except.error s!"Parse float: {err}"
     | .none => Except.error "Missing value."
   let parseExprs (map : Std.TreeMap.Raw String Lean.Json compare)
     : Except String (Vector CpsatSolver.Int64.Proven req.exprs.size) :=
@@ -327,17 +330,19 @@ private def Model.parseScriptOutput
     | _ => Except.error "Unexpected JSON type, expected JSON object at root."
   | .error err => Except.error s!"Parse JSON: {err}"
 
+def Model.script (model : Model) (req : SolveRequest model) : Python.Script := {
+  statements := Array.append
+    (Array.append
+      Model.Python.imports
+      (Model.Python.modelDef model))
+    (Model.Python.reportSolution model req)
+}
+
 def Model.solve
   (model : Model)
   (pythonRuntime : Python.Runtime)
   (req : SolveRequest model) : IO (Except String (SolveResponse model req)) := do
-  let script : Python.Script := {
-    statements := Array.append
-      (Array.append
-        Model.Python.imports
-        (Model.Python.modelDef model))
-      (Model.Python.reportSolution model req)
-  }
+  let script : Python.Script := Model.script model req
   let out <- Python.Script.exec pythonRuntime script
   return Model.parseScriptOutput model req out.stdout
 
