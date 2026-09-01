@@ -205,4 +205,13 @@ def Script.repr (s : Script) : String :=
   String.intercalate "\n"
     (s.statements.map (fun stmt => stmt.repr)).toList
 
+structure Runtime where
+  path : String
+
+def Script.exec (r : Runtime) (s : Script) : IO IO.Process.Output :=
+  IO.Process.output {
+    cmd := r.path,
+    args := #["-"]
+  } s.repr
+
 end CpsatSolver.Python

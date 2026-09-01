@@ -125,11 +125,11 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
     ;
   enforced
 
-structure SolveRequest (m : Model) where
+structure SolveRequest (model : Model) where
   exprs : Array CpsatSolver.LinearExpr.Proven
 
-structure SolveResponse (m : Model) (r : SolveRequest m) where
-  exprs : Vector CpsatSolver.Int64.Proven r.exprs.size
+structure SolveResponse (model : Model) (req : SolveRequest model) where
+  exprs : Vector CpsatSolver.Int64.Proven req.exprs.size
   -- TODO: implement other variables later
 
 namespace Model.Python.Name
@@ -159,7 +159,7 @@ private def Model.Python.imports : Array Python.Statement := #[
       Option.none)),
 ]
 
-private def Model.Python.modelDef (m : Model) : Array Python.Statement :=
+private def Model.Python.modelDef (model : Model) : Array Python.Statement :=
   let frontmatter : Array Python.Statement := #[
     -- model = cp_model.Model()
     (Python.Statement.exprLine (Python.Expr.assign
@@ -171,10 +171,10 @@ private def Model.Python.modelDef (m : Model) : Array Python.Statement :=
         )
         #[])))
   ];
-  let intVars := m.ints.map (Model.Python.intVar ·)
-  let boolVars := m.bools.map (Model.Python.boolVar ·)
-  let fixedSizeIntervalsVars := m.fixedSizeIntervals.map (Model.Python.fixedSizeIntervalVar ·)
-  let constraints := m.constraints.map (Model.Python.constraint ·)
+  let intVars := model.ints.map (Model.Python.intVar ·)
+  let boolVars := model.bools.map (Model.Python.boolVar ·)
+  let fixedSizeIntervalsVars := model.fixedSizeIntervals.map (Model.Python.fixedSizeIntervalVar ·)
+  let constraints := model.constraints.map (Model.Python.constraint ·)
   Array.append
     (Array.append
       (Array.append
@@ -184,7 +184,7 @@ private def Model.Python.modelDef (m : Model) : Array Python.Statement :=
     constraints
 
 private def Model.Python.reportSolution
-  (m : Model) (req : SolveRequest m) : Array Python.Statement :=
+  (model : Model) (req : SolveRequest model) : Array Python.Statement :=
   #[
     -- solver = cp_model.CpSolver()
     (Python.Statement.exprLine (Python.Expr.assign
@@ -221,12 +221,12 @@ private def Model.Python.reportSolution
   ]
 
 private def Model.parseScriptOutput
-  (m : Model) (r : SolveRequest m) (scriptOutput : String)
-  : Except String (SolveResponse m r) :=
+  (model : Model) (req : SolveRequest model) (scriptOutput : String)
+  : Except String (SolveResponse model req) :=
   match Lean.Json.parse scriptOutput with
   | .ok json => match json with
     | .arr elems =>
-      if h : elems.size = r.exprs.size then
+      if h : elems.size = req.exprs.size then
         let results : Except String (Vector Int64.Proven elems.size) :=
           Vector.mapM (fun el => match el with
             | Lean.Json.num no =>
@@ -250,9 +250,23 @@ private def Model.parseScriptOutput
           } }
         | Except.error err => Except.error err
       else
-        Except.error s!"Unexpected array.size, got {elems.size}, expected {r.exprs.size}."
+        Except.error s!"Unexpected array.size, got {elems.size}, expected {req.exprs.size}."
     | _ => Except.error "Unexpected JSON type, expected JSON array."
   | .error err => Except.error err
+
+def Model.solve
+  (model : Model)
+  (pythonRuntime : Python.Runtime)
+  (req : SolveRequest model) : IO (Except String (SolveResponse model req)) := do
+  let script : Python.Script := {
+    statements := Array.append
+      (Array.append
+        Model.Python.imports
+        (Model.Python.modelDef model))
+      (Model.Python.reportSolution model req)
+  }
+  let out <- Python.Script.exec pythonRuntime script
+  return Model.parseScriptOutput model req out.stdout
 
 end CpsatSolver
 
