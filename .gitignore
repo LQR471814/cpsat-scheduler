@@ -1,1 +1,4 @@
 /.lake
+
+*.egg-info
+.venv

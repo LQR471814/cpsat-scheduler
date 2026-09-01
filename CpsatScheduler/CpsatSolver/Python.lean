@@ -1,8 +1,7 @@
-import Regex
-import Mathlib.Data.Finset.Defs
+import Regex.Regex.Elab
+import Regex.Regex.Utilities
 import Mathlib.Data.Finset.Insert
-import Mathlib.Data.String.Basic
-import Mathlib.Order.Defs.PartialOrder
+import Mathlib.Algebra.Order.Group.Nat
 
 namespace CpsatSolver.Python
 
@@ -44,7 +43,7 @@ def ReservedKeywords : Finset String := {
   "yield"
 }
 
-def IDRegex := re! r"^[A-Za-z_][0-9A-Za-z_]+$"
+def IDRegex := re! r"^[A-Za-z_][0-9A-Za-z_]*$"
 
 def ValidName.Proof (name : String) : Prop :=
   ¬ (name ∈ ReservedKeywords) ∧ (IDRegex.test name)

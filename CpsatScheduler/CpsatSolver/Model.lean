@@ -128,9 +128,16 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
 structure SolveRequest (model : Model) where
   exprs : Array CpsatSolver.LinearExpr.Proven
 
+inductive SolveStatus where
+  | unknown
+  | infeasible
+  | modelInvalid
+  | feasible
+  | optimal
+
 structure SolveResponse (model : Model) (req : SolveRequest model) where
+  status : SolveStatus
   exprs : Vector CpsatSolver.Int64.Proven req.exprs.size
-  -- TODO: implement other variables later
 
 namespace Model.Python.Name
 private def print := Python.ValidName.mk "print" (by native_decide)
@@ -141,6 +148,11 @@ private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by native_dec
 private def solveStatus := Python.ValidName.mk "__solve_status__" (by native_decide)
 private def output := Python.ValidName.mk "__output__" (by native_decide)
 end Model.Python.Name
+
+namespace Model.Python.Literals
+private def exprs := "exprs"
+private def status := "status"
+end Model.Python.Literals
 
 private def Model.Python.imports : Array Python.Statement := #[
   -- from ortools.sat.python import cp_model
@@ -201,15 +213,27 @@ private def Model.Python.reportSolution
         (Python.ValidName.mk "solve" (by native_decide))
       )
       #[ (Python.Expr.id Model.Python.Name.model) ])),
-    -- output = [ solver.value()... ]
+    -- output = {"exprs": [ solver.value()... ], "status": str(status)}
     (Python.Statement.exprLine (Python.Expr.assign
       (Python.Expr.id Model.Python.Name.output)
-      (Python.Expr.lit (Python.Literal.array
-        (req.exprs.map (fun linExpr => Python.Expr.call
-          (Python.Expr.dot
-            (Python.Expr.id Model.Python.Name.cpsatSolver)
-            (Python.ValidName.mk "value" (by native_decide)))
-          #[ linExpr.toPythonExpr ])))))),
+      (Python.Expr.lit (Python.Literal.dict
+        #[
+          (Prod.mk
+            (Python.Expr.lit (Python.Literal.str Model.Python.Literals.exprs))
+            (Python.Expr.lit (Python.Literal.array
+              (req.exprs.map (fun linExpr => Python.Expr.call
+                (Python.Expr.dot
+                  (Python.Expr.id Model.Python.Name.cpsatSolver)
+                  (Python.ValidName.mk "value" (by native_decide)))
+                #[ linExpr.toPythonExpr ]))))),
+          (Prod.mk
+            (Python.Expr.lit (Python.Literal.str Model.Python.Literals.status))
+            (Python.Expr.call
+              (Python.Expr.id (Python.ValidName.mk "str" (by native_decide)))
+              #[ (Python.Expr.id Model.Python.Name.solveStatus) ]))
+        ]
+      ))
+      )),
     -- print(json.dumps(output))
     (Python.Statement.exprLine (Python.Expr.call
       (Python.Expr.id Model.Python.Name.print)
@@ -225,33 +249,50 @@ private def Model.parseScriptOutput
   : Except String (SolveResponse model req) :=
   match Lean.Json.parse scriptOutput with
   | .ok json => match json with
-    | .arr elems =>
-      if h : elems.size = req.exprs.size then
-        let results : Except String (Vector Int64.Proven elems.size) :=
-          Vector.mapM (fun el => match el with
-            | Lean.Json.num no =>
-              -- 1. JSON Number's value = mantissa * 10^-exponent
-              -- 2. therefore, we expect all resulting values (which must be
-              -- ints) to have exponent = 0
-              if no.exponent = 0 then
-                let num := no.mantissa;
-                if h : Int64.Proof num then
-                  Except.ok { val := num, proof := h }
-                else
-                  Except.error "Got out-of-bounds integer in resulting array."
+    | .obj map => match map.get? Model.Python.Literals.status with
+      | .none => Except.error "Missing key 'status' in resulting object."
+      | .some statusJson => match statusJson with
+        | .str statusStr =>
+          let status := match statusStr with
+          | "INFEASIBLE" => SolveStatus.infeasible
+          | "MODEL_INVALID" => SolveStatus.modelInvalid
+          | "FEASIBLE" => SolveStatus.feasible
+          | "OPTIMAL" => SolveStatus.optimal
+          | _ => SolveStatus.unknown;
+          match map.get? Model.Python.Literals.exprs with
+          | .some exprs => match exprs with
+            | .arr elems => if h : elems.size = req.exprs.size then
+              let results : Except String (Vector Int64.Proven elems.size) :=
+                Vector.mapM (fun el => match el with
+                  | Lean.Json.num no =>
+                    -- 1. JSON Number's value = mantissa * 10^-exponent
+                    -- 2. therefore, we expect all resulting values (which must be
+                    -- ints) to have exponent = 0
+                    if no.exponent = 0 then
+                      let num := no.mantissa;
+                      if h : Int64.Proof num then
+                        Except.ok { val := num, proof := h }
+                      else
+                        Except.error "Got out-of-bounds integer in resulting array."
+                    else
+                      Except.error "Got floating value in resulting array."
+                  | _ => Except.error "Unexpected type in resulting array.") elems.toVector
+                match results with
+                | Except.ok provenResults =>
+                  Except.ok {
+                    status := status
+                    exprs := {
+                      toArray := provenResults.toArray,
+                      size_toArray := Eq.subst h provenResults.size_toArray
+                    }
+                  }
+                | Except.error err => Except.error err
               else
-                Except.error "Got floating value in resulting array."
-            | _ => Except.error "Unexpected type in resulting array.") elems.toVector
-        match results with
-        | Except.ok provenResults =>
-          Except.ok { exprs := {
-            toArray := provenResults.toArray,
-            size_toArray := Eq.subst h provenResults.size_toArray
-          } }
-        | Except.error err => Except.error err
-      else
-        Except.error s!"Unexpected array.size, got {elems.size}, expected {req.exprs.size}."
-    | _ => Except.error "Unexpected JSON type, expected JSON array."
+                Except.error s!"Unexpected array.size, got {elems.size}, expected {req.exprs.size}."
+            | _ => Except.error "Unexpected JSON type, expected JSON array for key 'exprs'."
+          | .none => Except.error "Missing key 'exprs' in resulting object."
+        | _ => Except.error "Unexpected JSON type, expected string for key 'status'."
+    | _ => Except.error "Unexpected JSON type, expected JSON object at root."
   | .error err => Except.error err
 
 def Model.solve
