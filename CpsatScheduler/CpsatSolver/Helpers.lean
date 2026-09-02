@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Basic
+import CpsatScheduler.CpsatSolver.Defs
 
 import Mathlib.Data.Int.ConditionallyCompleteOrder
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
