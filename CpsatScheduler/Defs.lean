@@ -3,6 +3,7 @@ import CpsatScheduler.CpsatSolver.Defs
 import Mathlib.Data.Int.ConditionallyCompleteOrder
 import Mathlib.Data.Int.Interval
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
+import Mathlib.Combinatorics.Digraph.Basic
 
 namespace CpsatScheduler
 
@@ -12,24 +13,25 @@ structure Timescales where
   divisibility : ∀ a b : ℤ, a ∈ scales → b ∈ scales → a ≥ b → a % b = 0
   intValid : ∀ a : ℤ, a ∈ scales → CpsatSolver.Int64.Proof a
 
-structure Time (scale : Timescales) where
+structure Time (scales : Timescales) where
   coeff : ℤ
   unit : ℤ
-  unitValid : unit ∈ scale.scales
+  unitValid : unit ∈ scales.scales
   intValid : CpsatSolver.Int64.Proof (coeff * unit)
+  deriving DecidableEq
 
 -- ensures no remainder when int division, preventing lossy division
 private def Int.losslessDiv (a : ℤ) (b : ℤ) (_ : a % b = 0) :=
   a / b
 
 -- converts from a lesser timescale to a greater one
-def Time.convertUp {scale : Timescales}
-  (src : Time scale)
+def Time.convertUp {scales : Timescales}
+  (src : Time scales)
   (newUnit : ℤ)
-  (newUnitValid : newUnit ∈ scale.scales)
+  (newUnitValid : newUnit ∈ scales.scales)
   (isGe : newUnit ≥ src.unit) :=
   let scaleFactor := Int.losslessDiv newUnit src.unit (
-    scale.divisibility newUnit src.unit
+    scales.divisibility newUnit src.unit
       newUnitValid src.unitValid isGe
   );
   let newCoeff := src.coeff * scaleFactor;
@@ -39,16 +41,16 @@ def Time.convertUp {scale : Timescales}
     unit := newUnit
     unitValid := newUnitValid
     intValid := intValid
-  } : Time scale)
+  } : Time scales)
 
 -- converts from a greater timescale to a lesser one
-def Time.convertDown {scale : Timescales}
-  (src : Time scale)
+def Time.convertDown {scales : Timescales}
+  (src : Time scales)
   (newUnit : ℤ)
-  (newUnitValid : newUnit ∈ scale.scales)
+  (newUnitValid : newUnit ∈ scales.scales)
   (isLt : newUnit < src.unit) :=
   let newCoeff := Int.losslessDiv src.unit newUnit (
-    scale.divisibility src.unit newUnit
+    scales.divisibility src.unit newUnit
       src.unitValid newUnitValid (Std.le_of_lt isLt)
   );
   fun (intValid : CpsatSolver.Int64.Proof (newCoeff * newUnit)) =>
@@ -57,7 +59,7 @@ def Time.convertDown {scale : Timescales}
     unit := newUnit
     unitValid := newUnitValid
     intValid := intValid
-  } : Time scale)
+  } : Time scales)
 
 structure Interval where
   greater : ℤ
@@ -85,8 +87,45 @@ structure DiscretizedFunction (α : Type) where
 inductive CostConfiguration where
   | duration
 
-structure Task where
+structure Task (scales : Timescales) where
   name : CpsatSolver.Python.ValidName
+  startAfter : Option (Time scales)
+  startBefore : Option (Time scales)
   deriving DecidableEq
+
+-- sources:
+-- Digraph : https://leanprover-community.github.io/mathlib4_docs/Mathlib/Combinatorics/Digraph/Basic.html
+-- Relation.TransGen : https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#Relation.TransGen
+
+/-- for all tasks, there does not exist a chain of adjacent nodes which leads
+  to the task itself -/
+abbrev TaskSet.AcyclicGraph
+  {scales : Timescales}
+  {tasks : Finset (Task scales)}
+  (graph : Digraph { x // x ∈ tasks }) : Prop :=
+    ∀ x : Task scales, (h : x ∈ tasks) →
+      let xsub := { val := x, property := h };
+      ¬ (Relation.TransGen
+          (fun a b => graph.Adj a b)
+          xsub xsub)
+
+/-- for all tasks, there exists exactly one node which has it ∈ its .Adj -/
+abbrev TaskSet.TreeGraph
+  {scales : Timescales}
+  {tasks : Finset (Task scales)}
+  (graph : Digraph { x // x ∈ tasks }) : Prop :=
+  ∀ child : Task scales, (childInTasks : child ∈ tasks) →
+    ∃ parent : Task scales, (parentInTasks : parent ∈ tasks) →
+      graph.Adj
+        { val := parent, property := parentInTasks }
+        { val := child, property := childInTasks }
+
+structure TaskSet (scales : Timescales) where
+  tasks : Finset (Task scales)
+  prereqs : Digraph { x // x ∈ tasks }
+  children : Digraph { x // x ∈ tasks }
+  prereqsAcyclic : TaskSet.AcyclicGraph prereqs
+  childrenAcyclic : TaskSet.AcyclicGraph children
+  childrenTree : TaskSet.TreeGraph children
 
 end CpsatScheduler
