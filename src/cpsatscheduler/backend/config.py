@@ -1,4 +1,5 @@
 from __future__ import annotations
+from ortools.sat.python.cp_model import LinearExpr
 
 import sys
 from collections.abc import Callable
@@ -73,13 +74,28 @@ class TaskConfig:
     parent: int | None
     parent_configs: list[int]
 
+    early_bias_priority: int
+    # cognitive_perf_sensitivity is a value from 0-1
+    cognitive_perf_sensitivity: float
+
+
+@dataclass
+class CognitivePerfInterval:
+    start: atomic_unit
+    end: atomic_unit
+    # perf is a value from 0-1
+    perf: float
+
 
 @dataclass
 class Config:
+    global_early_bias_constant: int
+    global_cognitive_constant: int
+    cognitive_perf_intervals: list[CognitivePerfInterval]
     horizon: tuple[atomic_unit, atomic_unit]
     timescales: list[atomic_unit]
-    # margin will not be auto-created, the user is in charge of specifying magin
-    # ids -> TaskConfig
+    # margin will not be auto-created, the user is in charge of specifying
+    # margin ids -> TaskConfig
     tasks: dict[int, TaskConfig]
 
 
@@ -541,7 +557,8 @@ class ScheduledTask:
 @dataclass
 class Solution:
     status: cp_model.CpSolverStatus
-    cost: float
+    task_cost: float
+    early_bias_cost: float
     tasks: list[ScheduledTask]
 
 
@@ -663,11 +680,39 @@ class Model:
                     config_active, cost_intv_after_start, cost_intv_before_end
                 )
 
-    def __objective_function(self) -> None:
-        sum_cost_expr = 0
+    def __task_costs(self) -> LinearExpr:
+        expr = LinearExpr(0)
         for id in self.config.tasks:
-            sum_cost_expr += self.computed_vars[id].real_cost
-        self.model.minimize(sum_cost_expr)
+            expr += self.computed_vars[id].real_cost
+        return expr
+
+    def __early_bias_costs(self) -> LinearExpr:
+        expr = LinearExpr(0)
+        for id, t in self.config.tasks.items():
+            expr += (
+                self.config.global_early_bias_constant
+                * t.early_bias_priority
+                * self.decision_vars[id].start
+                * t.timescale_unit.value
+            )
+        return expr
+
+    # def __cognitive_sensitivity_costs(self) -> LinearExpr:
+    #     expr = LinearExpr(0)
+    #     for id, t in self.config.tasks.items():
+    #         # we want to pick a value based on comparison between a set of
+    #         # intervals and a variable
+    #         #
+    #         # we then want to add this value to a linear expression
+    #         expr += self.config.global_cognitive_constant * t.cognitive_perf_sensitivity
+    #         self.config.cognitive_perf_intervals
+    #
+    #     return expr
+
+    def __objective_function(self) -> None:
+        task_costs = self.__task_costs()
+        early_bias_costs = self.__early_bias_costs()
+        self.model.minimize(task_costs + early_bias_costs)
 
     # in general, worst case: O(task * cost config * cost interval)
     def make_cpmodel(self) -> cp_model.CpModel:
@@ -771,11 +816,13 @@ class Model:
             )
             for t in self.config.tasks
         ]
+
         # assert_intrinsic_start_end(self.config, scheduled)
         # assert_non_overflow(self.config, scheduled)
         return Solution(
             status=status,
-            cost=solver.ObjectiveValue(),
+            early_bias_cost=solver.value(self.__early_bias_costs()),
+            task_cost=solver.value(self.__task_costs()),
             tasks=scheduled,
         )
 
