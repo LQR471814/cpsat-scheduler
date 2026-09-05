@@ -12,6 +12,7 @@ abbrev Int64.Proof (b : ℤ) : Prop :=
 structure Int64.Proven where
   val : ℤ
   proof : Int64.Proof val
+  deriving DecidableEq
 
 structure Interval where
   min : ℤ

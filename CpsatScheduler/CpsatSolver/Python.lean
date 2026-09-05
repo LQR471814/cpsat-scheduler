@@ -1,5 +1,3 @@
-import Regex.Regex.Elab
-import Regex.Regex.Utilities
 import Mathlib.Data.Finset.Insert
 import Mathlib.Algebra.Order.Group.Nat
 
@@ -43,14 +41,19 @@ def ReservedKeywords : Finset String := {
   "yield"
 }
 
-def IDRegex := re! r"^[A-Za-z_][0-9A-Za-z_]*$"
+abbrev ValidIdent (str : String) : Prop :=
+  ∀ i : Fin str.toList.length, let c := str.toList[i];
+    (c ≥ 'A' ∧ c ≤ 'Z') ∨
+    (c ≥ 'a' ∧ c ≤ 'z') ∨
+    c = '_' ∨
+    (i.toNat > 0 → c ≥ '0' ∨ c ≤ '9')
 
 def ValidName.Proof (name : String) : Prop :=
-  ¬ (name ∈ ReservedKeywords) ∧ (IDRegex.test name)
+  ¬ (name ∈ ReservedKeywords) ∧ (ValidIdent name)
 
 instance : Decidable (ValidName.Proof α) :=
   (inferInstance : Decidable (
-    ¬ (α ∈ ReservedKeywords) ∧ (IDRegex.test α)
+    ¬ (α ∈ ReservedKeywords) ∧ (ValidIdent α)
   ))
 
 structure ValidName where

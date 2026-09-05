@@ -5,13 +5,13 @@ import Lean.Data.Json.Parser
 namespace CpsatSolver
 
 namespace Model.Python.Name
-private def print := Python.ValidName.mk "print" (by native_decide)
-private def json := Python.ValidName.mk "json" (by native_decide)
-private def cpModelLib := Python.ValidName.mk "cp_model" (by native_decide)
-private def model := Python.ValidName.mk "__cpsat_model__" (by native_decide)
-private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by native_decide)
-private def solveStatus := Python.ValidName.mk "__solve_status__" (by native_decide)
-private def output := Python.ValidName.mk "__output__" (by native_decide)
+private def print := Python.ValidName.mk "print" (by decide)
+private def json := Python.ValidName.mk "json" (by decide)
+private def cpModelLib := Python.ValidName.mk "cp_model" (by decide)
+private def model := Python.ValidName.mk "__cpsat_model__" (by decide)
+private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by decide)
+private def solveStatus := Python.ValidName.mk "__solve_status__" (by decide)
+private def output := Python.ValidName.mk "__output__" (by decide)
 end Model.Python.Name
 
 namespace Model.Python.Literals
@@ -50,7 +50,7 @@ private def Model.Python.boolVar (var : CpsatSolver.BoolVar) : Python.Statement 
     Python.Expr.call
       (Python.Expr.dot
         (Python.Expr.id Model.Python.Name.model)
-        (Python.ValidName.mk "new_bool_var" (by native_decide)))
+        (Python.ValidName.mk "new_bool_var" (by decide)))
       #[
         (Python.Expr.lit (Python.Literal.str var.name.val))
       ]
@@ -61,7 +61,7 @@ private def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
     Python.Expr.call
       (Python.Expr.dot
         (Python.Expr.id Model.Python.Name.model)
-        (Python.ValidName.mk "new_int_var" (by native_decide)))
+        (Python.ValidName.mk "new_int_var" (by decide)))
       #[
         (Python.Expr.lit (Python.Literal.int var.domain.min)),
         (Python.Expr.lit (Python.Literal.int var.domain.max)),
@@ -75,7 +75,7 @@ private def Model.Python.fixedSizeIntervalVar
     Python.Expr.call
       (Python.Expr.dot
         (Python.Expr.id Model.Python.Name.model)
-        (Python.ValidName.mk "new_fixed_size_interval" (by native_decide)))
+        (Python.ValidName.mk "new_fixed_size_interval" (by decide)))
       #[
         var.start.toPythonExpr,
         (Python.Expr.lit (Python.Literal.int var.size)),
@@ -89,29 +89,29 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
   let constraint : Python.Expr := match cnst.variant with
     | Constraint.Variant.bounded_linear expr =>
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add" (by native_decide)))
+        (modelDot (Python.ValidName.mk "add" (by decide)))
         #[ expr.toPythonExpr ]
     | Constraint.Variant.bool_and terms =>
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add_bool_and" (by native_decide)))
+        (modelDot (Python.ValidName.mk "add_bool_and" (by decide)))
         (terms.map (fun t => t.toPythonExpr))
     | Constraint.Variant.bool_or terms =>
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add_bool_or" (by native_decide)))
+        (modelDot (Python.ValidName.mk "add_bool_or" (by decide)))
         (terms.map (fun t => t.toPythonExpr))
     | Constraint.Variant.implication src dst =>
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add_implication" (by native_decide)))
+        (modelDot (Python.ValidName.mk "add_implication" (by decide)))
         #[ src.toPythonExpr, dst.toPythonExpr ]
     | Constraint.Variant.max_equality target exprs =>
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add_max_equality" (by native_decide)))
+        (modelDot (Python.ValidName.mk "add_max_equality" (by decide)))
         (Array.append
           #[ target.toPythonExpr ]
           (exprs.map (fun e => e.toPythonExpr)))
     | Constraint.Variant.cumulative intervals demands capacity =>
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add_cumulative" (by native_decide)))
+        (modelDot (Python.ValidName.mk "add_cumulative" (by decide)))
         #[
           (Python.Expr.lit (Python.Literal.array
             (intervals.map (fun e => e.toPythonExpr)))),
@@ -124,7 +124,7 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
     Python.Expr.call
       (Python.Expr.dot
         constraint
-        (Python.ValidName.mk "with_name" (by native_decide)))
+        (Python.ValidName.mk "with_name" (by decide)))
       #[ (Python.Expr.lit (Python.Literal.str cnst.name.val)) ]
   let enforced := match cnst.enforcement with
     | Constraint.Enforcement.always => Python.Statement.exprLine labeled
@@ -132,7 +132,7 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
       Python.Statement.exprLine (Python.Expr.call
         (Python.Expr.dot
           labeled
-          (Python.ValidName.mk "only_enforce_if" (by native_decide)))
+          (Python.ValidName.mk "only_enforce_if" (by decide)))
         (literals.map (fun (l : BoolLit) => l.toPythonExpr)).toArray)
     ;
   enforced
@@ -157,9 +157,9 @@ private def Model.Python.imports : Array Python.Statement := #[
   (Python.Statement.importLine
     (Python.Import.fromForm
       #[
-        (Python.ValidName.mk "ortools" (by native_decide)),
-        (Python.ValidName.mk "sat" (by native_decide)),
-        (Python.ValidName.mk "python" (by native_decide)),
+        (Python.ValidName.mk "ortools" (by decide)),
+        (Python.ValidName.mk "sat" (by decide)),
+        (Python.ValidName.mk "python" (by decide)),
       ]
       #[ (Python.NameAs.unaliased Model.Python.Name.cpModelLib) ])),
   -- import json
@@ -177,7 +177,7 @@ private def Model.Python.modelDef (model : Model) : Array Python.Statement :=
       (Python.Expr.call
         (Python.Expr.dot
           (Python.Expr.id Model.Python.Name.cpModelLib)
-          (Python.ValidName.mk "CpModel" (by native_decide))
+          (Python.ValidName.mk "CpModel" (by decide))
         )
         #[])))
   ];
@@ -202,7 +202,7 @@ private def Model.Python.reportSolution
       (Python.Expr.call
         (Python.Expr.dot
           (Python.Expr.id Model.Python.Name.cpModelLib)
-          (Python.ValidName.mk "CpSolver" (by native_decide)))
+          (Python.ValidName.mk "CpSolver" (by decide)))
         #[]))),
     -- status = solver.solve(model)
     (Python.Statement.exprLine (Python.Expr.assign
@@ -210,7 +210,7 @@ private def Model.Python.reportSolution
       (Python.Expr.call
         (Python.Expr.dot
           (Python.Expr.id Model.Python.Name.cpsatSolver)
-          (Python.ValidName.mk "solve" (by native_decide)))
+          (Python.ValidName.mk "solve" (by decide)))
         #[ (Python.Expr.id Model.Python.Name.model) ]))),
     -- output = {
     --   "exprs": [ solver.value()... ]
@@ -227,18 +227,18 @@ private def Model.Python.reportSolution
               (req.exprs.map (fun linExpr => Python.Expr.call
                 (Python.Expr.dot
                   (Python.Expr.id Model.Python.Name.cpsatSolver)
-                  (Python.ValidName.mk "value" (by native_decide)))
+                  (Python.ValidName.mk "value" (by decide)))
                 #[ linExpr.toPythonExpr ]))))),
           (Prod.mk
             (Python.Expr.lit (Python.Literal.str Model.Python.Literals.status))
             (Python.Expr.call
-              (Python.Expr.id (Python.ValidName.mk "str" (by native_decide)))
+              (Python.Expr.id (Python.ValidName.mk "str" (by decide)))
               #[ (Python.Expr.id Model.Python.Name.solveStatus) ])),
           (Prod.mk
             (Python.Expr.lit (Python.Literal.str Model.Python.Literals.objectiveValue))
             (Python.Expr.dot
               (Python.Expr.id Model.Python.Name.cpsatSolver)
-              (Python.ValidName.mk "objective_value" (by native_decide))))
+              (Python.ValidName.mk "objective_value" (by decide))))
         ]
       ))
       )),
@@ -248,7 +248,7 @@ private def Model.Python.reportSolution
       #[ (Python.Expr.call
           (Python.Expr.dot
             (Python.Expr.id Model.Python.Name.json)
-            (Python.ValidName.mk "dumps" (by native_decide)))
+            (Python.ValidName.mk "dumps" (by decide)))
           #[ (Python.Expr.id Model.Python.Name.output) ]) ]))
   ]
 

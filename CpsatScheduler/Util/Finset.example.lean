@@ -3,8 +3,8 @@ import Mathlib
 import CpsatScheduler.CpsatSolver.Python
 
 def exSet : Finset CpsatSolver.Python.ValidName := {
-  (CpsatSolver.Python.ValidName.mk "hello" (by native_decide)),
-  (CpsatSolver.Python.ValidName.mk "world" (by native_decide))
+  (CpsatSolver.Python.ValidName.mk "hello" (by decide)),
+  (CpsatSolver.Python.ValidName.mk "world" (by decide))
 }
 
 def nameOf (ofSet : exSet) := ofSet.val.val

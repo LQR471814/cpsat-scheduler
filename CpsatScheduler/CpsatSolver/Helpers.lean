@@ -229,10 +229,10 @@ def LinearExpr.mul
 
 #eval
   let intVarLeft := IntVar.mk
-    (Python.ValidName.mk "hello" (by native_decide))
+    (Python.ValidName.mk "hello" (by decide))
     { min := -1, max := 3 }
   let intVarRight := IntVar.mk
-    (Python.ValidName.mk "hello2" (by native_decide))
+    (Python.ValidName.mk "hello2" (by decide))
     { min := -5, max := -2 }
   let left := LinearExpr.var intVarLeft (of_decide_eq_true rfl);
   let right := LinearExpr.var intVarRight (of_decide_eq_true rfl);

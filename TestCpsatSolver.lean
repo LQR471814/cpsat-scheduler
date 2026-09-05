@@ -3,7 +3,7 @@ import CpsatScheduler.CpsatSolver.Model
 open CpsatSolver
 
 def x : IntVar := {
-  name := Python.ValidName.mk "x" (by native_decide),
+  name := Python.ValidName.mk "x" (by decide),
   domain := {
     min := 0,
     max := 10
@@ -11,7 +11,7 @@ def x : IntVar := {
 }
 
 def y : IntVar := {
-  name := Python.ValidName.mk "y" (by native_decide),
+  name := Python.ValidName.mk "y" (by decide),
   domain := {
     min := 0,
     max := 5
@@ -27,7 +27,7 @@ def model : Model := {
   fixedSizeIntervalsUniqueNames := by decide,
   constraints := #[
     (Constraint.mk
-      (Python.ValidName.mk "default" (by native_decide))
+      (Python.ValidName.mk "default" (by decide))
       Constraint.Enforcement.always
       (Constraint.Variant.bounded_linear
         (BoundedLinearExpr.eq
