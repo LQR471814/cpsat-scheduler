@@ -11,11 +11,21 @@ import CpsatScheduler.Util.Graphs
 
 namespace CpsatScheduler
 
+structure Horizon where
+  min : CpsatSolver.Int64.Proven
+  max : CpsatSolver.Int64.Proven
+  minLtMax : min.val < max.val
+  deriving DecidableEq
+
 structure Timescales where
   units : Finset ℤ
   hasAtomic : 1 ∈ units
   divisibility : ∀ a b : units, a ≥ b → (a : ℤ) % b = 0
   intValid : ∀ a : units, CpsatSolver.Int64.Proof a
+  horizon : Horizon
+  horizonMinValid : horizon.min.val % (units.max' (Exists.intro 1 hasAtomic)) = 0
+  horizonMaxValid : horizon.max.val % (units.max' (Exists.intro 1 hasAtomic)) = 0
+  deriving DecidableEq
 
 structure Time (scales : Timescales) where
   coeff : ℤ
@@ -81,14 +91,15 @@ structure DiscretizedFunction (α : Type) where
     Interval.mutuallyExclusive (Finset.image (·.interval) intervals)
   deriving DecidableEq
 
-inductive CostConfiguration where
-  | duration
+inductive CostConfiguration (scales : Timescales) where
+  | duration (value : Time scales)
+  deriving DecidableEq
 
 structure Task (scales : Timescales) where
   name : CpsatSolver.Python.ValidName
   unit : scales.units
-  startAfter : Option (Time scales)
-  startBefore : Option (Time scales)
+  startAfter : Option ({ t : Time scales // t.unit = unit })
+  startBefore : Option ({ t : Time scales // t.unit = unit })
   deriving DecidableEq
 
 structure TaskSet (scales : Timescales) where
@@ -99,35 +110,43 @@ structure TaskSet (scales : Timescales) where
   parents : FinDigraph (Task scales)
   parentsAcyclic : parents.IsAcyclic
   parentsTree : parents.IsTree
-  parentsMonotonicUnit : ∀ e : parents.edges, e.val.src.val.unit.val < e.val.dst.val.unit.val
+  parentsMonotonicUnit :
+    ∀ e : parents.edges, e.val.src.val.unit.val < e.val.dst.val.unit.val
 
-#eval
+#check
   let scales : Timescales := {
     units := { 1, 2, 4, 8 }
     intValid := by decide
     hasAtomic := by decide
     divisibility := by decide
+    horizon := {
+      min := { val := 0, proof := by decide }
+      max := { val := 32, proof := by decide }
+      minLtMax := by decide
+    }
+    horizonMinValid := by decide
+    horizonMaxValid := by decide
   };
   let t1 : Task scales := {
-    name := CpsatSolver.Python.ValidName.mk "task1" (by native_decide)
+    name := CpsatSolver.Python.ValidName.mk "task1" (by decide)
     unit := { val := 1, property := by decide }
     startAfter := Option.none
     startBefore := Option.none
   };
   let t2 : Task scales := {
-    name := CpsatSolver.Python.ValidName.mk "task2" (by native_decide)
+    name := CpsatSolver.Python.ValidName.mk "task2" (by decide)
     unit := { val := 2, property := by decide }
     startAfter := Option.none
     startBefore := Option.none
   };
   let t3 : Task scales := {
-    name := CpsatSolver.Python.ValidName.mk "task3" (by native_decide)
+    name := CpsatSolver.Python.ValidName.mk "task3" (by decide)
     unit := { val := 2, property := by decide }
     startAfter := Option.none
     startBefore := Option.none
   };
   let pt1 : Task scales := {
-    name := CpsatSolver.Python.ValidName.mk "ptask1" (by native_decide)
+    name := CpsatSolver.Python.ValidName.mk "ptask1" (by decide)
     unit := { val := 4, property := by decide }
     startAfter := Option.none
     startBefore := Option.none
@@ -138,7 +157,7 @@ structure TaskSet (scales : Timescales) where
     t3,
     pt1
   };
-  ({
+  let set : TaskSet scales := {
     tasks := tasks
     prereqs := {
       nodes := tasks
@@ -172,6 +191,7 @@ structure TaskSet (scales : Timescales) where
     parentsAcyclic := by decide
     parentsTree := by decide
     parentsMonotonicUnit := by decide
-  } : TaskSet scales)
+  };
+  set
 
 end CpsatScheduler
