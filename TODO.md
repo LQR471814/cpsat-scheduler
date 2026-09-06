@@ -4,16 +4,20 @@
       - [ ] Prove bounds for all integer variables
       - [o] Cost (configs)
          - [x] Def
+         - [x] Proof
          - [ ] Constraint
       - [o] Start/end
          - [x] Def
+         - [x] Proof
          - [ ] Constraint
-      - [.] Children
+      - [o] Children/parents
          - [x] Def
+         - [x] Proof
          - [ ] Constraint
-         - [ ] "Container" parents
+         - [ ] "Temporary" parents
       - [o] Prereqs
          - [x] Def
+         - [x] Proof
          - [ ] Constraint
       - [ ] Decision variables (cost config / start) constraint
       - [ ] Orphan deactivation constraint

@@ -5,7 +5,7 @@ import Mathlib.Algebra.Group.Int.Defs
 namespace CpsatSolver
 
 abbrev Int64.min : ℤ := -(2 : ℤ)^63
-abbrev Int64.max : ℤ := ((2 : ℤ)^63 - 1)
+abbrev Int64.max : ℤ := (2 : ℤ)^63 - 1
 abbrev Int64.Proof (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 

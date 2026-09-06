@@ -11,61 +11,91 @@ import CpsatScheduler.Util.Graphs
 
 namespace CpsatScheduler
 
-structure Horizon where
-  min : CpsatSolver.Int64.Proven
-  max : CpsatSolver.Int64.Proven
-  minLtMax : min.val < max.val
+structure Units where
+  set : Finset ℤ
+  nonzero : ∀ u : set, u.val ≥ 1
+  has_atomic : 1 ∈ set
+  divisibility : ∀ a b : set, a ≥ b → (a : ℤ) % b = 0
+  nonoverflow : ∀ a : set, CpsatSolver.Int64.Proof a
+  deriving DecidableEq
+
+abbrev Units.max (units : Units) : units.set :=
+  have nonempty := Exists.intro 1 units.has_atomic;
+  {
+    val := units.set.max' nonempty,
+    property := Finset.max'_mem units.set nonempty
+  }
+
+abbrev Units.atomic (units : Units) : units.set := {
+  val := 1, property := units.has_atomic
+}
+
+structure Horizon (units : Units) where
+  beginning : ℤ
+  ending : ℤ
+  begin_ge_0 : beginning ≥ 0
+  end_ge_0 : ending ≥ 0
+  begin_lt_end : beginning < ending
+  begin_divides_max_unit : beginning % units.max = 0
+  end_divides_max_unit : ending % units.max = 0
+  begin_nonoverflow : CpsatSolver.Int64.Proof (beginning * units.max)
+  end_nonoverflow : CpsatSolver.Int64.Proof (ending * units.max)
   deriving DecidableEq
 
 structure Timescales where
-  units : Finset ℤ
-  hasAtomic : 1 ∈ units
-  divisibility : ∀ a b : units, a ≥ b → (a : ℤ) % b = 0
-  intValid : ∀ a : units, CpsatSolver.Int64.Proof a
-  horizon : Horizon
-  horizonMinValid : horizon.min.val % (units.max' (Exists.intro 1 hasAtomic)) = 0
-  horizonMaxValid : horizon.max.val % (units.max' (Exists.intro 1 hasAtomic)) = 0
+  units : Units
+  horizon : Horizon units
   deriving DecidableEq
 
 structure Time (scales : Timescales) where
   coeff : ℤ
-  unit : scales.units
+  unit : scales.units.set
   intValid : CpsatSolver.Int64.Proof (coeff * unit)
   deriving DecidableEq
 
+theorem Timescales.all_ge_atomic {scales : Timescales}
+  : ∀ u : scales.units.set, scales.units.atomic ≤ u :=
+    scales.units.nonzero
+
 -- ensures no remainder when int division, preventing lossy division
-private def Int.losslessDiv (a : ℤ) (b : ℤ) (_ : a % b = 0) :=
+private abbrev Int.losslessDiv (a : ℤ) (b : ℤ) (_ : a % b = 0) :=
   a / b
 
 -- converts from a lesser timescale to a greater one
 def Time.convertUp {scales : Timescales}
   (src : Time scales)
-  (newUnit : scales.units)
+  (newUnit : scales.units.set)
   (isGe : newUnit ≥ src.unit) :=
-  let scaleFactor := Int.losslessDiv newUnit src.unit (
-    scales.divisibility newUnit src.unit isGe
-  );
+  let scaleFactor := Int.losslessDiv
+    newUnit src.unit
+    (scales.units.divisibility newUnit src.unit isGe);
   let newCoeff := src.coeff * scaleFactor;
   fun (intValid : CpsatSolver.Int64.Proof (newCoeff * newUnit)) =>
-  ({
-    coeff := newCoeff
-    unit := newUnit
-    intValid := intValid
-  } : Time scales)
+    ({
+      coeff := newCoeff
+      unit := newUnit
+      intValid := intValid
+    } : Time scales)
 
 -- converts from a greater timescale to a lesser one
 def Time.convertDown {scales : Timescales}
   (src : Time scales)
-  (newUnit : scales.units)
-  (isLt : newUnit < src.unit) :=
-  let newCoeff := Int.losslessDiv src.unit newUnit (
-    scales.divisibility src.unit newUnit (Std.le_of_lt isLt)
-  );
-  fun (intValid : CpsatSolver.Int64.Proof (newCoeff * newUnit)) =>
+  (newUnit : scales.units.set)
+  (isLe : newUnit ≤ src.unit) :=
+  have src_divides_new := scales.units.divisibility src.unit newUnit isLe;
+  let newCoeff := Int.losslessDiv src.unit newUnit
+    src_divides_new;
+  have mul_canceled : newCoeff * newUnit = src.unit :=
+    Int.ediv_mul_cancel_of_dvd
+      (Int.dvd_of_emod_eq_zero src_divides_new);
+  have mul_non_overflow : CpsatSolver.Int64.Proof (newCoeff * newUnit) :=
+    Eq.subst (Eq.symm mul_canceled)
+      (motive := fun p => CpsatSolver.Int64.Proof p)
+      (scales.units.nonoverflow src.unit);
   ({
     coeff := newCoeff
     unit := newUnit
-    intValid := intValid
+    intValid := mul_non_overflow
   } : Time scales)
 
 structure Interval where
@@ -97,7 +127,7 @@ inductive CostConfiguration (scales : Timescales) where
 
 structure Task (scales : Timescales) where
   name : CpsatSolver.Python.ValidName
-  unit : scales.units
+  unit : scales.units.set
   startAfter : Option ({ t : Time scales // t.unit = unit })
   startBefore : Option ({ t : Time scales // t.unit = unit })
   deriving DecidableEq
@@ -115,17 +145,24 @@ structure TaskSet (scales : Timescales) where
 
 #check
   let scales : Timescales := {
-    units := { 1, 2, 4, 8 }
-    intValid := by decide
-    hasAtomic := by decide
-    divisibility := by decide
-    horizon := {
-      min := { val := 0, proof := by decide }
-      max := { val := 32, proof := by decide }
-      minLtMax := by decide
+    units := {
+      set := { 1, 2, 4, 8 }
+      nonzero := by decide
+      nonoverflow := by decide
+      has_atomic := by decide
+      divisibility := by decide
     }
-    horizonMinValid := by decide
-    horizonMaxValid := by decide
+    horizon := {
+      beginning := 0
+      ending := 32
+      begin_ge_0 := by decide
+      end_ge_0 := by decide
+      begin_lt_end := by decide
+      begin_divides_max_unit := by decide
+      end_divides_max_unit := by decide
+      begin_nonoverflow := by decide
+      end_nonoverflow := by decide
+    }
   };
   let t1 : Task scales := {
     name := CpsatSolver.Python.ValidName.mk "task1" (by decide)
