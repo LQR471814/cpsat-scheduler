@@ -50,19 +50,15 @@ def LinearExpr.Proven.toPythonExpr (expr : LinearExpr.Proven) : Python.Expr :=
 termination_by structural expr
 
 def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
-  match expr with
-  | BoundedLinearExpr.eq a b =>
-    Python.Expr.eq a.toPythonExpr b.toPythonExpr
-  | BoundedLinearExpr.neq a b =>
-    Python.Expr.neq a.toPythonExpr b.toPythonExpr
-  | BoundedLinearExpr.gt a b =>
-    Python.Expr.gt a.toPythonExpr b.toPythonExpr
-  | BoundedLinearExpr.gte a b =>
-    Python.Expr.gte a.toPythonExpr b.toPythonExpr
-  | BoundedLinearExpr.lt a b =>
-    Python.Expr.lt a.toPythonExpr b.toPythonExpr
-  | BoundedLinearExpr.lte a b =>
-    Python.Expr.lte a.toPythonExpr b.toPythonExpr
+  let a := expr.left
+  let b := expr.right
+  match expr.op with
+  | .eq => Python.Expr.eq a.toPythonExpr b.toPythonExpr
+  | .neq => Python.Expr.neq a.toPythonExpr b.toPythonExpr
+  | .gt => Python.Expr.gt a.toPythonExpr b.toPythonExpr
+  | .gte => Python.Expr.gte a.toPythonExpr b.toPythonExpr
+  | .lt => Python.Expr.lt a.toPythonExpr b.toPythonExpr
+  | .lte => Python.Expr.lte a.toPythonExpr b.toPythonExpr
 
 def LinearExpr.var
   (value : IntVar)

@@ -171,17 +171,17 @@ instance : Var FixedSizeIntervalVar where
   name var := var.name
 
 
--- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
--- (e.g. >, <, ==)
-inductive BoundedLinearExpr where
-  | eq (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | neq (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | gt (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | gte (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | lt (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | lte (a : LinearExpr.Proven) (b : LinearExpr.Proven)
+inductive BoundedLinearExpr.Op where
+  | eq | neq | gt | gte | lt | lte
   deriving DecidableEq
 
+-- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
+-- (e.g. >, <, ==)
+structure BoundedLinearExpr where
+  op : BoundedLinearExpr.Op
+  left : LinearExpr.Proven
+  right : LinearExpr.Proven
+  deriving DecidableEq
 
 inductive Constraint.Enforcement where
   | always
