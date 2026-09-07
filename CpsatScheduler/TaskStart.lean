@@ -54,86 +54,17 @@ private def Task.startAfterTime {scales : Timescales}
   match t.startAfter with
   | Option.none =>
     {
-      coeff :=
-        {
-          val := (horizon.beginning.convertLossy t.unit).val
-          proof := by
-            have hunit : horizon.beginning.unit ≤ t.unit := by
-              rw [horizon.begin_is_atomic]
-              exact units.nonzero t.unit
-            have hsize :=
-              Time.convertLossy_coeff_abs_le horizon.beginning t.unit hunit
-            have hXpos : 0 < horizon.beginning.unit.val :=
-              lt_of_lt_of_le Int.zero_lt_one (units.nonzero horizon.beginning.unit)
-            obtain ⟨k, hk⟩ : ∃ k : ℤ, t.unit.val = horizon.beginning.unit.val * k :=
-              Int.dvd_iff_emod_eq_zero.mpr
-                (units.divisibility t.unit horizon.beginning.unit hunit)
-            have hkpos : 0 < k := by
-              have hYpos : 0 < t.unit.val :=
-                lt_of_lt_of_le Int.zero_lt_one (units.nonzero t.unit)
-              rw [hk] at hYpos
-              nlinarith
-            have hconverted :
-                (horizon.beginning.convertLossy t.unit).val = horizon.beginning.coeff.val / k := by
-              simp only [Time.convertLossy]
-              rw [hk]
-              calc
-                horizon.beginning.coeff.val * horizon.beginning.unit.val /
-                    (horizon.beginning.unit.val * k) =
-                    horizon.beginning.unit.val * horizon.beginning.coeff.val /
-                      (horizon.beginning.unit.val * k) := by rw [mul_comm]
-                _ = horizon.beginning.coeff.val / k :=
-                  Int.mul_ediv_mul_of_pos _ _ hXpos
-            constructor
-            · have hcoeff_abs : |horizon.beginning.coeff.val| ≤ (2 : ℤ)^63 := by
-                obtain ⟨hmin, hmax⟩ := horizon.beginning.coeff.proof
-                by_cases hcoeff_nonneg : 0 ≤ horizon.beginning.coeff.val
-                · rw [abs_of_nonneg hcoeff_nonneg]
-                  unfold CpsatSolver.Int64.max at hmax
-                  omega
-                · rw [abs_of_neg (lt_of_not_ge hcoeff_nonneg)]
-                  unfold CpsatSolver.Int64.min at hmin
-                  omega
-              unfold CpsatSolver.Int64.min
-              calc
-                -((2 : ℤ)^63) ≤ -|horizon.beginning.coeff.val| := by omega
-                _ ≤ -|(horizon.beginning.convertLossy t.unit).val| := by omega
-                _ ≤ (horizon.beginning.convertLossy t.unit).val := neg_abs_le _
-            · by_cases hconverted_nonpos : (horizon.beginning.convertLossy t.unit).val ≤ 0
-              · exact hconverted_nonpos.trans (by
-                  unfold CpsatSolver.Int64.max
-                  omega)
-              · have hconverted_pos : 0 < (horizon.beginning.convertLossy t.unit).val :=
-                  lt_of_not_ge hconverted_nonpos
-                have hcoeff_nonneg : 0 ≤ horizon.beginning.coeff.val := by
-                  by_contra hcoeff_nonneg
-                  have hcoeff_neg : horizon.beginning.coeff.val < 0 :=
-                    lt_of_not_ge hcoeff_nonneg
-                  rw [hconverted] at hconverted_pos
-                  exact (not_lt_of_ge (le_of_lt
-                    (Int.ediv_neg_of_neg_of_pos hcoeff_neg hkpos))) hconverted_pos
-                rw [hconverted]
-                exact (Int.ediv_le_self _ hcoeff_nonneg).trans
-                  horizon.beginning.coeff.proof.2
-        }
+      coeff := {
+        val := (horizon.beginning.convertLossy t.unit).val
+        proof := by
+          have hunit : horizon.beginning.unit ≤ t.unit := by
+            rw [horizon.begin_is_atomic]
+            exact units.nonzero t.unit
+          exact Time.convertLossy_coeff_proof horizon.beginning t.unit hunit
+      }
       unit := t.unit
     }
-    -- horizon.beginning.convertUp
-    --   t.unit
-    --   (have unit_ge_atomic : t.unit ≥ units.atomic :=
-    --       units.nonzero t.unit
-    --     have atomic_is_horizon_begin : units.atomic = horizon.beginning.unit :=
-    --       Eq.symm horizon.begin_is_atomic;
-    --     have result : t.unit ≥ horizon.beginning.unit :=
-    --       Eq.subst
-    --         atomic_is_horizon_begin
-    --         unit_ge_atomic
-    --     result)
-    --   (let newCoeff := t.unit.val / horizon.beginning.unit * horizon.beginning.coeff;
-    --     sorry
-    -- )
-  | Option.some time =>
-    time.val
+  | Option.some time => time.val
 
 private def Task.startBeforeTime {scales : Timescales} (t : Task scales) : Time scales.units :=
   let units := scales.units;

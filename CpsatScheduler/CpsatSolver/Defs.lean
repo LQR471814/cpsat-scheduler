@@ -11,6 +11,19 @@ abbrev Int64.max : ℤ := (2 : ℤ)^63 - 1
 abbrev Int64.Proof (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 
+/-- Euclidean division by a positive integer preserves the Int64 range. -/
+theorem Int64.proof_ediv_of_pos {a divisor : ℤ}
+    (ha : Int64.Proof a) (hdivisor : 0 < divisor) :
+    Int64.Proof (a / divisor) := by
+  constructor
+  · change Int64.min ≤ a / divisor
+    rw [Int.le_ediv_iff_mul_le hdivisor]
+    unfold Int64.min
+    nlinarith [ha.1]
+  · rw [Int.ediv_le_iff_le_mul hdivisor]
+    unfold Int64.max
+    nlinarith [ha.2]
+
 /-- If a nonzero integer `b` multiplies `a` into the `Int64` range, then `a` itself
 is in range, except for the overflow pair `a = 2^63`, `b = -1`. -/
 theorem Int64.proof_of_mul_left {a b : ℤ}

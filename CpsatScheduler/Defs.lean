@@ -203,6 +203,28 @@ theorem Time.convertLossy_coeff_abs_le {units : Units}
       _ = task.coeff.val / k := Int.mul_ediv_mul_of_pos _ _ hXpos]
   exact Int.abs_ediv_le_abs _ _
 
+/-- Lossy conversion to a no-smaller unit produces an Int64-valid coefficient. -/
+theorem Time.convertLossy_coeff_proof {units : Units}
+    (task : Time units) (Y : units.set) (hXY : task.unit ≤ Y) :
+    CpsatSolver.Int64.Proof (task.convertLossy Y).val := by
+  have hXpos : 0 < task.unit.val :=
+    lt_of_lt_of_le Int.zero_lt_one (units.nonzero task.unit)
+  obtain ⟨k, hk⟩ : ∃ k : ℤ, Y.val = task.unit.val * k :=
+    Int.dvd_iff_emod_eq_zero.mpr (units.divisibility Y task.unit hXY)
+  have hkpos : 0 < k := by
+    have hYpos : 0 < Y.val :=
+      lt_of_lt_of_le Int.zero_lt_one (units.nonzero Y)
+    rw [hk] at hYpos
+    nlinarith
+  rw [show (task.convertLossy Y).val = task.coeff.val / k by
+    simp only [Time.convertLossy]
+    rw [hk]
+    calc
+      task.coeff.val * task.unit.val / (task.unit.val * k)
+          = task.unit.val * task.coeff.val / (task.unit.val * k) := by rw [mul_comm]
+      _ = task.coeff.val / k := Int.mul_ediv_mul_of_pos _ _ hXpos]
+  exact CpsatSolver.Int64.proof_ediv_of_pos task.coeff.proof hkpos
+
 abbrev Time.lt {units : Units}
   (a b : Time units)
   (_ : a.unit = b.unit) : Prop :=
