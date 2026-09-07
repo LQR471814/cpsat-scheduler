@@ -2,6 +2,8 @@ import CpsatScheduler.CpsatSolver.Python
 import Mathlib.Order.Interval.Basic
 import Mathlib.Algebra.Group.Int.Defs
 
+import Mathlib
+
 namespace CpsatSolver
 
 abbrev Int64.min : ℤ := -(2 : ℤ)^63
@@ -9,10 +11,72 @@ abbrev Int64.max : ℤ := (2 : ℤ)^63 - 1
 abbrev Int64.Proof (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 
+/-- If a nonzero integer `b` multiplies `a` into the `Int64` range, then `a` itself
+is in range, except for the overflow pair `a = 2^63`, `b = -1`. -/
+theorem Int64.proof_of_mul_left {a b : ℤ}
+    (hb : b ≠ 0)
+    (h₁ : ¬(a = (2 : ℤ)^63 ∧ b = -1))
+    (h : Int64.Proof (a * b)) :
+    Int64.Proof a := by
+  obtain ⟨hab_min, hab_max⟩ := h
+  constructor
+  · -- `min ≤ a`
+    by_contra hna
+    have ha' : a ≤ -((2 : ℤ)^63) - 1 := by
+      unfold min at hna
+      omega
+    cases lt_or_gt_of_ne hb with
+    | inl hbneg =>
+      have hb1 : b ≤ -1 := by omega
+      have : (2 : ℤ)^63 ≤ a * b := by nlinarith
+      unfold max at hab_max
+      omega
+    | inr hbpos =>
+      have hb1 : 1 ≤ b := by omega
+      have : a * b ≤ -((2 : ℤ)^63) - 1 := by nlinarith
+      unfold min at hab_min
+      omega
+  · -- `a ≤ max`
+    by_contra hna
+    have ha' : (2 : ℤ)^63 ≤ a := by
+      unfold max at hna
+      omega
+    cases lt_or_gt_of_ne hb with
+    | inl hbneg =>
+      have hb1 : b ≤ -1 := by omega
+      have hle : a * b ≤ (2 : ℤ)^63 * b := by nlinarith
+      have hle' : (2 : ℤ)^63 * b ≤ -((2 : ℤ)^63) := by nlinarith
+      have heq_prod : a * b = -((2 : ℤ)^63) := by
+        unfold min at hab_min
+        omega
+      have hb_eq : b = -1 := by nlinarith
+      have ha_eq : a = (2 : ℤ)^63 := by nlinarith
+      exact h₁ ⟨ha_eq, hb_eq⟩
+    | inr hbpos =>
+      have hb1 : 1 ≤ b := by omega
+      have : (2 : ℤ)^63 ≤ a * b := by nlinarith
+      unfold max at hab_max
+      omega
+
+theorem Int64.proof_of_mul {a b : ℤ}
+    (ha : a ≠ 0)
+    (hb : b ≠ 0)
+    (h₁ : ¬(a = (2 : ℤ)^63 ∧ b = -1))
+    (h₂ : ¬(a = -1 ∧ b = (2 : ℤ)^63))
+    (h : Int64.Proof (a * b)) :
+    Int64.Proof a ∧ Int64.Proof b :=
+  ⟨Int64.proof_of_mul_left hb h₁ h,
+   Int64.proof_of_mul_left ha (by
+     intro hba
+     exact h₂ ⟨hba.2, hba.1⟩) (by simpa [mul_comm] using h)⟩
+
 structure Int64.Proven where
   val : ℤ
   proof : Int64.Proof val
   deriving DecidableEq
+
+instance : Coe Int64.Proven ℤ where
+  coe proven := proven.val
 
 structure Interval where
   min : ℤ
