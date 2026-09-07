@@ -158,6 +158,51 @@ def Time.convertLossy {units : Units}
     }
   result
 
+/-- Converting exactly to a no-larger unit cannot decrease the coefficient's magnitude. -/
+theorem Time.convertLossless_coeff_abs_le {units : Units}
+    (task : Time units) (Y : units.set) (hYX : Y ≤ task.unit) :
+    |task.coeff.val| ≤
+      |(task.convertLossless Y (dvd_mul_of_dvd_right
+        (Int.dvd_iff_emod_eq_zero.mpr (units.divisibility task.unit Y hYX)) _)).val| := by
+  have hYpos : 0 < Y.val :=
+    lt_of_lt_of_le Int.zero_lt_one (units.nonzero Y)
+  obtain ⟨k, hk⟩ : ∃ k : ℤ, task.unit.val = Y.val * k :=
+    Int.dvd_iff_emod_eq_zero.mpr (units.divisibility task.unit Y hYX)
+  have hk_nonneg : 0 ≤ k := by
+    have hXgeY : Y.val ≤ task.unit.val := hYX
+    rw [hk] at hXgeY
+    nlinarith
+  have hk_one : 1 ≤ k := by
+    have hXgeY : Y.val ≤ task.unit.val := hYX
+    rw [hk] at hXgeY
+    nlinarith
+  rw [show (task.convertLossless Y (dvd_mul_of_dvd_right
+      (Int.dvd_iff_emod_eq_zero.mpr (units.divisibility task.unit Y hYX)) _)).val =
+      task.coeff.val * k by
+    simp only [Time.convertLossless]
+    rw [hk]
+    rw [show task.coeff.val * (Y.val * k) = Y.val * (task.coeff.val * k) by ring]
+    exact Int.mul_ediv_cancel_left _ (ne_of_gt hYpos)]
+  rw [abs_mul, abs_of_nonneg hk_nonneg]
+  nlinarith [abs_nonneg task.coeff.val]
+
+/-- Converting to a no-smaller unit cannot increase the coefficient's magnitude. -/
+theorem Time.convertLossy_coeff_abs_le {units : Units}
+    (task : Time units) (Y : units.set) (hXY : task.unit ≤ Y) :
+    |(task.convertLossy Y).val| ≤ |task.coeff.val| := by
+  have hXpos : 0 < task.unit.val :=
+    lt_of_lt_of_le Int.zero_lt_one (units.nonzero task.unit)
+  obtain ⟨k, hk⟩ : ∃ k : ℤ, Y.val = task.unit.val * k :=
+    Int.dvd_iff_emod_eq_zero.mpr (units.divisibility Y task.unit hXY)
+  rw [show (task.convertLossy Y).val = task.coeff.val / k by
+    simp only [Time.convertLossy]
+    rw [hk]
+    calc
+      task.coeff.val * task.unit.val / (task.unit.val * k)
+          = task.unit.val * task.coeff.val / (task.unit.val * k) := by rw [mul_comm]
+      _ = task.coeff.val / k := Int.mul_ediv_mul_of_pos _ _ hXpos]
+  exact Int.abs_ediv_le_abs _ _
+
 abbrev Time.lt {units : Units}
   (a b : Time units)
   (_ : a.unit = b.unit) : Prop :=
