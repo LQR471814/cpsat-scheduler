@@ -91,10 +91,25 @@ structure Int64.Proven where
 instance : Coe Int64.Proven ℤ where
   coe proven := proven.val
 
+-- this is a closed interval
 structure Interval where
   min : ℤ
   max : ℤ
   deriving DecidableEq
+
+instance : Membership ℤ Interval where
+  mem i m := m ≥ i.min ∧ m ≤ i.max
+
+instance : Inter Interval where
+  inter a b :=
+    let fst := if a.min ≤ b.min then a else b;
+    let snd := if fst = a then b else a;
+    -- this may produce intervals whose min > max, asking for Interval.Proof
+    -- should help curb issues from this
+    {
+      min := max fst.min snd.min
+      max := min fst.max snd.max
+    }
 
 def Interval.Proof (it : Interval) :=
   it.min ≤ it.max ∧
@@ -175,12 +190,39 @@ inductive BoundedLinearExpr.Op where
   | eq | neq | gt | gte | lt | lte
   deriving DecidableEq
 
+def BoundedLinearExpr.NoContradict
+  (op : BoundedLinearExpr.Op) (left right : LinearExpr.Proven) : Prop :=
+  let L := left.proof.domain;
+  let R := right.proof.domain;
+  match op with
+  -- ¬ (left ∩ right = ∅)
+  | .eq => Interval.Proof (L ∩ R)
+  -- ¬ (left = right)
+  | .neq => L ≠ R
+  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≤ y)
+  | .gt => ∃ x ∈ L, ∃ y ∈ R, x > y
+  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x < y)
+  | .gte => ∃ x ∈ L, ∃ y ∈ R, x ≥ y
+  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≥ y)
+  | .lt => ∃ x ∈ L, ∃ y ∈ R, x < y
+  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x > y)
+  | .lte => ∃ x ∈ L, ∃ y ∈ R, x ≤ y
+
+-- TODO: determine whether int variable definitions are necessary
+-- 1. in scenarios where an int var = linear expr, they should be unnecessary
+-- 2. "add_max_equality" or "add_sum" require intermediate int var to store result
+--
+-- in general?
+--
+-- expressions whose values need to be modulated with constraints
+
 -- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
 -- (e.g. >, <, ==)
 structure BoundedLinearExpr where
   op : BoundedLinearExpr.Op
   left : LinearExpr.Proven
   right : LinearExpr.Proven
+  no_contradict : BoundedLinearExpr.NoContradict op left right
   deriving DecidableEq
 
 inductive Constraint.Enforcement where

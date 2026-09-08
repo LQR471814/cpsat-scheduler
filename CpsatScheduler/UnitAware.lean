@@ -54,6 +54,7 @@ structure BoundedLinearExpr (units : Units) where
   left : LinearExpr units
   right : LinearExpr units
   units_eq : left.unit = right.unit
+  no_contradict : CpsatSolver.BoundedLinearExpr.NoContradict op left.cpsat right.cpsat
   deriving DecidableEq
 
 def BoundedLinearExpr.cpsat {units : Units}
@@ -62,6 +63,7 @@ def BoundedLinearExpr.cpsat {units : Units}
       op := b.op
       left := b.left.cpsat
       right := b.right.cpsat
+      no_contradict := b.no_contradict
     }
 
 inductive Constraint.Variant (units : Units) where
