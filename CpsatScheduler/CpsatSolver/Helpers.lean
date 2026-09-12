@@ -9,14 +9,14 @@ namespace CpsatSolver
 
 open CpsatSolver
 
-instance : Decidable (Int64.Proof α) :=
+instance : Decidable (Int64.Nonoverflow α) :=
   (inferInstance : Decidable (α ≥ Int64.min ∧ α ≤ Int64.max))
 
 instance : Decidable (Interval.Proof α) :=
   (inferInstance : Decidable (
-    α.min ≤ α.max ∧
-    Int64.Proof α.min ∧
-    Int64.Proof α.max
+    α.left ≤ α.right ∧
+    Int64.Nonoverflow α.left ∧
+    Int64.Nonoverflow α.right
   ))
 
 instance : Decidable (IntVar.Proof α) :=
@@ -71,13 +71,13 @@ def LinearExpr.var (value : IntVar.Proven) : LinearExpr.Proven :=
 
 def LinearExpr.const
   (value : ℤ)
-  (H : Int64.Proof value) : LinearExpr.Proven :=
+  (H : Int64.Nonoverflow value) : LinearExpr.Proven :=
   {
     op := LinearExpr.Op.const value H,
     proof :=
       let domain : Interval := {
-        min := value,
-        max := value
+        left := value,
+        right := value
       };
       {
         domain := domain,
@@ -88,13 +88,13 @@ def LinearExpr.const
 def LinearExpr.neg
   (a : LinearExpr.Proven) :=
   let neg : Interval := {
-    min := -a.proof.domain.max,
-    max := -a.proof.domain.min
+    left := -a.proof.domain.max,
+    right := -a.proof.domain.left
   };
   let curried
-    (Hmin : Int64.Proof neg.min)
-    (Hmax : Int64.Proof neg.max) : LinearExpr.Proven :=
-    let min_le_max : neg.min ≤ neg.max :=
+    (Hmin : Int64.Nonoverflow neg.left)
+    (Hmax : Int64.Nonoverflow neg.right) : LinearExpr.Proven :=
+    let min_le_max : neg.left ≤ neg.right :=
       neg_le_neg a.proof.domainValid.left;
     {
       op := LinearExpr.Op.neg a,
@@ -111,13 +111,13 @@ def LinearExpr.add
   let leftDomain := left.proof.domain;
   let rightDomain := right.proof.domain;
   let added : Interval := {
-    min := leftDomain.min + rightDomain.min,
-    max := leftDomain.max + rightDomain.max
+    left := leftDomain.left + rightDomain.left,
+    right := leftDomain.right + rightDomain.right
   };
   let curried
-    (Hmin : Int64.Proof added.min)
-    (Hmax : Int64.Proof added.max) : LinearExpr.Proven :=
-    let min_le_max : added.min ≤ added.max :=
+    (Hmin : Int64.Nonoverflow added.left)
+    (Hmax : Int64.Nonoverflow added.right) : LinearExpr.Proven :=
+    let min_le_max : added.left ≤ added.right :=
       -- a <= a'
       -- b <= b'
       --
@@ -126,10 +126,10 @@ def LinearExpr.add
       -- 3. b + a' = a' + b
       -- 4. a' + b <= b' + a'
       -- 5. a + b <= a' + b'
-      let a := leftDomain.min;
-      let a' := leftDomain.max;
-      let b := rightDomain.min;
-      let b' := rightDomain.max;
+      let a := leftDomain.left;
+      let a' := leftDomain.right;
+      let b := rightDomain.left;
+      let b' := rightDomain.right;
       let a_lt_a' : a ≤ a' := left.proof.domainValid.left;
       let b_lt_b' : b ≤ b' := right.proof.domainValid.left;
       -- let st1 : a + b ≤ a' + b := add_le_add_left a_lt_a' b;
@@ -161,17 +161,17 @@ def LinearExpr.sub
   let leftDomain := left.proof.domain;
   let rightDomain := right.proof.domain;
   let subtracted : Interval := {
-    min := leftDomain.min - rightDomain.max,
-    max := leftDomain.max - rightDomain.min
+    left := leftDomain.left - rightDomain.max,
+    right := leftDomain.right - rightDomain.left
   };
   let curried
-    (Hmin : Int64.Proof subtracted.min)
-    (Hmax : Int64.Proof subtracted.max) : LinearExpr.Proven :=
-    let min_le_max : subtracted.min ≤ subtracted.max :=
-      let a := leftDomain.min;
-      let a' := leftDomain.max;
-      let b := rightDomain.min;
-      let b' := rightDomain.max;
+    (Hmin : Int64.Nonoverflow subtracted.left)
+    (Hmax : Int64.Nonoverflow subtracted.right) : LinearExpr.Proven :=
+    let min_le_max : subtracted.left ≤ subtracted.right :=
+      let a := leftDomain.left;
+      let a' := leftDomain.right;
+      let b := rightDomain.left;
+      let b' := rightDomain.right;
       let a_lt_a' : a ≤ a' := left.proof.domainValid.left;
       let b_lt_b' : b ≤ b' := right.proof.domainValid.left;
       sub_le_sub a_lt_a' b_lt_b'
@@ -187,17 +187,17 @@ def LinearExpr.sub
 def LinearExpr.mul
   (left : LinearExpr.Proven)
   (right : LinearExpr.Proven) :=
-  let c1 := left.proof.domain.min * right.proof.domain.min;
-  let c2 := left.proof.domain.min * right.proof.domain.max;
-  let c3 := left.proof.domain.max * right.proof.domain.min;
-  let c4 := left.proof.domain.max * right.proof.domain.max;
+  let c1 := left.proof.domain.left * right.proof.domain.left;
+  let c2 := left.proof.domain.left * right.proof.domain.right;
+  let c3 := left.proof.domain.right * right.proof.domain.left;
+  let c4 := left.proof.domain.right * right.proof.domain.right;
   let domain : Interval := {
-    min := min (min (min c1 c2) c3) c4,
-    max := max (max (max c1 c2) c3) c4
+    left := min (min (min c1 c2) c3) c4,
+    right := max (max (max c1 c2) c3) c4
   };
   let curried
-    (Hmin : Int64.Proof domain.min)
-    (Hmax : Int64.Proof domain.max) : LinearExpr.Proven :=
+    (Hmin : Int64.Nonoverflow domain.left)
+    (Hmax : Int64.Nonoverflow domain.right) : LinearExpr.Proven :=
       let domainValid : domain.Proof :=
         And.intro (
           (min_le_left _ _).trans (
@@ -224,10 +224,10 @@ def LinearExpr.mul
 #eval
   let intVarLeft := IntVar.mk
     (Python.ValidName.mk "hello" (by decide))
-    { min := -1, max := 3 }
+    { left := -1, right := 3 }
   let intVarRight := IntVar.mk
     (Python.ValidName.mk "hello2" (by decide))
-    { min := -5, max := -2 }
+    { left := -5, right := -2 }
   let left := LinearExpr.var {
     val := intVarLeft
     property := of_decide_eq_true rfl

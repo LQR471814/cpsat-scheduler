@@ -63,8 +63,8 @@ private def Model.Python.intVar (var : CpsatSolver.IntVar) : Python.Statement :=
         (Python.Expr.id Model.Python.Name.model)
         (Python.ValidName.mk "new_int_var" (by decide)))
       #[
-        (Python.Expr.lit (Python.Literal.int var.domain.min)),
-        (Python.Expr.lit (Python.Literal.int var.domain.max)),
+        (Python.Expr.lit (Python.Literal.int var.domain.left)),
+        (Python.Expr.lit (Python.Literal.int var.domain.right)),
         (Python.Expr.lit (Python.Literal.str var.name.val)),
       ]
   ))
@@ -299,7 +299,7 @@ private def Model.parseScriptOutput
           Vector.mapM
             (fun el => match parseJsonInteger el with
               | .ok num =>
-                if h : Int64.Proof num then
+                if h : Int64.Nonoverflow num then
                   Except.ok { val := num, proof := h }
                 else
                   Except.error "Got out-of-bounds integer in resulting array."

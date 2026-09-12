@@ -1,6 +1,7 @@
 import CpsatScheduler.CpsatSolver.Python
 import Mathlib.Order.Interval.Basic
 import Mathlib.Algebra.Group.Int.Defs
+import Mathlib.Order.Defs.LinearOrder
 
 import Mathlib
 
@@ -8,13 +9,13 @@ namespace CpsatSolver
 
 abbrev Int64.min : ℤ := -(2 : ℤ)^63
 abbrev Int64.max : ℤ := (2 : ℤ)^63 - 1
-abbrev Int64.Proof (b : ℤ) : Prop :=
+abbrev Int64.Nonoverflow (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 
 /-- Euclidean division by a positive integer preserves the Int64 range. -/
 theorem Int64.proof_ediv_of_pos {a divisor : ℤ}
-    (ha : Int64.Proof a) (hdivisor : 0 < divisor) :
-    Int64.Proof (a / divisor) := by
+    (ha : Int64.Nonoverflow a) (hdivisor : 0 < divisor) :
+    Int64.Nonoverflow (a / divisor) := by
   constructor
   · change Int64.min ≤ a / divisor
     rw [Int.le_ediv_iff_mul_le hdivisor]
@@ -29,8 +30,8 @@ is in range, except for the overflow pair `a = 2^63`, `b = -1`. -/
 theorem Int64.proof_of_mul_left {a b : ℤ}
     (hb : b ≠ 0)
     (h₁ : ¬(a = (2 : ℤ)^63 ∧ b = -1))
-    (h : Int64.Proof (a * b)) :
-    Int64.Proof a := by
+    (h : Int64.Nonoverflow (a * b)) :
+    Int64.Nonoverflow a := by
   obtain ⟨hab_min, hab_max⟩ := h
   constructor
   · -- `min ≤ a`
@@ -76,46 +77,101 @@ theorem Int64.proof_of_mul {a b : ℤ}
     (hb : b ≠ 0)
     (h₁ : ¬(a = (2 : ℤ)^63 ∧ b = -1))
     (h₂ : ¬(a = -1 ∧ b = (2 : ℤ)^63))
-    (h : Int64.Proof (a * b)) :
-    Int64.Proof a ∧ Int64.Proof b :=
+    (h : Int64.Nonoverflow (a * b)) :
+    Int64.Nonoverflow a ∧ Int64.Nonoverflow b :=
   ⟨Int64.proof_of_mul_left hb h₁ h,
    Int64.proof_of_mul_left ha (by
      intro hba
      exact h₂ ⟨hba.2, hba.1⟩) (by simpa [mul_comm] using h)⟩
 
-structure Int64.Proven where
+structure Int64 where
   val : ℤ
-  proof : Int64.Proof val
-  deriving DecidableEq
+  nonoverflow : Int64.Nonoverflow val
+deriving DecidableEq
 
-instance : Coe Int64.Proven ℤ where
+instance : Coe Int64 ℤ where
   coe proven := proven.val
 
 -- this is a closed interval
 structure Interval where
-  min : ℤ
-  max : ℤ
-  deriving DecidableEq
+  left : Int64
+  right : Int64
+  left_le_right : (left : ℤ) ≤ right
+deriving DecidableEq
 
-instance : Membership ℤ Interval where
-  mem i m := m ≥ i.min ∧ m ≤ i.max
+noncomputable def Interval.set (i : Interval) : Finset ℤ :=
+  Finset.Icc (i.left : ℤ) i.right
 
-instance : Inter Interval where
-  inter a b :=
-    let fst := if a.min ≤ b.min then a else b;
-    let snd := if fst = a then b else a;
-    -- this may produce intervals whose min > max, asking for Interval.Proof
-    -- should help curb issues from this
-    {
-      min := max fst.min snd.min
-      max := min fst.max snd.max
+def Interval.fromValue (v : Int64) : { x : Interval // x.set = {v.val} } :=
+  {
+    val := {
+      left := v
+      right := v
+      left_le_right := by exact Int.le_refl v.val
     }
+    property := Finset.Icc_self v.val
+  }
 
-def Interval.Proof (it : Interval) :=
-  it.min ≤ it.max ∧
-  Int64.Proof it.min ∧
-  Int64.Proof it.max
+instance : Membership Int64 Interval where
+  mem i m := (m : ℤ) ≥ i.left ∧ (m : ℤ) ≤ i.right
 
+def Interval.neg (i : Interval)
+  (h :
+    Int64.Nonoverflow (-i.right : ℤ) ∧
+    Int64.Nonoverflow (-i.left : ℤ))
+  : { x : Interval // x.set = i.set.map (Equiv.neg ℤ).toEmbedding } :=
+  {
+    val := {
+      left := {
+        val := -(i.right : ℤ),
+        nonoverflow := h.left
+      }
+      right := {
+        val := -(i.left : ℤ),
+        nonoverflow := h.right
+      }
+      left_le_right := by
+        refine Int.neg_le_neg i.left_le_right
+    }
+    property := by
+      ext x
+      simp [Interval.set]
+      omega
+  }
+
+def Interval.add (a b : Interval)
+   :=
+  ({
+    left := {
+      val := a.left + b.left
+      nonoverflow := sorry
+    }
+    right := {
+      val := a.right + b.right
+      nonoverflow := sorry
+    }
+    left_le_right := by
+      refine Int.neg_le_neg i.left_le_right
+  } : Interval)
+
+def Interval.intersect (a b : Interval) left_le_right :=
+  let fst := if (a.left : ℤ) ≤ b.left then a else b;
+  let snd := if fst = a then b else a;
+  ({
+    left := {
+      val := max fst.left (snd.left : ℤ)
+      nonoverflow := max_ind
+        (fun _ => fst.left.nonoverflow)
+        (fun _ => snd.left.nonoverflow)
+    }
+    right := {
+      val := min fst.right (snd.right : ℤ)
+      nonoverflow := min_ind
+        (fun _ => fst.right.nonoverflow)
+        (fun _ => snd.right.nonoverflow)
+    }
+    left_le_right := left_le_right
+  } : Interval)
 
 class Var (α : Type) where
   name (var : α) : CpsatSolver.Python.ValidName
@@ -124,7 +180,7 @@ class Var (α : Type) where
 /-- BoolVar is a boolean variable -/
 structure BoolVar where
   name : CpsatSolver.Python.ValidName
-  deriving DecidableEq
+deriving DecidableEq
 
 instance : Var BoolVar where
   name var := var.name
@@ -134,7 +190,7 @@ instance : Var BoolVar where
 inductive BoolLit where
   | var (v : CpsatSolver.BoolVar)
   | neg (v : CpsatSolver.BoolVar)
-  deriving DecidableEq
+deriving DecidableEq
 
 
 /-- IntVar is an integer variable bounded to a finite domain -/
@@ -142,47 +198,36 @@ structure IntVar where
   /-- name is the identifier of the variable -/
   name : CpsatSolver.Python.ValidName
   domain : CpsatSolver.Interval
-  deriving DecidableEq
-
-def IntVar.Proof (var : IntVar) :=
-  Interval.Proof var.domain
-
-abbrev IntVar.Proven := { x : IntVar // IntVar.Proof x }
+deriving DecidableEq
 
 instance : Var IntVar where
   name var := var.name
 
-mutual
+inductive LinearExpr where
+  | fromVar (value : IntVar)
+  | fromConst (value : Int64)
+  | fromNeg (a : LinearExpr) (domain : CpsatSolver.Interval)
+  | fromAdd (a b : LinearExpr) (domain : CpsatSolver.Interval)
+  | fromMul (a b : LinearExpr) (domain : CpsatSolver.Interval)
+  | fromSub (a b : LinearExpr) (domain : CpsatSolver.Interval)
+deriving DecidableEq
 
-/-- LinearExpr is a linear expr that evaluates to an ℤ -/
-inductive LinearExpr.Op where
-  | var (value : CpsatSolver.IntVar.Proven)
-  | const (value : ℤ) (H : CpsatSolver.Int64.Proof value)
-  | neg (a : LinearExpr.Proven)
-  | add (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | mul (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  | sub (a : LinearExpr.Proven) (b : LinearExpr.Proven)
-  deriving DecidableEq
-
-structure LinearExpr.Proof where
-  domain : CpsatSolver.Interval
-  domainValid : CpsatSolver.Interval.Proof domain
-  deriving DecidableEq
-
-structure LinearExpr.Proven where
-  op : LinearExpr.Op
-  proof : LinearExpr.Proof
-  deriving DecidableEq
-
-end
-
+def LinearExpr.domain (l : LinearExpr) : CpsatSolver.Interval :=
+  match l with
+  | .fromVar int => int.domain
+  | .fromConst const => Interval.fromValue const
+  | .fromNeg domain _ => domain
+  | .fromAdd domain _ _ => domain
+  | .fromMul domain _ _ => domain
+  | .fromSub domain _ _ => domain
 
 structure FixedSizeIntervalVar where
   -- name is also the identifier
   name : CpsatSolver.Python.ValidName
-  start : LinearExpr.Proven
-  size : ℕ
-  deriving DecidableEq
+  start : LinearExpr
+  size : Int64
+  nonzero : size ≥ (0 : ℤ)
+deriving DecidableEq
 
 instance : Var FixedSizeIntervalVar where
   name var := var.name
@@ -190,25 +235,25 @@ instance : Var FixedSizeIntervalVar where
 
 inductive BoundedLinearExpr.Op where
   | eq | neq | gt | gte | lt | lte
-  deriving DecidableEq
+deriving DecidableEq
 
 def BoundedLinearExpr.NoContradict
-  (op : BoundedLinearExpr.Op) (left right : LinearExpr.Proven) : Prop :=
-  let L := left.proof.domain;
-  let R := right.proof.domain;
+  (op : BoundedLinearExpr.Op) (left right : LinearExpr) : Prop :=
+  let L := left.domain;
+  let R := right.domain;
   match op with
   -- ¬ (left ∩ right = ∅)
   | .eq => Interval.Proof (L ∩ R)
   -- ¬ (left = right)
   | .neq => L ≠ R
   -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≤ y)
-  | .gt => ∃ x ∈ L, ∃ y ∈ R, x > y
+  | .gt => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) > y
   -- ¬ (∀ x ∈ left, ∀ y ∈ right, x < y)
-  | .gte => ∃ x ∈ L, ∃ y ∈ R, x ≥ y
+  | .gte => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) ≥ y
   -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≥ y)
-  | .lt => ∃ x ∈ L, ∃ y ∈ R, x < y
+  | .lt => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) < y
   -- ¬ (∀ x ∈ left, ∀ y ∈ right, x > y)
-  | .lte => ∃ x ∈ L, ∃ y ∈ R, x ≤ y
+  | .lte => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) ≤ y
 
 -- TODO: determine whether int variable definitions are necessary
 -- 1. in scenarios where an int var = linear expr, they should be unnecessary
@@ -222,38 +267,38 @@ def BoundedLinearExpr.NoContradict
 -- (e.g. >, <, ==)
 structure BoundedLinearExpr where
   op : BoundedLinearExpr.Op
-  left : LinearExpr.Proven
-  right : LinearExpr.Proven
+  left : LinearExpr
+  right : LinearExpr
   no_contradict : BoundedLinearExpr.NoContradict op left right
-  deriving DecidableEq
+deriving DecidableEq
 
 inductive Constraint.Enforcement where
   | always
   | onlyWhenAll {n : Nat} (literals : Vector BoolLit (n + 1))
-  deriving DecidableEq
+deriving DecidableEq
 
 inductive Constraint.Variant where
   /-- Corresponds to <model>.add -/
   | bounded_linear (expr : CpsatSolver.BoundedLinearExpr)
   /-- Corresponds to <model>.add_max_equality -/
-  | max_equality (target : LinearExpr.Proven) (exprs : Array LinearExpr.Proven)
+  | max_equality (target : LinearExpr) (exprs : Array LinearExpr)
   /-- Corresponds to <model>.add_cumulative -/
   | cumulative
     (intervals : Array CpsatSolver.FixedSizeIntervalVar)
-    (demands : Array LinearExpr.Proven)
-    (capacity : LinearExpr.Proven)
+    (demands : Array LinearExpr)
+    (capacity : LinearExpr)
   /-- Corresponds to <model>.add_bool_and -/
   | bool_and (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_bool_or -/
   | bool_or (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_implication -/
   | implication (src : CpsatSolver.BoolLit) (dst : CpsatSolver.BoolLit)
-  deriving DecidableEq
+deriving DecidableEq
 
 structure Constraint where
   name : Python.ValidName
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
-  deriving DecidableEq
+deriving DecidableEq
 
 end CpsatSolver

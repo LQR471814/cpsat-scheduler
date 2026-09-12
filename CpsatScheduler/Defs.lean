@@ -23,7 +23,7 @@ structure Units where
   has_atomic : 1 ∈ set
   nonzero : ∀ u : set, u ≥ { val := 1, property := has_atomic }
   divisibility : ∀ a b : set, a ≥ b → (a : ℤ) % b = 0
-  nonoverflow : ∀ a : set, CpsatSolver.Int64.Proof a
+  nonoverflow : ∀ a : set, Int64.Nonoverflow a
   deriving DecidableEq
 
 abbrev Units.max (units : Units) : units.set :=
@@ -46,46 +46,46 @@ theorem Units.all_ge_atomic {units : Units}
 
 
 
-structure Time (units : Units) where
+structure UnitValue (units : Units) where
   coeff : CpsatSolver.Int64.Proven
   unit : units.set
   deriving DecidableEq
 
-def Time.add {units : Units}
-  (a b : Time units)
+def UnitValue.add {units : Units}
+  (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : CpsatSolver.Int64.Proof (a.unit.val + b.unit.val))
-  : Time units :=
+  (nonoverflow : Int64.Nonoverflow (a.unit.val + b.unit.val))
+  : UnitValue units :=
     {
       coeff := { val := a.unit.val + b.unit.val, proof := nonoverflow },
       unit := a.unit
     }
 
-def Time.sub {units : Units}
-  (a b : Time units)
+def UnitValue.sub {units : Units}
+  (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : CpsatSolver.Int64.Proof (a.unit.val - b.unit.val))
-  : Time units :=
+  (nonoverflow : Int64.Nonoverflow (a.unit.val - b.unit.val))
+  : UnitValue units :=
     {
       coeff := { val := a.unit.val - b.unit.val, proof := nonoverflow }
       unit := a.unit
     }
 
-def Time.mul {units : Units}
-  (a b : Time units)
+def UnitValue.mul {units : Units}
+  (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : CpsatSolver.Int64.Proof (a.unit.val * b.unit.val))
-  : Time units :=
+  (nonoverflow : Int64.Nonoverflow (a.unit.val * b.unit.val))
+  : UnitValue units :=
     {
       coeff := { val := a.unit.val * b.unit.val, proof := nonoverflow }
       unit := a.unit
     }
 
-def Time.div {units : Units}
-  (a b : Time units)
+def UnitValue.div {units : Units}
+  (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : CpsatSolver.Int64.Proof (a.unit.val / b.unit.val))
-  : Time units :=
+  (nonoverflow : Int64.Nonoverflow (a.unit.val / b.unit.val))
+  : UnitValue units :=
     {
       coeff := { val := a.unit.val / b.unit.val, proof := nonoverflow }
       unit := a.unit
@@ -107,8 +107,8 @@ def Time.div {units : Units}
 -- A' = A * X / Y
 
 -- when converting from larger unit -> smaller unit
-def Time.convertLossless {units : Units}
-  (task : Time units)
+def UnitValue.convertLossless {units : Units}
+  (task : UnitValue units)
   (Y : units.set) :=
   let A := task.coeff.val
   let X : units.set := task.unit
@@ -125,8 +125,8 @@ def Time.convertLossless {units : Units}
   curried
 
 -- when converting from smaller unit -> larger unit
-def Time.convertLossy {units : Units}
-  (task : Time units) (Y : units.set) :=
+def UnitValue.convertLossy {units : Units}
+  (task : UnitValue units) (Y : units.set) :=
   let A := task.coeff.val
   let X := task.unit
   let result : { A' : ℤ // |A * X - A' * Y| < Y } :=
@@ -165,8 +165,8 @@ def Time.convertLossy {units : Units}
   result
 
 /-- Converting exactly to a no-larger unit cannot decrease the coefficient's magnitude. -/
-theorem Time.convertLossless_coeff_abs_le {units : Units}
-    (task : Time units) (Y : units.set) (hYX : Y ≤ task.unit) :
+theorem UnitValue.convertLossless_coeff_abs_le {units : Units}
+    (task : UnitValue units) (Y : units.set) (hYX : Y ≤ task.unit) :
     |task.coeff.val| ≤
       |(task.convertLossless Y (dvd_mul_of_dvd_right
         (Int.dvd_iff_emod_eq_zero.mpr (units.divisibility task.unit Y hYX)) _)).val| := by
@@ -185,7 +185,7 @@ theorem Time.convertLossless_coeff_abs_le {units : Units}
   rw [show (task.convertLossless Y (dvd_mul_of_dvd_right
       (Int.dvd_iff_emod_eq_zero.mpr (units.divisibility task.unit Y hYX)) _)).val =
       task.coeff.val * k by
-    simp only [Time.convertLossless]
+    simp only [UnitValue.convertLossless]
     rw [hk]
     rw [show task.coeff.val * (Y.val * k) = Y.val * (task.coeff.val * k) by ring]
     exact Int.mul_ediv_cancel_left _ (ne_of_gt hYpos)]
@@ -193,15 +193,15 @@ theorem Time.convertLossless_coeff_abs_le {units : Units}
   nlinarith [abs_nonneg task.coeff.val]
 
 /-- Converting to a no-smaller unit cannot increase the coefficient's magnitude. -/
-theorem Time.convertLossy_coeff_abs_le {units : Units}
-    (task : Time units) (Y : units.set) (hXY : task.unit ≤ Y) :
+theorem UnitValue.convertLossy_coeff_abs_le {units : Units}
+    (task : UnitValue units) (Y : units.set) (hXY : task.unit ≤ Y) :
     |(task.convertLossy Y).val| ≤ |task.coeff.val| := by
   have hXpos : 0 < task.unit.val :=
     lt_of_lt_of_le Int.zero_lt_one (units.nonzero task.unit)
   obtain ⟨k, hk⟩ : ∃ k : ℤ, Y.val = task.unit.val * k :=
     Int.dvd_iff_emod_eq_zero.mpr (units.divisibility Y task.unit hXY)
   rw [show (task.convertLossy Y).val = task.coeff.val / k by
-    simp only [Time.convertLossy]
+    simp only [UnitValue.convertLossy]
     rw [hk]
     calc
       task.coeff.val * task.unit.val / (task.unit.val * k)
@@ -210,9 +210,9 @@ theorem Time.convertLossy_coeff_abs_le {units : Units}
   exact Int.abs_ediv_le_abs _ _
 
 /-- Lossy conversion to a no-smaller unit produces an Int64-valid coefficient. -/
-theorem Time.convertLossy_coeff_proof {units : Units}
-    (task : Time units) (Y : units.set) (hXY : task.unit ≤ Y) :
-    CpsatSolver.Int64.Proof (task.convertLossy Y).val := by
+theorem UnitValue.convertLossy_coeff_proof {units : Units}
+    (task : UnitValue units) (Y : units.set) (hXY : task.unit ≤ Y) :
+    Int64.Nonoverflow (task.convertLossy Y).val := by
   have hXpos : 0 < task.unit.val :=
     lt_of_lt_of_le Int.zero_lt_one (units.nonzero task.unit)
   obtain ⟨k, hk⟩ : ∃ k : ℤ, Y.val = task.unit.val * k :=
@@ -223,7 +223,7 @@ theorem Time.convertLossy_coeff_proof {units : Units}
     rw [hk] at hYpos
     nlinarith
   rw [show (task.convertLossy Y).val = task.coeff.val / k by
-    simp only [Time.convertLossy]
+    simp only [UnitValue.convertLossy]
     rw [hk]
     calc
       task.coeff.val * task.unit.val / (task.unit.val * k)
@@ -231,16 +231,16 @@ theorem Time.convertLossy_coeff_proof {units : Units}
       _ = task.coeff.val / k := Int.mul_ediv_mul_of_pos _ _ hXpos]
   exact CpsatSolver.Int64.proof_ediv_of_pos task.coeff.proof hkpos
 
-abbrev Time.lt {units : Units}
-  (a b : Time units)
+abbrev UnitValue.lt {units : Units}
+  (a b : UnitValue units)
   (_ : a.unit = b.unit) : Prop :=
   a.coeff.val < b.coeff.val
 
 
 
 structure Horizon (units : Units) where
-  beginning : Time units
-  ending : Time units
+  beginning : UnitValue units
+  ending : UnitValue units
   begin_is_atomic : beginning.unit = units.atomic
   end_is_atomic : ending.unit = units.atomic
   begin_lt_end : beginning.lt ending (by grind)
@@ -257,8 +257,8 @@ structure Interval where
   greater : ℤ
   lesser : ℤ
   validLt : lesser ≤ greater
-  validGe : CpsatSolver.Int64.Proof greater
-  validLe : CpsatSolver.Int64.Proof lesser
+  validGe : Int64.Nonoverflow greater
+  validLe : Int64.Nonoverflow lesser
   deriving DecidableEq
 
 structure IntervalWithValue (α : Type) where
@@ -279,14 +279,14 @@ structure DiscretizedFunction (α : Type) where
   deriving DecidableEq
 
 inductive CostConfiguration (scales : Timescales) where
-  | duration (value : Time scales.units)
+  | duration (value : UnitValue scales.units)
   deriving DecidableEq
 
 structure Task (scales : Timescales) where
   name : CpsatSolver.Python.ValidName
   unit : scales.units.set
-  startAfter : Option ({ t : Time scales.units // t.unit = unit })
-  startBefore : Option ({ t : Time scales.units // t.unit = unit })
+  startAfter : Option ({ t : UnitValue scales.units // t.unit = unit })
+  startBefore : Option ({ t : UnitValue scales.units // t.unit = unit })
   deriving DecidableEq
 
 
@@ -400,7 +400,7 @@ def curryValidName (name : String) (callback : CpsatSolver.Python.ValidName → 
   curried
 
 def Task.startAfterTime {scales : Timescales}
-  (t : Task scales) : Time scales.units :=
+  (t : Task scales) : UnitValue scales.units :=
   let units := scales.units;
   let horizon := scales.horizon;
   match t.startAfter with
@@ -412,14 +412,14 @@ def Task.startAfterTime {scales : Timescales}
           have hunit : horizon.beginning.unit ≤ t.unit := by
             rw [horizon.begin_is_atomic]
             exact units.nonzero t.unit
-          exact Time.convertLossy_coeff_proof horizon.beginning t.unit hunit
+          exact UnitValue.convertLossy_coeff_proof horizon.beginning t.unit hunit
       }
       unit := t.unit
     }
   | Option.some time => time.val
 
 def Task.startBeforeTime {scales : Timescales}
-  (t : Task scales) : Time scales.units :=
+  (t : Task scales) : UnitValue scales.units :=
   let units := scales.units;
   let horizon := scales.horizon;
   match t.startBefore with
@@ -431,7 +431,7 @@ def Task.startBeforeTime {scales : Timescales}
           have hunit : horizon.ending.unit ≤ t.unit := by
             rw [horizon.end_is_atomic]
             exact units.nonzero t.unit
-          exact Time.convertLossy_coeff_proof horizon.ending t.unit hunit
+          exact UnitValue.convertLossy_coeff_proof horizon.ending t.unit hunit
 
       },
       unit := units.atomic,
@@ -443,8 +443,8 @@ def Task.costVar {scales : Timescales} (t : Task scales)
   curryValidName s! "{t.name.val}_cost" (fun name => ({
     name := name
     domain := {
-      min := min
-      max := max
+      left := min
+      right := max
     }
   } : CpsatSolver.IntVar))
 
@@ -452,8 +452,8 @@ def Task.durationVar {scales : Timescales} (t : Task scales) :=
   curryValidName s! "{t.name.val}_duration" (fun name => ({
     name := name
     domain := {
-      min := 0
-      max := t.unit
+      left := 0
+      right := t.unit
     }
   } : CpsatSolver.IntVar))
 
@@ -461,10 +461,79 @@ def Task.durationVar {scales : Timescales} (t : Task scales) :=
 
 namespace UnitAware
 
+structure IntVar (units : Units) where
+  var : CpsatSolver.IntVar.Proven
+  unit : units.set
+
+def IntVar.name {units : Units} (container : IntVar units) :=
+  container.var.val.name
+
 structure LinearExpr (units : Units) where
   cpsat : CpsatSolver.LinearExpr.Proven
   unit : units.set
   deriving DecidableEq
+
+def LinearExpr.domain {units : Units} (l : LinearExpr units)
+  : Set (UnitValue units) :=
+    fun v =>
+      v.unit = l.unit ∧
+      v.coeff.val ∈ l.cpsat.proof.domain
+
+-- prove injectivity?
+-- namely we can state that two exprs are injective via some relation?
+--
+-- Function.Injective?
+-- prove: f x = f y -> x = y
+
+/-- what are the rules for unit manipulation?
+
+here, we have a situation where all units can be defined in terms of every other unit
+
+we may have a "unit aware value" in which operations on it only make sense
+between unit aware values of the same unit
+
+or rather, operations between the same unit will result in a result of the same unit
+
+operations between different units require conversion to the same unit
+
+we define a "conversion" function:
+
+C : unit -> value+unit -> value+unit
+
+the properties of C are such that:
+
+Let
+a b : unit
+v_a : value+unit, s.t. unit = a
+v_b : value+unit, s.t. unit = b
+
+C a v_a = v_a
+(C b v_a).unit = b
+(C b v_a).value / v_a.value = a / b
+
+conversion between units is such that:
+
+- every value in one unit can be found in the other unit
+
+along the way, we might as well define the rest of the linear expr arithmetic
+relationships
+
+-/
+
+def LinearExpr.var {units : Units}
+  (awareVar : IntVar units) : LinearExpr units :=
+  {
+    cpsat := CpsatSolver.LinearExpr.var awareVar.var
+    unit := awareVar.unit
+  }
+
+def LinearExpr.convertUnit {units : Units}
+  (newUnit : units.set)
+  (expr : LinearExpr units) : { x : LinearExpr units // x.unit = newUnit } :=
+  {
+    val := sorry
+    property := sorry
+  }
 
 def LinearExpr.add {units : Units}
   (a b : LinearExpr units) (_ : a.unit = b.unit) :=
@@ -522,13 +591,6 @@ structure Constraint (units : Units) where
   variant : Constraint.Variant units
   deriving DecidableEq
 
-structure IntVarProven (units : Units) where
-  var : CpsatSolver.IntVar.Proven
-  unit : units.set
-
-def IntVarProven.name {units : Units} (container : IntVarProven units) :=
-  container.var.val.name
-
 end UnitAware
 
 
@@ -537,8 +599,8 @@ def Task.start {scales : Timescales} (task : Task scales) :=
     curryValidName s! "{t.name.val}_start" (fun name => ({
       name := name
       domain := {
-        min := t.startBeforeTime.coeff * t.startAfterTime.unit
-        max := t.startAfterTime.coeff * t.startAfterTime.unit
+        left := t.startBeforeTime.coeff * t.startAfterTime.unit
+        right := t.startAfterTime.coeff * t.startAfterTime.unit
       }
     } : CpsatSolver.IntVar))
   fun hname hvar =>
@@ -548,12 +610,43 @@ def Task.start {scales : Timescales} (task : Task scales) :=
         property := hvar
       }
       unit := task.unit
-    } : UnitAware.IntVarProven scales.units)
+    } : UnitAware.IntVar scales.units)
 
 
+
+def TaskConstrain.afterTask {scales : Timescales}
+  (self other : UnitAware.IntVar scales.units) :=
+  let curried name_valid no_contradict :
+    UnitAware.Constraint scales.units :=
+    let selfStart : UnitAware.LinearExpr scales.units :=
+      {
+        cpsat := CpsatSolver.LinearExpr.var self.var
+        unit := self.unit
+      };
+    let otherStart : UnitAware.LinearExpr scales.units :=
+      {
+        cpsat := CpsatSolver.LinearExpr.var other.var
+        unit := other.unit
+      };
+    let converted := otherStart
+    {
+      name := CpsatSolver.Python.ValidName.mk
+        s!"{self.name.val}_after_{other.name.val}_start"
+        name_valid
+      enforcement := CpsatSolver.Constraint.Enforcement.always
+      variant := UnitAware.Constraint.Variant.bounded_linear
+        {
+          op := CpsatSolver.BoundedLinearExpr.Op.gte,
+          left := otherStart
+          right := selfStart
+          no_contradict := no_contradict
+          units_eq := sorry
+        }
+    }
+  curried
 
 def TaskConstrain.withinParent {scales : Timescales}
-  (self parent : UnitAware.IntVarProven scales.units) :=
+  (self parent : UnitAware.IntVar scales.units) :=
   fun
     constraint_name1_valid
     constraint_name2_valid
@@ -601,6 +694,6 @@ def TaskConstrain.withinParent {scales : Timescales}
           no_contradict := no_contradict_before_end
         }
     };
-    [ afterParentStart, beforeParentEnd ]
+    #[ afterParentStart, beforeParentEnd ]
 
 end CpsatScheduler
