@@ -77,13 +77,15 @@ private def Model.Python.fixedSizeIntervalVar
         (Python.Expr.id Model.Python.Name.model)
         (Python.ValidName.mk "new_fixed_size_interval" (by decide)))
       #[
-        var.start.toPythonExpr,
+        (@LinearExpr.toPythonExpr var.startDomain var.start),
         (Python.Expr.lit (Python.Literal.int var.size)),
         (Python.Expr.lit (Python.Literal.str var.name.val)),
       ]
   ))
 
 private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Statement :=
+  let sigmaExprToPython (e : LinearExpr.WithDomain) : Python.Expr :=
+    @LinearExpr.toPythonExpr e.fst e.snd
   let modelDot (attr : Python.ValidName) : Python.Expr :=
     Python.Expr.dot (Python.Expr.id Model.Python.Name.model) attr
   let constraint : Python.Expr := match cnst.variant with
@@ -103,12 +105,12 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
       Python.Expr.call
         (modelDot (Python.ValidName.mk "add_implication" (by decide)))
         #[ src.toPythonExpr, dst.toPythonExpr ]
-    | Constraint.Variant.max_equality target exprs =>
+    | Constraint.Variant.max_equality target exprs _ =>
+      let args := Array.append
+        #[ sigmaExprToPython target ]
+        (exprs.map (fun e => sigmaExprToPython e))
       Python.Expr.call
-        (modelDot (Python.ValidName.mk "add_max_equality" (by decide)))
-        (Array.append
-          #[ target.toPythonExpr ]
-          (exprs.map (fun e => e.toPythonExpr)))
+        (modelDot (Python.ValidName.mk "add_max_equality" (by decide))) args
     | Constraint.Variant.cumulative intervals demands capacity =>
       Python.Expr.call
         (modelDot (Python.ValidName.mk "add_cumulative" (by decide)))
@@ -116,8 +118,8 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
           (Python.Expr.lit (Python.Literal.array
             (intervals.map (fun e => e.toPythonExpr)))),
           (Python.Expr.lit (Python.Literal.array
-            (demands.map (fun e => e.toPythonExpr)))),
-          capacity.toPythonExpr,
+            (demands.map (fun e => sigmaExprToPython e)))),
+          sigmaExprToPython capacity,
         ]
     ;
   let labeled :=
@@ -138,7 +140,7 @@ private def Model.Python.constraint (cnst : CpsatSolver.Constraint) : Python.Sta
   enforced
 
 structure SolveRequest (model : Model) where
-  exprs : Array CpsatSolver.LinearExpr.Proven
+  exprs : Array CpsatSolver.LinearExpr.WithDomain
 
 inductive SolveStatus where
   | unknown
@@ -150,7 +152,7 @@ inductive SolveStatus where
 structure SolveResponse (model : Model) (req : SolveRequest model) where
   objectiveValue : Float
   status : SolveStatus
-  exprs : Vector CpsatSolver.Int64.Proven req.exprs.size
+  exprs : Vector CpsatSolver.Int64 req.exprs.size
 
 private def Model.Python.imports : Array Python.Statement := #[
   -- from ortools.sat.python import cp_model
@@ -228,7 +230,7 @@ private def Model.Python.reportSolution
                 (Python.Expr.dot
                   (Python.Expr.id Model.Python.Name.cpsatSolver)
                   (Python.ValidName.mk "value" (by decide)))
-                #[ linExpr.toPythonExpr ]))))),
+                #[ (@LinearExpr.toPythonExpr linExpr.fst linExpr.snd) ]))))),
           (Prod.mk
             (Python.Expr.lit (Python.Literal.str Model.Python.Literals.status))
             (Python.Expr.call
@@ -291,7 +293,7 @@ private def Model.parseScriptOutput
       | .error err => Except.error s!"Parse float: {err}"
     | .none => Except.error "Missing value."
   let parseExprs (map : Std.TreeMap.Raw String Lean.Json compare)
-    : Except String (Vector CpsatSolver.Int64.Proven req.exprs.size) :=
+    : Except String (Vector CpsatSolver.Int64 req.exprs.size) :=
     match map.get? Model.Python.Literals.exprs with
     | .some exprsJson => match exprsJson with
       | .arr array =>
@@ -300,7 +302,7 @@ private def Model.parseScriptOutput
             (fun el => match parseJsonInteger el with
               | .ok num =>
                 if h : Int64.Nonoverflow num then
-                  Except.ok { val := num, proof := h }
+                  Except.ok { val := num, nonoverflow := h }
                 else
                   Except.error "Got out-of-bounds integer in resulting array."
               | .error err => Except.error s!"Parse Integer: {err}")
@@ -347,4 +349,3 @@ def Model.solve
   return Model.parseScriptOutput model req out.stdout
 
 end CpsatSolver
-

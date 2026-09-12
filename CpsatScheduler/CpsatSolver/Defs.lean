@@ -354,10 +354,12 @@ def BoundedLinearExpr.NoContradict (rel : BoundedLinearExpr.Rel)
 -- (e.g. >, <, ==)
 structure BoundedLinearExpr where
   rel : BoundedLinearExpr.Rel
-  left : LinearExpr L
-  right : LinearExpr R
+  leftDomain : Interval
+  rightDomain : Interval
+  left : LinearExpr leftDomain
+  right : LinearExpr rightDomain
   no_contradict : BoundedLinearExpr.NoContradict
-    (L := L) (R := R) rel left right
+    (L := leftDomain) (R := rightDomain) rel left right
 
 inductive Constraint.Enforcement where
   | always
