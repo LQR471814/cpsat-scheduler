@@ -139,76 +139,98 @@ def Interval.neg (i : Interval)
       omega
   }
 
-def Interval.add (a b : Interval)
-    (h : Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
-      Int64.Nonoverflow ((a.right : ℤ) + b.right)) :
-    { x : Interval // x.set = Finset.Icc ((a.left : ℤ) + b.left) ((a.right : ℤ) + b.right) } :=
+def Interval.ofBounds (left right : ℤ)
+    (nonoverflow : Int64.Nonoverflow left ∧ Int64.Nonoverflow right)
+    (left_le_right : left ≤ right) :
+    { x : Interval // x.set = Finset.Icc left right } :=
   {
     val := {
-      left := { val := (a.left : ℤ) + b.left, nonoverflow := h.1 }
-      right := { val := (a.right : ℤ) + b.right, nonoverflow := h.2 }
-      left_le_right := add_le_add a.left_le_right b.left_le_right
+      left := { val := left, nonoverflow := nonoverflow.1 }
+      right := { val := right, nonoverflow := nonoverflow.2 }
+      left_le_right := left_le_right
     }
     property := rfl
   }
+
+def Interval.add (a b : Interval)
+    (nonoverflow :
+      Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
+      Int64.Nonoverflow ((a.right : ℤ) + b.right)) :
+    { x : Interval //
+      x.set = Finset.Icc
+        ((a.left : ℤ) + b.left)
+        ((a.right : ℤ) + b.right) } :=
+  Interval.ofBounds
+    ((a.left : ℤ) + b.left)
+    ((a.right : ℤ) + b.right)
+    nonoverflow
+    (add_le_add a.left_le_right b.left_le_right)
 
 def Interval.sub (a b : Interval)
-    (h : Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
+    (nonoverflow :
+      Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
       Int64.Nonoverflow ((a.right : ℤ) - b.left)) :
-    { x : Interval // x.set = Finset.Icc ((a.left : ℤ) - b.right) ((a.right : ℤ) - b.left) } :=
-  {
-    val := {
-      left := { val := (a.left : ℤ) - b.right, nonoverflow := h.1 }
-      right := { val := (a.right : ℤ) - b.left, nonoverflow := h.2 }
-      left_le_right := by
-        linarith [a.left_le_right, b.left_le_right]
-    }
-    property := rfl
-  }
+    { x : Interval //
+      x.set = Finset.Icc
+        ((a.left : ℤ) - b.right)
+        ((a.right : ℤ) - b.left) } :=
+  Interval.ofBounds
+    ((a.left : ℤ) - b.right)
+    ((a.right : ℤ) - b.left)
+    nonoverflow
+    (by linarith [a.left_le_right, b.left_le_right])
+
+def Interval.mulLower (a b : Interval) : ℤ :=
+  min
+    (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
+    (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
+
+def Interval.mulUpper (a b : Interval) : ℤ :=
+  max
+    (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
+    (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
+
+theorem Interval.mulLower_le_mulUpper (a b : Interval) :
+    a.mulLower b ≤ a.mulUpper b := by
+  unfold mulLower mulUpper
+  calc
+    min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
+        (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
+        ≤ (a.left : ℤ) * b.left :=
+          (min_le_left _ _).trans (min_le_left _ _)
+    _ ≤ max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right) := le_max_left _ _
+    _ ≤ max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
+        (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right)) := le_max_left _ _
 
 def Interval.mul (a b : Interval)
-    (h : Int64.Nonoverflow
-        (min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-          (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))) ∧
-      Int64.Nonoverflow
-        (max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-          (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right)))) :
-    { x : Interval // x.set = Finset.Icc
-      (min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-        (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right)))
-      (max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-        (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))) } :=
-  {
-    val := {
-      left := { val := _, nonoverflow := h.1 }
-      right := { val := _, nonoverflow := h.2 }
-      left_le_right := by
-        calc
-          min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-              (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
-              ≤ (a.left : ℤ) * b.left :=
-                (min_le_left _ _).trans (min_le_left _ _)
-          _ ≤ max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right) := le_max_left _ _
-          _ ≤ max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-              (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right)) := le_max_left _ _
-    }
-    property := rfl
-  }
+    (nonoverflow :
+      Int64.Nonoverflow (a.mulLower b) ∧
+      Int64.Nonoverflow (a.mulUpper b)) :
+    { x : Interval //
+      x.set = Finset.Icc (a.mulLower b) (a.mulUpper b) } :=
+  Interval.ofBounds
+    (a.mulLower b)
+    (a.mulUpper b)
+    nonoverflow
+    (a.mulLower_le_mulUpper b)
+
+def Interval.divLower (a b : Interval) : ℤ :=
+  min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
+
+def Interval.divUpper (a b : Interval) : ℤ :=
+  max ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
 
 def Interval.div (a b : Interval)
-    (h : Int64.Nonoverflow (min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)) ∧
-      Int64.Nonoverflow (max ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right))) :
-    { x : Interval // x.set = Finset.Icc
-      (min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right))
-      (max ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)) } :=
-  {
-    val := {
-      left := { val := min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right), nonoverflow := h.1 }
-      right := { val := max ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right), nonoverflow := h.2 }
-      left_le_right := min_le_max
-    }
-    property := rfl
-  }
+    (nonoverflow :
+      Int64.Nonoverflow (a.divLower b) ∧
+      Int64.Nonoverflow (a.divUpper b)) :
+    { x : Interval //
+      x.set = Finset.Icc (a.divLower b) (a.divUpper b) } :=
+  Interval.ofBounds
+    (a.divLower b)
+    (a.divUpper b)
+    nonoverflow
+    min_le_max
 
 def Interval.intersect (a b : Interval) left_le_right :=
   let fst := if (a.left : ℤ) ≤ b.left then a else b;
