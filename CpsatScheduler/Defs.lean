@@ -532,20 +532,19 @@ def IntVarProven.name {units : Units} (container : IntVarProven units) :=
 end UnitAware
 
 
-private def Task.startIntVar {scales : Timescales} (t : Task scales) :=
-  curryValidName s! "{t.name.val}_start" (fun name => ({
-    name := name
-    domain := {
-      min := t.startBeforeTime.coeff * t.startAfterTime.unit
-      max := t.startAfterTime.coeff * t.startAfterTime.unit
-    }
-  } : CpsatSolver.IntVar))
-
 def Task.start {scales : Timescales} (task : Task scales) :=
+  let startIntVar {scales : Timescales} (t : Task scales) :=
+    curryValidName s! "{t.name.val}_start" (fun name => ({
+      name := name
+      domain := {
+        min := t.startBeforeTime.coeff * t.startAfterTime.unit
+        max := t.startAfterTime.coeff * t.startAfterTime.unit
+      }
+    } : CpsatSolver.IntVar))
   fun hname hvar =>
     ({
       var := {
-        val := Task.startIntVar task hname
+        val := startIntVar task hname
         property := hvar
       }
       unit := task.unit
