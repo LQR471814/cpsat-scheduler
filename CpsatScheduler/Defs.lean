@@ -3,8 +3,10 @@ import Mathlib.Data.Int.Interval
 import Mathlib.Data.Finset.Sort
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Combinatorics.Digraph.Basic
+import Mathlib.Data.Int.Star
+import Mathlib.Algebra.Order.Ring.Star
 
-import CpsatScheduler.CpsatSolver.Defs
+import CpsatScheduler.CpsatSolver.Helpers
 import CpsatScheduler.Util.Finset
 import CpsatScheduler.Util.Graphs
 
@@ -13,6 +15,8 @@ namespace CpsatScheduler
 -- ensures no remainder when int division, preventing lossy division
 private abbrev Int.losslessDiv (a : ℤ) (b : ℤ) (_ : a % b = 0) :=
   a / b
+
+
 
 structure Units where
   set : Finset ℤ
@@ -39,6 +43,8 @@ theorem Units.one_is_atomic (units : Units) : (1 : ℤ) = units.atomic :=
 theorem Units.all_ge_atomic {units : Units}
   : ∀ u : units.set, units.atomic ≤ u :=
     units.nonzero
+
+
 
 structure Time (units : Units) where
   coeff : CpsatSolver.Int64.Proven
@@ -230,6 +236,8 @@ abbrev Time.lt {units : Units}
   (_ : a.unit = b.unit) : Prop :=
   a.coeff.val < b.coeff.val
 
+
+
 structure Horizon (units : Units) where
   beginning : Time units
   ending : Time units
@@ -242,6 +250,8 @@ structure Timescales where
   units : Units
   horizon : Horizon units
   deriving DecidableEq
+
+
 
 structure Interval where
   greater : ℤ
@@ -260,6 +270,8 @@ abbrev Interval.mutuallyExclusive (s : Finset Interval) :=
   ∀ a b : Interval, a ∈ s ∧ b ∈ s →
     (Finset.Icc a.lesser a.greater) ∪ (Finset.Icc b.lesser b.greater) = ∅
 
+
+
 structure DiscretizedFunction (α : Type) where
   intervals : Finset (IntervalWithValue α)
   mutuallyExclusive :
@@ -276,6 +288,8 @@ structure Task (scales : Timescales) where
   startAfter : Option ({ t : Time scales.units // t.unit = unit })
   startBefore : Option ({ t : Time scales.units // t.unit = unit })
   deriving DecidableEq
+
+
 
 structure TaskSet (scales : Timescales) where
   tasks : Finset (Task scales)
@@ -378,9 +392,216 @@ structure TaskSet (scales : Timescales) where
   };
   set
 
+
+
 def curryValidName (name : String) (callback : CpsatSolver.Python.ValidName → α) :=
   let curried (name_valid : CpsatSolver.Python.ValidName.Proof name) :=
     callback { val := name, proof := name_valid };
   curried
+
+def Task.startAfterTime {scales : Timescales}
+  (t : Task scales) : Time scales.units :=
+  let units := scales.units;
+  let horizon := scales.horizon;
+  match t.startAfter with
+  | Option.none =>
+    {
+      coeff := {
+        val := (horizon.beginning.convertLossy t.unit).val
+        proof := by
+          have hunit : horizon.beginning.unit ≤ t.unit := by
+            rw [horizon.begin_is_atomic]
+            exact units.nonzero t.unit
+          exact Time.convertLossy_coeff_proof horizon.beginning t.unit hunit
+      }
+      unit := t.unit
+    }
+  | Option.some time => time.val
+
+def Task.startBeforeTime {scales : Timescales}
+  (t : Task scales) : Time scales.units :=
+  let units := scales.units;
+  let horizon := scales.horizon;
+  match t.startBefore with
+  | Option.none =>
+    {
+      coeff := {
+        val := (horizon.ending.convertLossy t.unit).val
+        proof := by
+          have hunit : horizon.ending.unit ≤ t.unit := by
+            rw [horizon.end_is_atomic]
+            exact units.nonzero t.unit
+          exact Time.convertLossy_coeff_proof horizon.ending t.unit hunit
+
+      },
+      unit := units.atomic,
+    }
+  | Option.some time => time.val
+
+def Task.costVar {scales : Timescales} (t : Task scales)
+  (min max : ℤ) :=
+  curryValidName s! "{t.name.val}_cost" (fun name => ({
+    name := name
+    domain := {
+      min := min
+      max := max
+    }
+  } : CpsatSolver.IntVar))
+
+def Task.durationVar {scales : Timescales} (t : Task scales) :=
+  curryValidName s! "{t.name.val}_duration" (fun name => ({
+    name := name
+    domain := {
+      min := 0
+      max := t.unit
+    }
+  } : CpsatSolver.IntVar))
+
+
+
+namespace UnitAware
+
+structure LinearExpr (units : Units) where
+  cpsat : CpsatSolver.LinearExpr.Proven
+  unit : units.set
+  deriving DecidableEq
+
+def LinearExpr.add {units : Units}
+  (a b : LinearExpr units) (_ : a.unit = b.unit) :=
+  fun hmin hmax => ({
+    cpsat := CpsatSolver.LinearExpr.add
+      a.cpsat b.cpsat hmin hmax
+    unit := a.unit
+  } : LinearExpr units)
+
+def LinearExpr.sub {units : Units}
+  (a b : LinearExpr units) (_ : a.unit = b.unit) :=
+  fun hmin hmax => ({
+    cpsat := CpsatSolver.LinearExpr.sub
+      a.cpsat b.cpsat hmin hmax
+    unit := a.unit
+  } : LinearExpr units)
+
+def LinearExpr.mul {units : Units}
+  (a b : LinearExpr units) (_ : a.unit = b.unit) :=
+  fun hmin hmax => ({
+    cpsat := CpsatSolver.LinearExpr.mul
+      a.cpsat b.cpsat hmin hmax
+    unit := a.unit
+  } : LinearExpr units)
+
+structure BoundedLinearExpr (units : Units) where
+  op : CpsatSolver.BoundedLinearExpr.Op
+  left : LinearExpr units
+  right : LinearExpr units
+  units_eq : left.unit = right.unit
+  no_contradict : CpsatSolver.BoundedLinearExpr.NoContradict op left.cpsat right.cpsat
+  deriving DecidableEq
+
+def BoundedLinearExpr.cpsat {units : Units}
+  (b : BoundedLinearExpr units) : CpsatSolver.BoundedLinearExpr :=
+    {
+      op := b.op
+      left := b.left.cpsat
+      right := b.right.cpsat
+      no_contradict := b.no_contradict
+    }
+
+inductive Constraint.Variant (units : Units) where
+  | bounded_linear (expr : BoundedLinearExpr units)
+  | max_equality (target : LinearExpr units) (exprs : Array (LinearExpr units))
+  | cumulative
+    (intervals : Array CpsatSolver.FixedSizeIntervalVar)
+    (demands : Array (LinearExpr units))
+    (capacity : (LinearExpr units))
+  deriving DecidableEq
+
+structure Constraint (units : Units) where
+  name : CpsatSolver.Python.ValidName
+  enforcement : CpsatSolver.Constraint.Enforcement
+  variant : Constraint.Variant units
+  deriving DecidableEq
+
+structure IntVarProven (units : Units) where
+  var : CpsatSolver.IntVar.Proven
+  unit : units.set
+
+def IntVarProven.name {units : Units} (container : IntVarProven units) :=
+  container.var.val.name
+
+end UnitAware
+
+
+private def Task.startIntVar {scales : Timescales} (t : Task scales) :=
+  curryValidName s! "{t.name.val}_start" (fun name => ({
+    name := name
+    domain := {
+      min := t.startBeforeTime.coeff * t.startAfterTime.unit
+      max := t.startAfterTime.coeff * t.startAfterTime.unit
+    }
+  } : CpsatSolver.IntVar))
+
+def Task.start {scales : Timescales} (task : Task scales) :=
+  fun hname hvar =>
+    ({
+      var := {
+        val := Task.startIntVar task hname
+        property := hvar
+      }
+      unit := task.unit
+    } : UnitAware.IntVarProven scales.units)
+
+
+
+def TaskConstrain.withinParent {scales : Timescales}
+  (self parent : UnitAware.IntVarProven scales.units) :=
+  fun
+    constraint_name1_valid
+    constraint_name2_valid
+    parent_end_domain_min_valid
+    parent_end_domain_max_valid
+    no_contradict_after_start
+    no_contradict_before_end
+  =>
+    let selfStart : CpsatSolver.LinearExpr.Proven :=
+      CpsatSolver.LinearExpr.var self.var
+    let parentStart : CpsatSolver.LinearExpr.Proven :=
+      CpsatSolver.LinearExpr.var parent.var
+    let parentEnd : CpsatSolver.LinearExpr.Proven :=
+      CpsatSolver.LinearExpr.add
+        parentStart
+        (CpsatSolver.LinearExpr.const
+          parent.unit
+          (scales.units.nonoverflow parent.unit))
+        parent_end_domain_min_valid
+        parent_end_domain_max_valid
+    let afterParentStart : CpsatSolver.Constraint :=
+      {
+        name := CpsatSolver.Python.ValidName.mk
+          s!"{self.name.val}_after_{parent.name.val}_start"
+          constraint_name1_valid
+        enforcement := CpsatSolver.Constraint.Enforcement.always
+        variant := CpsatSolver.Constraint.Variant.bounded_linear
+          {
+            op := CpsatSolver.BoundedLinearExpr.Op.gte,
+            left := parentStart
+            right := selfStart
+            no_contradict := no_contradict_after_start
+          }
+      };
+    let beforeParentEnd : CpsatSolver.Constraint := {
+      name := CpsatSolver.Python.ValidName.mk
+        s!"{self.name.val}_before_{parent.name.val}_end"
+        constraint_name2_valid
+      enforcement := CpsatSolver.Constraint.Enforcement.always
+      variant := CpsatSolver.Constraint.Variant.bounded_linear
+        {
+          op := CpsatSolver.BoundedLinearExpr.Op.lt,
+          left := selfStart,
+          right := parentEnd,
+          no_contradict := no_contradict_before_end
+        }
+    };
+    [ afterParentStart, beforeParentEnd ]
 
 end CpsatScheduler

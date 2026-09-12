@@ -147,6 +147,8 @@ structure IntVar where
 def IntVar.Proof (var : IntVar) :=
   Interval.Proof var.domain
 
+abbrev IntVar.Proven := { x : IntVar // IntVar.Proof x }
+
 instance : Var IntVar where
   name var := var.name
 
@@ -154,7 +156,7 @@ mutual
 
 /-- LinearExpr is a linear expr that evaluates to an ℤ -/
 inductive LinearExpr.Op where
-  | var (value : CpsatSolver.IntVar) (H : CpsatSolver.IntVar.Proof value)
+  | var (value : CpsatSolver.IntVar.Proven)
   | const (value : ℤ) (H : CpsatSolver.Int64.Proof value)
   | neg (a : LinearExpr.Proven)
   | add (a : LinearExpr.Proven) (b : LinearExpr.Proven)

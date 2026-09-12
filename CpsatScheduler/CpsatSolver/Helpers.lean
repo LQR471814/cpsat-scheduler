@@ -36,7 +36,7 @@ def FixedSizeIntervalVar.toPythonExpr (var : FixedSizeIntervalVar) : Python.Expr
 
 def LinearExpr.Proven.toPythonExpr (expr : LinearExpr.Proven) : Python.Expr :=
   match expr with
-    | { op := LinearExpr.Op.var var _, proof := _ } => Python.Expr.id var.name
+    | { op := LinearExpr.Op.var var, proof := _ } => Python.Expr.id var.val.name
     | { op := LinearExpr.Op.const value _, proof := _ }  =>
       Python.Expr.lit (Python.Literal.int value)
     | { op := LinearExpr.Op.neg subexpr, proof := _ } =>
@@ -60,14 +60,12 @@ def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
   | .lt => Python.Expr.lt a.toPythonExpr b.toPythonExpr
   | .lte => Python.Expr.lte a.toPythonExpr b.toPythonExpr
 
-def LinearExpr.var
-  (value : IntVar)
-  (H : IntVar.Proof value) : LinearExpr.Proven :=
+def LinearExpr.var (value : IntVar.Proven) : LinearExpr.Proven :=
   {
-    op := LinearExpr.Op.var value H,
+    op := LinearExpr.Op.var value,
     proof := {
-      domain := value.domain,
-      domainValid := H
+      domain := value.val.domain,
+      domainValid := value.prop
     }
   }
 
@@ -230,8 +228,14 @@ def LinearExpr.mul
   let intVarRight := IntVar.mk
     (Python.ValidName.mk "hello2" (by decide))
     { min := -5, max := -2 }
-  let left := LinearExpr.var intVarLeft (of_decide_eq_true rfl);
-  let right := LinearExpr.var intVarRight (of_decide_eq_true rfl);
+  let left := LinearExpr.var {
+    val := intVarLeft
+    property := of_decide_eq_true rfl
+  };
+  let right := LinearExpr.var {
+    val := intVarRight
+    property := of_decide_eq_true rfl
+  };
   let multiplied := LinearExpr.mul left right (of_decide_eq_true rfl) (of_decide_eq_true rfl);
   multiplied.proof.domain
 
