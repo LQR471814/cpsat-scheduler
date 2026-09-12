@@ -281,45 +281,53 @@ deriving DecidableEq
 instance : Var IntVar where
   name var := var.name
 
-inductive LinearExpr where
-  | fromVar (value : IntVar)
-  | fromConst (value : Int64)
-  | fromNeg (a : LinearExpr) (domain : CpsatSolver.Interval)
-  | fromAdd (a b : LinearExpr) (domain : CpsatSolver.Interval)
-  | fromMul (a b : LinearExpr) (domain : CpsatSolver.Interval)
-  | fromSub (a b : LinearExpr) (domain : CpsatSolver.Interval)
-deriving DecidableEq
-
-def LinearExpr.domain (l : LinearExpr) : CpsatSolver.Interval :=
-  match l with
-  | .fromVar int => int.domain
-  | .fromConst const => Interval.fromValue const
-  | .fromNeg _ domain => domain
-  | .fromAdd _ _ domain => domain
-  | .fromMul _ _ domain => domain
-  | .fromSub _ _ domain => domain
+inductive LinearExpr : Interval → Type where
+  | fromVar (value : IntVar) : LinearExpr value.domain
+  | fromConst (value : Int64) : LinearExpr (Interval.fromValue value)
+  | fromNeg
+    (a : LinearExpr α)
+    (domain : Interval)
+    (neg_nonoverflow)
+    (domain_is_neg : α.neg neg_nonoverflow = domain)
+      : LinearExpr domain
+  | fromAdd
+    (a : LinearExpr α) (b : LinearExpr β)
+    (domain : Interval)
+    (add_nonoverflow)
+    (domain_is_add : α.add β add_nonoverflow = domain)
+      : LinearExpr domain
+  | fromMul
+    (a : LinearExpr α) (b : LinearExpr β)
+    (domain : Interval)
+    (sub_nonoverflow)
+    (domain_is_sub : α.sub β sub_nonoverflow = domain)
+      : LinearExpr domain
+  | fromSub
+    (a : LinearExpr α) (b : LinearExpr β)
+    (domain : Interval)
+    (mul_nonoverflow)
+    (domain_is_mul : α.mul β mul_nonoverflow = domain)
+      : LinearExpr domain
 
 structure FixedSizeIntervalVar where
   -- name is also the identifier
   name : CpsatSolver.Python.ValidName
-  start : LinearExpr
+  startDomain : Interval
+  start : LinearExpr startDomain
   size : Int64
   nonzero : size ≥ (0 : ℤ)
-deriving DecidableEq
 
 instance : Var FixedSizeIntervalVar where
   name var := var.name
 
 
-inductive BoundedLinearExpr.Op where
+inductive BoundedLinearExpr.Rel where
   | eq | neq | gt | gte | lt | lte
 deriving DecidableEq
 
-def BoundedLinearExpr.NoContradict
-  (op : BoundedLinearExpr.Op) (left right : LinearExpr) : Prop :=
-  let L := left.domain;
-  let R := right.domain;
-  match op with
+def BoundedLinearExpr.NoContradict (rel : BoundedLinearExpr.Rel)
+  (_ : LinearExpr L) (_ : LinearExpr R) : Prop :=
+  match rel with
   -- ¬ (left ∩ right = ∅)
   | .eq => ∃ x : ℤ, (L.left : ℤ) ≤ x ∧ x ≤ L.right ∧
       (R.left : ℤ) ≤ x ∧ x ≤ R.right
@@ -345,39 +353,66 @@ def BoundedLinearExpr.NoContradict
 -- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
 -- (e.g. >, <, ==)
 structure BoundedLinearExpr where
-  op : BoundedLinearExpr.Op
-  left : LinearExpr
-  right : LinearExpr
-  no_contradict : BoundedLinearExpr.NoContradict op left right
-deriving DecidableEq
+  rel : BoundedLinearExpr.Rel
+  left : LinearExpr L
+  right : LinearExpr R
+  no_contradict : BoundedLinearExpr.NoContradict
+    (L := L) (R := R) rel left right
 
 inductive Constraint.Enforcement where
   | always
   | onlyWhenAll {n : Nat} (literals : Vector BoolLit (n + 1))
 deriving DecidableEq
 
+abbrev LinearExpr.WithDomain := Σ D : Interval, LinearExpr D
+
+inductive LinearExprList where
+  | nil
+  | cons (head : LinearExpr D) (tail : LinearExprList)
+
+def LinearExprList.maxOfMin (l : LinearExprList) := match l with
+  | .nil => Int64.min
+  | @LinearExprList.cons domain _ tail => max domain.left (maxOfMin tail)
+
+def LinearExprList.maxOfMax (l : LinearExprList) := match l with
+  | .nil => Int64.min
+  | @LinearExprList.cons domain _ tail => max domain.right (maxOfMax tail)
+
 inductive Constraint.Variant where
   /-- Corresponds to <model>.add -/
   | bounded_linear (expr : CpsatSolver.BoundedLinearExpr)
-  /-- Corresponds to <model>.add_max_equality -/
-  | max_equality (target : LinearExpr) (exprs : Array LinearExpr)
+  /--
+    Corresponds to <model>.add_max_equality
+
+    If target doesn't have enough room to store the max of all possible
+    combinations of values across the expressions (max of the minimums) -> (max
+    of the maximums) then we may have a contradiction
+  -/
+  | max_equality
+    (target : LinearExpr.WithDomain)
+    (exprs : Array LinearExpr.WithDomain)
+    (nocontradict : Finset.Icc
+      (exprs.foldl
+        (fun acc val => max val.fst.left acc)
+        Int64.min)
+      (exprs.foldl
+        (fun acc val => max val.fst.right acc)
+        Int64.min) ⊆ target.fst.set)
   /-- Corresponds to <model>.add_cumulative -/
   | cumulative
-    (intervals : Array CpsatSolver.FixedSizeIntervalVar)
-    (demands : Array LinearExpr)
-    (capacity : LinearExpr)
+    (intervals : Array FixedSizeIntervalVar)
+    (demands : Array LinearExpr.WithDomain)
+    (capacity : LinearExpr.WithDomain)
   /-- Corresponds to <model>.add_bool_and -/
   | bool_and (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_bool_or -/
   | bool_or (terms : Array CpsatSolver.BoolLit)
   /-- Corresponds to <model>.add_implication -/
   | implication (src : CpsatSolver.BoolLit) (dst : CpsatSolver.BoolLit)
-deriving DecidableEq
 
 structure Constraint where
   name : Python.ValidName
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
-deriving DecidableEq
 
 end CpsatSolver

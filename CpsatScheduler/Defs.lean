@@ -560,7 +560,7 @@ def LinearExpr.mul {units : Units}
   } : LinearExpr units)
 
 structure BoundedLinearExpr (units : Units) where
-  op : CpsatSolver.BoundedLinearExpr.Op
+  op : BoundedLinearExpr.Type
   left : LinearExpr units
   right : LinearExpr units
   units_eq : left.unit = right.unit
