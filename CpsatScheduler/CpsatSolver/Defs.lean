@@ -180,17 +180,17 @@ def Interval.sub (a b : Interval)
     nonoverflow
     (by linarith [a.left_le_right, b.left_le_right])
 
-def Interval.mulLower (a b : Interval) : ℤ :=
+private def Interval.mulLower (a b : Interval) : ℤ :=
   min
     (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
     (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
 
-def Interval.mulUpper (a b : Interval) : ℤ :=
+private def Interval.mulUpper (a b : Interval) : ℤ :=
   max
     (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
     (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
 
-theorem Interval.mulLower_le_mulUpper (a b : Interval) :
+private theorem Interval.mulLower_le_mulUpper (a b : Interval) :
     a.mulLower b ≤ a.mulUpper b := by
   unfold mulLower mulUpper
   calc
@@ -214,10 +214,10 @@ def Interval.mul (a b : Interval)
     nonoverflow
     (a.mulLower_le_mulUpper b)
 
-def Interval.divLower (a b : Interval) : ℤ :=
+private def Interval.divLower (a b : Interval) : ℤ :=
   min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
 
-def Interval.divUpper (a b : Interval) : ℤ :=
+private def Interval.divUpper (a b : Interval) : ℤ :=
   max ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
 
 def Interval.div (a b : Interval)
