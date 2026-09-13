@@ -2,8 +2,8 @@
 
 ## Goal
 
-Give `CpsatSolver.LinearExpr` arithmetic semantics over every assignment that
-respects the domains of the integer variables declared in a model. Expose those
+Give `CpsatSolver.LinearExpr` arithmetic semantics over every valuation of its
+integer variables. Expose those
 semantics using ordinary Lean `Set`s so identities such as
 `-(-a) = a` and `(a + b) - b = a` can be proved as set equalities.
 
@@ -16,18 +16,18 @@ Int64 overflow. CP-SAT itself is a trusted external component.
    representable-expression structure.
 2. Define evaluation structurally over `ℤ`. Constructor overflow proofs are
    used when constructing expressions; evaluation ignores proof fields.
-3. Define assignments relative to a `Model`. An assignment maps Python integer
-   variable names to integers and proves that each declared integer variable's
-   value belongs to its domain.
-4. Define the primary semantics as a standard set of assignment/value pairs:
+3. Evaluate expressions under an arbitrary valuation `IntVar → ℤ`. The solver
+   chooses the valuation; domain membership is supplied separately by theorems
+   that need it.
+4. Define the primary semantics as a standard set of valuation/value pairs:
 
    ```lean
-   Set (model.Assignment × ℤ)
+   Set ((IntVar → ℤ) × ℤ)
    ```
 
-   Keeping the assignment in the set preserves correlations. For example,
+   Keeping the valuation in the set preserves correlations. For example,
    `x` and `-x` can have the same possible output values without having the
-   same value under the same assignment.
+   same value under the same valuation.
 5. Derive `possibleValues : Set ℤ` from the primary semantics by projection.
 6. Treat expression domains as conservative bounds, not exact possible-value
    sets.
@@ -87,12 +87,7 @@ Decide during implementation whether these proofs become structure fields or
 are bundled in validated wrappers. In either case, invalid models and requests
 must not reach the trusted solve interface.
 
-### 4. Define assignments and evaluation
-
-Define a model-scoped assignment with:
-
-- a value for each integer-variable name;
-- a proof that every declared integer variable receives a value in its domain.
+### 4. Define valuations and evaluation
 
 Define `LinearExpr.eval` recursively over `ℤ` for variables, constants,
 negation, addition, subtraction, and scalar multiplication if present.
@@ -101,11 +96,10 @@ Add simplification lemmas for each evaluator case.
 
 ### 5. Define standard `Set` semantics
 
-Define the primary meaning as the graph of evaluation over all
-domain-respecting model assignments:
+Define the primary meaning as the graph of evaluation over all valuations:
 
 ```lean
-LinearExpr.meaning : Set (model.Assignment × ℤ)
+LinearExpr.meaning : Set ((IntVar → ℤ) × ℤ)
 ```
 
 Define:
@@ -135,8 +129,8 @@ evaluation.
 Prove domain soundness:
 
 ```text
-If an expression references only variables declared in the model, evaluating
-it under a model assignment produces a value in the expression's conservative
+If an expression's variables respect their domains, evaluating it under a
+domain-respecting valuation produces a value in the expression's conservative
 interval.
 ```
 
@@ -152,7 +146,7 @@ Python identifier collisions.
 ### 8. Mark the trusted solver boundary
 
 Define a validity predicate for feasible or optimal responses saying that there
-exists one domain-respecting, constraint-satisfying model assignment for which
+exists one domain-respecting, constraint-satisfying valuation for which
 every returned request value equals `LinearExpr.eval` on the corresponding
 requested expression.
 
@@ -194,7 +188,7 @@ The work is complete when:
 
 - `LinearExpr` has no expression-by-expression multiplication;
 - every model/request expression references declared integer variables;
-- model assignments enforce declared variable domains;
+- solver-validity predicates enforce declared variable domains;
 - `eval`, `meaning`, and `possibleValues` are available;
 - double-negation and add/subtract cancellation are proved as `Set` equalities;
 - evaluation is proved to stay inside its conservative interval;

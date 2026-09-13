@@ -9,7 +9,7 @@ y = model.new_int_var(0, 5, "y")
 z = model.new_int_var(0, 5, "y")
 
 model.add(y == 5)
-model.add_multiplication_equality(z, x, y)
+model.add_multiplication_equality(z, x, y).only_enforce_if(True)
 
 solver = cp_model.CpSolver()
 status = solver.solve(model)
