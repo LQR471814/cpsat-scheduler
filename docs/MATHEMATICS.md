@@ -642,6 +642,20 @@ else being equal, we move a task back one 4-hour time block.
 Then let's say that the increase in costs resulting from
 [[#Early%20biasing]] should equal twice the cost of
 
+# Optimizing intervals
+
+We might approach optimizing interval resolution in a manner
+similar to binary search.
+
+Namely, instead of making each interval its own constraint, we
+make each constraint divide the set of possible intervals in half.
+
+After pruning to a single possible interval, we can then add a
+check for it.
+
+For $n$ intervals, this should yield $\log_{2}(n)+1$ constraints
+with $\log_{2}(n)$ intermediate boolean variables.
+
 [^1]: Dijk, Derk-Jan, Jeanne F. Duffy, and Charles A. Czeisler.
        “Circadian and Sleep/Wake Dependent Aspects of Subjective
        Alertness and Cognitive Performance.” Journal of Sleep
@@ -662,27 +676,25 @@ Then let's say that the increase in costs resulting from
        Sleep Propensity.” Sleep 32, no. 3 (2009): 392–98.
        https://doi.org/10.1093/sleep/32.3.392.
 [^5]: Shekleton, Julia A., Shantha M. W. Rajaratnam, Joshua J.
-       Gooley, Eliza Van Reen, Charles A. Czeisler, and Steven W.
-       Lockley. “Improved Neurobehavioral Performance during the
-       Wake Maintenance Zone.” Journal of Clinical Sleep
-       Medicine : JCSM : Official Publication of the American
-       Academy of Sleep Medicine 9, no. 4 (2013): 353–62.
-       https://doi.org/10.5664/jcsm.2588.
+    Gooley, Eliza Van Reen, Charles A. Czeisler, and Steven W.
+    Lockley. “Improved Neurobehavioral Performance during the Wake
+    Maintenance Zone.” Journal of Clinical Sleep Medicine : JCSM :
+    Official Publication of the American Academy of Sleep Medicine
+    9, no. 4 (2013): 353–62. https://doi.org/10.5664/jcsm.2588.
 [^6]: Pashler, Harold. “Dual-Task Interference in Simple Tasks:
-       Data and Theory.” Psychological Bulletin (US) 116, no. 2
-       (1994): 220–44.
-       https://doi.org/10.1037/0033-2909.116.2.220.
+    Data and Theory.” Psychological Bulletin (US) 116, no. 2
+    (1994): 220–44. https://doi.org/10.1037/0033-2909.116.2.220.
 [^7]: Monsell, Stephen. “Task Switching.” Trends in Cognitive
-       Sciences 7, no. 3 (2003): 134–40.
-       https://doi.org/10.1016/s1364-6613(03)00028-7.
+    Sciences 7, no. 3 (2003): 134–40.
+    https://doi.org/10.1016/s1364-6613(03)00028-7.
 [^8]: Leroy, Sophie. “Why Is It so Hard to Do My Work? The
-       Challenge of Attention Residue When Switching between Work
-       Tasks.” Organizational Behavior and Human Decision
-       Processes 109, no. 2 (2009): 168–81.
-       https://doi.org/10.1016/j.obhdp.2009.04.002.
+    Challenge of Attention Residue When Switching between Work
+    Tasks.” Organizational Behavior and Human Decision Processes
+    109, no. 2 (2009): 168–81.
+    https://doi.org/10.1016/j.obhdp.2009.04.002.
 [^9]: Mark, Gloria, Victor M. Gonzalez, and Justin Harris. “No
-       Task Left behind? Examining the Nature of Fragmented Work.”
-       Proceedings of the SIGCHI Conference on Human Factors in
-       Computing Systems (New York, NY, USA), CHI ’05, April 2,
-       2005, 321–30. https://doi.org/10.1145/1054972.1055017.
+    Task Left behind? Examining the Nature of Fragmented Work.”
+    Proceedings of the SIGCHI Conference on Human Factors in
+    Computing Systems (New York, NY, USA), CHI ’05, April 2, 2005,
+    321–30. https://doi.org/10.1145/1054972.1055017.
 

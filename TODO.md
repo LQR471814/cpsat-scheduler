@@ -1,8 +1,38 @@
-- [ ] Early biasing
-  - [ ] Compute different "cost categories" after solution.
-- [ ] Energy levels
-  - [ ] Energy level encoding on the task object
-  - [ ] Schedule-synced recurring cost topology
-- [ ] Routine tasks
-- [ ] Parameter tuning
+- [.] Core:
+   - [x] Timescales
+   - [.] Task
+      - [ ] Prove bounds for all integer variables
+      - [o] Cost (configs)
+         - [x] Def
+         - [x] Proof
+         - [ ] Constraint
+      - [o] Start/end
+         - [x] Def
+         - [x] Proof
+         - [ ] Constraint
+      - [o] Children/parents
+         - [x] Def
+         - [x] Proof
+         - [ ] Constraint
+         - [ ] "Temporary" parents
+      - [o] Prereqs
+         - [x] Def
+         - [x] Proof
+         - [ ] Constraint
+      - [ ] Decision variables (cost config / start) constraint
+      - [ ] Orphan deactivation constraint
+      - [ ] Real duration constraint
+      - [ ] Real completion constraint
+      - [ ] PERT def
+   - [ ] Non-overflow constraint
+   - [ ] Objective function
+   - [ ] Events
+- [ ] Process factors
+   - [ ] Early biasing
+     - [ ] Compute different "cost categories" after solution.
+   - [ ] Energy levels
+     - [ ] Energy level encoding on the task object
+     - [ ] Schedule-synced recurring cost topology
+   - [ ] Routine tasks
+   - [ ] Parameter tuning
 

@@ -1,16 +1,4 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
+/.lake
+
 *.egg-info
-
-# Virtual environments
 .venv
-
-*.xml
-*.sh
-*.bin
-*.build/
-*.dist/
