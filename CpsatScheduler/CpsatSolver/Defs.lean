@@ -214,6 +214,34 @@ def Interval.mul (a b : Interval)
     nonoverflow
     (a.mulLower_le_mulUpper b)
 
+theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
+    (hx : (a.left : ℤ) ≤ x ∧ x ≤ a.right) :
+    (a.mulLower (Interval.fromValue value) : ℤ) ≤ value.val * x ∧
+      value.val * x ≤ a.mulUpper (Interval.fromValue value) := by
+  unfold mulLower mulUpper
+  simp only [Interval.fromValue, min_self, max_self]
+  rcases le_total (0 : ℤ) value.val with hvalue | hvalue
+  · constructor
+    · calc
+        min (a.left.val * value.val) (a.right.val * value.val) ≤
+            a.left.val * value.val := min_le_left _ _
+        _ ≤ value.val * x := by
+          simpa [mul_comm] using mul_le_mul_of_nonneg_right hx.1 hvalue
+    · calc
+        value.val * x ≤ a.right.val * value.val := by
+          simpa [mul_comm] using mul_le_mul_of_nonneg_right hx.2 hvalue
+        _ ≤ max (a.left.val * value.val) (a.right.val * value.val) := le_max_right _ _
+  · constructor
+    · calc
+        min (a.left.val * value.val) (a.right.val * value.val) ≤
+            a.right.val * value.val := min_le_right _ _
+        _ ≤ value.val * x := by
+          simpa [mul_comm] using mul_le_mul_of_nonpos_right hx.2 hvalue
+    · calc
+        value.val * x ≤ a.left.val * value.val := by
+          simpa [mul_comm] using mul_le_mul_of_nonpos_right hx.1 hvalue
+        _ ≤ max (a.left.val * value.val) (a.right.val * value.val) := le_max_left _ _
+
 private def Interval.divLower (a b : Interval) : ℤ :=
   min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
 
@@ -290,24 +318,36 @@ inductive LinearExpr : Interval → Type where
     (neg_nonoverflow)
     (domain_is_neg : α.neg neg_nonoverflow = domain)
       : LinearExpr domain
+  | fromMulConst
+    (a : LinearExpr α) (value : Int64)
+    (domain : Interval)
+    (mul_nonoverflow)
+    (domain_is_mul : α.mul (Interval.fromValue value) mul_nonoverflow = domain)
+      : LinearExpr domain
   | fromAdd
     (a : LinearExpr α) (b : LinearExpr β)
     (domain : Interval)
     (add_nonoverflow)
     (domain_is_add : α.add β add_nonoverflow = domain)
       : LinearExpr domain
-  | fromMul
+  | fromSub
     (a : LinearExpr α) (b : LinearExpr β)
     (domain : Interval)
     (sub_nonoverflow)
     (domain_is_sub : α.sub β sub_nonoverflow = domain)
       : LinearExpr domain
-  | fromSub
-    (a : LinearExpr α) (b : LinearExpr β)
-    (domain : Interval)
-    (mul_nonoverflow)
-    (domain_is_mul : α.mul β mul_nonoverflow = domain)
-      : LinearExpr domain
+
+/- A CP-SAT linear expression is affine. Multiplication of two expressions is
+   deliberately not representable because CP-SAT cannot use it as a linear
+   expression. -/
+
+def LinearExpr.intVars {domain : Interval} : LinearExpr domain → Finset IntVar
+  | .fromVar value => {value}
+  | .fromConst _ => ∅
+  | .fromNeg a _ _ _ => a.intVars
+  | .fromMulConst a _ _ _ _ => a.intVars
+  | .fromAdd a b _ _ _ => a.intVars ∪ b.intVars
+  | .fromSub a b _ _ _ => a.intVars ∪ b.intVars
 
 structure FixedSizeIntervalVar where
   -- name is also the identifier
@@ -320,6 +360,9 @@ structure FixedSizeIntervalVar where
 instance : Var FixedSizeIntervalVar where
   name var := var.name
 
+def FixedSizeIntervalVar.intVars (value : FixedSizeIntervalVar) : Finset IntVar :=
+  value.start.intVars
+
 
 inductive BoundedLinearExpr.Rel where
   | eq | neq | gt | gte | lt | lte
@@ -331,8 +374,8 @@ def BoundedLinearExpr.NoContradict (rel : BoundedLinearExpr.Rel)
   -- ¬ (left ∩ right = ∅)
   | .eq => ∃ x : ℤ, (L.left : ℤ) ≤ x ∧ x ≤ L.right ∧
       (R.left : ℤ) ≤ x ∧ x ≤ R.right
-  -- ¬ (left = right)
-  | .neq => L ≠ R
+  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x = y)
+  | .neq => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) ≠ y
   -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≤ y)
   | .gt => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) > y
   -- ¬ (∀ x ∈ left, ∀ y ∈ right, x < y)
@@ -404,5 +447,23 @@ structure Constraint where
   name : Python.ValidName
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
+
+def BoundedLinearExpr.intVars (value : BoundedLinearExpr) : Finset IntVar :=
+  value.left.intVars ∪ value.right.intVars
+
+def Constraint.Variant.intVars : Constraint.Variant → Finset IntVar
+  | .bounded_linear expr => expr.intVars
+  | .max_equality target exprs _ =>
+    exprs.foldl (fun acc expr => acc ∪ expr.snd.intVars) target.snd.intVars
+  | .cumulative intervals demands capacity =>
+    let intervalVars := intervals.foldl (fun acc value => acc ∪ value.start.intVars) ∅
+    let demandVars := demands.foldl (fun acc expr => acc ∪ expr.snd.intVars) ∅
+    intervalVars ∪ demandVars ∪ capacity.snd.intVars
+  | .bool_and _ => ∅
+  | .bool_or _ => ∅
+  | .implication _ _ => ∅
+
+def Constraint.intVars (value : Constraint) : Finset IntVar :=
+  value.variant.intVars
 
 end CpsatSolver

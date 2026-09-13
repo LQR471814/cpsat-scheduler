@@ -32,6 +32,9 @@ def model : Model := {
 
 def req : SolveRequest model := {
   exprs := #[⟨x.domain, LinearExpr.var x⟩, ⟨y.domain, LinearExpr.var y⟩]
+  expressionsWellFormed := by
+    intro i
+    fin_cases i <;> simp [Model.declaredInts]
 }
 
 def main : IO Unit := do

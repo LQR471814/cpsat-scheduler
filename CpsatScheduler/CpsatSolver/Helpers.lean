@@ -17,8 +17,9 @@ def LinearExpr.toPythonExpr {domain : Interval} (expr : LinearExpr domain) : Pyt
   | .fromVar value => value.toPythonExpr
   | .fromConst value => Python.Expr.lit (Python.Literal.int value.val)
   | .fromNeg a _ _ _ => Python.Expr.neg a.toPythonExpr
+  | .fromMulConst a value _ _ _ =>
+    Python.Expr.mul (Python.Expr.lit (Python.Literal.int value.val)) a.toPythonExpr
   | .fromAdd a b _ _ _ => Python.Expr.add a.toPythonExpr b.toPythonExpr
-  | .fromMul a b _ _ _ => Python.Expr.mul a.toPythonExpr b.toPythonExpr
   | .fromSub a b _ _ _ => Python.Expr.sub a.toPythonExpr b.toPythonExpr
 
 def LinearExpr.var (value : IntVar) : LinearExpr value.domain := .fromVar value
@@ -32,6 +33,14 @@ def LinearExpr.neg {domain : Interval}
     (result_eq : domain.neg nonoverflow = result) : LinearExpr result :=
   .fromNeg a result nonoverflow result_eq
 
+def LinearExpr.mul {domain : Interval}
+    (a : LinearExpr domain) (value : Int64)
+    (result : Interval)
+    (nonoverflow : Int64.Nonoverflow _ ∧ Int64.Nonoverflow _)
+    (result_eq : domain.mul (Interval.fromValue value) nonoverflow = result) :
+    LinearExpr result :=
+  .fromMulConst a value result nonoverflow result_eq
+
 def LinearExpr.add {leftDomain rightDomain : Interval}
     (left : LinearExpr leftDomain) (right : LinearExpr rightDomain)
     (result : Interval)
@@ -43,24 +52,10 @@ def LinearExpr.add {leftDomain rightDomain : Interval}
 def LinearExpr.sub {leftDomain rightDomain : Interval}
     (left : LinearExpr leftDomain) (right : LinearExpr rightDomain)
     (result : Interval)
-    (nonoverflow : Int64.Nonoverflow (min (min ((leftDomain.left : ℤ) * rightDomain.left)
-        ((leftDomain.left : ℤ) * rightDomain.right))
-        (min ((leftDomain.right : ℤ) * rightDomain.left)
-          ((leftDomain.right : ℤ) * rightDomain.right))) ∧
-      Int64.Nonoverflow (max (max ((leftDomain.left : ℤ) * rightDomain.left)
-        ((leftDomain.left : ℤ) * rightDomain.right))
-        (max ((leftDomain.right : ℤ) * rightDomain.left)
-          ((leftDomain.right : ℤ) * rightDomain.right))))
-    (result_eq : leftDomain.mul rightDomain nonoverflow = result) : LinearExpr result :=
-  .fromSub left right result nonoverflow result_eq
-
-def LinearExpr.mul {leftDomain rightDomain : Interval}
-    (left : LinearExpr leftDomain) (right : LinearExpr rightDomain)
-    (result : Interval)
     (nonoverflow : Int64.Nonoverflow ((leftDomain.left : ℤ) - rightDomain.right) ∧
       Int64.Nonoverflow ((leftDomain.right : ℤ) - rightDomain.left))
     (result_eq : leftDomain.sub rightDomain nonoverflow = result) : LinearExpr result :=
-  .fromMul left right result nonoverflow result_eq
+  .fromSub left right result nonoverflow result_eq
 
 def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
   let left := @LinearExpr.toPythonExpr expr.leftDomain expr.left

@@ -566,15 +566,6 @@ def LinearExpr.sub {units : Units}
     unit := a.unit
   } : LinearExpr units)
 
-def LinearExpr.mul {units : Units}
-  (a b : LinearExpr units) (_ : a.unit = b.unit) :=
-  fun (result : CpsatSolver.Interval) nonoverflow result_eq => ({
-    domain := result
-    cpsat := CpsatSolver.LinearExpr.mul
-      a.cpsat b.cpsat result nonoverflow result_eq
-    unit := a.unit
-  } : LinearExpr units)
-
 structure BoundedLinearExpr (units : Units) where
   rel : CpsatSolver.BoundedLinearExpr.Rel
   left : LinearExpr units
