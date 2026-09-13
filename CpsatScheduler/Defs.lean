@@ -23,7 +23,7 @@ structure Units where
   has_atomic : 1 ∈ set
   nonzero : ∀ u : set, u ≥ { val := 1, property := has_atomic }
   divisibility : ∀ a b : set, a ≥ b → (a : ℤ) % b = 0
-  nonoverflow : ∀ a : set, Int64.Nonoverflow a
+  nonoverflow : ∀ a : set, CpsatSolver.Int64.Nonoverflow a
   deriving DecidableEq
 
 abbrev Units.max (units : Units) : units.set :=
@@ -47,47 +47,47 @@ theorem Units.all_ge_atomic {units : Units}
 
 
 structure UnitValue (units : Units) where
-  coeff : CpsatSolver.Int64.Proven
+  coeff : CpsatSolver.Int64
   unit : units.set
   deriving DecidableEq
 
 def UnitValue.add {units : Units}
   (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : Int64.Nonoverflow (a.unit.val + b.unit.val))
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow (a.coeff.val + b.coeff.val))
   : UnitValue units :=
     {
-      coeff := { val := a.unit.val + b.unit.val, proof := nonoverflow },
+      coeff := { val := a.coeff.val + b.coeff.val, nonoverflow := nonoverflow },
       unit := a.unit
     }
 
 def UnitValue.sub {units : Units}
   (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : Int64.Nonoverflow (a.unit.val - b.unit.val))
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow (a.coeff.val - b.coeff.val))
   : UnitValue units :=
     {
-      coeff := { val := a.unit.val - b.unit.val, proof := nonoverflow }
+      coeff := { val := a.coeff.val - b.coeff.val, nonoverflow := nonoverflow }
       unit := a.unit
     }
 
 def UnitValue.mul {units : Units}
   (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : Int64.Nonoverflow (a.unit.val * b.unit.val))
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow (a.coeff.val * b.coeff.val))
   : UnitValue units :=
     {
-      coeff := { val := a.unit.val * b.unit.val, proof := nonoverflow }
+      coeff := { val := a.coeff.val * b.coeff.val, nonoverflow := nonoverflow }
       unit := a.unit
     }
 
 def UnitValue.div {units : Units}
   (a b : UnitValue units)
   (_ : a.unit = b.unit)
-  (nonoverflow : Int64.Nonoverflow (a.unit.val / b.unit.val))
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow (a.coeff.val / b.coeff.val))
   : UnitValue units :=
     {
-      coeff := { val := a.unit.val / b.unit.val, proof := nonoverflow }
+      coeff := { val := a.coeff.val / b.coeff.val, nonoverflow := nonoverflow }
       unit := a.unit
     }
 
@@ -212,7 +212,7 @@ theorem UnitValue.convertLossy_coeff_abs_le {units : Units}
 /-- Lossy conversion to a no-smaller unit produces an Int64-valid coefficient. -/
 theorem UnitValue.convertLossy_coeff_proof {units : Units}
     (task : UnitValue units) (Y : units.set) (hXY : task.unit ≤ Y) :
-    Int64.Nonoverflow (task.convertLossy Y).val := by
+    CpsatSolver.Int64.Nonoverflow (task.convertLossy Y).val := by
   have hXpos : 0 < task.unit.val :=
     lt_of_lt_of_le Int.zero_lt_one (units.nonzero task.unit)
   obtain ⟨k, hk⟩ : ∃ k : ℤ, Y.val = task.unit.val * k :=
@@ -229,7 +229,7 @@ theorem UnitValue.convertLossy_coeff_proof {units : Units}
       task.coeff.val * task.unit.val / (task.unit.val * k)
           = task.unit.val * task.coeff.val / (task.unit.val * k) := by rw [mul_comm]
       _ = task.coeff.val / k := Int.mul_ediv_mul_of_pos _ _ hXpos]
-  exact CpsatSolver.Int64.proof_ediv_of_pos task.coeff.proof hkpos
+  exact CpsatSolver.Int64.proof_ediv_of_pos task.coeff.nonoverflow hkpos
 
 abbrev UnitValue.lt {units : Units}
   (a b : UnitValue units)
@@ -257,8 +257,8 @@ structure Interval where
   greater : ℤ
   lesser : ℤ
   validLt : lesser ≤ greater
-  validGe : Int64.Nonoverflow greater
-  validLe : Int64.Nonoverflow lesser
+  validGe : CpsatSolver.Int64.Nonoverflow greater
+  validLe : CpsatSolver.Int64.Nonoverflow lesser
   deriving DecidableEq
 
 structure IntervalWithValue (α : Type) where
@@ -313,11 +313,11 @@ structure TaskSet (scales : Timescales) where
     }
     horizon := {
       beginning := {
-        coeff := CpsatSolver.Int64.Proven.mk 0 (by decide),
+        coeff := CpsatSolver.Int64.mk 0 (by decide),
         unit := { val := 1, property := by decide }
       }
       ending := {
-        coeff := CpsatSolver.Int64.Proven.mk 32 (by decide),
+        coeff := CpsatSolver.Int64.mk 32 (by decide),
         unit := { val := 1, property := by decide }
       }
       begin_is_atomic := by decide
@@ -408,7 +408,7 @@ def Task.startAfterTime {scales : Timescales}
     {
       coeff := {
         val := (horizon.beginning.convertLossy t.unit).val
-        proof := by
+        nonoverflow := by
           have hunit : horizon.beginning.unit ≤ t.unit := by
             rw [horizon.begin_is_atomic]
             exact units.nonzero t.unit
@@ -427,24 +427,28 @@ def Task.startBeforeTime {scales : Timescales}
     {
       coeff := {
         val := (horizon.ending.convertLossy t.unit).val
-        proof := by
+        nonoverflow := by
           have hunit : horizon.ending.unit ≤ t.unit := by
             rw [horizon.end_is_atomic]
             exact units.nonzero t.unit
           exact UnitValue.convertLossy_coeff_proof horizon.ending t.unit hunit
 
       },
-      unit := units.atomic,
+      unit := t.unit,
     }
   | Option.some time => time.val
 
 def Task.costVar {scales : Timescales} (t : Task scales)
-  (min max : ℤ) :=
+  (min max : ℤ)
+  (min_nonoverflow : CpsatSolver.Int64.Nonoverflow min)
+  (max_nonoverflow : CpsatSolver.Int64.Nonoverflow max)
+  (min_le_max : min ≤ max) :=
   curryValidName s! "{t.name.val}_cost" (fun name => ({
     name := name
     domain := {
-      left := min
-      right := max
+      left := { val := min, nonoverflow := min_nonoverflow }
+      right := { val := max, nonoverflow := max_nonoverflow }
+      left_le_right := min_le_max
     }
   } : CpsatSolver.IntVar))
 
@@ -452,8 +456,16 @@ def Task.durationVar {scales : Timescales} (t : Task scales) :=
   curryValidName s! "{t.name.val}_duration" (fun name => ({
     name := name
     domain := {
-      left := 0
-      right := t.unit
+      left := { val := 0, nonoverflow := by decide }
+      right := {
+        val := t.unit.val
+        nonoverflow := scales.units.nonoverflow t.unit
+      }
+      left_le_right := by
+        change (0 : ℤ) ≤ t.unit.val
+        have hunit := scales.units.nonzero t.unit
+        change (1 : ℤ) ≤ t.unit.val at hunit
+        omega
     }
   } : CpsatSolver.IntVar))
 
@@ -462,22 +474,22 @@ def Task.durationVar {scales : Timescales} (t : Task scales) :=
 namespace UnitAware
 
 structure IntVar (units : Units) where
-  var : CpsatSolver.IntVar.Proven
+  var : CpsatSolver.IntVar
   unit : units.set
 
 def IntVar.name {units : Units} (container : IntVar units) :=
-  container.var.val.name
+  container.var.name
 
 structure LinearExpr (units : Units) where
-  cpsat : CpsatSolver.LinearExpr.Proven
+  domain : CpsatSolver.Interval
+  cpsat : CpsatSolver.LinearExpr domain
   unit : units.set
-  deriving DecidableEq
 
-def LinearExpr.domain {units : Units} (l : LinearExpr units)
+def LinearExpr.valueSet {units : Units} (l : LinearExpr units)
   : Set (UnitValue units) :=
     fun v =>
       v.unit = l.unit ∧
-      v.coeff.val ∈ l.cpsat.proof.domain
+      v.coeff ∈ l.domain
 
 -- prove injectivity?
 -- namely we can state that two exprs are injective via some relation?
@@ -523,6 +535,7 @@ relationships
 def LinearExpr.var {units : Units}
   (awareVar : IntVar units) : LinearExpr units :=
   {
+    domain := awareVar.var.domain
     cpsat := CpsatSolver.LinearExpr.var awareVar.var
     unit := awareVar.unit
   }
@@ -537,40 +550,45 @@ def LinearExpr.convertUnit {units : Units}
 
 def LinearExpr.add {units : Units}
   (a b : LinearExpr units) (_ : a.unit = b.unit) :=
-  fun hmin hmax => ({
+  fun (result : CpsatSolver.Interval) nonoverflow result_eq => ({
+    domain := result
     cpsat := CpsatSolver.LinearExpr.add
-      a.cpsat b.cpsat hmin hmax
+      a.cpsat b.cpsat result nonoverflow result_eq
     unit := a.unit
   } : LinearExpr units)
 
 def LinearExpr.sub {units : Units}
   (a b : LinearExpr units) (_ : a.unit = b.unit) :=
-  fun hmin hmax => ({
+  fun (result : CpsatSolver.Interval) nonoverflow result_eq => ({
+    domain := result
     cpsat := CpsatSolver.LinearExpr.sub
-      a.cpsat b.cpsat hmin hmax
+      a.cpsat b.cpsat result nonoverflow result_eq
     unit := a.unit
   } : LinearExpr units)
 
 def LinearExpr.mul {units : Units}
   (a b : LinearExpr units) (_ : a.unit = b.unit) :=
-  fun hmin hmax => ({
+  fun (result : CpsatSolver.Interval) nonoverflow result_eq => ({
+    domain := result
     cpsat := CpsatSolver.LinearExpr.mul
-      a.cpsat b.cpsat hmin hmax
+      a.cpsat b.cpsat result nonoverflow result_eq
     unit := a.unit
   } : LinearExpr units)
 
 structure BoundedLinearExpr (units : Units) where
-  op : BoundedLinearExpr.Type
+  rel : CpsatSolver.BoundedLinearExpr.Rel
   left : LinearExpr units
   right : LinearExpr units
   units_eq : left.unit = right.unit
-  no_contradict : CpsatSolver.BoundedLinearExpr.NoContradict op left.cpsat right.cpsat
-  deriving DecidableEq
+  no_contradict : CpsatSolver.BoundedLinearExpr.NoContradict
+    (L := left.domain) (R := right.domain) rel left.cpsat right.cpsat
 
 def BoundedLinearExpr.cpsat {units : Units}
   (b : BoundedLinearExpr units) : CpsatSolver.BoundedLinearExpr :=
     {
-      op := b.op
+      rel := b.rel
+      leftDomain := b.left.domain
+      rightDomain := b.right.domain
       left := b.left.cpsat
       right := b.right.cpsat
       no_contradict := b.no_contradict
@@ -583,32 +601,30 @@ inductive Constraint.Variant (units : Units) where
     (intervals : Array CpsatSolver.FixedSizeIntervalVar)
     (demands : Array (LinearExpr units))
     (capacity : (LinearExpr units))
-  deriving DecidableEq
 
 structure Constraint (units : Units) where
   name : CpsatSolver.Python.ValidName
   enforcement : CpsatSolver.Constraint.Enforcement
   variant : Constraint.Variant units
-  deriving DecidableEq
 
 end UnitAware
 
 
 def Task.start {scales : Timescales} (task : Task scales) :=
-  let startIntVar {scales : Timescales} (t : Task scales) :=
+  let startIntVar {scales : Timescales} (t : Task scales)
+      (start_le_end :
+        t.startAfterTime.coeff.val ≤ t.startBeforeTime.coeff.val) :=
     curryValidName s! "{t.name.val}_start" (fun name => ({
       name := name
       domain := {
-        left := t.startBeforeTime.coeff * t.startAfterTime.unit
-        right := t.startAfterTime.coeff * t.startAfterTime.unit
+        left := t.startAfterTime.coeff
+        right := t.startBeforeTime.coeff
+        left_le_right := start_le_end
       }
     } : CpsatSolver.IntVar))
   fun hname hvar =>
     ({
-      var := {
-        val := startIntVar task hname
-        property := hvar
-      }
+      var := startIntVar task hvar hname
       unit := task.unit
     } : UnitAware.IntVar scales.units)
 
@@ -618,17 +634,9 @@ def TaskConstrain.afterTask {scales : Timescales}
   (self other : UnitAware.IntVar scales.units) :=
   let curried name_valid no_contradict :
     UnitAware.Constraint scales.units :=
-    let selfStart : UnitAware.LinearExpr scales.units :=
-      {
-        cpsat := CpsatSolver.LinearExpr.var self.var
-        unit := self.unit
-      };
-    let otherStart : UnitAware.LinearExpr scales.units :=
-      {
-        cpsat := CpsatSolver.LinearExpr.var other.var
-        unit := other.unit
-      };
-    let converted := otherStart
+    let selfStart := UnitAware.LinearExpr.var self
+    let otherStart := UnitAware.LinearExpr.var other
+    let converted := otherStart.convertUnit self.unit
     {
       name := CpsatSolver.Python.ValidName.mk
         s!"{self.name.val}_after_{other.name.val}_start"
@@ -636,11 +644,11 @@ def TaskConstrain.afterTask {scales : Timescales}
       enforcement := CpsatSolver.Constraint.Enforcement.always
       variant := UnitAware.Constraint.Variant.bounded_linear
         {
-          op := CpsatSolver.BoundedLinearExpr.Op.gte,
-          left := otherStart
-          right := selfStart
+          rel := CpsatSolver.BoundedLinearExpr.Rel.gte,
+          left := selfStart
+          right := converted.val
           no_contradict := no_contradict
-          units_eq := sorry
+          units_eq := converted.property.symm
         }
     }
   curried
@@ -655,18 +663,26 @@ def TaskConstrain.withinParent {scales : Timescales}
     no_contradict_after_start
     no_contradict_before_end
   =>
-    let selfStart : CpsatSolver.LinearExpr.Proven :=
+    let selfStart : CpsatSolver.LinearExpr self.var.domain :=
       CpsatSolver.LinearExpr.var self.var
-    let parentStart : CpsatSolver.LinearExpr.Proven :=
+    let parentStart : CpsatSolver.LinearExpr parent.var.domain :=
       CpsatSolver.LinearExpr.var parent.var
-    let parentEnd : CpsatSolver.LinearExpr.Proven :=
+    let parentUnit : CpsatSolver.Int64 := {
+      val := parent.unit.val
+      nonoverflow := scales.units.nonoverflow parent.unit
+    }
+    let parentUnitDomain := (CpsatSolver.Interval.fromValue parentUnit).val
+    let parentEndNonoverflow :=
+      And.intro parent_end_domain_min_valid parent_end_domain_max_valid
+    let parentEndDomain :=
+      (parent.var.domain.add parentUnitDomain parentEndNonoverflow).val
+    let parentEnd : CpsatSolver.LinearExpr parentEndDomain :=
       CpsatSolver.LinearExpr.add
         parentStart
-        (CpsatSolver.LinearExpr.const
-          parent.unit
-          (scales.units.nonoverflow parent.unit))
-        parent_end_domain_min_valid
-        parent_end_domain_max_valid
+        (CpsatSolver.LinearExpr.const parentUnit)
+        parentEndDomain
+        parentEndNonoverflow
+        rfl
     let afterParentStart : CpsatSolver.Constraint :=
       {
         name := CpsatSolver.Python.ValidName.mk
@@ -675,7 +691,9 @@ def TaskConstrain.withinParent {scales : Timescales}
         enforcement := CpsatSolver.Constraint.Enforcement.always
         variant := CpsatSolver.Constraint.Variant.bounded_linear
           {
-            op := CpsatSolver.BoundedLinearExpr.Op.gte,
+            rel := CpsatSolver.BoundedLinearExpr.Rel.gte,
+            leftDomain := parent.var.domain
+            rightDomain := self.var.domain
             left := parentStart
             right := selfStart
             no_contradict := no_contradict_after_start
@@ -688,7 +706,9 @@ def TaskConstrain.withinParent {scales : Timescales}
       enforcement := CpsatSolver.Constraint.Enforcement.always
       variant := CpsatSolver.Constraint.Variant.bounded_linear
         {
-          op := CpsatSolver.BoundedLinearExpr.Op.lt,
+          rel := CpsatSolver.BoundedLinearExpr.Rel.lt,
+          leftDomain := self.var.domain
+          rightDomain := parentEndDomain
           left := selfStart,
           right := parentEnd,
           no_contradict := no_contradict_before_end
