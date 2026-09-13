@@ -39,11 +39,6 @@ def ReferencesWellFormed (model : Model) : Prop :=
   ∀ i : Fin model.constraints.size,
     (model.constraints[i]).intVars ⊆ model.declaredInts
 
-structure Assignment (model : Model) where
-  value : Python.ValidName → ℤ
-  inDomain : ∀ v ∈ model.declaredInts,
-    (v.domain.left : ℤ) ≤ value v.name ∧ value v.name ≤ v.domain.right
-
 end Model
 
 namespace LinearExpr
@@ -52,72 +47,75 @@ namespace LinearExpr
     (LinearExpr.var value).intVars = {value} := by
   rfl
 
-def eval {model : Model} (assignment : model.Assignment)
+/- An expression is evaluated under an arbitrary valuation.  The solver is
+   free to choose these values; domain membership is an assumption only for
+   theorems that need it. -/
+def eval (valuation : IntVar → ℤ)
     {domain : Interval} : LinearExpr domain → ℤ
-  | .fromVar value => assignment.value value.name
+  | .fromVar value => valuation value
   | .fromConst value => value.val
-  | .fromNeg a _ _ _ => -eval assignment a
-  | .fromMulConst a value _ _ _ => value.val * eval assignment a
-  | .fromAdd a b _ _ _ => eval assignment a + eval assignment b
-  | .fromSub a b _ _ _ => eval assignment a - eval assignment b
+  | .fromNeg a _ _ _ => -eval valuation a
+  | .fromMulConst a value _ _ _ => value.val * eval valuation a
+  | .fromAdd a b _ _ _ => eval valuation a + eval valuation b
+  | .fromSub a b _ _ _ => eval valuation a - eval valuation b
 
-@[simp] theorem eval_fromVar {model : Model} (assignment : model.Assignment)
-    (value : IntVar) : eval assignment (.fromVar value) = assignment.value value.name := rfl
+@[simp] theorem eval_fromVar (valuation : IntVar → ℤ)
+    (value : IntVar) : eval valuation (.fromVar value) = valuation value := rfl
 
-@[simp] theorem eval_fromConst {model : Model} (assignment : model.Assignment)
-    (value : Int64) : eval assignment (.fromConst value) = value.val := rfl
+@[simp] theorem eval_fromConst (valuation : IntVar → ℤ)
+    (value : Int64) : eval valuation (.fromConst value) = value.val := rfl
 
-@[simp] theorem eval_fromNeg {model : Model} (assignment : model.Assignment)
+@[simp] theorem eval_fromNeg (valuation : IntVar → ℤ)
     (a : LinearExpr α) (domain negNonoverflow domainIsNeg) :
-    eval assignment (.fromNeg a domain negNonoverflow domainIsNeg) = -eval assignment a := rfl
+    eval valuation (.fromNeg a domain negNonoverflow domainIsNeg) = -eval valuation a := rfl
 
-@[simp] theorem eval_fromMulConst {model : Model} (assignment : model.Assignment)
+@[simp] theorem eval_fromMulConst (valuation : IntVar → ℤ)
     (a : LinearExpr α) (value : Int64) (domain mulNonoverflow domainIsMul) :
-    eval assignment (.fromMulConst a value domain mulNonoverflow domainIsMul) =
-      value.val * eval assignment a := rfl
+    eval valuation (.fromMulConst a value domain mulNonoverflow domainIsMul) =
+      value.val * eval valuation a := rfl
 
-@[simp] theorem eval_fromAdd {model : Model} (assignment : model.Assignment)
+@[simp] theorem eval_fromAdd (valuation : IntVar → ℤ)
     (a : LinearExpr α) (b : LinearExpr β) (domain addNonoverflow domainIsAdd) :
-    eval assignment (.fromAdd a b domain addNonoverflow domainIsAdd) =
-      eval assignment a + eval assignment b := rfl
+    eval valuation (.fromAdd a b domain addNonoverflow domainIsAdd) =
+      eval valuation a + eval valuation b := rfl
 
-@[simp] theorem eval_fromSub {model : Model} (assignment : model.Assignment)
+@[simp] theorem eval_fromSub (valuation : IntVar → ℤ)
     (a : LinearExpr α) (b : LinearExpr β) (domain subNonoverflow domainIsSub) :
-    eval assignment (.fromSub a b domain subNonoverflow domainIsSub) =
-      eval assignment a - eval assignment b := rfl
+    eval valuation (.fromSub a b domain subNonoverflow domainIsSub) =
+      eval valuation a - eval valuation b := rfl
 
-def meaning {model : Model} {domain : Interval} (expr : LinearExpr domain) :
-    Set (model.Assignment × ℤ) :=
+def meaning {domain : Interval} (expr : LinearExpr domain) :
+    Set ((IntVar → ℤ) × ℤ) :=
   {pair | pair.2 = expr.eval pair.1}
 
-def possibleValues {model : Model} {domain : Interval} (expr : LinearExpr domain) : Set ℤ :=
-  {value | ∃ assignment : model.Assignment, (assignment, value) ∈ expr.meaning}
+def possibleValues {domain : Interval} (expr : LinearExpr domain) : Set ℤ :=
+  {value | ∃ valuation : IntVar → ℤ, (valuation, value) ∈ expr.meaning}
 
-theorem meaning_eq_iff {model : Model} {α β : Interval}
+theorem meaning_eq_iff {α β : Interval}
     (a : LinearExpr α) (b : LinearExpr β) :
-    @meaning model α a = @meaning model β b ↔ ∀ assignment : model.Assignment,
-      a.eval assignment = b.eval assignment := by
+    @meaning α a = @meaning β b ↔ ∀ valuation : IntVar → ℤ,
+      a.eval valuation = b.eval valuation := by
   constructor
-  · intro h assignment
-    have := Set.ext_iff.mp h (assignment, a.eval assignment)
+  · intro h valuation
+    have := Set.ext_iff.mp h (valuation, a.eval valuation)
     simpa [meaning] using this.mp rfl
   · intro h
     ext pair
     simp [meaning, h]
 
-theorem meaning_double_neg {model : Model} {α d₁ d₂ : Interval}
+theorem meaning_double_neg {α d₁ d₂ : Interval}
     (a : LinearExpr α)
     (h₁ : Int64.Nonoverflow (-α.right : ℤ) ∧ Int64.Nonoverflow (-α.left : ℤ))
     (e₁ : α.neg h₁ = d₁)
     (h₂ : Int64.Nonoverflow (-d₁.right : ℤ) ∧ Int64.Nonoverflow (-d₁.left : ℤ))
     (e₂ : d₁.neg h₂ = d₂) :
-    @meaning model d₂ (LinearExpr.fromNeg (LinearExpr.fromNeg a d₁ h₁ e₁) d₂ h₂ e₂) =
-      @meaning model α a := by
-  apply (@meaning_eq_iff model d₂ α _ _).mpr
-  intro assignment
+    @meaning d₂ (LinearExpr.fromNeg (LinearExpr.fromNeg a d₁ h₁ e₁) d₂ h₂ e₂) =
+      @meaning α a := by
+  apply (@meaning_eq_iff d₂ α _ _).mpr
+  intro valuation
   simp
 
-theorem meaning_add_sub_cancel {model : Model} {α β γ δ : Interval}
+theorem meaning_add_sub_cancel {α β γ δ : Interval}
     (a : LinearExpr α) (b : LinearExpr β)
     (hAdd : Int64.Nonoverflow ((α.left : ℤ) + β.left) ∧
       Int64.Nonoverflow ((α.right : ℤ) + β.right))
@@ -125,35 +123,35 @@ theorem meaning_add_sub_cancel {model : Model} {α β γ δ : Interval}
     (hSub : Int64.Nonoverflow ((γ.left : ℤ) - β.right) ∧
       Int64.Nonoverflow ((γ.right : ℤ) - β.left))
     (eSub : γ.sub β hSub = δ) :
-    @meaning model δ (LinearExpr.fromSub (LinearExpr.fromAdd a b γ hAdd eAdd) b δ hSub eSub) =
-      @meaning model α a := by
-  apply (@meaning_eq_iff model δ α _ _).mpr
-  intro assignment
+    @meaning δ (LinearExpr.fromSub (LinearExpr.fromAdd a b γ hAdd eAdd) b δ hSub eSub) =
+      @meaning α a := by
+  apply (@meaning_eq_iff δ α _ _).mpr
+  intro valuation
   simp
 
-theorem meaning_sub_self {model : Model} {α β : Interval}
+theorem meaning_sub_self {α β : Interval}
     (a : LinearExpr α)
     (hSub : Int64.Nonoverflow ((α.left : ℤ) - α.right) ∧
       Int64.Nonoverflow ((α.right : ℤ) - α.left))
     (eSub : α.sub α hSub = β) :
-    @meaning model β (LinearExpr.fromSub a a β hSub eSub) =
-      @meaning model (Interval.fromValue { val := 0, nonoverflow := by decide })
+    @meaning β (LinearExpr.fromSub a a β hSub eSub) =
+      @meaning (Interval.fromValue { val := 0, nonoverflow := by decide })
         (LinearExpr.fromConst { val := 0, nonoverflow := by decide }) := by
-  apply (@meaning_eq_iff model β
+  apply (@meaning_eq_iff β
     (Interval.fromValue { val := 0, nonoverflow := by decide }) _ _).mpr
-  intro assignment
+  intro valuation
   simp
 
-theorem eval_mem_domain {model : Model} (assignment : model.Assignment)
+theorem eval_mem_domain (valuation : IntVar → ℤ)
     {domain : Interval} (expr : LinearExpr domain)
-    (referencesDeclared : expr.intVars ⊆ model.declaredInts) :
-    (domain.left : ℤ) ≤ expr.eval assignment ∧ expr.eval assignment ≤ domain.right := by
+    (inDomain : ∀ v ∈ expr.intVars,
+      (v.domain.left : ℤ) ≤ valuation v ∧ valuation v ≤ v.domain.right) :
+    (domain.left : ℤ) ≤ expr.eval valuation ∧ expr.eval valuation ≤ domain.right := by
   induction expr with
   | fromVar value =>
-    obtain ⟨left, right⟩ := assignment.inDomain value
-      (referencesDeclared (by
-        change value ∈ ({value} : Finset IntVar)
-        simp))
+    obtain ⟨left, right⟩ := inDomain value (by
+      change value ∈ ({value} : Finset IntVar)
+      simp)
     exact ⟨left, right⟩
   | fromConst value =>
     change (value.val : ℤ) ≤ value.val ∧ value.val ≤ value.val
@@ -161,16 +159,18 @@ theorem eval_mem_domain {model : Model} (assignment : model.Assignment)
   | fromNeg a domain negNonoverflow domainIsNeg ih =>
     have bounds := ih (by
       intro v hv
-      exact referencesDeclared (by simp [LinearExpr.intVars, hv]))
+      exact inDomain v (by simp [LinearExpr.intVars, hv]))
     have hleft := congrArg (fun i : Interval => (i.left : ℤ)) domainIsNeg
     have hright := congrArg (fun i : Interval => (i.right : ℤ)) domainIsNeg
     simp [Interval.neg] at hleft hright
     simp [eval]
     constructor <;> linarith [bounds.1, bounds.2, hleft, hright]
   | fromMulConst a value domain mulNonoverflow domainIsMul ih =>
-    have bounds := ih referencesDeclared
+    have bounds := ih (by
+      intro v hv
+      exact inDomain v (by simp [LinearExpr.intVars, hv]))
     have resultBounds := Interval.mul_const_mem _ value
-      (eval assignment a) bounds
+      (eval valuation a) bounds
     have hleft := congrArg (fun i : Interval => (i.left : ℤ)) domainIsMul
     have hright := congrArg (fun i : Interval => (i.right : ℤ)) domainIsMul
     simp [Interval.mul, Interval.ofBounds] at hleft hright
@@ -179,10 +179,10 @@ theorem eval_mem_domain {model : Model} (assignment : model.Assignment)
   | fromAdd a b domain addNonoverflow domainIsAdd ihA ihB =>
     have boundsA := ihA (by
       intro v hv
-      exact referencesDeclared (by simp [LinearExpr.intVars, hv]))
+      exact inDomain v (by simp [LinearExpr.intVars, hv]))
     have boundsB := ihB (by
       intro v hv
-      exact referencesDeclared (by simp [LinearExpr.intVars, hv]))
+      exact inDomain v (by simp [LinearExpr.intVars, hv]))
     have hleft := congrArg (fun i : Interval => (i.left : ℤ)) domainIsAdd
     have hright := congrArg (fun i : Interval => (i.right : ℤ)) domainIsAdd
     simp [Interval.add, Interval.ofBounds] at hleft hright
@@ -191,10 +191,10 @@ theorem eval_mem_domain {model : Model} (assignment : model.Assignment)
   | fromSub a b domain subNonoverflow domainIsSub ihA ihB =>
     have boundsA := ihA (by
       intro v hv
-      exact referencesDeclared (by simp [LinearExpr.intVars, hv]))
+      exact inDomain v (by simp [LinearExpr.intVars, hv]))
     have boundsB := ihB (by
       intro v hv
-      exact referencesDeclared (by simp [LinearExpr.intVars, hv]))
+      exact inDomain v (by simp [LinearExpr.intVars, hv]))
     have hleft := congrArg (fun i : Interval => (i.left : ℤ)) domainIsSub
     have hright := congrArg (fun i : Interval => (i.right : ℤ)) domainIsSub
     simp [Interval.sub, Interval.ofBounds] at hleft hright
@@ -339,10 +339,12 @@ def Model.Valid (model : Model) (req : SolveRequest model) : Prop :=
 def SolveResponse.Valid {model : Model} {req : SolveRequest model}
     (response : SolveResponse model req) : Prop :=
   response.status = .feasible ∨ response.status = .optimal →
-    ∃ assignment : model.Assignment,
+    ∃ valuation : IntVar → ℤ,
+      (∀ v ∈ model.declaredInts,
+        (v.domain.left : ℤ) ≤ valuation v ∧ valuation v ≤ v.domain.right) ∧
       ∀ i : Fin req.exprs.size,
         response.exprs[i].val =
-          LinearExpr.eval assignment (req.exprs[i]).snd
+          LinearExpr.eval valuation (req.exprs[i]).snd
 
 private def Model.Python.imports : Array Python.Statement := #[
   -- from ortools.sat.python import cp_model
