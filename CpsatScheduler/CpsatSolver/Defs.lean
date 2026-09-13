@@ -368,18 +368,6 @@ deriving DecidableEq
 
 abbrev LinearExpr.WithDomain := Σ D : Interval, LinearExpr D
 
-inductive LinearExprList where
-  | nil
-  | cons (head : LinearExpr D) (tail : LinearExprList)
-
-def LinearExprList.maxOfMin (l : LinearExprList) := match l with
-  | .nil => Int64.min
-  | @LinearExprList.cons domain _ tail => max domain.left (maxOfMin tail)
-
-def LinearExprList.maxOfMax (l : LinearExprList) := match l with
-  | .nil => Int64.min
-  | @LinearExprList.cons domain _ tail => max domain.right (maxOfMax tail)
-
 inductive Constraint.Variant where
   /-- Corresponds to <model>.add -/
   | bounded_linear (expr : CpsatSolver.BoundedLinearExpr)
