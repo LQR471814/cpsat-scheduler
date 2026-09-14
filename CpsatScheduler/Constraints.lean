@@ -1,6 +1,6 @@
 import CpsatScheduler.Defs
-import CpsatScheduler.CpsatSolver.Helpers
 import CpsatScheduler.CpsatSolver.Model
+import CpsatScheduler.Util.Graphs
 
 namespace CpsatScheduler
 

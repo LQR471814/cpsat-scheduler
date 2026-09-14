@@ -1,4 +1,10 @@
-import Mathlib
+import Mathlib.Data.Int.ConditionallyCompleteOrder
+import Mathlib.Data.Int.Star
+import Mathlib.Data.Nat.SuccPred
+import Mathlib.Order.Interval.Basic
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Ineq
+import Mathlib.Algebra.Order.Ring.Star
 
 set_option linter.mathlibStandardSet false
 set_option linter.style.longLine false

@@ -1,3 +1,4 @@
+import Mathlib.Data.Char
 import CpsatScheduler.CpsatSolver.Python
 import CpsatScheduler.CpsatSolver.Domain
 
