@@ -19,3 +19,5 @@ def step_fn(
         CostInterval((start, step_time), cost_before_step),
         CostInterval((step_time, end), cost_after_step),
     ]
+
+

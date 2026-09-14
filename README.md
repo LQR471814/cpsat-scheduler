@@ -1,42 +1,13 @@
-# CP-SAT Scheduler
+# lean-cpsat-scheduler
 
-CP-SAT Scheduler is an experimental scheduler that uses Google
-OR-Tools' CP-SAT solver to place tasks on a discrete time grid.
-The current codebase is a Python package for building scheduling
-models, expressing costs and constraints, solving them, and
-printing or viewing the resulting schedule.
+## GitHub configuration
 
-## Project Layout
-- `src/cpsatscheduler/backend/` - core CP-SAT model configuration,
-  task builders, unit types, and solution printing helpers.
-- `src/cpsatscheduler/frontend/` - higher-level scheduling helpers
-  for real datetimes, time units, PERT-style estimates, and cost
-      topology utilities.
-- `examples/` - Examples of scheduling scenarios.
-- `tests/` - pytest coverage for CP-SAT behavior demos and
-  expected solver output.
-- `docs/` - design notes and reference material for the scheduler
-  model and planned architecture.
+To set up your new GitHub repository, follow these steps:
 
-## Development
+* Under your repository name, click **Settings**.
+* In the **Actions** section of the sidebar, click "General".
+* Check the box **Allow GitHub Actions to create and approve pull requests**.
+* Click the **Pages** section of the settings sidebar.
+* In the **Source** dropdown menu, select "GitHub Actions".
 
-This project targets Python 3.13 and uses `uv`.
-
-```sh
-uv sync
-uv run pytest
-uv run ruff check
-uv run ty check
-```
-
-## Documentation
-
-- [Mathematics](docs/MATHEMATICS.md) - formal model for scheduling
-- [CP-SAT proto](docs/cp_model.proto) - local copy/reference for
-  CP-SAT model protobuf structures.
-
-## Additional resources
-
-- [CP-SAT Primer](https://github.com/d-krupke/cpsat-primer#search-core) - learn how to use CP-SAT solver
-- [CP-SAT Log Visualizer](https://cpsat-log-analyzer.streamlit.app/) - for performance debugging
-
+After following the steps above, you can remove this section from the README file.
