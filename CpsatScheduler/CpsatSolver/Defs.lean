@@ -1,469 +1,316 @@
 import CpsatScheduler.CpsatSolver.Python
-import Mathlib.Order.Interval.Basic
-import Mathlib.Algebra.Group.Int.Defs
-import Mathlib.Order.Defs.LinearOrder
-
-import Mathlib
+import CpsatScheduler.CpsatSolver.Domain
 
 namespace CpsatSolver
 
-abbrev Int64.min : ℤ := -(2 : ℤ)^63
-abbrev Int64.max : ℤ := (2 : ℤ)^63 - 1
-abbrev Int64.Nonoverflow (b : ℤ) : Prop :=
-  b ≥ min ∧ b ≤ max
+/-- Opaque solver entity identity, allocated from one global builder counter. -/
+structure EntityId where
+  val : Nat
+deriving DecidableEq, Repr
 
-/-- Euclidean division by a positive integer preserves the Int64 range. -/
-theorem Int64.proof_ediv_of_pos {a divisor : ℤ}
-    (ha : Int64.Nonoverflow a) (hdivisor : 0 < divisor) :
-    Int64.Nonoverflow (a / divisor) := by
-  constructor
-  · change Int64.min ≤ a / divisor
-    rw [Int.le_ediv_iff_mul_le hdivisor]
-    unfold Int64.min
-    nlinarith [ha.1]
-  · rw [Int.ediv_le_iff_le_mul hdivisor]
-    unfold Int64.max
-    nlinarith [ha.2]
+instance : LT EntityId where
+  lt a b := a.val < b.val
 
-/-- If a nonzero integer `b` multiplies `a` into the `Int64` range, then `a` itself
-is in range, except for the overflow pair `a = 2^63`, `b = -1`. -/
-theorem Int64.proof_of_mul_left {a b : ℤ}
-    (hb : b ≠ 0)
-    (h₁ : ¬(a = (2 : ℤ)^63 ∧ b = -1))
-    (h : Int64.Nonoverflow (a * b)) :
-    Int64.Nonoverflow a := by
-  obtain ⟨hab_min, hab_max⟩ := h
-  constructor
-  · -- `min ≤ a`
-    by_contra hna
-    have ha' : a ≤ -((2 : ℤ)^63) - 1 := by
-      unfold min at hna
-      omega
-    cases lt_or_gt_of_ne hb with
-    | inl hbneg =>
-      have hb1 : b ≤ -1 := by omega
-      have : (2 : ℤ)^63 ≤ a * b := by nlinarith
-      unfold max at hab_max
-      omega
-    | inr hbpos =>
-      have hb1 : 1 ≤ b := by omega
-      have : a * b ≤ -((2 : ℤ)^63) - 1 := by nlinarith
-      unfold min at hab_min
-      omega
-  · -- `a ≤ max`
-    by_contra hna
-    have ha' : (2 : ℤ)^63 ≤ a := by
-      unfold max at hna
-      omega
-    cases lt_or_gt_of_ne hb with
-    | inl hbneg =>
-      have hb1 : b ≤ -1 := by omega
-      have hle : a * b ≤ (2 : ℤ)^63 * b := by nlinarith
-      have hle' : (2 : ℤ)^63 * b ≤ -((2 : ℤ)^63) := by nlinarith
-      have heq_prod : a * b = -((2 : ℤ)^63) := by
-        unfold min at hab_min
-        omega
-      have hb_eq : b = -1 := by nlinarith
-      have ha_eq : a = (2 : ℤ)^63 := by nlinarith
-      exact h₁ ⟨ha_eq, hb_eq⟩
-    | inr hbpos =>
-      have hb1 : 1 ≤ b := by omega
-      have : (2 : ℤ)^63 ≤ a * b := by nlinarith
-      unfold max at hab_max
-      omega
+instance : DecidableLT EntityId :=
+  fun a b => inferInstanceAs (Decidable (a.val < b.val))
 
-theorem Int64.proof_of_mul {a b : ℤ}
-    (ha : a ≠ 0)
-    (hb : b ≠ 0)
-    (h₁ : ¬(a = (2 : ℤ)^63 ∧ b = -1))
-    (h₂ : ¬(a = -1 ∧ b = (2 : ℤ)^63))
-    (h : Int64.Nonoverflow (a * b)) :
-    Int64.Nonoverflow a ∧ Int64.Nonoverflow b :=
-  ⟨Int64.proof_of_mul_left hb h₁ h,
-   Int64.proof_of_mul_left ha (by
-     intro hba
-     exact h₂ ⟨hba.2, hba.1⟩) (by simpa [mul_comm] using h)⟩
+private theorem char_ge_zero_or_le_nine (c : Char) : '0' ≤ c ∨ c ≤ '9' := by
+  by_cases h : '0' ≤ c
+  · exact Or.inl h
+  · exact Or.inr (le_of_lt (lt_of_lt_of_le (lt_of_not_ge h) (by decide)))
 
-structure Int64 where
-  val : ℤ
-  nonoverflow : Int64.Nonoverflow val
-deriving DecidableEq
+theorem EntityId.validIdent_e_suffix (s : String) :
+    Python.ValidIdent ("e_" ++ s) := by
+  intro i
+  exact Or.inr (Or.inr (Or.inr fun _ => char_ge_zero_or_le_nine _))
 
-instance : Coe Int64 ℤ where
-  coe proven := proven.val
+theorem EntityId.not_reserved_e_suffix (s : String) :
+    ¬ ("e_" ++ s) ∈ Python.ReservedKeywords := by
+  have hkw : ∀ kw ∈ Python.ReservedKeywords, '_' ∉ kw.toList := by
+    decide
+  intro hmem
+  have : '_' ∈ ("e_" ++ s).toList := by
+    simp [String.toList_append]
+  exact (hkw _ hmem) this
 
--- this is a closed interval
-structure Interval where
-  left : Int64
-  right : Int64
-  left_le_right : (left : ℤ) ≤ right
-deriving DecidableEq
+theorem EntityId.toPythonName_proof (n : Nat) :
+    Python.ValidName.Proof ("e_" ++ toString n) :=
+  ⟨EntityId.not_reserved_e_suffix (toString n),
+    EntityId.validIdent_e_suffix (toString n)⟩
 
-noncomputable def Interval.set (i : Interval) : Finset ℤ :=
-  Finset.Icc (i.left : ℤ) i.right
+/-- Collision-free Python identifier derived from an ID, never from a label. -/
+def EntityId.toPythonName (id : EntityId) : Python.ValidName :=
+  ⟨"e_" ++ toString id.val, EntityId.toPythonName_proof id.val⟩
 
-def Interval.fromValue (v : Int64) : { x : Interval // x.set = {v.val} } :=
-  {
-    val := {
-      left := v
-      right := v
-      left_le_right := by exact Int.le_refl v.val
-    }
-    property := Finset.Icc_self v.val
-  }
+class HasId (α : Type) where
+  id : α → EntityId
 
-instance : Membership Int64 Interval where
-  mem i m := (m : ℤ) ≥ i.left ∧ (m : ℤ) ≤ i.right
+def HasId.pythonName {α : Type} [HasId α] (x : α) : Python.ValidName :=
+  EntityId.toPythonName (HasId.id x)
 
-def Interval.neg (i : Interval)
-  (h :
-    Int64.Nonoverflow (-i.right : ℤ) ∧
-    Int64.Nonoverflow (-i.left : ℤ))
-  : { x : Interval // x.set = i.set.map (Equiv.neg ℤ).toEmbedding } :=
-  {
-    val := {
-      left := {
-        val := -(i.right : ℤ),
-        nonoverflow := h.left
-      }
-      right := {
-        val := -(i.left : ℤ),
-        nonoverflow := h.right
-      }
-      left_le_right := by
-        refine Int.neg_le_neg i.left_le_right
-    }
-    property := by
-      ext x
-      simp [Interval.set]
-      omega
-  }
-
-def Interval.ofBounds (left right : ℤ)
-    (nonoverflow : Int64.Nonoverflow left ∧ Int64.Nonoverflow right)
-    (left_le_right : left ≤ right) :
-    { x : Interval // x.set = Finset.Icc left right } :=
-  {
-    val := {
-      left := { val := left, nonoverflow := nonoverflow.1 }
-      right := { val := right, nonoverflow := nonoverflow.2 }
-      left_le_right := left_le_right
-    }
-    property := rfl
-  }
-
-def Interval.add (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
-      Int64.Nonoverflow ((a.right : ℤ) + b.right)) :
-    { x : Interval //
-      x.set = Finset.Icc
-        ((a.left : ℤ) + b.left)
-        ((a.right : ℤ) + b.right) } :=
-  Interval.ofBounds
-    ((a.left : ℤ) + b.left)
-    ((a.right : ℤ) + b.right)
-    nonoverflow
-    (add_le_add a.left_le_right b.left_le_right)
-
-def Interval.sub (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
-      Int64.Nonoverflow ((a.right : ℤ) - b.left)) :
-    { x : Interval //
-      x.set = Finset.Icc
-        ((a.left : ℤ) - b.right)
-        ((a.right : ℤ) - b.left) } :=
-  Interval.ofBounds
-    ((a.left : ℤ) - b.right)
-    ((a.right : ℤ) - b.left)
-    nonoverflow
-    (by linarith [a.left_le_right, b.left_le_right])
-
-private def Interval.mulLower (a b : Interval) : ℤ :=
-  min
-    (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-    (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
-
-private def Interval.mulUpper (a b : Interval) : ℤ :=
-  max
-    (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-    (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
-
-private theorem Interval.mulLower_le_mulUpper (a b : Interval) :
-    a.mulLower b ≤ a.mulUpper b := by
-  unfold mulLower mulUpper
-  calc
-    min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-        (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
-        ≤ (a.left : ℤ) * b.left :=
-          (min_le_left _ _).trans (min_le_left _ _)
-    _ ≤ max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right) := le_max_left _ _
-    _ ≤ max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-        (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right)) := le_max_left _ _
-
-def Interval.mul (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow (a.mulLower b) ∧
-      Int64.Nonoverflow (a.mulUpper b)) :
-    { x : Interval //
-      x.set = Finset.Icc (a.mulLower b) (a.mulUpper b) } :=
-  Interval.ofBounds
-    (a.mulLower b)
-    (a.mulUpper b)
-    nonoverflow
-    (a.mulLower_le_mulUpper b)
-
-theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
-    (hx : (a.left : ℤ) ≤ x ∧ x ≤ a.right) :
-    (a.mulLower (Interval.fromValue value) : ℤ) ≤ value.val * x ∧
-      value.val * x ≤ a.mulUpper (Interval.fromValue value) := by
-  unfold mulLower mulUpper
-  simp only [Interval.fromValue, min_self, max_self]
-  rcases le_total (0 : ℤ) value.val with hvalue | hvalue
-  · constructor
-    · calc
-        min (a.left.val * value.val) (a.right.val * value.val) ≤
-            a.left.val * value.val := min_le_left _ _
-        _ ≤ value.val * x := by
-          simpa [mul_comm] using mul_le_mul_of_nonneg_right hx.1 hvalue
-    · calc
-        value.val * x ≤ a.right.val * value.val := by
-          simpa [mul_comm] using mul_le_mul_of_nonneg_right hx.2 hvalue
-        _ ≤ max (a.left.val * value.val) (a.right.val * value.val) := le_max_right _ _
-  · constructor
-    · calc
-        min (a.left.val * value.val) (a.right.val * value.val) ≤
-            a.right.val * value.val := min_le_right _ _
-        _ ≤ value.val * x := by
-          simpa [mul_comm] using mul_le_mul_of_nonpos_right hx.2 hvalue
-    · calc
-        value.val * x ≤ a.left.val * value.val := by
-          simpa [mul_comm] using mul_le_mul_of_nonpos_right hx.1 hvalue
-        _ ≤ max (a.left.val * value.val) (a.right.val * value.val) := le_max_left _ _
-
-private def Interval.divLower (a b : Interval) : ℤ :=
-  min ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
-
-private def Interval.divUpper (a b : Interval) : ℤ :=
-  max ((a.left : ℤ) / b.left) ((a.right : ℤ) / b.right)
-
-def Interval.div (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow (a.divLower b) ∧
-      Int64.Nonoverflow (a.divUpper b)) :
-    { x : Interval //
-      x.set = Finset.Icc (a.divLower b) (a.divUpper b) } :=
-  Interval.ofBounds
-    (a.divLower b)
-    (a.divUpper b)
-    nonoverflow
-    min_le_max
-
-def Interval.intersect (a b : Interval) left_le_right :=
-  let fst := if (a.left : ℤ) ≤ b.left then a else b;
-  let snd := if fst = a then b else a;
-  ({
-    left := {
-      val := max fst.left (snd.left : ℤ)
-      nonoverflow := max_ind
-        (fun _ => fst.left.nonoverflow)
-        (fun _ => snd.left.nonoverflow)
-    }
-    right := {
-      val := min fst.right (snd.right : ℤ)
-      nonoverflow := min_ind
-        (fun _ => fst.right.nonoverflow)
-        (fun _ => snd.right.nonoverflow)
-    }
-    left_le_right := left_le_right
-  } : Interval)
-
-class Var (α : Type) where
-  name (var : α) : CpsatSolver.Python.ValidName
-
-
-/-- BoolVar is a boolean variable -/
 structure BoolVar where
-  name : CpsatSolver.Python.ValidName
+  id : EntityId
+  label : Option String := none
 deriving DecidableEq
 
-instance : Var BoolVar where
-  name var := var.name
+instance : HasId BoolVar where
+  id v := v.id
 
-
--- BoolLit is a CpsatSolver.BoolVar or its negation
 inductive BoolLit where
-  | var (v : CpsatSolver.BoolVar)
-  | neg (v : CpsatSolver.BoolVar)
+  | var (v : BoolVar)
+  | neg (v : BoolVar)
 deriving DecidableEq
 
+def BoolLit.varId : BoolLit → EntityId
+  | .var v => v.id
+  | .neg v => v.id
 
-/-- IntVar is an integer variable bounded to a finite domain -/
+/-- Integer variable with a nonempty canonical domain. -/
 structure IntVar where
-  /-- name is the identifier of the variable -/
-  name : CpsatSolver.Python.ValidName
-  domain : CpsatSolver.Interval
+  id : EntityId
+  domain : NonemptyDomain
+  label : Option String := none
 deriving DecidableEq
 
-instance : Var IntVar where
-  name var := var.name
+instance : HasId IntVar where
+  id v := v.id
 
-inductive LinearExpr : Interval → Type where
-  | fromVar (value : IntVar) : LinearExpr value.domain
+inductive LinearExpr : Bounds → Type where
+  | fromVar (value : IntVar) : LinearExpr value.domain.hull
   | fromConst (value : Int64) : LinearExpr (Interval.fromValue value)
   | fromNeg
     (a : LinearExpr α)
-    (domain : Interval)
-    (neg_nonoverflow)
-    (domain_is_neg : α.neg neg_nonoverflow = domain)
-      : LinearExpr domain
+    (neg_nonoverflow : Int64.Nonoverflow (-α.right : ℤ) ∧ Int64.Nonoverflow (-α.left : ℤ))
+      : LinearExpr (α.neg neg_nonoverflow)
   | fromMulConst
     (a : LinearExpr α) (value : Int64)
-    (domain : Interval)
-    (mul_nonoverflow)
-    (domain_is_mul : α.mul (Interval.fromValue value) mul_nonoverflow = domain)
-      : LinearExpr domain
+    (mul_nonoverflow :
+      Int64.Nonoverflow (α.mulLower (Interval.fromValue value)) ∧
+      Int64.Nonoverflow (α.mulUpper (Interval.fromValue value)))
+      : LinearExpr (α.mul (Interval.fromValue value) mul_nonoverflow)
   | fromAdd
     (a : LinearExpr α) (b : LinearExpr β)
-    (domain : Interval)
-    (add_nonoverflow)
-    (domain_is_add : α.add β add_nonoverflow = domain)
-      : LinearExpr domain
+    (add_nonoverflow :
+      Int64.Nonoverflow ((α.left : ℤ) + β.left) ∧
+      Int64.Nonoverflow ((α.right : ℤ) + β.right))
+      : LinearExpr (α.add β add_nonoverflow)
   | fromSub
     (a : LinearExpr α) (b : LinearExpr β)
-    (domain : Interval)
-    (sub_nonoverflow)
-    (domain_is_sub : α.sub β sub_nonoverflow = domain)
-      : LinearExpr domain
+    (sub_nonoverflow :
+      Int64.Nonoverflow ((α.left : ℤ) - β.right) ∧
+      Int64.Nonoverflow ((α.right : ℤ) - β.left))
+      : LinearExpr (α.sub β sub_nonoverflow)
 
-/- A CP-SAT linear expression is affine. Multiplication of two expressions is
-   deliberately not representable because CP-SAT cannot use it as a linear
-   expression. -/
+def LinearExpr.intVars {bounds : Bounds} : LinearExpr bounds → List IntVar
+  | .fromVar value => [value]
+  | .fromConst _ => []
+  | .fromNeg a _ => a.intVars
+  | .fromMulConst a _ _ => a.intVars
+  | .fromAdd a b _ => a.intVars ++ b.intVars
+  | .fromSub a b _ => a.intVars ++ b.intVars
 
-def LinearExpr.intVars {domain : Interval} : LinearExpr domain → Finset IntVar
-  | .fromVar value => {value}
-  | .fromConst _ => ∅
-  | .fromNeg a _ _ _ => a.intVars
-  | .fromMulConst a _ _ _ _ => a.intVars
-  | .fromAdd a b _ _ _ => a.intVars ∪ b.intVars
-  | .fromSub a b _ _ _ => a.intVars ∪ b.intVars
+def LinearExpr.eval (valuation : EntityId → ℤ)
+    {bounds : Bounds} : LinearExpr bounds → ℤ
+  | .fromVar value => valuation value.id
+  | .fromConst value => value.val
+  | .fromNeg a _ => -eval valuation a
+  | .fromMulConst a value _ => value.val * eval valuation a
+  | .fromAdd a b _ => eval valuation a + eval valuation b
+  | .fromSub a b _ => eval valuation a - eval valuation b
 
+/-- Expression bounds are a sound over-approximation under domain-respecting
+assignments. -/
+theorem LinearExpr.eval_mem_bounds (valuation : EntityId → ℤ)
+    {bounds : Bounds} (expr : LinearExpr bounds)
+    (inDomain : ∀ v ∈ expr.intVars,
+      valuation v.id ∈ v.domain.domain) :
+    expr.eval valuation ∈ bounds := by
+  induction expr with
+  | fromVar value =>
+    exact NonemptyDomain.mem_hull value.domain
+      (inDomain value (List.mem_singleton.mpr rfl))
+  | fromConst value =>
+    simp [LinearExpr.eval, Interval.mem_fromValue]
+  | fromNeg a h ih =>
+    exact Interval.eval_neg _ h (ih (fun v hv => inDomain v hv))
+  | fromMulConst a value h ih =>
+    simpa [LinearExpr.eval] using
+      Interval.mul_const_mem _ value _
+        (ih (fun v hv => inDomain v hv)) h
+  | fromAdd a b h iha ihb =>
+    exact Interval.eval_add _ _ h
+      (iha (fun v hv => inDomain v (List.mem_append.mpr (Or.inl hv))))
+      (ihb (fun v hv => inDomain v (List.mem_append.mpr (Or.inr hv))))
+  | fromSub a b h iha ihb =>
+    exact Interval.eval_sub _ _ h
+      (iha (fun v hv => inDomain v (List.mem_append.mpr (Or.inl hv))))
+      (ihb (fun v hv => inDomain v (List.mem_append.mpr (Or.inr hv))))
+
+abbrev LinearExpr.WithBounds := Σ b : Bounds, LinearExpr b
+
+/-- Half-open interval `[start, start + size)`. -/
 structure FixedSizeIntervalVar where
-  -- name is also the identifier
-  name : CpsatSolver.Python.ValidName
-  startDomain : Interval
-  start : LinearExpr startDomain
+  id : EntityId
+  startBounds : Bounds
+  start : LinearExpr startBounds
   size : Int64
-  nonzero : size ≥ (0 : ℤ)
+  size_nonneg : (0 : ℤ) ≤ size
+  label : Option String := none
 
-instance : Var FixedSizeIntervalVar where
-  name var := var.name
+instance : HasId FixedSizeIntervalVar where
+  id v := v.id
 
-def FixedSizeIntervalVar.intVars (value : FixedSizeIntervalVar) : Finset IntVar :=
+def FixedSizeIntervalVar.intVars (value : FixedSizeIntervalVar) : List IntVar :=
   value.start.intVars
-
 
 inductive BoundedLinearExpr.Rel where
   | eq | neq | gt | gte | lt | lte
 deriving DecidableEq
 
-def BoundedLinearExpr.NoContradict (rel : BoundedLinearExpr.Rel)
-  (_ : LinearExpr L) (_ : LinearExpr R) : Prop :=
-  match rel with
-  -- ¬ (left ∩ right = ∅)
-  | .eq => ∃ x : ℤ, (L.left : ℤ) ≤ x ∧ x ≤ L.right ∧
-      (R.left : ℤ) ≤ x ∧ x ≤ R.right
-  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x = y)
-  | .neq => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) ≠ y
-  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≤ y)
-  | .gt => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) > y
-  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x < y)
-  | .gte => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) ≥ y
-  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x ≥ y)
-  | .lt => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) < y
-  -- ¬ (∀ x ∈ left, ∀ y ∈ right, x > y)
-  | .lte => ∃ x ∈ L, ∃ y ∈ R, (x : ℤ) ≤ y
-
--- TODO: determine whether int variable definitions are necessary
--- 1. in scenarios where an int var = linear expr, they should be unnecessary
--- 2. "add_max_equality" or "add_sum" require intermediate int var to store result
---
--- in general?
---
--- expressions whose values need to be modulated with constraints
-
--- BoundedLinearExpr is LinearExpr with some bounding operators applied on it
--- (e.g. >, <, ==)
 structure BoundedLinearExpr where
   rel : BoundedLinearExpr.Rel
-  leftDomain : Interval
-  rightDomain : Interval
-  left : LinearExpr leftDomain
-  right : LinearExpr rightDomain
-  no_contradict : BoundedLinearExpr.NoContradict
-    (L := leftDomain) (R := rightDomain) rel left right
+  leftBounds : Bounds
+  rightBounds : Bounds
+  left : LinearExpr leftBounds
+  right : LinearExpr rightBounds
+
+/-- Cheap necessary condition on closed bounds (interval overlap), used only
+for unconditional constraints. Does not enumerate interior points. -/
+def BoundedLinearExpr.NoContradict (expr : BoundedLinearExpr) : Prop :=
+  match expr.rel with
+  | .eq =>
+    (max (expr.leftBounds.left : ℤ) expr.rightBounds.left) ≤
+      min (expr.leftBounds.right : ℤ) expr.rightBounds.right
+  | .neq =>
+    ¬ ((expr.leftBounds.left : ℤ) = expr.leftBounds.right ∧
+      (expr.rightBounds.left : ℤ) = expr.rightBounds.right ∧
+      (expr.leftBounds.left : ℤ) = expr.rightBounds.left)
+  | .gt => (expr.leftBounds.right : ℤ) > expr.rightBounds.left
+  | .gte => (expr.leftBounds.right : ℤ) ≥ expr.rightBounds.left
+  | .lt => (expr.leftBounds.left : ℤ) < expr.rightBounds.right
+  | .lte => (expr.leftBounds.left : ℤ) ≤ expr.rightBounds.right
 
 inductive Constraint.Enforcement where
   | always
   | onlyWhenAll {n : Nat} (literals : Vector BoolLit (n + 1))
 deriving DecidableEq
 
-abbrev LinearExpr.WithDomain := Σ D : Interval, LinearExpr D
+structure CumulativeItem where
+  interval : FixedSizeIntervalVar
+  demand : LinearExpr.WithBounds
 
 inductive Constraint.Variant where
-  /-- Corresponds to <model>.add -/
-  | bounded_linear (expr : CpsatSolver.BoundedLinearExpr)
-  /--
-    Corresponds to <model>.add_max_equality
-
-    If target doesn't have enough room to store the max of all possible
-    combinations of values across the expressions (max of the minimums) -> (max
-    of the maximums) then we may have a contradiction
-  -/
+  | bounded_linear (expr : BoundedLinearExpr)
   | max_equality
-    (target : LinearExpr.WithDomain)
-    (exprs : Array LinearExpr.WithDomain)
-    (nocontradict : Finset.Icc
-      (exprs.foldl
-        (fun acc val => max val.fst.left acc)
-        Int64.min)
-      (exprs.foldl
-        (fun acc val => max val.fst.right acc)
-        Int64.min) ⊆ target.fst.set)
-  /-- Corresponds to <model>.add_cumulative -/
+    (target : LinearExpr.WithBounds)
+    (exprs : Array LinearExpr.WithBounds)
+  | div_eq
+    (target : LinearExpr.WithBounds)
+    (numerator : LinearExpr.WithBounds)
+    (divisor : Int64)
+    (divisor_pos : (0 : ℤ) < divisor)
+  | allowedAssignments {n : Nat}
+    (vars : Vector IntVar n)
+    (rows : Array (Vector Int64 n))
   | cumulative
-    (intervals : Array FixedSizeIntervalVar)
-    (demands : Array LinearExpr.WithDomain)
-    (capacity : LinearExpr.WithDomain)
-  /-- Corresponds to <model>.add_bool_and -/
-  | bool_and (terms : Array CpsatSolver.BoolLit)
-  /-- Corresponds to <model>.add_bool_or -/
-  | bool_or (terms : Array CpsatSolver.BoolLit)
-  /-- Corresponds to <model>.add_implication -/
-  | implication (src : CpsatSolver.BoolLit) (dst : CpsatSolver.BoolLit)
+    (items : Array CumulativeItem)
+    (capacity : LinearExpr.WithBounds)
+  | bool_and (terms : Array BoolLit)
+  | bool_or (terms : Array BoolLit)
+  | implication (src : BoolLit) (dst : BoolLit)
 
 structure Constraint where
-  name : Python.ValidName
+  id : EntityId
+  label : Option String := none
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
 
-def BoundedLinearExpr.intVars (value : BoundedLinearExpr) : Finset IntVar :=
-  value.left.intVars ∪ value.right.intVars
+instance : HasId Constraint where
+  id c := c.id
 
-def Constraint.Variant.intVars : Constraint.Variant → Finset IntVar
+def BoundedLinearExpr.intVars (value : BoundedLinearExpr) : List IntVar :=
+  value.left.intVars ++ value.right.intVars
+
+def LinearExpr.WithBounds.intVars (e : LinearExpr.WithBounds) : List IntVar :=
+  e.snd.intVars
+
+def Constraint.Variant.intVars : Constraint.Variant → List IntVar
   | .bounded_linear expr => expr.intVars
-  | .max_equality target exprs _ =>
-    exprs.foldl (fun acc expr => acc ∪ expr.snd.intVars) target.snd.intVars
-  | .cumulative intervals demands capacity =>
-    let intervalVars := intervals.foldl (fun acc value => acc ∪ value.start.intVars) ∅
-    let demandVars := demands.foldl (fun acc expr => acc ∪ expr.snd.intVars) ∅
-    intervalVars ∪ demandVars ∪ capacity.snd.intVars
-  | .bool_and _ => ∅
-  | .bool_or _ => ∅
-  | .implication _ _ => ∅
+  | .max_equality target exprs =>
+    exprs.foldl (fun acc e => acc ++ e.intVars) target.intVars
+  | .div_eq target numerator _ _ =>
+    target.intVars ++ numerator.intVars
+  | .allowedAssignments vars _ => vars.toList
+  | .cumulative items capacity =>
+    items.foldl (fun acc it =>
+      acc ++ it.interval.intVars ++ it.demand.intVars) capacity.intVars
+  | .bool_and _ => []
+  | .bool_or _ => []
+  | .implication _ _ => []
 
-def Constraint.intVars (value : Constraint) : Finset IntVar :=
+def Constraint.intVars (value : Constraint) : List IntVar :=
   value.variant.intVars
+
+def Constraint.Variant.boolVars : Constraint.Variant → List BoolVar
+  | .bool_and terms => terms.toList.map BoolLit.varId |>.map (fun id => { id := id })
+  | .bool_or terms => terms.toList.map BoolLit.varId |>.map (fun id => { id := id })
+  | .implication src dst =>
+    [{ id := src.varId }, { id := dst.varId }]
+  | _ => []
+
+def Constraint.Enforcement.boolVars : Constraint.Enforcement → List BoolVar
+  | .always => []
+  | .onlyWhenAll literals =>
+    literals.toList.map (fun l => { id := l.varId })
+
+/-- Structural well-formedness of a constraint variant. -/
+def Constraint.Variant.WellFormed : Constraint.Variant → Prop
+  | .bounded_linear _ => True
+  | .max_equality _ exprs => 0 < exprs.size
+  | .div_eq _ _ _ _ => True
+  | .allowedAssignments vars rows =>
+    0 < rows.size ∧
+      ∀ row ∈ rows, ∀ i : Fin vars.size, (row[i].val : ℤ) ∈ vars[i].domain.domain
+  | .cumulative _ _ => True
+  | .bool_and terms => 0 < terms.size
+  | .bool_or terms => 0 < terms.size
+  | .implication _ _ => True
+
+/-- Cheap necessary checks for unconditional constraints only. -/
+def Constraint.PassesPresolveSanityChecks (c : Constraint) : Prop :=
+  match c.enforcement with
+  | .onlyWhenAll _ => True
+  | .always =>
+    match c.variant with
+    | .bounded_linear expr => expr.NoContradict
+    | .max_equality _ _ => True
+    | .div_eq _ _ _ _ => True
+    | .allowedAssignments _ rows => 0 < rows.size
+    | .cumulative _ _ => True
+    | .bool_and terms => 0 < terms.size
+    | .bool_or terms => 0 < terms.size
+    | .implication _ _ => True
+
+inductive Objective where
+  | none
+  | minimize (expr : LinearExpr.WithBounds)
+  | maximize (expr : LinearExpr.WithBounds)
+
+def Objective.intVars : Objective → List IntVar
+  | .none => []
+  | .minimize e => e.intVars
+  | .maximize e => e.intVars
+
+instance (expr : BoundedLinearExpr) : Decidable expr.NoContradict := by
+  unfold BoundedLinearExpr.NoContradict
+  split <;> infer_instance
+
+instance (v : Constraint.Variant) : Decidable v.WellFormed := by
+  cases v <;> dsimp [Constraint.Variant.WellFormed] <;> infer_instance
+
+instance (c : Constraint) : Decidable c.PassesPresolveSanityChecks := by
+  unfold Constraint.PassesPresolveSanityChecks
+  split <;> try infer_instance
+  split <;> infer_instance
 
 end CpsatSolver

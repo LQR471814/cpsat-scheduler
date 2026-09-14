@@ -4,62 +4,62 @@ namespace CpsatSolver
 
 def BoolLit.toPythonExpr (b : BoolLit) : Python.Expr :=
   match b with
-  | .var v => Python.Expr.id v.name
-  | .neg v => Python.Expr.bitwiseNot (Python.Expr.id v.name)
+  | .var v => Python.Expr.id v.id.toPythonName
+  | .neg v => Python.Expr.bitwiseNot (Python.Expr.id v.id.toPythonName)
 
-def IntVar.toPythonExpr (var : IntVar) : Python.Expr := Python.Expr.id var.name
+def IntVar.toPythonExpr (var : IntVar) : Python.Expr :=
+  Python.Expr.id var.id.toPythonName
 
 def FixedSizeIntervalVar.toPythonExpr (var : FixedSizeIntervalVar) : Python.Expr :=
-  Python.Expr.id var.name
+  Python.Expr.id var.id.toPythonName
 
-def LinearExpr.toPythonExpr {domain : Interval} (expr : LinearExpr domain) : Python.Expr :=
+def LinearExpr.toPythonExpr {bounds : Bounds} (expr : LinearExpr bounds) : Python.Expr :=
   match expr with
   | .fromVar value => value.toPythonExpr
   | .fromConst value => Python.Expr.lit (Python.Literal.int value.val)
-  | .fromNeg a _ _ _ => Python.Expr.neg a.toPythonExpr
-  | .fromMulConst a value _ _ _ =>
+  | .fromNeg a _ => Python.Expr.neg a.toPythonExpr
+  | .fromMulConst a value _ =>
     Python.Expr.mul (Python.Expr.lit (Python.Literal.int value.val)) a.toPythonExpr
-  | .fromAdd a b _ _ _ => Python.Expr.add a.toPythonExpr b.toPythonExpr
-  | .fromSub a b _ _ _ => Python.Expr.sub a.toPythonExpr b.toPythonExpr
+  | .fromAdd a b _ => Python.Expr.add a.toPythonExpr b.toPythonExpr
+  | .fromSub a b _ => Python.Expr.sub a.toPythonExpr b.toPythonExpr
 
-def LinearExpr.var (value : IntVar) : LinearExpr value.domain := .fromVar value
+def LinearExpr.var (value : IntVar) : LinearExpr value.domain.hull := .fromVar value
 
-def LinearExpr.const (value : Int64) : LinearExpr (Interval.fromValue value) := .fromConst value
+def LinearExpr.const (value : Int64) : LinearExpr (Interval.fromValue value) :=
+  .fromConst value
 
-def LinearExpr.neg {domain : Interval}
-    (a : LinearExpr domain) (result : Interval)
-    (nonoverflow : Int64.Nonoverflow (-domain.right : ℤ) ∧
-      Int64.Nonoverflow (-domain.left : ℤ))
-    (result_eq : domain.neg nonoverflow = result) : LinearExpr result :=
-  .fromNeg a result nonoverflow result_eq
+def LinearExpr.neg {bounds : Bounds} (a : LinearExpr bounds)
+    (nonoverflow : Int64.Nonoverflow (-bounds.right : ℤ) ∧
+      Int64.Nonoverflow (-bounds.left : ℤ)) :
+    LinearExpr (bounds.neg nonoverflow) :=
+  .fromNeg a nonoverflow
 
-def LinearExpr.mul {domain : Interval}
-    (a : LinearExpr domain) (value : Int64)
-    (result : Interval)
-    (nonoverflow : Int64.Nonoverflow _ ∧ Int64.Nonoverflow _)
-    (result_eq : domain.mul (Interval.fromValue value) nonoverflow = result) :
-    LinearExpr result :=
-  .fromMulConst a value result nonoverflow result_eq
+def LinearExpr.mul {bounds : Bounds} (a : LinearExpr bounds) (value : Int64)
+    (nonoverflow :
+      Int64.Nonoverflow (bounds.mulLower (Interval.fromValue value)) ∧
+      Int64.Nonoverflow (bounds.mulUpper (Interval.fromValue value))) :
+    LinearExpr (bounds.mul (Interval.fromValue value) nonoverflow) :=
+  .fromMulConst a value nonoverflow
 
-def LinearExpr.add {leftDomain rightDomain : Interval}
-    (left : LinearExpr leftDomain) (right : LinearExpr rightDomain)
-    (result : Interval)
-    (nonoverflow : Int64.Nonoverflow ((leftDomain.left : ℤ) + rightDomain.left) ∧
-      Int64.Nonoverflow ((leftDomain.right : ℤ) + rightDomain.right))
-    (result_eq : leftDomain.add rightDomain nonoverflow = result) : LinearExpr result :=
-  .fromAdd left right result nonoverflow result_eq
+def LinearExpr.add {leftBounds rightBounds : Bounds}
+    (left : LinearExpr leftBounds) (right : LinearExpr rightBounds)
+    (nonoverflow :
+      Int64.Nonoverflow ((leftBounds.left : ℤ) + rightBounds.left) ∧
+      Int64.Nonoverflow ((leftBounds.right : ℤ) + rightBounds.right)) :
+    LinearExpr (leftBounds.add rightBounds nonoverflow) :=
+  .fromAdd left right nonoverflow
 
-def LinearExpr.sub {leftDomain rightDomain : Interval}
-    (left : LinearExpr leftDomain) (right : LinearExpr rightDomain)
-    (result : Interval)
-    (nonoverflow : Int64.Nonoverflow ((leftDomain.left : ℤ) - rightDomain.right) ∧
-      Int64.Nonoverflow ((leftDomain.right : ℤ) - rightDomain.left))
-    (result_eq : leftDomain.sub rightDomain nonoverflow = result) : LinearExpr result :=
-  .fromSub left right result nonoverflow result_eq
+def LinearExpr.sub {leftBounds rightBounds : Bounds}
+    (left : LinearExpr leftBounds) (right : LinearExpr rightBounds)
+    (nonoverflow :
+      Int64.Nonoverflow ((leftBounds.left : ℤ) - rightBounds.right) ∧
+      Int64.Nonoverflow ((leftBounds.right : ℤ) - rightBounds.left)) :
+    LinearExpr (leftBounds.sub rightBounds nonoverflow) :=
+  .fromSub left right nonoverflow
 
 def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
-  let left := @LinearExpr.toPythonExpr expr.leftDomain expr.left
-  let right := @LinearExpr.toPythonExpr expr.rightDomain expr.right
+  let left := @LinearExpr.toPythonExpr expr.leftBounds expr.left
+  let right := @LinearExpr.toPythonExpr expr.rightBounds expr.right
   match expr.rel with
     | .eq => Python.Expr.eq left right
     | .neq => Python.Expr.neq left right
@@ -68,7 +68,7 @@ def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
     | .lt => Python.Expr.lt left right
     | .lte => Python.Expr.lte left right
 
-abbrev Var.uniqueNames {α : Type} [Var α] (arr : Array α) :=
-  ∀ a b : Fin arr.size, a ≠ b → (Var.name (arr[a])) ≠ (Var.name (arr[b]))
+def idsUnique {α : Type} [HasId α] (arr : Array α) : Prop :=
+  ∀ a b : Fin arr.size, a ≠ b → HasId.id arr[a] ≠ HasId.id arr[b]
 
 end CpsatSolver

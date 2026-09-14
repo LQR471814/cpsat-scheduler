@@ -8,6 +8,7 @@ pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
+linter.style.header = false
 
 [[require]]
 name = "mathlib"
@@ -22,3 +23,7 @@ subDir = "regex"
 
 [[lean_lib]]
 name = "CpsatScheduler"
+
+[[lean_exe]]
+name = "TestCpsatSolver"
+root = "TestCpsatSolver"

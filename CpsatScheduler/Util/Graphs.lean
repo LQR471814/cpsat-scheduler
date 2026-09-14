@@ -54,5 +54,5 @@ private def exampleGraph : FinDigraph String := {
 
 example : exampleGraph.IsAcyclic := by decide
 
-#eval decide exampleGraph.IsTree
+example : ¬ exampleGraph.IsTree := by decide
 

@@ -2,40 +2,22 @@ import CpsatScheduler.CpsatSolver.Model
 
 open CpsatSolver
 
-def x : IntVar := {
-  name := Python.ValidName.mk "x" (by decide)
-  domain := {
-    left := { val := 0, nonoverflow := by decide }
-    right := { val := 10, nonoverflow := by decide }
-    left_le_right := by decide
-  }
-}
+def xDomain : NonemptyDomain :=
+  NonemptyDomain.interval (Interval.ofBounds 0 10 ⟨by decide, by decide⟩ (by decide))
 
-def y : IntVar := {
-  name := Python.ValidName.mk "y" (by decide)
-  domain := {
-    left := { val := 0, nonoverflow := by decide }
-    right := { val := 5, nonoverflow := by decide }
-    left_le_right := by decide
-  }
-}
+def yDomain : NonemptyDomain :=
+  NonemptyDomain.interval (Interval.ofBounds 0 5 ⟨by decide, by decide⟩ (by decide))
 
-def model : Model := {
-  ints := #[x, y]
-  intsUniqueNames := by decide
-  bools := #[]
-  boolsUniqueNames := by decide
-  fixedSizeIntervals := #[]
-  fixedSizeIntervalsUniqueNames := by decide
-  constraints := #[]
-}
+def demo : RawModel × (IntVar × IntVar) :=
+  Builder.run do
+    let x ← Builder.newIntVar xDomain (some "x (not a python ident!)")
+    let y ← Builder.newIntVar yDomain (some "y")
+    pure (x, y)
 
-def req : SolveRequest model := {
-  exprs := #[⟨x.domain, LinearExpr.var x⟩, ⟨y.domain, LinearExpr.var y⟩]
-  expressionsWellFormed := by
-    intro i
-    fin_cases i <;> simp [Model.declaredInts]
-}
+def demoRaw : RawModel := demo.1
+def x : IntVar := demo.2.1
+def y : IntVar := demo.2.2
 
 def main : IO Unit := do
-  IO.println (model.script req).repr
+  IO.println s!"allocated ids x={x.id.val} y={y.id.val} next={demoRaw.nextId}"
+  IO.println s!"python names {x.id.toPythonName.val} {y.id.toPythonName.val}"
