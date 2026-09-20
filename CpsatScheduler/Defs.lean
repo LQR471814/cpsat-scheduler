@@ -6,10 +6,19 @@ namespace CpsatScheduler
 
 /-- Positive natural unit scale that fits in CP-SAT `Int64`. -/
 structure UnitScale where
+  mkRaw ::
   val : ℕ
   pos : 0 < val
   nonoverflow : CpsatSolver.Int64.Nonoverflow (val : ℤ)
 deriving DecidableEq
+
+def UnitScale.mk
+  (val : ℕ)
+  (pos : 0 < val := by decide)
+  (nonoverflow
+    : CpsatSolver.Int64.Nonoverflow (val : ℤ)
+    := by decide) : UnitScale :=
+  ⟨val, pos, nonoverflow⟩
 
 instance : Coe UnitScale ℕ where
   coe u := u.val
@@ -26,11 +35,20 @@ instance : LT UnitScale where
 def UnitScale.atomic : UnitScale :=
   ⟨1, Nat.succ_pos 0, by decide⟩
 
+abbrev Units.Divisibility (set : Finset UnitScale) :=
+  ∀ a ∈ set, ∀ b ∈ set, b ≤ a → (b.val : ℕ) ∣ a.val
+
 structure Units where
+  rawMk ::
   set : Finset UnitScale
   has_atomic : UnitScale.atomic ∈ set
-  divisibility :
-    ∀ a ∈ set, ∀ b ∈ set, b ≤ a → (b.val : ℕ) ∣ a.val
+  divisibility : Units.Divisibility set
+
+def Units.mk
+  (set : Finset UnitScale)
+  (has_atomic : UnitScale.atomic ∈ set := by decide)
+  (divisibility : Units.Divisibility set := by decide) : Units :=
+  ⟨set, has_atomic, divisibility⟩
 
 def Units.atomic (_units : Units) : UnitScale := UnitScale.atomic
 
@@ -47,11 +65,20 @@ structure RatQuantity where
 
 /-- Nonnegative atomic-unit half-open horizon `[begin, end)`. -/
 structure Horizon where
+  mkRaw ::
   begin : ℕ
   end_ : ℕ
   begin_lt_end : begin < end_
   begin_safe : CpsatSolver.Int64.Nonoverflow begin
   end_safe : CpsatSolver.Int64.Nonoverflow end_
+
+def Horizon.mk
+  (begin end_ : ℕ)
+  (begin_lt_end : begin < end_ := by decide)
+  (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by decide)
+  (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) :
+    Horizon :=
+  ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
 structure Timescales where
   units : Units

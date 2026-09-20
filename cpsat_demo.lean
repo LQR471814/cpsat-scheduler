@@ -5,43 +5,15 @@ import CpsatScheduler.Constraints
 open CpsatScheduler
 open CpsatSolver
 
-def atomic : UnitScale := {
-  val := 1
-  pos := by decide
-  nonoverflow := by decide
-}
+def atomic : UnitScale := UnitScale.mk 1
+def unit2 : UnitScale := UnitScale.mk 2
+def unit4 : UnitScale := UnitScale.mk 4
 
-def unit2 : UnitScale := {
-  val := 2
-  pos := by decide
-  nonoverflow := by decide
-}
+def unitSet : Finset UnitScale := { atomic, unit2, unit4 }
 
-def unit4 : UnitScale := {
-  val := 4
-  pos := by decide
-  nonoverflow := by decide
-}
+def units : CpsatScheduler.Units := CpsatScheduler.Units.mk unitSet
 
-def unitSet : Finset UnitScale := {
-  atomic,
-  unit2,
-  unit4
-}
-
-def units : Units := {
-  set := unitSet
-  has_atomic := by decide
-  divisibility := by decide
-}
-
-def horizon : Horizon := {
-  begin := 0
-  end_ := 12
-  begin_lt_end := by decide
-  begin_safe := by decide
-  end_safe := by decide
-}
+def horizon : Horizon := Horizon.mk 0 12
 
 def scales := Timescales.mk units horizon
 
@@ -49,9 +21,6 @@ def scales := Timescales.mk units horizon
 def taskA : Task scales :=
   Task.ofBucketRange scales { val := 1 } (Subtype.mk atomic (by decide))
     (kLo := 0) (kHi := 11)
-    (hle := by decide)
-    (hbegin := by decide)
-    (hend := by decide)
     (label := Option.some "task_a")
 
 def taskB : Task scales :=
