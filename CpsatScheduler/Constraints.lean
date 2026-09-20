@@ -1,4 +1,4 @@
-import CpsatScheduler.Defs
+import CpsatScheduler.UnitAware
 import CpsatScheduler.CpsatSolver.Model
 import CpsatScheduler.Util.Graphs
 
@@ -87,34 +87,6 @@ def PrerequisitesAcyclic {scales : Timescales} [DecidableEq (Task scales)]
     (g : FinDigraph (Task scales)) : Prop :=
   g.IsAcyclic
 
-theorem TaskCostTable.pointsNeNil {scales : Timescales} {task : Task scales}
-    (table : TaskCostTable task) : table.points.toList ≠ [] := by
-  intro h
-  have : table.points.size = 0 := by
-    rw [← Array.length_toList, h, List.length_nil]
-  exact (Nat.not_lt_of_ge (Nat.le_of_eq this)) table.nonempty
-
-def TaskCostTable.demandDomain {scales : Timescales} {task : Task scales}
-    (table : TaskCostTable task) : CpsatSolver.NonemptyDomain :=
-  CpsatSolver.Domain.ofListNonempty
-    (table.points.toList.map fun p => CpsatSolver.Interval.fromValue p.timeDemanded)
-    (by
-      intro h
-      exact TaskCostTable.pointsNeNil table (List.map_eq_nil_iff.mp h))
-
-def TaskCostTable.costDomain {scales : Timescales} {task : Task scales}
-    (table : TaskCostTable task) : CpsatSolver.NonemptyDomain :=
-  CpsatSolver.Domain.ofListNonempty
-    (table.points.toList.map fun p => CpsatSolver.Interval.fromValue p.encodedCost)
-    (by
-      intro h
-      exact TaskCostTable.pointsNeNil table (List.map_eq_nil_iff.mp h))
-
-def TaskCostTable.allowedRows {scales : Timescales} {task : Task scales}
-    (table : TaskCostTable task) : Array (Vector CpsatSolver.Int64 2) :=
-  table.points.map fun p =>
-    Vector.mk #[p.timeDemanded, p.encodedCost] rfl
-
 /-- Capacity of a per-scale packing cumulative: the bucket width in atomic units. -/
 def scaleCapacity (u : UnitScale) : CpsatSolver.LinearExpr.WithBounds :=
   let c : CpsatSolver.Int64 := ⟨u.val, u.nonoverflow⟩
@@ -125,20 +97,5 @@ coordinates, demand is atomic `timeDemanded`, capacity is the scale. -/
 def packScaleCumulative (items : Array CpsatSolver.CumulativeItem) (u : UnitScale) :
     CpsatSolver.Constraint.Variant :=
   .cumulative items (scaleCapacity u)
-
-/-- Coarser conversion from unit `u` to `v` (`u ∣ v`): auxiliary quotient plus
-truncating division equality. -/
-def UnitAware.truncCoarsen {u v : UnitScale}
-    (e : UnitAware.LinearExpr u) (huv : u.val ∣ v.val)
-    (quotDomain : CpsatSolver.NonemptyDomain) (label : Option String := none) :
-    CpsatSolver.Builder (UnitAware.IntVar v) := do
-  let ratio := UnitScale.exactRatio v u huv
-  have hdiv : (0 : ℤ) < ratio.val := by
-    change (0 : ℤ) < ((v.val / u.val : ℕ) : ℤ)
-    have hle : u.val ≤ v.val := Nat.le_of_dvd v.pos huv
-    have hpos : 0 < v.val / u.val := Nat.div_pos hle u.pos
-    exact_mod_cast hpos
-  let q ← CpsatSolver.Builder.truncCoarsen e.cpsat ratio hdiv quotDomain label
-  pure ⟨q⟩
 
 end CpsatScheduler

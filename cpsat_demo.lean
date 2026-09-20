@@ -1,4 +1,5 @@
 import CpsatScheduler.CpsatSolver.Model
+import CpsatScheduler.Task
 import CpsatScheduler.Constraints
 
 open CpsatScheduler
@@ -44,49 +45,65 @@ def horizon : Horizon := {
 
 def scales := Timescales.mk units horizon
 
+-- `atomic` unit, horizon `[0, 12)`, so valid start buckets are `[0, 11]`.
+def taskA : Task scales :=
+  Task.ofBucketRange scales { val := 1 } (Subtype.mk atomic (by decide))
+    (kLo := 0) (kHi := 11)
+    (hle := by decide)
+    (hbegin := by decide)
+    (hend := by decide)
+    (label := Option.some "task_a")
+
+def taskB : Task scales :=
+  Task.ofBucketRange scales { val := 2 } (Subtype.mk unit2 (by decide))
+    (kHi := 4)
+    (label := Option.some "task_b")
+
+def taskC : Task scales :=
+  Task.ofBucketRange scales { val := 3 } (Subtype.mk unit2 (by decide))
+    (label := Option.some "task_b")
+
 def demoModel? : Option Model :=
   let result := Builder.run do
-    -- `atomic` unit, horizon `[0, 12)`, so valid start buckets are `[0, 11]`.
-    let taskA : Task scales :=
-      Task.ofBucketRange scales { val := 1 } (Subtype.mk atomic (by decide))
-        (kLo := 0) (kHi := 11)
-        (hle := by decide)
-        (hbegin := by decide)
-        (hend := by decide)
-        (label := Option.some "task_a")
     let aVar ← Builder.newIntVar taskA.startDomain (some "task_a_start")
     let a : TaskStart scales := {
       task := taskA
       var := aVar.var
       unit_eq := by rw [aVar.eq]
     }
-    let taskB : Task scales :=
-      Task.ofBucketRange scales { val := 2 } (Subtype.mk unit2 (by decide))
-        (kLo := 0) (kHi := 5)
-        (hle := by decide)
-        (hbegin := by decide)
-        (hend := by decide)
-        (label := Option.some "task_b")
-    let b ← Builder.newIntVar taskB.startDomain (some "task_b_start")
-    let c ← Builder.newIntVar d0_3 (some "task_c_start")
-    let be := LinearExpr.var b.var
+    let bVar ← Builder.newIntVar taskB.startDomain (some "task_b_start")
+    let b : TaskStart scales := {
+      task := taskB
+      var := bVar.var
+      unit_eq := by rw [bVar.eq]
+    }
+    let cVar ← Builder.newIntVar taskC.startDomain (some "task_c_start")
+    let c : TaskStart scales := {
+      task := taskC
+      var := cVar.var
+      unit_eq := by rw [cVar.eq]
+    }
+    let be := LinearExpr.var bVar.var
     let rows : Array (Vector CpsatSolver.Int64 2) := #[
       Vector.mk #[CpsatSolver.Int64.of 0, CpsatSolver.Int64.of 1] rfl,
       Vector.mk #[CpsatSolver.Int64.of 1, CpsatSolver.Int64.of 2] rfl,
       Vector.mk #[CpsatSolver.Int64.of 2, CpsatSolver.Int64.of 3] rfl,
     ]
     let _ ← Builder.addConstraint .always
-      (.allowed_assignments (Vector.mk #[a.var, b.var] rfl) rows)
+      (.allowed_assignments (Vector.mk #[a.var, bVar.var] rfl) rows)
       (some "task_b_after_a")
     let _ ← Builder.addConstraint .always
-      (.bounded_linear (prerequisite.variant c.var a.var (by
+      (.bounded_linear (prerequisite.variant cVar.var a.var (by
         show
           CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.left : ℤ) + 1) ∧
           CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.right : ℤ) + 1)
-        rw [show a.var.domain = taskA.startDomain from by rw [show a.var = aVar.var from rfl, aVar.eq]]
+        rw [
+          show a.var.domain = taskA.startDomain from by
+            rw [show a.var = aVar.var from rfl, aVar.eq]
+        ]
         decide)))
       (some "task_c_within_task_a")
-    Builder.setObjective (.minimize ⟨b.var.domain.hull, be⟩)
+    Builder.setObjective (.minimize ⟨bVar.var.domain.hull, be⟩)
     pure ()
   result.1.finalize?
 

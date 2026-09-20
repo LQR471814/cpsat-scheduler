@@ -1,5 +1,6 @@
 import CpsatScheduler.CpsatSolver.Model
-import CpsatScheduler.Defs
+import CpsatScheduler.Task
+import CpsatScheduler.Optimality
 import CpsatScheduler.Constraints
 
 set_option linter.style.setOption false
@@ -8,6 +9,10 @@ set_option maxHeartbeats 400000
 
 open CpsatSolver
 open CpsatScheduler
+
+/-- Lossless normalization of two operands to their minimum/finer unit. -/
+def finer (a b : UnitScale) : UnitScale :=
+  if a.val ≤ b.val then a else b
 
 /-- Sparse domains decide membership by scanning interval endpoints, not by
 enumerating every integer in a huge range. -/
