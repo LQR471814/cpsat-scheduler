@@ -210,7 +210,7 @@ inductive Constraint.Variant where
     (numerator : LinearExpr.WithBounds)
     (divisor : Int64)
     (divisor_pos : (0 : ℤ) < divisor)
-  | allowedAssignments {n : Nat}
+  | allowed_assignments {n : Nat}
     (vars : Vector IntVar n)
     (rows : Array (Vector Int64 n))
   | cumulative
@@ -241,7 +241,7 @@ def Constraint.Variant.intVars : Constraint.Variant → List IntVar
     exprs.foldl (fun acc e => acc ++ e.intVars) target.intVars
   | .div_eq target numerator _ _ =>
     target.intVars ++ numerator.intVars
-  | .allowedAssignments vars _ => vars.toList
+  | allowed_assignments vars _ => vars.toList
   | .cumulative items capacity =>
     items.foldl (fun acc it =>
       acc ++ it.interval.intVars ++ it.demand.intVars) capacity.intVars
@@ -269,7 +269,7 @@ def Constraint.Variant.WellFormed : Constraint.Variant → Prop
   | .bounded_linear _ => True
   | .max_equality _ exprs => 0 < exprs.size
   | .div_eq _ _ _ _ => True
-  | .allowedAssignments vars rows =>
+  | allowed_assignments vars rows =>
     0 < rows.size ∧
       ∀ row ∈ rows, ∀ i : Fin vars.size, (row[i].val : ℤ) ∈ vars[i].domain.domain
   | .cumulative _ _ => True
@@ -286,7 +286,7 @@ def Constraint.PassesPresolveSanityChecks (c : Constraint) : Prop :=
     | .bounded_linear expr => expr.NoContradict
     | .max_equality _ _ => True
     | .div_eq _ _ _ _ => True
-    | .allowedAssignments _ rows => 0 < rows.size
+    | .allowed_assignments _ rows => 0 < rows.size
     | .cumulative _ _ => True
     | .bool_and terms => 0 < terms.size
     | .bool_or terms => 0 < terms.size

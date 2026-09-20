@@ -27,7 +27,7 @@ def bucketContainedIn.variants
     (addChild :
       CpsatSolver.Int64.Nonoverflow ((child.domain.hull.left : ℤ) + 1) ∧
       CpsatSolver.Int64.Nonoverflow ((child.domain.hull.right : ℤ) + 1)) :
-    Array CpsatSolver.BoundedLinearExpr :=
+    CpsatSolver.BoundedLinearExpr × CpsatSolver.BoundedLinearExpr :=
   let childE := CpsatSolver.LinearExpr.var child
   let parentE := CpsatSolver.LinearExpr.var parent
   let parentScaled := CpsatSolver.LinearExpr.mul parentE ratio mul₁
@@ -36,15 +36,15 @@ def bucketContainedIn.variants
   let parentPlus := CpsatSolver.LinearExpr.add parentE one add₁
   let parentPlusScaled := CpsatSolver.LinearExpr.mul parentPlus ratio mul₂
   let childPlus := CpsatSolver.LinearExpr.add childE one addChild
-  #[
-    {
+  {
+    fst := {
       rel := .gte
       leftBounds := child.domain.hull
       rightBounds := parent.domain.hull.mul (CpsatSolver.Interval.fromValue ratio) mul₁
       left := childE
       right := parentScaled
     },
-    {
+    snd := {
       rel := .lte
       leftBounds := child.domain.hull.add (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1))
         addChild
@@ -54,7 +54,7 @@ def bucketContainedIn.variants
       left := childPlus
       right := parentPlusScaled
     }
-  ]
+  }
 
 /-- Successor start after predecessor bucket end, already in a common unit. -/
 def prerequisite.variant (successor predecessor : CpsatSolver.IntVar)

@@ -72,21 +72,27 @@ def Builder.freshId : Builder EntityId := do
   pure ⟨s.nextId⟩
 
 def Builder.newIntVar (domain : NonemptyDomain) (label : Option String := none) :
-    Builder IntVar := do
+    Builder { v : IntVar // v.domain = domain ∧ v.label = label } := do
   let id ← Builder.freshId
   let v : IntVar := { id := id, domain := domain, label := label }
   modify fun s => { s with ints := s.ints.push v }
-  pure v
+  pure { val := v, property := by exact Prod.mk_inj.mp rfl }
 
-def Builder.newBoolVar (label : Option String := none) : Builder BoolVar := do
+def Builder.newBoolVar (label : Option String := none) :
+    Builder { v : BoolVar // v.label = label } := do
   let id ← Builder.freshId
   let v : BoolVar := { id := id, label := label }
   modify fun s => { s with bools := s.bools.push v }
-  pure v
+  pure { val := v, property := by exact (Option.map_inj_right fun x y a ↦ a).mp rfl }
 
 def Builder.newFixedSizeInterval {b : Bounds}
     (start : LinearExpr b) (size : Int64) (size_nonneg : (0 : ℤ) ≤ size)
-    (label : Option String := none) : Builder FixedSizeIntervalVar := do
+    (label : Option String := none) :
+    Builder { v : FixedSizeIntervalVar //
+      v.startBounds = b ∧
+      v.start = start ∧
+      v.size = size ∧
+      v.label = label } := do
   let id ← Builder.freshId
   let v : FixedSizeIntervalVar := {
     id := id, startBounds := b, start := start, size := size,
@@ -275,7 +281,7 @@ theorem meaning_sub_self {α : Bounds} (a : LinearExpr α)
     (hSub : Int64.Nonoverflow ((α.left : ℤ) - α.right) ∧
       Int64.Nonoverflow ((α.right : ℤ) - α.left)) :
     meaning (LinearExpr.fromSub a a hSub) =
-      meaning (LinearExpr.fromConst { val := 0, nonoverflow := by decide }) := by
+      meaning (LinearExpr.fromConst (Subtype.mk 0 (by decide))) := by
   apply (meaning_eq_iff _ _).mpr
   intro
   simp [LinearExpr.eval]
@@ -332,7 +338,7 @@ def Constraint.Variant.holdsB (v : Constraint.Variant) (a : Assignment) : Bool :
   | .div_eq target numerator divisor _ =>
     decide (target.snd.eval a.valuation =
       Int.tdiv (numerator.snd.eval a.valuation) divisor.val)
-  | .allowedAssignments vars rows =>
+  | allowed_assignments vars rows =>
     rows.any fun row =>
       decide (∀ i : Fin vars.size, a.intVal vars[i].id = row[i].val)
   | .cumulative items capacity =>
@@ -455,27 +461,27 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
   let modelDot (attr : Python.ValidName) : Python.Expr :=
     Python.Expr.dot (Python.Expr.id Model.Python.Name.model) attr
   let constraint : Python.Expr := match cnst.variant with
-    | Constraint.Variant.bounded_linear expr =>
+    | .bounded_linear expr =>
       Python.Expr.call (modelDot (Python.ValidName.mk "add" (by decide)))
         #[expr.toPythonExpr]
-    | Constraint.Variant.bool_and terms =>
+    | .bool_and terms =>
       Python.Expr.call (modelDot (Python.ValidName.mk "add_bool_and" (by decide)))
         (terms.map (fun t => t.toPythonExpr))
-    | Constraint.Variant.bool_or terms =>
+    | .bool_or terms =>
       Python.Expr.call (modelDot (Python.ValidName.mk "add_bool_or" (by decide)))
         (terms.map (fun t => t.toPythonExpr))
-    | Constraint.Variant.implication src dst =>
+    | .implication src dst =>
       Python.Expr.call (modelDot (Python.ValidName.mk "add_implication" (by decide)))
         #[src.toPythonExpr, dst.toPythonExpr]
-    | Constraint.Variant.max_equality target exprs =>
+    | .max_equality target exprs =>
       Python.Expr.call (modelDot (Python.ValidName.mk "add_max_equality" (by decide)))
         (#[sigmaExprToPython target] ++ exprs.map sigmaExprToPython)
-    | Constraint.Variant.div_eq target numerator divisor _ =>
+    | .div_eq target numerator divisor _ =>
       Python.Expr.call
         (modelDot (Python.ValidName.mk "add_division_equality" (by decide)))
         #[sigmaExprToPython target, sigmaExprToPython numerator,
           Python.Expr.lit (Python.Literal.int divisor)]
-    | Constraint.Variant.allowedAssignments vars rows =>
+    | .allowed_assignments vars rows =>
       Python.Expr.call
         (modelDot (Python.ValidName.mk "add_allowed_assignments" (by decide)))
         #[
@@ -487,7 +493,7 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
                 (row.toArray.map fun n =>
                   Python.Expr.lit (Python.Literal.int n.val)))))
         ]
-    | Constraint.Variant.cumulative items capacity =>
+    | .cumulative items capacity =>
       Python.Expr.call (modelDot (Python.ValidName.mk "add_cumulative" (by decide)))
         #[
           Python.Expr.lit (Python.Literal.array

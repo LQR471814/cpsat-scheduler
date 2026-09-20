@@ -1,30 +1,28 @@
 - [.] Core:
    - [x] Timescales
-   - [.] Task
-      - [ ] Prove bounds for all integer variables
-      - [o] Cost (configs)
+   - [o] Task
+      - [x] Prove bounds for all integer variables
+      - [x] Cost (configs)
          - [x] Def
          - [x] Proof
-         - [ ] Constraint
-      - [o] Start/end
+         - [x] Constraint
+      - [x] Start/end
          - [x] Def
          - [x] Proof
-         - [ ] Constraint
+         - [x] Constraint
       - [o] Children/parents
          - [x] Def
          - [x] Proof
          - [ ] Constraint
-         - [ ] "Temporary" parents
       - [o] Prereqs
          - [x] Def
          - [x] Proof
          - [ ] Constraint
       - [ ] Decision variables (cost config / start) constraint
       - [ ] Orphan deactivation constraint
-      - [ ] Real duration constraint
-      - [ ] Real completion constraint
       - [ ] PERT def
    - [ ] Non-overflow constraint
+      - [ ] "Temporary" parents
    - [ ] Objective function
    - [ ] Events
 - [ ] Process factors

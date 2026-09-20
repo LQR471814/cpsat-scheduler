@@ -72,17 +72,48 @@ It is currently undesirable for the durations of tasks without
 parents to not be counted in higher timescales without the adding
 of "synthetic parents" for every task.
 
-To model this, for each timescale, we will use the
-`add_cumulative` constraint like follows:
+The `add_cumulative` constraint states the following:
 
-- For all timescales:
-   - Tasks of the current unit will have intervals will span their
-     start times to the end of their timescale instance.
-   - Tasks of smaller units, will expand their intervals to be of
-     the current unit's size, and be included within intervals.
-   - The duration decision var will be used for the demand of each
-     task interval.
-   - The capacity will be the timescale instance's size.
+Let $I$ is a set of intervals (over integers), $D$ a set of
+demands (integers), and $C$ a capacity (integer).
+
+We are given $S = I \times D$, where every interval is associated
+with a demand.
+
+The `add_cumulative` constraint then guarantees the following:
+
+$$
+\forall x \in \mathbb{Z}, \left(\sum_{(i,d)\in{S}} x \in i \to d\right) \leq C
+$$
+
+This means that for all times $x$, if $x$ is within an interval,
+the corresponding demand $d$ will be added to a cumulative tracker
+of all the demands during this time. The solver will then check
+that the total sum of demands is less than a fixed capacity $C$.
+
+So what we will do is introduce a `add_cumulative` constraint for
+every timescale.
+
+On each timescale (let's call it $\tau$), the tasks on that
+timescale will have their intervals and demands (normalized to the
+atomic unit) as usual.
+
+But the `add_cumulative` constraint will also contain the tasks of
+lower timescales:
+
+- The intervals of tasks of lower timescales will be converted
+  into the current timescale:
+   - This is done by truncate dividing by the start and
+     renormalizing the end to be $\text{start}+\tau$.
+- The demands of tasks of lower timescales will be unchanged.
+
+> [!TODO]
+> Prove that this method maps any lower timescale task whose
+> interval occurs within the higher timescale into the higher
+> timescale in question.
+
+This is because the lower timescale tasks must still happen
+*somewhere* inside the higher timescale task.
 
 The reason we must constrain on each timescale is because of the
 following:

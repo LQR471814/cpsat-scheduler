@@ -84,10 +84,7 @@ theorem Int64.proof_of_mul {a b : ℤ}
      intro hba
      exact h₂ ⟨hba.2, hba.1⟩) (by simpa [mul_comm] using h)⟩
 
-structure Int64 where
-  val : ℤ
-  nonoverflow : Int64.Nonoverflow val
-deriving DecidableEq
+abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
 
 instance : Coe Int64 ℤ where
   coe proven := proven.val
@@ -132,8 +129,8 @@ def Interval.ofBounds (left right : ℤ)
     (nonoverflow : Int64.Nonoverflow left ∧ Int64.Nonoverflow right)
     (left_le_right : left ≤ right) : Interval :=
   {
-    left := { val := left, nonoverflow := nonoverflow.1 }
-    right := { val := right, nonoverflow := nonoverflow.2 }
+    left := Subtype.mk left nonoverflow.1
+    right := Subtype.mk right nonoverflow.2
     left_le_right := left_le_right
   }
 
@@ -141,8 +138,8 @@ def Interval.neg (i : Interval)
     (h : Int64.Nonoverflow (-i.right : ℤ) ∧ Int64.Nonoverflow (-i.left : ℤ)) :
     Interval :=
   {
-    left := { val := -(i.right : ℤ), nonoverflow := h.left }
-    right := { val := -(i.left : ℤ), nonoverflow := h.right }
+    left := Subtype.mk (-(i.right : ℤ)) h.left
+    right := Subtype.mk (-(i.left : ℤ)) h.right
     left_le_right := Int.neg_le_neg i.left_le_right
   }
 
