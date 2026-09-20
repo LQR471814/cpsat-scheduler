@@ -62,15 +62,18 @@ def demoModel? : Option Model :=
       (.allowed_assignments (Vector.mk #[a.var, bVar.var] rfl) rows)
       (some "task_b_after_a")
     let _ ← Builder.addConstraint .always
-      (.bounded_linear (prerequisite.variant cVar.var a.var (by
-        show
-          CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.left : ℤ) + 1) ∧
-          CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.right : ℤ) + 1)
-        rw [
-          show a.var.domain = taskA.startDomain from by
-            rw [show a.var = aVar.var from rfl, aVar.eq]
-        ]
-        decide)))
+      (.bounded_linear
+        (Constraint.prerequisite
+          cVar.var a.var
+          (by
+            show
+              CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.left : ℤ) + 1) ∧
+              CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.right : ℤ) + 1)
+            rw [
+              show a.var.domain = taskA.startDomain from by
+                rw [show a.var = aVar.var from rfl, aVar.eq]
+            ]
+            decide)))
       (some "task_c_within_task_a")
     Builder.setObjective (.minimize ⟨bVar.var.domain.hull, be⟩)
     pure ()

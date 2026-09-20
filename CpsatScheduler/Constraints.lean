@@ -7,7 +7,7 @@ namespace CpsatScheduler
 /-- Containment in child coordinates using the exact unit ratio:
 `parentStart * ratio ≤ childStart` and
 `childStart + 1 ≤ (parentStart + 1) * ratio`. -/
-def bucketContainedIn.variants
+def Constraint.bucketContainedIn
     (child parent : CpsatSolver.IntVar) (ratio : CpsatSolver.Int64)
     (mul₁ :
       CpsatSolver.Int64.Nonoverflow
@@ -57,7 +57,7 @@ def bucketContainedIn.variants
   }
 
 /-- Successor start after predecessor bucket end, already in a common unit. -/
-def prerequisite.variant (successor predecessor : CpsatSolver.IntVar)
+def Constraint.prerequisite (successor predecessor : CpsatSolver.IntVar)
     (addPred :
       CpsatSolver.Int64.Nonoverflow ((predecessor.domain.hull.left : ℤ) + 1) ∧
       CpsatSolver.Int64.Nonoverflow ((predecessor.domain.hull.right : ℤ) + 1)) :
