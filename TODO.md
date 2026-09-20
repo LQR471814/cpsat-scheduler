@@ -1,36 +1,9 @@
-- [.] Core:
-   - [x] Timescales
-   - [o] Task
-      - [x] Prove bounds for all integer variables
-      - [x] Cost (configs)
-         - [x] Def
-         - [x] Proof
-         - [x] Constraint
-      - [x] Start/end
-         - [x] Def
-         - [x] Proof
-         - [x] Constraint
-      - [o] Children/parents
-         - [x] Def
-         - [x] Proof
-         - [ ] Constraint
-      - [o] Prereqs
-         - [x] Def
-         - [x] Proof
-         - [ ] Constraint
-      - [ ] Decision variables (cost config / start) constraint
-      - [ ] Orphan deactivation constraint
-      - [ ] PERT def
-   - [ ] Non-overflow constraint
-      - [ ] "Temporary" parents
-   - [ ] Objective function
-   - [ ] Events
-- [ ] Process factors
-   - [ ] Early biasing
-     - [ ] Compute different "cost categories" after solution.
-   - [ ] Energy levels
-     - [ ] Energy level encoding on the task object
-     - [ ] Schedule-synced recurring cost topology
-   - [ ] Routine tasks
-   - [ ] Parameter tuning
-
+- [ ] Test prereq/within
+- [ ] Test non-overflow constraint
+- [ ] Test cost assignment
+- [ ] Chronological (schedule) declaration layer
+- [ ] Define events
+- [ ] Process factors:
+   - [ ] Refactor into different types of cost
+   - [ ] Early biasing cost
+   - [ ] Energy level cost
