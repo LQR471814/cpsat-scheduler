@@ -1,8 +1,7 @@
-import CpsatScheduler.CpsatSolver.Helpers
-import Lean.Data.Json.Parser
+import CpsatScheduler.CpsatSolver.LinearExpr
+import CpsatScheduler.CpsatSolver.ToPython
 
-set_option linter.mathlibStandardSet false
-set_option linter.style.header false
+import Lean.Data.Json.Parser
 
 /-!
 # CP-SAT model builder, assignment checking, and Python serialization

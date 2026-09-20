@@ -4,43 +4,47 @@ import CpsatScheduler.Constraints
 open CpsatScheduler
 open CpsatSolver
 
-def d0_3 : NonemptyDomain :=
-  NonemptyDomain.interval (Interval.ofBounds 0 6 ⟨by decide, by decide⟩ (by decide))
+def atomic : UnitScale := {
+  val := 1
+  pos := by decide
+  nonoverflow := by decide
+}
+
+def unit2 : UnitScale := {
+  val := 2
+  pos := by decide
+  nonoverflow := by decide
+}
+
+def unit4 : UnitScale := {
+  val := 4
+  pos := by decide
+  nonoverflow := by decide
+}
+
+def unitSet : Finset UnitScale := {
+  atomic,
+  unit2,
+  unit4
+}
+
+def units : Units := {
+  set := unitSet
+  has_atomic := by decide
+  divisibility := by decide
+}
+
+def horizon : Horizon := {
+  begin := 0
+  end_ := 12
+  begin_lt_end := by decide
+  begin_safe := by decide
+  end_safe := by decide
+}
+
+def scales := Timescales.mk units horizon
 
 def demoModel? : Option Model :=
-  let atomic : UnitScale := {
-    val := 1
-    pos := by decide
-    nonoverflow := by decide
-  }
-  let unit2 : UnitScale := {
-    val := 2
-    pos := by decide
-    nonoverflow := by decide
-  }
-  let unit4 : UnitScale := {
-    val := 4
-    pos := by decide
-    nonoverflow := by decide
-  }
-  let unitSet : Finset UnitScale := {
-    atomic,
-    unit2,
-    unit4
-  }
-  let units : Units := {
-    set := unitSet
-    has_atomic := by decide
-    divisibility := by decide
-  }
-  let horizon : Horizon := {
-    begin := 0
-    end_ := 12
-    begin_lt_end := by decide
-    begin_safe := by decide
-    end_safe := by decide
-  }
-  let scales := Timescales.mk units horizon
   let result := Builder.run do
     -- `atomic` unit, horizon `[0, 12)`, so valid start buckets are `[0, 11]`.
     let taskA : Task scales :=
@@ -57,13 +61,13 @@ def demoModel? : Option Model :=
       unit_eq := by rw [aVar.eq]
     }
     let taskB : Task scales :=
-      Task.ofBucketRange scales { val := 2 } (Subtype.mk atomic (by decide))
-        (kLo := 0) (kHi := 11)
+      Task.ofBucketRange scales { val := 2 } (Subtype.mk unit2 (by decide))
+        (kLo := 0) (kHi := 5)
         (hle := by decide)
         (hbegin := by decide)
         (hend := by decide)
-        (label := Option.some "task_a")
-    let b ← Builder.newIntVar d0_3 (some "task_b_start")
+        (label := Option.some "task_b")
+    let b ← Builder.newIntVar taskB.startDomain (some "task_b_start")
     let c ← Builder.newIntVar d0_3 (some "task_c_start")
     let be := LinearExpr.var b.var
     let rows : Array (Vector CpsatSolver.Int64 2) := #[

@@ -1,6 +1,14 @@
-import CpsatScheduler.CpsatSolver.Defs
+import CpsatScheduler.CpsatSolver.WellFormed
+import CpsatScheduler.CpsatSolver.EntityId
 
 namespace CpsatSolver
+
+/-- Collision-free Python identifier derived from an ID, never from a label. -/
+def EntityId.toPythonName (id : EntityId) : Python.ValidName :=
+  ⟨"e_" ++ toString id.val, EntityId.toPythonName_proof id.val⟩
+
+def HasId.pythonName {α : Type} [HasId α] (x : α) : Python.ValidName :=
+  EntityId.toPythonName (HasId.id x)
 
 def BoolLit.toPythonExpr (b : BoolLit) : Python.Expr :=
   match b with
@@ -22,40 +30,6 @@ def LinearExpr.toPythonExpr {bounds : Bounds} (expr : LinearExpr bounds) : Pytho
     Python.Expr.mul (Python.Expr.lit (Python.Literal.int value.val)) a.toPythonExpr
   | .fromAdd a b _ => Python.Expr.add a.toPythonExpr b.toPythonExpr
   | .fromSub a b _ => Python.Expr.sub a.toPythonExpr b.toPythonExpr
-
-def LinearExpr.var (value : IntVar) : LinearExpr value.domain.hull := .fromVar value
-
-def LinearExpr.const (value : Int64) : LinearExpr (Interval.fromValue value) :=
-  .fromConst value
-
-def LinearExpr.neg {bounds : Bounds} (a : LinearExpr bounds)
-    (nonoverflow : Int64.Nonoverflow (-bounds.right : ℤ) ∧
-      Int64.Nonoverflow (-bounds.left : ℤ)) :
-    LinearExpr (bounds.neg nonoverflow) :=
-  .fromNeg a nonoverflow
-
-def LinearExpr.mul {bounds : Bounds} (a : LinearExpr bounds) (value : Int64)
-    (nonoverflow :
-      Int64.Nonoverflow (bounds.mulLower (Interval.fromValue value)) ∧
-      Int64.Nonoverflow (bounds.mulUpper (Interval.fromValue value))) :
-    LinearExpr (bounds.mul (Interval.fromValue value) nonoverflow) :=
-  .fromMulConst a value nonoverflow
-
-def LinearExpr.add {leftBounds rightBounds : Bounds}
-    (left : LinearExpr leftBounds) (right : LinearExpr rightBounds)
-    (nonoverflow :
-      Int64.Nonoverflow ((leftBounds.left : ℤ) + rightBounds.left) ∧
-      Int64.Nonoverflow ((leftBounds.right : ℤ) + rightBounds.right)) :
-    LinearExpr (leftBounds.add rightBounds nonoverflow) :=
-  .fromAdd left right nonoverflow
-
-def LinearExpr.sub {leftBounds rightBounds : Bounds}
-    (left : LinearExpr leftBounds) (right : LinearExpr rightBounds)
-    (nonoverflow :
-      Int64.Nonoverflow ((leftBounds.left : ℤ) - rightBounds.right) ∧
-      Int64.Nonoverflow ((leftBounds.right : ℤ) - rightBounds.left)) :
-    LinearExpr (leftBounds.sub rightBounds nonoverflow) :=
-  .fromSub left right nonoverflow
 
 def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
   let left := @LinearExpr.toPythonExpr expr.leftBounds expr.left

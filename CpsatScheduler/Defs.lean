@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Helpers
+import CpsatScheduler.CpsatSolver
 
 import Mathlib.Data.Rat.Star
 
