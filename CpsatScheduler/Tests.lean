@@ -82,3 +82,29 @@ example :
       norm_num)
     rfl
     (by norm_num)
+
+/-- `Task.ofBucketRange` works for a coarse unit `u = 4` (exercising the generic
+`u > 1` arithmetic, not just the atomic case). Horizon `[0, 24)` admits start
+buckets `[0, 5]`, since `(5 + 1) * 4 = 24 ≤ 24`. -/
+def coarseTask :
+    let unit4 : UnitScale := ⟨4, by decide, by decide⟩
+    let units : Units :=
+      { set := {UnitScale.atomic, unit4}
+        has_atomic := by decide
+        divisibility := by decide }
+    let horizon : Horizon :=
+      { begin := 0, end_ := 24, begin_lt_end := by decide,
+        begin_safe := by decide, end_safe := by decide }
+    Task (Timescales.mk units horizon) :=
+  Task.ofBucketRange _ { val := 7 } (Subtype.mk ⟨4, by decide, by decide⟩ (by decide))
+    (kLo := 0) (kHi := 5)
+    (hle := by decide)
+    (hbegin := by decide)
+    (hend := by decide)
+    (label := some "coarse_task")
+
+/-- Bucket index `5` is the last valid start for the coarse task. -/
+example : (5 : ℤ) ∈ coarseTask.startDomain.domain := by native_decide
+
+/-- Bucket index `6` overflows the horizon and is excluded. -/
+example : (6 : ℤ) ∉ coarseTask.startDomain.domain := by native_decide

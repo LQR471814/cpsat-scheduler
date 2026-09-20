@@ -42,51 +42,47 @@ def demoModel? : Option Model :=
   }
   let scales := Timescales.mk units horizon
   let result := Builder.run do
-    let taskA : Task scales := {
-      id := { val := 1 }
-      label := Option.some "task_a"
-      unit := Subtype.mk atomic (by decide)
-      startDomain := {
-        domain := {
-          intervals := [
-            {
-              left := Subtype.mk horizon.begin horizon.begin_safe
-              right := Subtype.mk horizon.end_ horizon.end_safe
-              left_le_right := by exact Int.le.intro_sub (horizon.end_ + 0) rfl
-            }
-          ]
-          pairwise := by decide
-        }
-        nonempty := by decide
-      }
-      bucketsFitHorizon := fun k h_mem => And.intro
-        sorry
-        (And.intro
-          sorry
-          (And.intro
-            sorry
-            sorry))
-    }
+    -- `atomic` unit, horizon `[0, 12)`, so valid start buckets are `[0, 11]`.
+    let taskA : Task scales :=
+      Task.ofBucketRange scales { val := 1 } (Subtype.mk atomic (by decide))
+        (kLo := 0) (kHi := 11)
+        (hle := by decide)
+        (hbegin := by decide)
+        (hend := by decide)
+        (label := Option.some "task_a")
     let aVar ← Builder.newIntVar taskA.startDomain (some "task_a_start")
     let a : TaskStart scales := {
       task := taskA
-      var := aVar
-      unit_eq := by refine bif ?_ then ?_ else ?_
+      var := aVar.var
+      unit_eq := by rw [aVar.eq]
     }
+    let taskB : Task scales :=
+      Task.ofBucketRange scales { val := 2 } (Subtype.mk atomic (by decide))
+        (kLo := 0) (kHi := 11)
+        (hle := by decide)
+        (hbegin := by decide)
+        (hend := by decide)
+        (label := Option.some "task_a")
     let b ← Builder.newIntVar d0_3 (some "task_b_start")
     let c ← Builder.newIntVar d0_3 (some "task_c_start")
-    let be := LinearExpr.var b
+    let be := LinearExpr.var b.var
     let rows : Array (Vector CpsatSolver.Int64 2) := #[
       Vector.mk #[CpsatSolver.Int64.of 0, CpsatSolver.Int64.of 1] rfl,
       Vector.mk #[CpsatSolver.Int64.of 1, CpsatSolver.Int64.of 2] rfl,
       Vector.mk #[CpsatSolver.Int64.of 2, CpsatSolver.Int64.of 3] rfl,
     ]
     let _ ← Builder.addConstraint .always
-      (.allowed_assignments (Vector.mk #[a, b] rfl) rows)
+      (.allowed_assignments (Vector.mk #[a.var, b.var] rfl) rows)
       (some "task_b_after_a")
     let _ ← Builder.addConstraint .always
+      (.bounded_linear (prerequisite.variant c.var a.var (by
+        show
+          CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.left : ℤ) + 1) ∧
+          CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.right : ℤ) + 1)
+        rw [show a.var.domain = taskA.startDomain from by rw [show a.var = aVar.var from rfl, aVar.eq]]
+        decide)))
       (some "task_c_within_task_a")
-    Builder.setObjective (.minimize ⟨b.domain.hull, be⟩)
+    Builder.setObjective (.minimize ⟨b.var.domain.hull, be⟩)
     pure ()
   result.1.finalize?
 

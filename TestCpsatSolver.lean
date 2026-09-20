@@ -12,7 +12,7 @@ def demo : RawModel × (IntVar × IntVar) :=
   Builder.run do
     let x ← Builder.newIntVar xDomain (some "x (not a python ident!)")
     let y ← Builder.newIntVar yDomain (some "y")
-    pure (x, y)
+    pure (x.var, y.var)
 
 def demoRaw : RawModel := demo.1
 def x : IntVar := demo.2.1

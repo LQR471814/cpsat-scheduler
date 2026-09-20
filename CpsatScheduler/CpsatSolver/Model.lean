@@ -71,45 +71,73 @@ def Builder.freshId : Builder EntityId := do
   set { s with nextId := s.nextId + 1 }
   pure ⟨s.nextId⟩
 
+/-- Result of allocating an integer variable. The `id` is chosen opaquely by the
+builder, but `eq` recovers the full record structure so callers can reason about
+every field definitionally. -/
+structure NewIntVar (domain : NonemptyDomain) (label : Option String) where
+  id : EntityId
+  var : IntVar
+  eq : var = { id := id, domain := domain, label := label }
+
+/-- Result of allocating a boolean variable, with `eq` recovering the record. -/
+structure NewBoolVar (label : Option String) where
+  id : EntityId
+  var : BoolVar
+  eq : var = { id := id, label := label }
+
+/-- Result of allocating a fixed-size interval, with `eq` recovering the record. -/
+structure NewFixedSizeInterval {b : Bounds}
+    (start : LinearExpr b) (size : Int64) (size_nonneg : (0 : ℤ) ≤ size)
+    (label : Option String) where
+  id : EntityId
+  var : FixedSizeIntervalVar
+  eq : var =
+    { id := id, startBounds := b, start := start, size := size,
+      size_nonneg := size_nonneg, label := label }
+
+/-- Result of allocating a constraint, with `eq` recovering the record. -/
+structure NewConstraint (enforcement : Constraint.Enforcement)
+    (variant : Constraint.Variant) (label : Option String) where
+  id : EntityId
+  constraint : Constraint
+  eq : constraint =
+    { id := id, label := label, enforcement := enforcement, variant := variant }
+
 def Builder.newIntVar (domain : NonemptyDomain) (label : Option String := none) :
-    Builder { v : IntVar // v.domain = domain ∧ v.label = label } := do
+    Builder (NewIntVar domain label) := do
   let id ← Builder.freshId
   let v : IntVar := { id := id, domain := domain, label := label }
   modify fun s => { s with ints := s.ints.push v }
-  pure { val := v, property := by exact Prod.mk_inj.mp rfl }
+  pure { id := id, var := v, eq := rfl }
 
 def Builder.newBoolVar (label : Option String := none) :
-    Builder { v : BoolVar // v.label = label } := do
+    Builder (NewBoolVar label) := do
   let id ← Builder.freshId
   let v : BoolVar := { id := id, label := label }
   modify fun s => { s with bools := s.bools.push v }
-  pure { val := v, property := by exact (Option.map_inj_right fun x y a ↦ a).mp rfl }
+  pure { id := id, var := v, eq := rfl }
 
 def Builder.newFixedSizeInterval {b : Bounds}
     (start : LinearExpr b) (size : Int64) (size_nonneg : (0 : ℤ) ≤ size)
     (label : Option String := none) :
-    Builder { v : FixedSizeIntervalVar //
-      v.startBounds = b ∧
-      v.start = start ∧
-      v.size = size ∧
-      v.label = label } := do
+    Builder (NewFixedSizeInterval start size size_nonneg label) := do
   let id ← Builder.freshId
   let v : FixedSizeIntervalVar := {
     id := id, startBounds := b, start := start, size := size,
     size_nonneg := size_nonneg, label := label
   }
   modify fun s => { s with intervals := s.intervals.push v }
-  pure v
+  pure { id := id, var := v, eq := rfl }
 
 def Builder.addConstraint (enforcement : Constraint.Enforcement)
     (variant : Constraint.Variant) (label : Option String := none) :
-    Builder Constraint := do
+    Builder (NewConstraint enforcement variant label) := do
   let id ← Builder.freshId
   let c : Constraint := {
     id := id, label := label, enforcement := enforcement, variant := variant
   }
   modify fun s => { s with constraints := s.constraints.push c }
-  pure c
+  pure { id := id, constraint := c, eq := rfl }
 
 def Builder.setObjective (obj : Objective) : Builder Unit :=
   modify fun s => { s with objective := obj }
@@ -118,9 +146,10 @@ def Builder.setObjective (obj : Objective) : Builder Unit :=
 constraint. -/
 def Builder.addTruncDivEq {nb nt : Bounds}
     (numerator : LinearExpr nb) (divisor : Int64) (hdiv : (0 : ℤ) < divisor)
-    (target : LinearExpr nt) (label : Option String := none) : Builder Constraint :=
-  Builder.addConstraint .always
+    (target : LinearExpr nt) (label : Option String := none) : Builder Constraint := do
+  let c ← Builder.addConstraint .always
     (.div_eq ⟨nt, target⟩ ⟨nb, numerator⟩ divisor hdiv) label
+  pure c.constraint
 
 /-- Truncating coarsening: allocate an auxiliary quotient variable and emit
 positive-constant division equality. -/
@@ -129,12 +158,13 @@ def Builder.truncCoarsen {nb : Bounds}
     (quotDomain : NonemptyDomain) (label : Option String := none) :
     Builder IntVar := do
   let q ← Builder.newIntVar quotDomain label
-  let _ ← Builder.addTruncDivEq numerator divisor hdiv (LinearExpr.var q)
-  pure q
+  let _ ← Builder.addTruncDivEq numerator divisor hdiv (LinearExpr.var q.var)
+  pure q.var
 
 def Builder.newBucketInterval (start : IntVar) (label : Option String := none) :
-    Builder FixedSizeIntervalVar :=
-  Builder.newFixedSizeInterval (LinearExpr.var start) (Int64.of 1) (by decide) label
+    Builder FixedSizeIntervalVar := do
+  let iv ← Builder.newFixedSizeInterval (LinearExpr.var start) (Int64.of 1) (by decide) label
+  pure iv.var
 
 def Builder.run (x : Builder α) : RawModel × α :=
   let (a, s) := StateT.run x {}
