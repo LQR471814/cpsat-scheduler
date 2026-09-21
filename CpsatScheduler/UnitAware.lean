@@ -70,8 +70,7 @@ def truncCoarsen {u v : UnitScale}
     have hle : u.val ≤ v.val := Nat.le_of_dvd v.pos huv
     have hpos : 0 < v.val / u.val := Nat.div_pos hle u.pos
     exact_mod_cast hpos
-  let quotDomain : CpsatSolver.NonemptyDomain := NonemptyDomain.mk
-  let q ← CpsatSolver.Builder.truncCoarsen e.snd ratio hdiv quotDomain label
+  let q ← CpsatSolver.Builder.truncCoarsen e.snd ratio hdiv label
   pure ⟨q⟩
 
 end CpsatScheduler.UnitAware
