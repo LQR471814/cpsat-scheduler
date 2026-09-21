@@ -102,7 +102,8 @@ def packScaleCumulative (items : Array CpsatSolver.CumulativeItem) (u : UnitScal
 -- demands of both the current and the lower timescales (normalized to fit
 -- inside the current timescale)
 
-def Constraint.timescaleLayerPacking
+-- add_cumulative constraint for a single timescale
+def Constraint.packSingleLayer
   {scales : Timescales}
   (u : UnitScale)
   (u_in_scales : u ∈ scales.units.set := by decide)
@@ -128,9 +129,9 @@ def Constraint.timescaleLayerPacking
         (fun x => decide (x.task.unit < u) = true)
         (fun x hx => (Array.mem_filter.mp hx).2)
   let itemsUnitLt <- tasksUnitLt.mapM
-    (α := TaskVars scales)
+    (α := { x : TaskVars scales // decide (↑x.task.unit < u) = true })
     (β := CpsatSolver.CumulativeItem)
-    (fun (el : { x : TaskVars scales // decide (↑x.task.unit < u) = true }) => do
+    (fun el => do
       let task := el.val.task
       let startVar := el.val.startVar
       let startLinExpr := CpsatSolver.LinearExpr.var startVar
@@ -147,11 +148,17 @@ def Constraint.timescaleLayerPacking
             task.unit.val
             task.unit.mem
             taskunit_le_u)
-          (CpsatSolver.NonemptyDomain.interval startVar.domain.hull)
           none
       let interval <- CpsatSolver.Builder.newFixedSizeInterval
         (.var normalized.var) u
         (by exact Int.natCast_nonneg u.val)
+      let result : CpsatSolver.CumulativeItem := {
+        interval := interval.var
+        demand := (
+          CpsatSolver.LinearExpr.var el.val.timeDemandedVar
+        ).wrapBounds
+      }
+      pure result
     )
   let capacity : CpsatSolver.LinearExpr.WithBounds :=
     {
@@ -162,6 +169,21 @@ def Constraint.timescaleLayerPacking
       }
       snd := .const u
     }
-  .cumulative items capacity
+  let result : CpsatSolver.Constraint.Variant :=
+    .cumulative (itemsUnitEq ++ itemsUnitLt) capacity
+  pure result
+
+def Constraint.packing
+  {scales : Timescales}
+  (tasks : Array (TaskVars scales))
+    : CpsatSolver.Builder Unit := do
+  let _ <- scales.units.set
+    (fun unit => do
+      let cnstr <- (Constraint.packSingleLayer
+        unit.val
+        unit.prop
+        tasks)
+      let _ <- CpsatSolver.Builder.addConstraint .always cnstr none)
+  pure ()
 
 end CpsatScheduler
