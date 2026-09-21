@@ -1,6 +1,7 @@
 import CpsatScheduler.UnitAware
 import CpsatScheduler.CpsatSolver.Model
 import CpsatScheduler.Util.Graphs
+import CpsatScheduler.UnitScale
 
 namespace CpsatScheduler
 
@@ -177,11 +178,11 @@ def Constraint.packing
   {scales : Timescales}
   (tasks : Array (TaskVars scales))
     : CpsatSolver.Builder Unit := do
-  let _ <- scales.units.set
+  let _ <- (UnitScale.sort scales.units.set).attach.mapM
     (fun unit => do
       let cnstr <- (Constraint.packSingleLayer
         unit.val
-        unit.prop
+        (unit.val.mem_sort unit.prop)
         tasks)
       let _ <- CpsatSolver.Builder.addConstraint .always cnstr none)
   pure ()
