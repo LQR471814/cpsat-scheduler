@@ -117,7 +117,8 @@ def Builder.newBoolVar (label : Option String := none) :
   pure { id := id, var := v, eq := rfl }
 
 def Builder.newFixedSizeInterval {b : Bounds}
-    (start : LinearExpr b) (size : Int64) (size_nonneg : (0 : ℤ) ≤ size)
+    (start : LinearExpr b) (size : Int64)
+    (size_nonneg : (0 : ℤ) ≤ size := by decide)
     (label : Option String := none) :
     Builder (NewFixedSizeInterval start size size_nonneg label) := do
   let id ← Builder.freshId
@@ -141,24 +142,66 @@ def Builder.addConstraint (enforcement : Constraint.Enforcement)
 def Builder.setObjective (obj : Objective) : Builder Unit :=
   modify fun s => { s with objective := obj }
 
+structure TruncDivEqResult
+    (nb nt : Bounds) (numerator : LinearExpr nb)
+    (divisor : Int64) where
+  constraint : Constraint
+  prop : ∀ val, (numerator.eval val) ∈ nb →
+    (numerator.eval val) / divisor ∈ nt
+
 /-- Truncating coarsening: allocate an auxiliary quotient and a division-equality
 constraint. -/
-def Builder.addTruncDivEq {nb nt : Bounds}
-    (numerator : LinearExpr nb) (divisor : Int64) (hdiv : (0 : ℤ) < divisor)
-    (target : LinearExpr nt) (label : Option String := none) : Builder Constraint := do
-  let c ← Builder.addConstraint .always
-    (.div_eq ⟨nt, target⟩ ⟨nb, numerator⟩ divisor hdiv) label
-  pure c.constraint
+def Builder.addTruncDivEq {nb : Bounds}
+  (numerator : LinearExpr nb) (divisor : Int64) (hdiv : (0 : ℤ) < divisor) :=
+  let nt := nb.divPosConst divisor hdiv
+  have div_mem := nb.mem_const_div divisor hdiv
+  let curried (target : LinearExpr nt) (label : Option String := none) :
+      Builder (TruncDivEqResult nb nt numerator divisor) := do
+    let c ← Builder.addConstraint .always
+      (.div_eq ⟨nt, target⟩ ⟨nb, numerator⟩ divisor hdiv) label
+    pure {
+      constraint := c.constraint
+      prop := fun valuation val_mem_nb =>
+        let val := numerator.eval valuation
+        by
+          change (nb.mem val) at val_mem_nb
+          dsimp [Interval.mem] at val_mem_nb
+          dsimp [nt, Interval.divPosConst]
+          constructor
+          · apply Int.ediv_le_ediv
+            · exact hdiv
+            · change nb.left ≤ val
+              exact val_mem_nb.1
+          · simp only
+            apply Int.ediv_le_ediv
+            · exact hdiv
+            · change val ≤ nb.right
+              exact val_mem_nb.2
+    }
+  curried
 
 /-- Truncating coarsening: allocate an auxiliary quotient variable and emit
 positive-constant division equality. -/
 def Builder.truncCoarsen {nb : Bounds}
     (numerator : LinearExpr nb) (divisor : Int64) (hdiv : (0 : ℤ) < divisor)
-    (quotDomain : NonemptyDomain) (label : Option String := none) :
+    (label : Option String := none) :
     Builder IntVar := do
-  let q ← Builder.newIntVar quotDomain label
-  let _ ← Builder.addTruncDivEq numerator divisor hdiv (LinearExpr.var q.var)
-  pure q.var
+  let quotDomain := NonemptyDomain.interval
+    (nb.divPosConst divisor hdiv)
+  let quot ← Builder.newIntVar quotDomain label
+  let quotTarget : LinearExpr (Interval.divPosConst nb (↑divisor) hdiv) :=
+    let quotExpr := LinearExpr.var quot.var
+    by
+      have var_eq := quot.eq
+      rw [var_eq] at quotExpr
+      simp only at quotExpr
+      have quot_div_eq := NonemptyDomain.hull_interval_eq
+        quotDomain rfl
+      rw [quot_div_eq.symm]
+      exact quotExpr
+  let _ ← Builder.addTruncDivEq
+    numerator divisor hdiv quotTarget
+  pure quot.var
 
 def Builder.newBucketInterval (start : IntVar) (label : Option String := none) :
     Builder FixedSizeIntervalVar := do

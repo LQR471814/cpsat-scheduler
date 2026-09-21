@@ -27,4 +27,11 @@ def NonemptyDomain.min (d : NonemptyDomain) : Int64 :=
 def NonemptyDomain.max (d : NonemptyDomain) : Int64 :=
   (d.domain.intervals.getLast d.nonempty).right
 
+theorem NonemptyDomain.hull_interval_eq {i : Interval}
+  (d : NonemptyDomain) (heq : d = NonemptyDomain.interval i) :
+    d.hull = i := by
+      dsimp [NonemptyDomain.hull, Domain.hullOf]
+      rw [heq]
+      dsimp [NonemptyDomain.interval, Domain.interval, List.head]
+
 end CpsatSolver

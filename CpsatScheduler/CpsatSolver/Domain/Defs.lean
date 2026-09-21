@@ -20,8 +20,11 @@ structure Interval where
   left_le_right : (left : ℤ) ≤ right
 deriving DecidableEq
 
+def Interval.mem (i : Interval) (x : ℤ) : Prop :=
+  (i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)
+
 instance : Membership ℤ Interval where
-  mem i x := (i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)
+  mem i x := i.mem x
 
 instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) :=
   inferInstanceAs (Decidable ((i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)))

@@ -222,4 +222,39 @@ theorem Interval.mem_inter? (a b : Interval) (x : ℤ) :
         split_ifs <;> linarith [ha.1, ha.2, hb.1, hb.2]
       exact (h this).elim
 
+def Interval.divPosConst (i : Interval)
+  (divisor : ℤ) (pos : divisor > 0) :
+    Interval :=
+  {
+    left := Subtype.mk
+      (i.left.val / divisor)
+      (Int64.proof_ediv_of_pos
+        i.left.prop
+        pos)
+    right := Subtype.mk
+      (i.right.val / divisor)
+      (Int64.proof_ediv_of_pos
+        i.right.prop
+        pos)
+    left_le_right := Int.ediv_le_ediv
+      pos
+      i.left_le_right
+  }
+
+theorem Interval.mem_const_div (i : Interval)
+  (divisor : ℤ) (pos : divisor > 0) :
+    ∀ x ∈ i, x / divisor ∈ i.divPosConst divisor pos :=
+  fun x x_mem_i => by
+    change (i.mem x) at x_mem_i
+    dsimp [Interval.mem] at x_mem_i
+    constructor
+    · dsimp [divPosConst]
+      apply Int.ediv_le_ediv
+      · exact pos
+      · exact x_mem_i.1
+    · dsimp [divPosConst]
+      apply Int.ediv_le_ediv
+      · exact pos
+      · exact x_mem_i.2
+
 end CpsatSolver

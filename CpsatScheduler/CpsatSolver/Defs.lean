@@ -60,6 +60,9 @@ inductive LinearExpr : Bounds → Type where
 
 abbrev LinearExpr.WithBounds := Σ b : Bounds, LinearExpr b
 
+def LinearExpr.wrapBounds (e : LinearExpr α) : LinearExpr.WithBounds :=
+  Sigma.mk α e
+
 /-- Half-open interval `[start, start + size)`. -/
 structure FixedSizeIntervalVar where
   id : EntityId

@@ -83,7 +83,8 @@ with a demand.
 The `add_cumulative` constraint then guarantees the following:
 
 $$
-\forall x \in \mathbb{Z}, \left(\sum_{(i,d)\in{S}} x \in i \to d\right) \leq C
+\forall x \in \mathbb{Z},
+\left(\sum_{(i,d)\in\{s\in{S}|{x\in}s_{i}\}} d\right) \leq C
 $$
 
 This means that for all times $x$, if $x$ is within an interval,
@@ -96,7 +97,7 @@ every timescale.
 
 On each timescale (let's call it $\tau$), the tasks on that
 timescale will have their intervals and demands (normalized to the
-atomic unit) as usual.
+atomic unit) representing the tasks and their durations as usual.
 
 But the `add_cumulative` constraint will also contain the tasks of
 lower timescales:

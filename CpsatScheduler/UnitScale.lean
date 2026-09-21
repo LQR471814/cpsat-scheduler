@@ -23,5 +23,8 @@ def UnitScale.exactRatio (u v : UnitScale) (_hv : v.val ∣ u.val) :
     CpsatSolver.Int64 :=
   ⟨u.val / v.val, UnitScale.ratio_nonoverflow u v⟩
 
+instance : Coe UnitScale CpsatSolver.Int64 where
+  coe v := Subtype.mk (v.val : ℤ) v.nonoverflow
+
 end CpsatScheduler
 

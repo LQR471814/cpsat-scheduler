@@ -35,19 +35,19 @@ def taskC : Task scales :=
 def demoModel? : Option Model :=
   let result := Builder.run do
     let aVar ← Builder.newIntVar taskA.startDomain (some "task_a_start")
-    let a : TaskStart scales := {
+    let a : TaskVars scales := {
       task := taskA
       var := aVar.var
       unit_eq := by rw [aVar.eq]
     }
     let bVar ← Builder.newIntVar taskB.startDomain (some "task_b_start")
-    let b : TaskStart scales := {
+    let b : TaskVars scales := {
       task := taskB
       var := bVar.var
       unit_eq := by rw [bVar.eq]
     }
     let cVar ← Builder.newIntVar taskC.startDomain (some "task_c_start")
-    let c : TaskStart scales := {
+    let c : TaskVars scales := {
       task := taskC
       var := cVar.var
       unit_eq := by rw [cVar.eq]
@@ -75,6 +75,8 @@ def demoModel? : Option Model :=
             ]
             decide)))
       (some "task_c_within_task_a")
+    let _ <- Builder.addConstraint .always
+      (packScaleCumulative )
     Builder.setObjective (.minimize ⟨bVar.var.domain.hull, be⟩)
     pure ()
   result.1.finalize?
