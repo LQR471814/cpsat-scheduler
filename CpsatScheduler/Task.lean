@@ -52,14 +52,15 @@ def Task.ofBucketRange (scales : Timescales)
     unit := unit
     startDomain :=
       CpsatSolver.NonemptyDomain.interval
-        (CpsatSolver.Interval.ofBounds kLo kHi ⟨hkLoSafe, hkHiSafe⟩ hle)
+        (CpsatSolver.Interval.of kLo kHi
+          hkLoSafe hkHiSafe hle)
     bucketsFitHorizon := by
       intro k hk
       -- Membership reduces to `kLo ≤ k ≤ kHi`.
       rw [CpsatSolver.NonemptyDomain.interval,
         CpsatSolver.Domain.mem_interval] at hk
       obtain ⟨hklo, hkhi⟩ := hk
-      -- endpoints of `Interval.ofBounds kLo kHi` are `kLo`, `kHi`.
+      -- endpoints of `Interval.of kLo kHi` are `kLo`, `kHi`.
       have hklo' : kLo ≤ k := hklo
       have hkhi' : k ≤ kHi := hkhi
       have hk0 : (0 : ℤ) ≤ k := le_trans hkLo0 hklo'

@@ -14,15 +14,6 @@ theorem Interval.mem_fromValue (v : Int64) (x : ℤ) :
     subst h
     exact ⟨le_rfl, le_rfl⟩
 
-def Interval.ofBounds (left right : ℤ)
-    (nonoverflow : Int64.Nonoverflow left ∧ Int64.Nonoverflow right)
-    (left_le_right : left ≤ right) : Interval :=
-  {
-    left := Subtype.mk left nonoverflow.1
-    right := Subtype.mk right nonoverflow.2
-    left_le_right := left_le_right
-  }
-
 def Interval.neg (i : Interval)
     (h : Int64.Nonoverflow (-i.right : ℤ) ∧ Int64.Nonoverflow (-i.left : ℤ)) :
     Interval :=
@@ -44,8 +35,10 @@ def Interval.add (a b : Interval)
     (nonoverflow :
       Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
       Int64.Nonoverflow ((a.right : ℤ) + b.right)) : Interval :=
-  Interval.ofBounds ((a.left : ℤ) + b.left) ((a.right : ℤ) + b.right)
-    nonoverflow (add_le_add a.left_le_right b.left_le_right)
+  Interval.of ((a.left : ℤ) + b.left) ((a.right : ℤ) + b.right)
+    (hl := nonoverflow.1)
+    (hr := nonoverflow.2)
+    (hlr := add_le_add a.left_le_right b.left_le_right)
 
 theorem Interval.eval_add (a b : Interval)
     (nonoverflow :
@@ -60,8 +53,10 @@ def Interval.sub (a b : Interval)
     (nonoverflow :
       Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
       Int64.Nonoverflow ((a.right : ℤ) - b.left)) : Interval :=
-  Interval.ofBounds ((a.left : ℤ) - b.right) ((a.right : ℤ) - b.left)
-    nonoverflow (by linarith [a.left_le_right, b.left_le_right])
+  Interval.of ((a.left : ℤ) - b.right) ((a.right : ℤ) - b.left)
+    (hl := nonoverflow.1)
+    (hr := nonoverflow.2)
+    (hlr := by linarith [a.left_le_right, b.left_le_right])
 
 theorem Interval.eval_sub (a b : Interval)
     (nonoverflow :
@@ -83,13 +78,19 @@ def Interval.mulUpper (a b : Interval) : ℤ :=
 theorem Interval.mulLower_le_mulUpper (a b : Interval) :
     a.mulLower b ≤ a.mulUpper b := by
   unfold mulLower mulUpper
-  exact (min_le_left _ _).trans ((min_le_left _ _).trans ((le_max_left _ _).trans (le_max_left _ _)))
-
+  exact
+    (min_le_left _ _).trans (
+      (min_le_left _ _).trans (
+        (le_max_left _ _).trans (
+          le_max_left _ _)))
 def Interval.mul (a b : Interval)
     (nonoverflow :
       Int64.Nonoverflow (a.mulLower b) ∧
       Int64.Nonoverflow (a.mulUpper b)) : Interval :=
-  Interval.ofBounds (a.mulLower b) (a.mulUpper b) nonoverflow (a.mulLower_le_mulUpper b)
+  Interval.of (a.mulLower b) (a.mulUpper b)
+    (hl := nonoverflow.1)
+    (hr := nonoverflow.2)
+    (hlr := a.mulLower_le_mulUpper b)
 
 theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
     (hx : x ∈ a)

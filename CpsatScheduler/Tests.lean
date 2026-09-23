@@ -18,7 +18,7 @@ def finer (a b : UnitScale) : UnitScale :=
 enumerating every integer in a huge range. -/
 example :
     Domain.contains
-      (Domain.interval (Interval.ofBounds 0 ((2 : ℤ) ^ 50)
+      (Domain.interval (Interval.of 0 ((2 : ℤ) ^ 50)
         ⟨by decide, by decide⟩ (by decide)))
       ((2 : ℤ) ^ 50) = true := by
   native_decide
@@ -26,8 +26,8 @@ example :
 example :
     Domain.contains
       (Domain.union
-        (Domain.interval (Interval.ofBounds 0 1 ⟨by decide, by decide⟩ (by decide)))
-        (Domain.interval (Interval.ofBounds 5 8 ⟨by decide, by decide⟩ (by decide))))
+        (Domain.interval (Interval.of 0 1 ⟨by decide, by decide⟩ (by decide)))
+        (Domain.interval (Interval.of 5 8 ⟨by decide, by decide⟩ (by decide))))
       3 = false := by
   native_decide
 

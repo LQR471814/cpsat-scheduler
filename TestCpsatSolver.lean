@@ -3,10 +3,10 @@ import CpsatScheduler.CpsatSolver.Model
 open CpsatSolver
 
 def xDomain : NonemptyDomain :=
-  NonemptyDomain.interval (Interval.ofBounds 0 10 ⟨by decide, by decide⟩ (by decide))
+  NonemptyDomain.interval (Interval.of 0 10 ⟨by decide, by decide⟩ (by decide))
 
 def yDomain : NonemptyDomain :=
-  NonemptyDomain.interval (Interval.ofBounds 0 5 ⟨by decide, by decide⟩ (by decide))
+  NonemptyDomain.interval (Interval.of 0 5 ⟨by decide, by decide⟩ (by decide))
 
 def demo : RawModel × (IntVar × IntVar) :=
   Builder.run do

@@ -1,6 +1,7 @@
 import CpsatScheduler.CpsatSolver.Model
 import CpsatScheduler.Task
 import CpsatScheduler.Constraints
+import CpsatScheduler.Model
 
 open CpsatScheduler
 open CpsatSolver
@@ -11,7 +12,7 @@ def unit4 : UnitScale := UnitScale.mk 4
 
 def unitSet : Finset UnitScale := { atomic, unit2, unit4 }
 
-def units : CpsatScheduler.Units := CpsatScheduler.Units.mk unitSet
+def units : CpsatScheduler.Units := CpsatScheduler.Units.of unitSet
 
 def horizon : Horizon := Horizon.mk 0 12
 
@@ -34,25 +35,10 @@ def taskC : Task scales :=
 
 def demoModel? : Option Model :=
   let result := Builder.run do
-    let aVar ← Builder.newIntVar taskA.startDomain (some "task_a_start")
-    let a : TaskVars scales := {
-      task := taskA
-      var := aVar.var
-      unit_eq := by rw [aVar.eq]
-    }
-    let bVar ← Builder.newIntVar taskB.startDomain (some "task_b_start")
-    let b : TaskVars scales := {
-      task := taskB
-      var := bVar.var
-      unit_eq := by rw [bVar.eq]
-    }
-    let cVar ← Builder.newIntVar taskC.startDomain (some "task_c_start")
-    let c : TaskVars scales := {
-      task := taskC
-      var := cVar.var
-      unit_eq := by rw [cVar.eq]
-    }
-    let be := LinearExpr.var bVar.var
+    let a <- TaskVars.of taskA
+    let b <- TaskVars.of taskB
+    let c <- TaskVars.of taskC
+    let be := LinearExpr.var b.startVar
     let rows : Array (Vector CpsatSolver.Int64 2) := #[
       Vector.mk #[CpsatSolver.Int64.of 0, CpsatSolver.Int64.of 1] rfl,
       Vector.mk #[CpsatSolver.Int64.of 1, CpsatSolver.Int64.of 2] rfl,
@@ -64,14 +50,14 @@ def demoModel? : Option Model :=
     let _ ← Builder.addConstraint .always
       (.bounded_linear
         (Constraint.prerequisite
-          cVar.var a.var
+          cVar.var a.startVar
           (by
             show
-              CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.left : ℤ) + 1) ∧
-              CpsatSolver.Int64.Nonoverflow ((a.var.domain.hull.right : ℤ) + 1)
+              CpsatSolver.Int64.Nonoverflow ((a.startVar.domain.hull.left : ℤ) + 1) ∧
+              CpsatSolver.Int64.Nonoverflow ((a.startVar.domain.hull.right : ℤ) + 1)
             rw [
-              show a.var.domain = taskA.startDomain from by
-                rw [show a.var = aVar.var from rfl, aVar.eq]
+              show a.startVar.domain = taskA.startDomain from by
+                rw [show a.startVar = aStart.var from rfl, aStart.eq]
             ]
             decide)))
       (some "task_c_within_task_a")

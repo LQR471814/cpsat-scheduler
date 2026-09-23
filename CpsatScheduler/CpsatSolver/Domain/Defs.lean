@@ -20,6 +20,16 @@ structure Interval where
   left_le_right : (left : ℤ) ≤ right
 deriving DecidableEq
 
+@[simp] def Interval.of (l r : ℤ)
+  (hl : Int64.Nonoverflow l := by decide)
+  (hr : Int64.Nonoverflow r := by decide)
+  (hlr : l ≤ r := by decide) : Interval :=
+  {
+    left := Subtype.mk l hl
+    right := Subtype.mk r hr
+    left_le_right := hlr
+  }
+
 def Interval.mem (i : Interval) (x : ℤ) : Prop :=
   (i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)
 

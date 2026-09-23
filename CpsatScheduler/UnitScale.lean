@@ -69,7 +69,7 @@ instance : IsTrans UnitScale sortPred where
 instance : Std.Total sortPred where
   total a b := le_total a.val b.val
 
-def UnitScale.sort (s : Finset UnitScale) : List UnitScale :=
+@[simp] def UnitScale.sort (s : Finset UnitScale) : List UnitScale :=
   Finset.sort s sortPred
 
 theorem UnitScale.mem_sort {us : Finset UnitScale}
