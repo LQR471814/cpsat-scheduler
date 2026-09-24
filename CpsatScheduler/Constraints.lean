@@ -58,21 +58,21 @@ def Constraint.bucketContainedIn
   }
 
 /-- Successor start after predecessor bucket end, already in a common unit. -/
-def Constraint.prerequisite (successor predecessor : CpsatSolver.IntVar)
-    (addPred :
-      CpsatSolver.Int64.Nonoverflow ((predecessor.domain.hull.left : ℤ) + 1) ∧
-      CpsatSolver.Int64.Nonoverflow ((predecessor.domain.hull.right : ℤ) + 1)) :
+def Constraint.prerequisite (succ pred : CpsatSolver.IntVar)
+    (nonoverflow :
+      CpsatSolver.Int64.Nonoverflow ((pred.domain.hull.left : ℤ) + 1) ∧
+      CpsatSolver.Int64.Nonoverflow ((pred.domain.hull.right : ℤ) + 1)) :
     CpsatSolver.BoundedLinearExpr :=
-  let succE := CpsatSolver.LinearExpr.var successor
-  let predE := CpsatSolver.LinearExpr.var predecessor
+  let succE := CpsatSolver.LinearExpr.var succ
+  let predE := CpsatSolver.LinearExpr.var pred
   let one : CpsatSolver.LinearExpr _ :=
     CpsatSolver.LinearExpr.const (CpsatSolver.Int64.of 1)
-  let predEnd := CpsatSolver.LinearExpr.add predE one addPred
+  let predEnd := CpsatSolver.LinearExpr.add predE one nonoverflow
   {
     rel := .gte
-    leftBounds := successor.domain.hull
-    rightBounds := predecessor.domain.hull.add
-      (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1)) addPred
+    leftBounds := succ.domain.hull
+    rightBounds := pred.domain.hull.add
+      (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1)) nonoverflow
     left := succE
     right := predEnd
   }
@@ -118,7 +118,7 @@ def Constraint.packSingleLayer
         (.var t.startVar) u
         (by exact Int.natCast_nonneg u.val)
       let result : CpsatSolver.CumulativeItem := {
-        interval := interval.var
+        interval := interval.val
         demand := (
           CpsatSolver.LinearExpr.var t.timeDemandedVar
         ).wrapBounds
@@ -154,7 +154,7 @@ def Constraint.packSingleLayer
         (.var normalized.var) u
         (by exact Int.natCast_nonneg u.val)
       let result : CpsatSolver.CumulativeItem := {
-        interval := interval.var
+        interval := interval.val
         demand := (
           CpsatSolver.LinearExpr.var el.val.timeDemandedVar
         ).wrapBounds

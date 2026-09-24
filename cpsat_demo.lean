@@ -45,19 +45,17 @@ def demoModel? : Option Model :=
       Vector.mk #[CpsatSolver.Int64.of 2, CpsatSolver.Int64.of 3] rfl,
     ]
     let _ ← Builder.addConstraint .always
-      (.allowed_assignments (Vector.mk #[a.var, bVar.var] rfl) rows)
-      (some "task_b_after_a")
-    let _ ← Builder.addConstraint .always
       (.bounded_linear
         (Constraint.prerequisite
-          cVar.var a.startVar
+          c.startVar a.startVar
           (by
             show
               CpsatSolver.Int64.Nonoverflow ((a.startVar.domain.hull.left : ℤ) + 1) ∧
               CpsatSolver.Int64.Nonoverflow ((a.startVar.domain.hull.right : ℤ) + 1)
             rw [
               show a.startVar.domain = taskA.startDomain from by
-                rw [show a.startVar = aStart.var from rfl, aStart.eq]
+                rw [a.unit_eq]
+                simp [taskA]
             ]
             decide)))
       (some "task_c_within_task_a")

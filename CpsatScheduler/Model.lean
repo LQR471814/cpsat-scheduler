@@ -23,12 +23,12 @@ def TaskVars.of (task : Task S) :
     (some "task_a_demand")
   pure {
     task := task
-    startVar := start.var
-    costVar := cost.var
-    timeDemandedVar := demand.var
-    unit_eq := by rw [start.eq]
+    startVar := start.val
+    costVar := cost.val
+    timeDemandedVar := demand.val
+    unit_eq := start.property.1
     time_demanded_le_unit := by
-      rw [demand.eq]
+      rw [demand.property.1]
       simp
   }
 
