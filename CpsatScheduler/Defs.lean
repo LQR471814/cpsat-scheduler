@@ -101,17 +101,6 @@ structure Task (scales : Timescales) where
       CpsatSolver.Int64.Nonoverflow (k * unit.val.val) ∧
       CpsatSolver.Int64.Nonoverflow ((k + 1) * unit.val.val)
 
-/-- Nonnegative task start in bucket-index coordinates. -/
-structure TaskVars (scales : Timescales) where
-  task : Task scales
-  startVar : CpsatSolver.IntVar
-  unit_eq : startVar.domain = task.startDomain
-  costVar : CpsatSolver.IntVar
-  timeDemandedVar : CpsatSolver.IntVar
-  time_demanded_le_unit :
-    timeDemandedVar.domain.min ≥ (0 : ℤ) ∧
-    timeDemandedVar.domain.max.val ≤ task.unit.val
-
 structure CostPoint where
   timeDemanded : CpsatSolver.Int64
   encodedCost : CpsatSolver.Int64

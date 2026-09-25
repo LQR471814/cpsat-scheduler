@@ -1,7 +1,7 @@
 import CpsatScheduler.CpsatSolver.Model
 import CpsatScheduler.Task
 import CpsatScheduler.Optimality
-import CpsatScheduler.Constraints
+import CpsatScheduler.UnitScale
 
 set_option linter.style.setOption false
 set_option linter.style.nativeDecide false
