@@ -32,7 +32,7 @@ def scales := Timescales.mk units horizon
 
 @[simp] def taskC : Task scales :=
   Task.ofBucketRange scales { val := 3 } (Subtype.mk unit2 (by decide))
-    (label := Option.some "task_b")
+    (label := Option.some "task_c")
 
 def demoModel? : Option Model :=
   let result := Builder.run do
@@ -60,6 +60,12 @@ def demoModel? : Option Model :=
     pure ()
   result.1.finalize?
 
+/-- Pair each solved int assignment with its variable's label (falling back to the
+generated python name when the variable has no label). -/
+def labeledInts (model : Model) (a : Assignment) : List (String × ℤ) :=
+  a.ints.map fun (id, val) =>
+    ((model.labelOf id).getD id.toPythonName.val, val)
+
 def main : IO Unit := do
   match demoModel? with
   | none => IO.println "invalid model"
@@ -69,7 +75,8 @@ def main : IO Unit := do
     match result with
     | .error err => IO.println s!"error: {err}"
     | .ok (.optimal asgn _) =>
-      let assignments := asgn.ints.map (fun pair => s!"{pair.1.val}={pair.2}");
+      let assignments := (labeledInts model asgn).map
+        (fun pair => s!"{pair.1}={pair.2}");
       IO.println s!"optimal: {assignments.foldl (s!"{·} {·}") ""}"
     | .ok (.feasible _ _) => IO.println "feasible"
     | .ok (.infeasible) => IO.println "infeasible"

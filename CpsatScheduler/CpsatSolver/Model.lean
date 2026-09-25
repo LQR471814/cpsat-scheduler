@@ -10,13 +10,14 @@ import Lean.Data.Json.Parser
 namespace CpsatSolver
 
 namespace Model.Python.Name
-private def print := Python.ValidName.mk "print" (by decide)
-private def json := Python.ValidName.mk "json" (by decide)
-private def cpModelLib := Python.ValidName.mk "cp_model" (by decide)
-private def model := Python.ValidName.mk "__cpsat_model__" (by decide)
-private def cpsatSolver := Python.ValidName.mk "__cpsat_solver__" (by decide)
-private def solveStatus := Python.ValidName.mk "__solve_status__" (by decide)
-private def output := Python.ValidName.mk "__output__" (by decide)
+private def print := Python.ValidName.of "print"
+private def json := Python.ValidName.of "json"
+private def dumps := Python.ValidName.of "dumps"
+private def cpModelLib := Python.ValidName.of "cp_model"
+private def model := Python.ValidName.of "__cpsat_model"
+private def cpsatSolver := Python.ValidName.of "__cpsat_solver"
+private def solveStatus := Python.ValidName.of "__solve_status"
+private def output := Python.ValidName.of "__output"
 end Model.Python.Name
 
 namespace Model.Python.Literals
@@ -366,6 +367,12 @@ def Assignment.boolVal (a : Assignment) (id : EntityId) : Bool :=
 def Assignment.valuation (a : Assignment) : EntityId → ℤ :=
   fun id => a.intVal id
 
+/-- Look up the label of a declared variable (int, bool, or interval) by its id. -/
+def Model.labelOf (model : Model) (id : EntityId) : Option String :=
+  (model.raw.ints.find? (fun v => v.id == id)).bind (·.label)
+  |>.orElse fun _ => (model.raw.bools.find? (fun v => v.id == id)).bind (·.label)
+  |>.orElse fun _ => (model.raw.intervals.find? (fun v => v.id == id)).bind (·.label)
+
 def BoolLit.eval (a : Assignment) : BoolLit → Bool
   | .var v => a.boolVal v.id
   | .neg v => !a.boolVal v.id
@@ -602,7 +609,9 @@ private def Model.Python.imports : Array Python.Statement := #[
         Python.ValidName.mk "python" (by decide)]
       #[Python.NameAs.unaliased Model.Python.Name.cpModelLib]),
   Python.Statement.importLine
-    (Python.Import.basicForm #[Model.Python.Name.json] Option.none)
+    (Python.Import.fromForm
+      #[Model.Python.Name.json]
+      #[Python.NameAs.unaliased Model.Python.Name.dumps])
 ]
 
 private def Model.Python.modelDef (model : Model) : Array Python.Statement :=
@@ -666,8 +675,7 @@ private def Model.Python.reportSolution (model : Model) : Array Python.Statement
     Python.Statement.exprLine (Python.Expr.call
       (Python.Expr.id Model.Python.Name.print)
       #[Python.Expr.call
-        (Python.Expr.dot (Python.Expr.id Model.Python.Name.json)
-          (Python.ValidName.mk "dumps" (by decide)))
+        (Python.Expr.id (Python.ValidName.mk "dumps" (by decide)))
         #[Python.Expr.id Model.Python.Name.output]])
   ]
 

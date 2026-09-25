@@ -61,6 +61,11 @@ structure ValidName where
   proof : ValidName.Proof val
   deriving DecidableEq
 
+def ValidName.of (val : String)
+  (h : ValidName.Proof val := by decide) :
+    ValidName :=
+  ValidName.mk val h
+
 mutual
 
 inductive Literal where
