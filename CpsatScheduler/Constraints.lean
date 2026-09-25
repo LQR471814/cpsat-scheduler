@@ -88,21 +88,6 @@ def PrerequisitesAcyclic {scales : Timescales} [DecidableEq (Task scales)]
     (g : FinDigraph (Task scales)) : Prop :=
   g.IsAcyclic
 
-/-- Capacity of a per-scale packing cumulative: the bucket width in atomic units. -/
-def scaleCapacity (u : UnitScale) : CpsatSolver.LinearExpr.WithBounds :=
-  let c : CpsatSolver.Int64 := ⟨u.val, u.nonoverflow⟩
-  ⟨CpsatSolver.Interval.fromValue c, CpsatSolver.LinearExpr.const c⟩
-
-/-- Packing cumulative at one bucket scale: interval size is 1 in bucket-index
-coordinates, demand is atomic `timeDemanded`, capacity is the scale. -/
-def packScaleCumulative (items : Array CpsatSolver.CumulativeItem) (u : UnitScale) :
-    CpsatSolver.Constraint.Variant :=
-  .cumulative items (scaleCapacity u)
-
--- we do add_cumulative for each timescale and incorporate the intervals and
--- demands of both the current and the lower timescales (normalized to fit
--- inside the current timescale)
-
 -- add_cumulative constraint for a single timescale
 def Constraint.packSingleLayer
   {scales : Timescales}

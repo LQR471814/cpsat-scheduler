@@ -9,7 +9,9 @@ namespace CpsatScheduler
 
 def TaskVars.of (task : Task S) :
     Builder (TaskVars S) := do
-  let start ← Builder.newIntVar task.startDomain (some "task_a_start")
+  let start ← Builder.newIntVar
+    task.startDomain
+    (some "task_a_start")
   let cost ← Builder.newIntVar
     (NonemptyDomain.interval
       (CpsatSolver.Interval.of 0 100))

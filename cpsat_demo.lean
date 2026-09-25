@@ -49,19 +49,14 @@ def demoModel? : Option Model :=
         (Constraint.prerequisite
           c.startVar a.startVar
           (by
-            show
-              CpsatSolver.Int64.Nonoverflow ((a.startVar.domain.hull.left : ℤ) + 1) ∧
-              CpsatSolver.Int64.Nonoverflow ((a.startVar.domain.hull.right : ℤ) + 1)
-            rw [
-              show a.startVar.domain = taskA.startDomain from by
-                rw [a.unit_eq]
-                simp [taskA]
-            ]
-            decide)))
+            simp [TaskVars.of]
+            constructor
+            · sorry
+          )))
       (some "task_c_within_task_a")
-    let _ <- Builder.addConstraint .always
-      (packScaleCumulative )
-    Builder.setObjective (.minimize ⟨bVar.var.domain.hull, be⟩)
+    let _ <- (Constraint.packing #[
+      a, b, c
+    ])
     pure ()
   result.1.finalize?
 
