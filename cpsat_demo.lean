@@ -19,7 +19,12 @@ def atomic : UnitScale := UnitScale.mk 1
 def unit4 : UnitScale := UnitScale.mk 4
 def units : CpsatScheduler.Units := CpsatScheduler.Units.of { atomic, unit4 }
 
-def horizon : Horizon := Horizon.mk 0 12
+def horizon : Horizon := Horizon.ofDateTime
+  (epoch := datetime("2026-01-01T00:00:00"))
+  (start := datetime("2026-01-01T00:00:00"))
+  («end» := datetime("2026-01-01T04:00:00"))
+  900
+
 def scales := Timescales.mk units horizon
 
 def sched : ScheduleMap :=
