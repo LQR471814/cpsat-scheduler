@@ -68,7 +68,7 @@ def demoModel? (tableA : CostTable atomic) (tableB : CostTable unit4)
         (Constraint.prerequisite c.vars.startVar a.vars.startVar
           (by rw [a.start_domain]; decide)))
       (some "task_c_before_a")
-    let _ ← Constraint.packing #[ a.vars, b.vars, c.vars ]
+    Constraint.packing #[ a.vars, b.vars, c.vars ]
     Constraint.PERT.costByTable a.vars tableA
     Constraint.PERT.costByTable b.vars tableB
     Constraint.PERT.costByTable c.vars tableC
@@ -82,7 +82,8 @@ def startDateOf (model : Model) (a : Assignment)
     |>.map fun p => sched.bucketDateString unit p.2
 
 def main : IO Unit := do
-  let runtime : Python.Runtime := { path := ".venv/bin/python3" }
+  let runtime : Python.Runtime := { path := ".venv/bin/python3" };
+  IO.println "generating model..."
   let (⟨hA, hB, hC⟩, results) ← PertM.run runtime do
     let hA ← Constraint.PERT.requestCostTable configA
     let hB ← Constraint.PERT.requestCostTable configB
