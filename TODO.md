@@ -1,8 +1,8 @@
 - [x] Test prereq/within
 - [x] Test non-overflow constraint
 - [x] Test cost assignment
-- [ ] Chronological (schedule) declaration layer
-- [ ] Define events
+- [x] Chronological (schedule) declaration layer
+- [x] Define events
 - [ ] Process factors:
    - [ ] Refactor into different types of cost
    - [ ] Early biasing cost
