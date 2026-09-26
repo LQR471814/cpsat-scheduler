@@ -8,6 +8,12 @@ Toolchain: `leanprover/lean4:v4.34.0-rc2`. Mathlib `v4.34.0-rc2`. lean-regex `v4
 lakefile.toml enables `weak.linter.mathlibStandardSet`, `relaxedAutoImplicit = false`.
 Follow Mathlib standard-set lint.
 
+# General code style
+
+- Let code speak for itself, don't comment.
+- In this vein, whenever you finish an implementation, see what
+  you can simplify.
+
 ## Structure design pattern
 
 - Structures carry proof obligations as fields (e.g. `UnitScale.pos`,
@@ -40,8 +46,7 @@ Follow Mathlib standard-set lint.
 
 ## Proof style
 
-- Prefer `by decide` for finite/decidable obligations; `nlinarith`/`linarith` for
-  the integer-bound arithmetic (as in `Task.ofBucketRange`).
+- Prefer `by decide` always over `by native_decide`
 - Mutual recursive `repr` uses `termination_by sizeOf` + `decreasing_by`.
 - `namespace CpsatScheduler` for domain, `CpsatSolver` for IR, `Python` for AST,
   `Scipy` for scipy path. Keep new defs in the matching namespace.
@@ -51,3 +56,4 @@ Follow Mathlib standard-set lint.
 1. Create `CpsatScheduler/<Name>.lean` in the correct namespace.
 2. Add `import CpsatScheduler.<Name>` to `CpsatScheduler.lean` if it's public API.
 3. Build to verify (see build-and-test rule).
+
