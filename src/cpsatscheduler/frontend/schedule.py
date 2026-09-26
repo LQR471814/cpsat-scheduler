@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.rrule import rrule, rruleset
 from enum import Enum
 from math import ceil
 from sys import stderr
@@ -104,7 +105,13 @@ class Schedule:
         self.timescales.add(unit)
         return t
 
-    def event(self, name: str, start: datetime, end: datetime, unit=hour_4) -> None:
+    def event(
+        self,
+        name: str,
+        start: datetime,
+        end: datetime,
+        unit=hour_4,
+    ) -> None:
         if end < self.horizon[0]:
             raise ValueError("end cannot be before horizon lower bound")
         if start > self.horizon[1]:
@@ -182,7 +189,7 @@ class Schedule:
 
     def print_solution(self, solution: Solution) -> None:
         status = solution.status
-        total_cost = solution.cost
+        total_cost = solution.task_cost
         tasks = solution.tasks
 
         if status != cp_model.OPTIMAL and status != cp_model.FEASIBLE:
@@ -270,7 +277,8 @@ class Schedule:
             )
         return {
             "status": solution.status.name,
-            "cost": solution.cost,
+            "early_bias_cost": solution.early_bias_cost,
+            "task_cost": solution.task_cost,
             "tasks": tasks,
         }
 

@@ -20,6 +20,8 @@ class Task:
     unit: atomic_unit
     start: task_unit | None
     end: task_unit | None
+    early_bias_priority: int
+    cognitive_perf_sensitivity: int
 
     _prerequisites: list[int]
 
@@ -38,6 +40,8 @@ class Task:
         start: task_unit | None = None,
         # end is inclusive
         end: task_unit | None = None,
+        early_bias_priority=1,
+        cognitive_perf_sensitivity=1,
     ) -> None:
         builder.task_next_id += 1
         builder.tasks[builder.task_next_id] = self
@@ -53,6 +57,8 @@ class Task:
         self.unit = unit
         self.start = start
         self.end = end
+        self.early_bias_priority = early_bias_priority
+        self.cognitive_perf_sensitivity = cognitive_perf_sensitivity
         assert start is None or end is None or start < end
 
     def add_cost_config_duration(
@@ -67,7 +73,9 @@ class Task:
             )
         )
 
-    def add_cost_config_children(self, costs: list[CostInterval], children: list[Task]) -> None:
+    def add_cost_config_children(
+        self, costs: list[CostInterval], children: list[Task]
+    ) -> None:
         for c in children:
             # child must exist
             assert c.id in self._builder.tasks
@@ -100,6 +108,8 @@ class Task:
             cost_configs=self._configs,
             parent_configs=self._parent_cfgs,
             parent=self._parent,
+            early_bias_priority=self.early_bias_priority,
+            cognitive_perf_sensitivity=self.cognitive_perf_sensitivity,
         )
 
 
@@ -113,7 +123,9 @@ class ConfigBuilder:
 
         self.temp_tasks: set[int] = set()
 
-    def _detect_cycles(self, id: int, visited: set[int], trace: list[int], depth: int) -> None:
+    def _detect_cycles(
+        self, id: int, visited: set[int], trace: list[int], depth: int
+    ) -> None:
         trace = trace[:depth]
         trace.append(id)
         if id in visited:

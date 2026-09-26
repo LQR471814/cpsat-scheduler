@@ -1,0 +1,84 @@
+import Mathlib.Order.Interval.Basic
+import Mathlib.Algebra.Group.Int.Defs
+
+namespace CpsatSolver
+
+abbrev Int64.min : ℤ := -(2 : ℤ) ^ 63
+abbrev Int64.max : ℤ := (2 : ℤ) ^ 63 - 1
+abbrev Int64.Nonoverflow (b : ℤ) : Prop :=
+  b ≥ min ∧ b ≤ max
+
+abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
+
+@[simp] def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by decide) : Int64 :=
+  ⟨n, h⟩
+
+/-- Closed interval over `Int64`. Also used as conservative expression bounds. -/
+structure Interval where
+  left : Int64
+  right : Int64
+  left_le_right : (left : ℤ) ≤ right
+deriving DecidableEq
+
+@[simp] def Interval.of (l r : ℤ)
+  (hl : Int64.Nonoverflow l := by decide)
+  (hr : Int64.Nonoverflow r := by decide)
+  (hlr : l ≤ r := by decide) : Interval :=
+  {
+    left := Subtype.mk l hl
+    right := Subtype.mk r hr
+    left_le_right := hlr
+  }
+
+def Interval.mem (i : Interval) (x : ℤ) : Prop :=
+  (i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)
+
+instance : Membership ℤ Interval where
+  mem i x := i.mem x
+
+instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) :=
+  inferInstanceAs (Decidable ((i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)))
+
+abbrev Bounds := Interval
+
+def Interval.toSet (i : Interval) : Set ℤ :=
+  Set.Icc (i.left : ℤ) i.right
+
+@[simp] def Interval.ofValue (v : Int64) : Interval :=
+  { left := v, right := v, left_le_right := le_rfl }
+
+/-- Consecutive domain fragments must have a gap of at least one integer. -/
+def Interval.separated (a b : Interval) : Prop :=
+  (a.right : ℤ) + 1 < (b.left : ℤ)
+
+/-- Canonical sparse domain: pairwise separated, hence sorted, disjoint, and
+nonadjacent. Empty domains are allowed. -/
+structure Domain where
+  intervals : List Interval
+  pairwise : intervals.Pairwise Interval.separated
+deriving DecidableEq
+
+def Domain.singleton (v : Int64) : Domain :=
+  ⟨[Interval.ofValue v], List.pairwise_singleton _ _⟩
+
+instance : Membership ℤ Domain where
+  mem d x := ∃ i ∈ d.intervals, x ∈ i
+
+def Domain.toSet (d : Domain) : Set ℤ := {x | x ∈ d}
+
+def Domain.empty : Domain :=
+  ⟨[], List.Pairwise.nil⟩
+
+structure NonemptyDomain where
+  domain : Domain
+  nonempty : domain.intervals ≠ []
+deriving DecidableEq
+
+def NonemptyDomain.of (domain : Domain)
+    (h : domain.intervals ≠ [] :=
+      by simp [Domain.canonicalize, Domain.mergeOne]) :
+      NonemptyDomain :=
+  { domain := domain, nonempty := h }
+
+end CpsatSolver
+
