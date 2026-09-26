@@ -46,32 +46,12 @@ def CostTableHandle.resolve (handle : CostTableHandle) (results : Array Float)
     (entries.find? (fun e => e.fst.timeDemanded.val == demand)).map (·.snd) |>.getD 0
   CostTable.ofPoints? unit (entries.map (·.fst)) costOf Scipy.Convert.roundingErrorBound
 
-def constrainCostByTable {scales : Timescales} {unit : UnitScale}
+def costByTable {scales : Timescales} {unit : UnitScale}
     (vars : TaskVars scales) (table : CostTable unit) : Builder Unit := do
   let cols : Vector IntVar 2 := ⟨#[vars.timeDemandedVar, vars.costVar], rfl⟩
   let _ ← Builder.addConstraint .always
     (.allowed_assignments cols table.allowedRows)
     (some s!"task_{vars.task.id.val}_pert_cost")
   pure ()
-
-def sumVars (vars : Array IntVar) : Option ((b : Bounds) × LinearExpr b) :=
-  vars.foldl (init := none) fun acc v =>
-    let cur : (b : Bounds) × LinearExpr b := ⟨_, LinearExpr.var v⟩
-    match acc with
-    | none => some cur
-    | some ⟨b, e⟩ =>
-      if h : Int64.Nonoverflow ((b.left : ℤ) + cur.fst.left) ∧
-             Int64.Nonoverflow ((b.right : ℤ) + cur.fst.right) then
-        some ⟨_, LinearExpr.add e cur.snd h⟩
-      else
-        none
-
-def minimizeCostSum {scales : Timescales} (varsList : Array (TaskVars scales)) :
-    Builder Bool :=
-  match sumVars (varsList.map (·.costVar)) with
-  | none => pure false
-  | some ⟨_, total⟩ => do
-    Builder.setObjective (.minimize total.wrapBounds)
-    pure true
 
 end Constraint.PERT
