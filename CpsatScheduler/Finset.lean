@@ -11,8 +11,6 @@ def Finset.sortByKey
   have nameOf_injective : Function.Injective key :=
     fun a b h =>
       key_injective h
-
   letI : LinearOrder set :=
     LinearOrder.lift' key nameOf_injective
-
   set.attach.sort

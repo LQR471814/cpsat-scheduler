@@ -106,7 +106,7 @@ structure CostPoint where
   encodedCost : CpsatSolver.Int64
 deriving DecidableEq
 
-structure TaskCostTable {scales : Timescales} (task : Task scales) where
+structure CostTable (unit : UnitScale) where
   points : Array CostPoint
   nonempty : 0 < points.size
   uniqueDemand :
@@ -115,7 +115,7 @@ structure TaskCostTable {scales : Timescales} (task : Task scales) where
   demandBounds :
     ∀ p ∈ points,
       (0 : ℤ) ≤ p.timeDemanded.val ∧
-      p.timeDemanded.val ≤ task.unit.val.val
+      p.timeDemanded.val ≤ unit.val
   trueCost : ℤ → ℚ
   errorBound : ℚ
   error_nonneg : 0 ≤ errorBound

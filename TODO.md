@@ -1,6 +1,6 @@
-- [ ] Test prereq/within
-- [ ] Test non-overflow constraint
-- [ ] Test cost assignment
+- [x] Test prereq/within
+- [x] Test non-overflow constraint
+- [x] Test cost assignment
 - [ ] Chronological (schedule) declaration layer
 - [ ] Define events
 - [ ] Process factors:

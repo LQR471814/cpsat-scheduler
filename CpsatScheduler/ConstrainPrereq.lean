@@ -2,7 +2,6 @@ import CpsatScheduler.CpsatSolver.LinearExpr
 
 namespace CpsatScheduler
 
-/-- Successor start after predecessor bucket end, already in a common unit. -/
 def Constraint.prerequisite (succ pred : CpsatSolver.IntVar)
     (nonoverflow :
       CpsatSolver.Int64.Nonoverflow ((pred.domain.hull.left : ℤ) + 1) ∧

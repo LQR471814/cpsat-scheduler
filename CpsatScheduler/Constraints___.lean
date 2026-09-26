@@ -1,5 +1,5 @@
 import CpsatScheduler.Defs
-import CpsatScheduler.Util.Graphs
+import CpsatScheduler.Graphs
 
 namespace CpsatScheduler
 

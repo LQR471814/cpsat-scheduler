@@ -2,9 +2,6 @@ import CpsatScheduler.CpsatSolver.LinearExpr
 
 namespace CpsatScheduler
 
-/-- Containment in child coordinates using the exact unit ratio:
-`parentStart * ratio ≤ childStart` and
-`childStart + 1 ≤ (parentStart + 1) * ratio`. -/
 def Constraint.bucketContainedIn
     (child parent : CpsatSolver.IntVar) (ratio : CpsatSolver.Int64)
     (mul₁ :

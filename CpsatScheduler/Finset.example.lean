@@ -1,8 +1,6 @@
 import Mathlib
 
-import CpsatScheduler.Python
-
-#import_bumps
+import CpsatScheduler.Python.Basic
 
 def exSet : Finset Python.ValidName := {
   (Python.ValidName.mk "hello" (by decide)),

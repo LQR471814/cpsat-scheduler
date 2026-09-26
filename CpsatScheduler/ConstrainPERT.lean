@@ -1,36 +1,9 @@
 import CpsatScheduler.Defs
-import CpsatScheduler.TaskCostTable
+import CpsatScheduler.CostTable
+import CpsatScheduler.TaskVars
 import CpsatScheduler.Scipy.PERT
 import CpsatScheduler.Scipy.Batch
 import CpsatScheduler.Scipy.Convert
-
-/-!
-# PERT-driven cost/demand table generation
-
-`Constraint.PERT` samples a PERT distribution (via the batched `PertM` Python
-bridge) to produce a `TaskCostTable` for a task: each sampled quantile yields a
-`(timeDemanded, encodedCost)` pair, which together act as an allowed-assignment
-(table) constraint tying a chosen cost to its time demanded.
-
-Pipeline:
-1. `Scipy.pertProbs` — `steps` quantile probabilities under a chosen `Spacing`.
-2. One `Scipy.pertPointExpr` per probability, requested through `PertM`
-   (a single Python subprocess flushes all of them).
-3. Each resolved `Float` cost is rounded to an `Int64` (`encodedCost`) and kept
-   as an exact `ℚ` (`trueCost`); the demand grid is `0, 1, …, steps-1`.
-4. `TaskCostTable.ofPoints?` certifies uniqueness / bounds / closeness.
-
-Because `PertM` defers evaluation until `PertM.run`, generation is two-phase:
-`genCostTableRequest` runs inside `PertM` (registering all quantile requests and
-returning their handles), and the pure `assembleTable` turns the resolved floats
-into the certified `TaskCostTable`. `runGenCostTable` wires both together with a
-single Python execution.
-
-Demand mapping: demands are the integers `0 … steps-1`, guaranteeing uniqueness;
-pick `steps ≤ task.unit + 1` so every demand fits `[0, unit]` (otherwise
-`ofPoints?` — and hence generation — returns `none`). `errorBound = 1/2`
-(nearest-integer rounding), so `encodedClose` always holds for in-range demands.
--/
 
 namespace Constraint.PERT
 
@@ -38,66 +11,67 @@ open CpsatScheduler
 open CpsatSolver
 open Scipy
 
-/-- PERT parameters and sampling resolution for one task. -/
 structure Config where
-  /-- Optimistic estimate (distribution lower support). -/
   opt : Float
-  /-- Most-likely / expected estimate (distribution mode). -/
   exp : Float
-  /-- Pessimistic estimate (distribution upper support). -/
   pes : Float
-  /-- Number of quantile samples (cost/demand pairs) to generate. -/
+  cost : Float
   steps : ℕ
   steps_nonzero : steps > 0
-  /-- How quantile sample points are distributed across `(0,1)`
-  (default: denser near the pessimistic tail). -/
-  spacing : Spacing := Spacing.backLoaded
 
-/-- Decimal precision used when turning a sampled `Float` cost into an exact
-`trueCost : ℚ`. -/
 def costPrecision : ℕ := 6
 
-/-- Phase 1: register one PERT quantile request per quantile probability
-(using `config.spacing`), returning the handles in demand order (`0 … steps-1`). -/
-def genCostTableRequest (config : Config) : PertM (Array PertHandle) := do
-  let probs := pertProbs config.steps config.spacing config.steps_nonzero
-  probs.mapM fun p =>
-    PertM.request (pertPointExpr config.opt config.exp config.pes p)
+structure CostTableHandle where
+  config : Config
+  start : Nat
 
-/-- Phase 2 (pure): assemble a certified `TaskCostTable` from the resolved
-results. Demand `i` (the grid index) is paired with the rounded cost at
-`handles[i]`; `trueCost` maps each demand to the exact `ℚ` cost. Returns `none`
-if any handle is unresolved, a cost overflows `Int64`, or validation fails. -/
-def assembleTable {scales : Timescales} (task : Task scales)
-    (handles : Array PertHandle) (results : Array Float) :
-    Option (TaskCostTable task) :=
-  -- exact ℚ cost keyed by demand index, plus the encoded points
-  let entries : Array (Option (CostPoint × (ℤ × ℚ))) :=
-    (Array.range handles.size).map fun i =>
-      match (handles[i]!).resolve results with
-      | none => none
-      | some cost =>
-        match Scipy.Convert.int64? (i : ℤ), Scipy.Convert.roundToInt64? cost with
-        | some d, some c =>
-          some (⟨d, c⟩, ((i : ℤ), Scipy.Convert.floatToRat cost costPrecision))
-        | _, _ => none
-  if entries.all Option.isSome then
-    let resolved := entries.filterMap id
-    let points := resolved.map (·.fst)
-    let ratByDemand := resolved.map (·.snd)
-    let trueCost : ℤ → ℚ := fun d =>
-      match ratByDemand.find? (fun kv => kv.fst == d) with
-      | some kv => kv.snd
-      | none => 0
-    TaskCostTable.ofPoints? task points trueCost Scipy.Convert.roundingErrorBound
-  else
-    none
+def requestCostTable (config : Config) : PertM CostTableHandle := do
+  let start := (← get).requests.size
+  for δ in Array.range config.steps do
+    let _ ← PertM.request
+      (pertCostExpr config.opt config.exp config.pes config.cost δ.toFloat)
+  pure { config := config, start := start }
 
-/-- End-to-end generation: one Python execution produces every quantile, then a
-certified `TaskCostTable` is assembled (or `none` on validation failure). -/
-def runGenCostTable {scales : Timescales} (runtime : Python.Runtime)
-    (config : Config) (task : Task scales) : IO (Option (TaskCostTable task)) := do
-  let (handles, results) ← PertM.run runtime (genCostTableRequest config)
-  pure (assembleTable task handles results)
+private def pointAt (handle : CostTableHandle) (results : Array Float) (i : ℕ) :
+    Option (CostPoint × ℚ) := do
+  let cost ← results[handle.start + i]?
+  let demand ← Scipy.Convert.int64? (i : ℤ)
+  let encoded ← Scipy.Convert.roundToInt64? cost
+  pure (⟨demand, encoded⟩, Scipy.Convert.floatToRat cost costPrecision)
+
+def CostTableHandle.resolve (handle : CostTableHandle) (results : Array Float)
+    (unit : UnitScale) : Option (CostTable unit) := do
+  let entries ← (Array.range handle.config.steps).mapM (pointAt handle results)
+  let costOf (demand : ℤ) : ℚ :=
+    (entries.find? (fun e => e.fst.timeDemanded.val == demand)).map (·.snd) |>.getD 0
+  CostTable.ofPoints? unit (entries.map (·.fst)) costOf Scipy.Convert.roundingErrorBound
+
+def constrainCostByTable {scales : Timescales} {unit : UnitScale}
+    (vars : TaskVars scales) (table : CostTable unit) : Builder Unit := do
+  let cols : Vector IntVar 2 := ⟨#[vars.timeDemandedVar, vars.costVar], rfl⟩
+  let _ ← Builder.addConstraint .always
+    (.allowed_assignments cols table.allowedRows)
+    (some s!"task_{vars.task.id.val}_pert_cost")
+  pure ()
+
+def sumVars (vars : Array IntVar) : Option ((b : Bounds) × LinearExpr b) :=
+  vars.foldl (init := none) fun acc v =>
+    let cur : (b : Bounds) × LinearExpr b := ⟨_, LinearExpr.var v⟩
+    match acc with
+    | none => some cur
+    | some ⟨b, e⟩ =>
+      if h : Int64.Nonoverflow ((b.left : ℤ) + cur.fst.left) ∧
+             Int64.Nonoverflow ((b.right : ℤ) + cur.fst.right) then
+        some ⟨_, LinearExpr.add e cur.snd h⟩
+      else
+        none
+
+def minimizeCostSum {scales : Timescales} (varsList : Array (TaskVars scales)) :
+    Builder Bool :=
+  match sumVars (varsList.map (·.costVar)) with
+  | none => pure false
+  | some ⟨_, total⟩ => do
+    Builder.setObjective (.minimize total.wrapBounds)
+    pure true
 
 end Constraint.PERT
