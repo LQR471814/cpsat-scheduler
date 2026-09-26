@@ -9,6 +9,10 @@ def stats := Python.ValidName.of "stats"
 def beta := Python.ValidName.of "beta"
 def item := Python.ValidName.of "item"
 def print := Python.ValidName.of "print"
+def ppf := Python.ValidName.of "ppf"
+def float := Python.ValidName.of "float"
+def json := Python.ValidName.of "json"
+def dumps := Python.ValidName.of "dumps"
 end Name
 
 def ppf (probs : Array Float) (alpha beta : Float)
@@ -33,30 +37,29 @@ def ppf (probs : Array Float) (alpha beta : Float)
       Name.item)
     #[]
 
-private def mkEvalScript (expr : Python.Expr) : Python.Script :=
-  {
-    statements := #[
-      (Python.Statement.importLine
-        (Python.Import.fromForm
-          #[ Name.scipy, Name.stats ]
-          #[ (Python.NameAs.unaliased Name.beta) ])),
-      (Python.Statement.exprLine
-        (Python.Expr.call
-          (Python.Expr.id Name.print)
-          #[ expr ]))
-    ]
-  }
+/-- Scalar PPF evaluation for a single probability, emitting a JSON-clean float:
+`float(beta.ppf(prob, alpha, beta))`.
 
-def evalFloat (runtime : Python.Runtime) (expr : Python.Expr) := do
-  let script := mkEvalScript expr;
-  let result <- script.exec runtime;
-  let json := Lean.Json.parse result.stdout
-  let result := match json with
-    | Except.ok value => match value with
-      | Lean.Json.num n => Except.ok n.toFloat
-      | _ => Except.error "expected float value output"
-    | Except.error err => Except.error s!"parse json: ${err}"
-  pure result
+`scipy.stats.beta.ppf` is the inverse CDF; wrapping in `float(...)` collapses the
+returned numpy scalar to a Python `float` so it serializes cleanly inside a JSON
+array (see `Scipy.mkBatchScript`).
+
+The `[0,1]` range precondition on `prob` is a caller obligation; it is not
+machine-checked because it ranges over runtime `Float`s. `Scipy.pertProbs`
+satisfies it by construction. -/
+def ppfScalarUnchecked (prob alpha beta : Float) : Python.Expr :=
+  -- float(beta.ppf(prob, alpha, beta))
+  Python.Expr.call
+    (Python.Expr.id Name.float)
+    #[
+      Python.Expr.call
+        (Python.Expr.dot (Python.Expr.id Name.beta) Name.ppf)
+        #[
+          Python.Expr.lit (Python.Literal.float prob),
+          Python.Expr.lit (Python.Literal.float alpha),
+          Python.Expr.lit (Python.Literal.float beta)
+        ]
+    ]
 
 end Scipy
 

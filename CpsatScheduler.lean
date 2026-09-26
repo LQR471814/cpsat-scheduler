@@ -1,3 +1,6 @@
 import CpsatScheduler.CpsatSolver
 import CpsatScheduler.Defs
 import CpsatScheduler.Tests
+import CpsatScheduler.TaskCostTable
+import CpsatScheduler.ConstrainPERT
+import CpsatScheduler.ScipyTests
