@@ -36,15 +36,16 @@ def scales := Timescales.mk units horizon
 
 def demoModel? : Option Model :=
   let result := Builder.run do
-    let a <- TaskVars.of taskA
+    let a <- TaskVars.of taskA (NonemptyDomain.of
+      (Domain.ofValues #[
+        CpsatSolver.Int64.of 1,
+        CpsatSolver.Int64.of 2,
+        CpsatSolver.Int64.of 4,
+        CpsatSolver.Int64.of 7
+      ]))
     let b <- TaskVars.of taskB
     let c <- TaskVars.of taskC
     let be := LinearExpr.var b.vars.startVar
-    let rows : Array (Vector CpsatSolver.Int64 2) := #[
-      Vector.mk #[CpsatSolver.Int64.of 0, CpsatSolver.Int64.of 1] rfl,
-      Vector.mk #[CpsatSolver.Int64.of 1, CpsatSolver.Int64.of 2] rfl,
-      Vector.mk #[CpsatSolver.Int64.of 2, CpsatSolver.Int64.of 3] rfl,
-    ]
     let _ ← Builder.addConstraint .always
       (.bounded_linear
         (Constraint.prerequisite

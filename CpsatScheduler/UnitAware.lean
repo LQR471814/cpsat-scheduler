@@ -39,13 +39,13 @@ def LinearExpr.rescaleExact {u v : UnitScale}
     (e : LinearExpr u) (hv : v.val ∣ u.val)
     (mul_nonoverflow :
       CpsatSolver.Int64.Nonoverflow
-        (e.fst.mulLower (CpsatSolver.Interval.fromValue (UnitScale.exactRatio u v hv))) ∧
+        (e.fst.mulLower (CpsatSolver.Interval.ofValue (UnitScale.exactRatio u v hv))) ∧
       CpsatSolver.Int64.Nonoverflow
-        (e.fst.mulUpper (CpsatSolver.Interval.fromValue (UnitScale.exactRatio u v hv)))) :
+        (e.fst.mulUpper (CpsatSolver.Interval.ofValue (UnitScale.exactRatio u v hv)))) :
     LinearExpr v :=
   let ratio := UnitScale.exactRatio u v hv
   ⟨
-    e.fst.mul (CpsatSolver.Interval.fromValue ratio) mul_nonoverflow,
+    e.fst.mul (CpsatSolver.Interval.ofValue ratio) mul_nonoverflow,
     CpsatSolver.LinearExpr.mul e.snd ratio mul_nonoverflow
   ⟩
 

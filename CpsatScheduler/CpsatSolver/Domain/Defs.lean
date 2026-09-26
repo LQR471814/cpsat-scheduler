@@ -10,7 +10,7 @@ abbrev Int64.Nonoverflow (b : ℤ) : Prop :=
 
 abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
 
-def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by decide) : Int64 :=
+@[simp] def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by decide) : Int64 :=
   ⟨n, h⟩
 
 /-- Closed interval over `Int64`. Also used as conservative expression bounds. -/
@@ -44,7 +44,7 @@ abbrev Bounds := Interval
 def Interval.toSet (i : Interval) : Set ℤ :=
   Set.Icc (i.left : ℤ) i.right
 
-def Interval.fromValue (v : Int64) : Interval :=
+@[simp] def Interval.ofValue (v : Int64) : Interval :=
   { left := v, right := v, left_le_right := le_rfl }
 
 /-- Consecutive domain fragments must have a gap of at least one integer. -/
@@ -59,7 +59,7 @@ structure Domain where
 deriving DecidableEq
 
 def Domain.singleton (v : Int64) : Domain :=
-  ⟨[Interval.fromValue v], List.pairwise_singleton _ _⟩
+  ⟨[Interval.ofValue v], List.pairwise_singleton _ _⟩
 
 instance : Membership ℤ Domain where
   mem d x := ∃ i ∈ d.intervals, x ∈ i
@@ -73,6 +73,12 @@ structure NonemptyDomain where
   domain : Domain
   nonempty : domain.intervals ≠ []
 deriving DecidableEq
+
+def NonemptyDomain.of (domain : Domain)
+    (h : domain.intervals ≠ [] :=
+      by simp [Domain.canonicalize, Domain.mergeOne]) :
+      NonemptyDomain :=
+  { domain := domain, nonempty := h }
 
 end CpsatSolver
 

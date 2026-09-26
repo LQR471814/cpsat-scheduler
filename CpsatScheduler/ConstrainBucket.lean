@@ -9,19 +9,19 @@ def Constraint.bucketContainedIn
     (child parent : CpsatSolver.IntVar) (ratio : CpsatSolver.Int64)
     (mul₁ :
       CpsatSolver.Int64.Nonoverflow
-        (parent.domain.hull.mulLower (CpsatSolver.Interval.fromValue ratio)) ∧
+        (parent.domain.hull.mulLower (CpsatSolver.Interval.ofValue ratio)) ∧
       CpsatSolver.Int64.Nonoverflow
-        (parent.domain.hull.mulUpper (CpsatSolver.Interval.fromValue ratio)))
+        (parent.domain.hull.mulUpper (CpsatSolver.Interval.ofValue ratio)))
     (add₁ :
       CpsatSolver.Int64.Nonoverflow ((parent.domain.hull.left : ℤ) + 1) ∧
       CpsatSolver.Int64.Nonoverflow ((parent.domain.hull.right : ℤ) + 1))
     (mul₂ :
       CpsatSolver.Int64.Nonoverflow
-        (((parent.domain.hull.add (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1))
-            add₁).mulLower (CpsatSolver.Interval.fromValue ratio))) ∧
+        (((parent.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1))
+            add₁).mulLower (CpsatSolver.Interval.ofValue ratio))) ∧
       CpsatSolver.Int64.Nonoverflow
-        (((parent.domain.hull.add (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1))
-            add₁).mulUpper (CpsatSolver.Interval.fromValue ratio))))
+        (((parent.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1))
+            add₁).mulUpper (CpsatSolver.Interval.ofValue ratio))))
     (addChild :
       CpsatSolver.Int64.Nonoverflow ((child.domain.hull.left : ℤ) + 1) ∧
       CpsatSolver.Int64.Nonoverflow ((child.domain.hull.right : ℤ) + 1)) :
@@ -38,17 +38,17 @@ def Constraint.bucketContainedIn
     fst := {
       rel := .gte
       leftBounds := child.domain.hull
-      rightBounds := parent.domain.hull.mul (CpsatSolver.Interval.fromValue ratio) mul₁
+      rightBounds := parent.domain.hull.mul (CpsatSolver.Interval.ofValue ratio) mul₁
       left := childE
       right := parentScaled
     },
     snd := {
       rel := .lte
-      leftBounds := child.domain.hull.add (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1))
+      leftBounds := child.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1))
         addChild
       rightBounds :=
-        (parent.domain.hull.add (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1)) add₁).mul
-          (CpsatSolver.Interval.fromValue ratio) mul₂
+        (parent.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁).mul
+          (CpsatSolver.Interval.ofValue ratio) mul₂
       left := childPlus
       right := parentPlusScaled
     }

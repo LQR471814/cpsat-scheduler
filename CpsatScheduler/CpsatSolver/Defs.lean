@@ -1,5 +1,5 @@
 import Mathlib.Data.Char
-import CpsatScheduler.CpsatSolver.Python
+import CpsatScheduler.Python
 import CpsatScheduler.CpsatSolver.Domain.NonemptyDomain
 
 namespace CpsatSolver
@@ -34,7 +34,7 @@ deriving DecidableEq
 
 inductive LinearExpr : Bounds → Type where
   | fromVar (value : IntVar) : LinearExpr value.domain.hull
-  | fromConst (value : Int64) : LinearExpr (Interval.fromValue value)
+  | fromConst (value : Int64) : LinearExpr (Interval.ofValue value)
   | fromNeg
     (a : LinearExpr α)
     (neg_nonoverflow : Int64.Nonoverflow (-α.right : ℤ) ∧ Int64.Nonoverflow (-α.left : ℤ))
@@ -42,9 +42,9 @@ inductive LinearExpr : Bounds → Type where
   | fromMulConst
     (a : LinearExpr α) (value : Int64)
     (mul_nonoverflow :
-      Int64.Nonoverflow (α.mulLower (Interval.fromValue value)) ∧
-      Int64.Nonoverflow (α.mulUpper (Interval.fromValue value)))
-      : LinearExpr (α.mul (Interval.fromValue value) mul_nonoverflow)
+      Int64.Nonoverflow (α.mulLower (Interval.ofValue value)) ∧
+      Int64.Nonoverflow (α.mulUpper (Interval.ofValue value)))
+      : LinearExpr (α.mul (Interval.ofValue value) mul_nonoverflow)
   | fromAdd
     (a : LinearExpr α) (b : LinearExpr β)
     (add_nonoverflow :

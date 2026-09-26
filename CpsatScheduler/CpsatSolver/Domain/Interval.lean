@@ -5,8 +5,8 @@ namespace CpsatSolver
 theorem Interval.mem_toSet (i : Interval) (x : ℤ) :
     x ∈ i.toSet ↔ x ∈ i := Iff.rfl
 
-theorem Interval.mem_fromValue (v : Int64) (x : ℤ) :
-    x ∈ Interval.fromValue v ↔ x = v.val := by
+theorem Interval.mem_ofValue (v : Int64) (x : ℤ) :
+    x ∈ Interval.ofValue v ↔ x = v.val := by
   constructor
   · intro h
     exact le_antisymm h.2 h.1
@@ -95,20 +95,20 @@ def Interval.mul (a b : Interval)
 theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
     (hx : x ∈ a)
     (nonoverflow :
-      Int64.Nonoverflow (a.mulLower (Interval.fromValue value)) ∧
-      Int64.Nonoverflow (a.mulUpper (Interval.fromValue value))) :
-    value.val * x ∈ a.mul (Interval.fromValue value) nonoverflow := by
+      Int64.Nonoverflow (a.mulLower (Interval.ofValue value)) ∧
+      Int64.Nonoverflow (a.mulUpper (Interval.ofValue value))) :
+    value.val * x ∈ a.mul (Interval.ofValue value) nonoverflow := by
   change
-    a.mulLower (Interval.fromValue value) ≤ value.val * x ∧
-      value.val * x ≤ a.mulUpper (Interval.fromValue value)
+    a.mulLower (Interval.ofValue value) ≤ value.val * x ∧
+      value.val * x ≤ a.mulUpper (Interval.ofValue value)
   have hlo :
-      a.mulLower (Interval.fromValue value) =
+      a.mulLower (Interval.ofValue value) =
         min ((a.left : ℤ) * value.val) ((a.right : ℤ) * value.val) := by
-    simp only [Interval.mulLower, Interval.fromValue, min_self]
+    simp only [Interval.mulLower, Interval.ofValue, min_self]
   have hhi :
-      a.mulUpper (Interval.fromValue value) =
+      a.mulUpper (Interval.ofValue value) =
         max ((a.left : ℤ) * value.val) ((a.right : ℤ) * value.val) := by
-    simp only [Interval.mulUpper, Interval.fromValue, max_self]
+    simp only [Interval.mulUpper, Interval.ofValue, max_self]
   rw [hlo, hhi]
   rcases le_total (0 : ℤ) value.val with hv | hv
   · have h1 := mul_le_mul_of_nonneg_right hx.1 hv
@@ -134,7 +134,7 @@ theorem Interval.separated_trans {x a y : Interval}
   have : (x.right : ℤ) + 1 < (y.left : ℤ) := by linarith
   exact this
 
-def Interval.span (a b : Interval) : Interval :=
+@[simp] def Interval.span (a b : Interval) : Interval :=
   {
     left := if (a.left : ℤ) ≤ b.left then a.left else b.left
     right := if (a.right : ℤ) ≤ b.right then b.right else a.right

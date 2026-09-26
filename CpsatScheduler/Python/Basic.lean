@@ -1,7 +1,7 @@
 import Mathlib.Data.Finset.Insert
 import Mathlib.Algebra.Order.Group.Nat
 
-namespace CpsatSolver.Python
+namespace Python
 
 def ReservedKeywords : Finset String := {
   "False",
@@ -71,6 +71,7 @@ mutual
 inductive Literal where
   | bool (val : Bool)
   | int (val : ℤ)
+  | float (val : Float)
   | str (val : String)
   | array (elems : Array Expr)
   | dict (pairs : Array (Expr × Expr))
@@ -104,6 +105,7 @@ def Literal.repr (lit : Literal) : String :=
     | Bool.true => "True"
     | Bool.false => "False"
   | Literal.int i => toString i
+  | Literal.float f => toString f
   | Literal.str s => Lean.Json.compress (Lean.Json.str s)
   | Literal.array elems =>
     let elemStr := elems.map (fun e => e.repr)
@@ -221,4 +223,4 @@ def Script.exec (r : Runtime) (s : Script) : IO IO.Process.Output :=
     args := #["-"]
   } s.repr
 
-end CpsatSolver.Python
+end Python

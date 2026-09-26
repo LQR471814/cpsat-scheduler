@@ -17,7 +17,7 @@ def Constraint.prerequisite (succ pred : CpsatSolver.IntVar)
     rel := .gte
     leftBounds := succ.domain.hull
     rightBounds := pred.domain.hull.add
-      (CpsatSolver.Interval.fromValue (CpsatSolver.Int64.of 1)) nonoverflow
+      (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) nonoverflow
     left := succE
     right := predEnd
   }

@@ -23,7 +23,9 @@ theorem LinearExpr.eval_mem_bounds (valuation : EntityId → ℤ)
     exact NonemptyDomain.mem_hull value.domain
       (inDomain value (List.mem_singleton.mpr rfl))
   | fromConst value =>
-    simp [LinearExpr.eval, Interval.mem_fromValue]
+    simp only [Interval.ofValue]
+    apply (Interval.mem_ofValue value value.val).mpr
+    rfl
   | fromNeg a h ih =>
     exact Interval.eval_neg _ h (ih (fun v hv => inDomain v hv))
   | fromMulConst a value h ih =>
@@ -41,7 +43,7 @@ theorem LinearExpr.eval_mem_bounds (valuation : EntityId → ℤ)
 
 def LinearExpr.var (value : IntVar) : LinearExpr value.domain.hull := .fromVar value
 
-def LinearExpr.const (value : Int64) : LinearExpr (Interval.fromValue value) :=
+def LinearExpr.const (value : Int64) : LinearExpr (Interval.ofValue value) :=
   .fromConst value
 
 def LinearExpr.neg {bounds : Bounds} (a : LinearExpr bounds)
@@ -52,9 +54,9 @@ def LinearExpr.neg {bounds : Bounds} (a : LinearExpr bounds)
 
 def LinearExpr.mul {bounds : Bounds} (a : LinearExpr bounds) (value : Int64)
     (nonoverflow :
-      Int64.Nonoverflow (bounds.mulLower (Interval.fromValue value)) ∧
-      Int64.Nonoverflow (bounds.mulUpper (Interval.fromValue value))) :
-    LinearExpr (bounds.mul (Interval.fromValue value) nonoverflow) :=
+      Int64.Nonoverflow (bounds.mulLower (Interval.ofValue value)) ∧
+      Int64.Nonoverflow (bounds.mulUpper (Interval.ofValue value))) :
+    LinearExpr (bounds.mul (Interval.ofValue value) nonoverflow) :=
   .fromMulConst a value nonoverflow
 
 def LinearExpr.add {leftBounds rightBounds : Bounds}

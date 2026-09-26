@@ -12,12 +12,12 @@ theorem Domain.mem_singleton (v : Int64) (x : ℤ) :
   constructor
   · rintro ⟨i, hi, hx⟩
     cases hi with
-    | head => exact (Interval.mem_fromValue v x).mp hx
+    | head => exact (Interval.mem_ofValue v x).mp hx
     | tail _ h => cases h
   · intro h
     subst h
-    exact ⟨Interval.fromValue v, by simp [Domain.singleton],
-      (Interval.mem_fromValue v _).mpr rfl⟩
+    exact ⟨Interval.ofValue v, by simp [Domain.singleton],
+      (Interval.mem_ofValue v _).mpr rfl⟩
 
 @[simp] def Domain.contains (d : Domain) (x : ℤ) : Bool :=
   d.intervals.any fun i => decide (x ∈ i)
@@ -225,6 +225,9 @@ theorem Domain.canonicalize_cons_ne_nil (x : Interval) (xs : List Interval) :
 
 @[simp] def Domain.ofArray (xs : Array Interval) : Domain :=
   Domain.ofList xs.toList
+
+@[simp] def Domain.ofValues (xs : Array CpsatSolver.Int64) : Domain :=
+  Domain.ofList (xs.toList.map (Interval.ofValue ·))
 
 @[simp] def Domain.insert (d : Domain) (i : Interval) : Domain :=
   ⟨Domain.mergeOne i d.intervals, Domain.mergeOne_pairwise i d.intervals d.pairwise⟩

@@ -12,7 +12,7 @@ theorem TaskCostTable.pointsNeNil {scales : Timescales} {task : Task scales}
 def TaskCostTable.demandDomain {scales : Timescales} {task : Task scales}
     (table : TaskCostTable task) : CpsatSolver.NonemptyDomain :=
   CpsatSolver.Domain.ofListNonempty
-    (table.points.toList.map fun p => CpsatSolver.Interval.fromValue p.timeDemanded)
+    (table.points.toList.map fun p => CpsatSolver.Interval.ofValue p.timeDemanded)
     (by
       intro h
       exact TaskCostTable.pointsNeNil table (List.map_eq_nil_iff.mp h))
@@ -20,7 +20,7 @@ def TaskCostTable.demandDomain {scales : Timescales} {task : Task scales}
 def TaskCostTable.costDomain {scales : Timescales} {task : Task scales}
     (table : TaskCostTable task) : CpsatSolver.NonemptyDomain :=
   CpsatSolver.Domain.ofListNonempty
-    (table.points.toList.map fun p => CpsatSolver.Interval.fromValue p.encodedCost)
+    (table.points.toList.map fun p => CpsatSolver.Interval.ofValue p.encodedCost)
     (by
       intro h
       exact TaskCostTable.pointsNeNil table (List.map_eq_nil_iff.mp h))

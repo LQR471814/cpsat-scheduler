@@ -39,7 +39,7 @@ example :
   native_decide
 
 example :
-    (3 : ℤ) ∈ Interval.fromValue (Int64.of 3) := by
+    (3 : ℤ) ∈ Interval.ofValue (Int64.of 3) := by
   decide
 
 def emptyModel? : Option Model := RawModel.finalize? {}

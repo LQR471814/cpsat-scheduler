@@ -1,10 +1,12 @@
 import Mathlib
 
-import CpsatScheduler.CpsatSolver.Python
+import CpsatScheduler.Python
 
-def exSet : Finset CpsatSolver.Python.ValidName := {
-  (CpsatSolver.Python.ValidName.mk "hello" (by decide)),
-  (CpsatSolver.Python.ValidName.mk "world" (by decide))
+#import_bumps
+
+def exSet : Finset Python.ValidName := {
+  (Python.ValidName.mk "hello" (by decide)),
+  (Python.ValidName.mk "world" (by decide))
 }
 
 def nameOf (ofSet : exSet) := ofSet.val.val
