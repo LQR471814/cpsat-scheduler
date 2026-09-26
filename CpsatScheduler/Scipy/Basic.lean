@@ -11,8 +11,8 @@ def item := Python.ValidName.of "item"
 def print := Python.ValidName.of "print"
 end Name
 
-def ppf (prob alpha beta : Float)
-  (_ : prob ≥ 0 ∧ prob ≤ 1 := by decide) :
+def ppf (probs : Array Float) (alpha beta : Float)
+  (_ : ∀ p ∈ probs, p ≥ 0 ∧ p ≤ 1 := by decide) :
     Python.Expr :=
   -- beta([prob], alpha, beta).item()
   Python.Expr.call
@@ -22,8 +22,9 @@ def ppf (prob alpha beta : Float)
         #[
           (Python.Expr.lit
             (Python.Literal.array
-              #[ (Python.Expr.lit
-                  (Python.Literal.float prob)) ])),
+              (probs.map
+                (fun p => Python.Expr.lit
+                  (Python.Literal.float p))))),
           (Python.Expr.lit
             (Python.Literal.float alpha)),
           (Python.Expr.lit
@@ -31,23 +32,6 @@ def ppf (prob alpha beta : Float)
         ])
       Name.item)
     #[]
-
-def pert (prob opt exp pes : Float)
-  (h : prob ≥ 0 ∧ prob ≤ 1 := by decide) :
-    Python.Expr :=
-  let alpha := 1 + 4 * (exp - opt) / (pes - opt);
-  let beta := 1 + 4 * (pes - exp) / (pes - opt);
-  let texpr := ppf prob alpha beta h;
-  -- opt + <PPF> * (pes - opt <- as a literal)
-  Python.Expr.add
-    (Python.Expr.lit
-      (Python.Literal.float
-        opt))
-    (Python.Expr.mul
-      texpr
-      (Python.Expr.lit
-        (Python.Literal.float
-          (pes - opt))))
 
 private def mkEvalScript (expr : Python.Expr) : Python.Script :=
   {
