@@ -15,6 +15,8 @@ open CpsatSolver
 open Scipy
 open Std.Time
 
+def runtime : Python.Runtime := { path := ".venv/bin/python3" }
+
 def atomic : UnitScale := UnitScale.mk 1
 def unit4 : UnitScale := UnitScale.mk 4
 def units : CpsatScheduler.Units := CpsatScheduler.Units.of { atomic, unit4 }
@@ -29,6 +31,11 @@ def scales := Timescales.mk units horizon
 
 def sched : ScheduleMap :=
   ScheduleMap.ofDateTime scales (epoch := datetime("2026-01-01T00:00:00")) (atomicSec := 900)
+
+def blocked : List Alloc :=
+  sched.quantizeEventDateTime datetime("2026-01-01T01:30:00") datetime("2026-01-01T01:45:00") unit4
+
+example : totalAlloc blocked = 1 := by decide
 
 @[simp] def taskA : Task scales :=
   sched.task { val := 1 } (Subtype.mk atomic (by decide))
@@ -48,11 +55,6 @@ def sched : ScheduleMap :=
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T01:00:00"))
     (label := some "task_c")
 
-def blocked : List Alloc :=
-  sched.quantizeEventDateTime datetime("2026-01-01T01:30:00") datetime("2026-01-01T01:45:00") unit4
-
-example : totalAlloc blocked = 1 := by decide
-
 def configA : Constraint.PERT.Config :=
   { opt := 1.0, exp := 2.0, pes := 5.0, cost := 1000.0, steps := 2, steps_nonzero := by decide }
 
@@ -62,25 +64,33 @@ def configB : Constraint.PERT.Config :=
 def configC : Constraint.PERT.Config :=
   { opt := 1.0, exp := 3.0, pes := 8.0, cost := 1000.0, steps := 5, steps_nonzero := by decide }
 
-def demoModel? (tableA : CostTable atomic) (tableB : CostTable unit4)
-    (tableC : CostTable unit4) : Option Model := do
-  let blockedValid <- Alloc.checkMany blocked
-  let result := Builder.run do
-    let a ← TaskVars.of taskA tableA.costHull
-    let b ← TaskVars.of taskB tableB.costHull
-    let c ← TaskVars.of taskC tableC.costHull
-    let _ ← Builder.addConstraint .always
-      (.bounded_linear
-        (Constraint.prerequisite c.vars.startVar a.vars.startVar
-          (by rw [a.start_domain]; decide)))
-      (some "task_c_before_a")
-    Constraint.packing #[ a.vars, b.vars, c.vars ] blockedValid
-    Constraint.PERT.costByTable a.vars tableA
-    Constraint.PERT.costByTable b.vars tableB
-    Constraint.PERT.costByTable c.vars tableC
-    let _ ← Objective.minimizeCostSum #[ a.vars, b.vars, c.vars ]
-    pure ()
-  result.1.finalize?
+def demoModel : IO (Option Model) := do
+  let (⟨pA, pB, pC⟩, results) ← PertM.run runtime do
+    let pA ← Constraint.PERT.requestCostTable configA
+    let pB ← Constraint.PERT.requestCostTable configB
+    let pC ← Constraint.PERT.requestCostTable configC
+    pure (pA, pB, pC)
+  let some tableA := pA.resolve results atomic | do IO.println "table A failed"; pure none
+  let some tableB := pB.resolve results unit4 | do IO.println "table B failed"; pure none
+  let some tableC := pC.resolve results unit4 | do IO.println "table C failed"; pure none
+  pure do
+    let blockedValid <- Alloc.checkMany blocked
+    let result := Builder.run do
+      let a ← TaskVars.of taskA tableA.costHull
+      let b ← TaskVars.of taskB tableB.costHull
+      let c ← TaskVars.of taskC tableC.costHull
+      Constraint.PERT.costByTable a.vars tableA
+      Constraint.PERT.costByTable b.vars tableB
+      Constraint.PERT.costByTable c.vars tableC
+      let _ ← Builder.addConstraint .always
+        (.bounded_linear
+          (Constraint.prerequisite c.vars.startVar a.vars.startVar
+            (by rw [a.start_domain]; decide)))
+        (some "task_c_before_a")
+      Constraint.packing #[ a.vars, b.vars, c.vars ] blockedValid
+      let _ ← Objective.minimizeCostSum #[ a.vars, b.vars, c.vars ]
+      pure ()
+    result.1.finalize?
 
 def startDateOf (model : Model) (a : Assignment)
     (label : String) (unit : UnitScale) : Option String :=
@@ -88,17 +98,9 @@ def startDateOf (model : Model) (a : Assignment)
     |>.map fun p => sched.bucketDateString unit p.2
 
 def main : IO Unit := do
-  let runtime : Python.Runtime := { path := ".venv/bin/python3" };
   IO.println "generating model..."
-  let (⟨hA, hB, hC⟩, results) ← PertM.run runtime do
-    let hA ← Constraint.PERT.requestCostTable configA
-    let hB ← Constraint.PERT.requestCostTable configB
-    let hC ← Constraint.PERT.requestCostTable configC
-    pure (hA, hB, hC)
-  let some tableA := hA.resolve results atomic | IO.println "table A failed"
-  let some tableB := hB.resolve results unit4 | IO.println "table B failed"
-  let some tableC := hC.resolve results unit4 | IO.println "table C failed"
-  match demoModel? tableA tableB tableC with
+  let model? <- demoModel
+  match model? with
   | none => IO.println "invalid model"
   | some model =>
     IO.println "solving..."
