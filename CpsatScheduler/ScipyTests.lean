@@ -62,10 +62,10 @@ example : (parseFloatArray "not json").toOption = none := by native_decide
 
 def liveBatchDemo (runtime : Python.Runtime := { path := "./.venv/bin/python" }) :
     IO Unit := do
-  let (handles, results) ← PertM.run runtime do
-    let h0 ← PertM.request (pertCostExpr 1.0 3.0 8.0 1000.0 0.0)
-    let h2 ← PertM.request (pertCostExpr 1.0 3.0 8.0 1000.0 2.0)
-    let h4 ← PertM.request (pertCostExpr 1.0 3.0 8.0 1000.0 4.0)
+  let (handles, results) ← BatchM.run runtime do
+    let h0 ← BatchM.request (pertCostExpr 1.0 3.0 8.0 1000.0 0.0)
+    let h2 ← BatchM.request (pertCostExpr 1.0 3.0 8.0 1000.0 2.0)
+    let h4 ← BatchM.request (pertCostExpr 1.0 3.0 8.0 1000.0 4.0)
     pure #[h0, h2, h4]
   IO.println s!"results ({results.size}): {results.toList}"
   for h in handles do
@@ -153,7 +153,7 @@ example :
 
 def liveGenDemo (runtime : Python.Runtime := { path := "./.venv/bin/python" }) :
     IO Unit := do
-  let (handles, results) ← PertM.run runtime do
+  let (handles, results) ← BatchM.run runtime do
     let h1 ← requestCostTable genConfig
     let h2 ← requestCostTable { genConfig with opt := 2.0, exp := 5.0, pes := 12.0 }
     pure #[h1, h2]

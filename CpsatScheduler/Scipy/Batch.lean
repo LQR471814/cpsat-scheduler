@@ -4,16 +4,16 @@ namespace Scipy
 
 open Scipy
 
-structure PertState where
+structure Batch where
   requests : Array Python.Expr := #[]
 
-structure PertHandle where
+structure RequestHandle where
   idx : Nat
 deriving DecidableEq, Repr, Inhabited
 
-abbrev PertM := StateT PertState IO
+abbrev BatchM := StateT Batch IO
 
-def PertM.request (e : Python.Expr) : PertM PertHandle := do
+def BatchM.request (e : Python.Expr) : BatchM RequestHandle := do
   let idx := (← get).requests.size
   modify fun s => { s with requests := s.requests.push e }
   pure ⟨idx⟩
@@ -32,13 +32,18 @@ def parseFloatArray (stdout : String) : Except String (Array Float) := do
     | .num n => pure n.toFloat
     | _ => throw "expected float array element"
 
-def PertM.run (runtime : Python.Runtime) (x : PertM α) : IO (α × Array Float) := do
-  let (a, s) ← StateT.run x {}
+structure BatchResult (α : Type) where
+  ret : α
+  values : Array Float
+
+def BatchM.run (runtime : Python.Runtime) (closure : BatchM α) :
+    IO (BatchResult α) := do
+  let (a, s) ← StateT.run closure {}
   if s.requests.isEmpty then
-    return (a, #[])
+    return ⟨a, #[]⟩
   let out ← (mkBatchScript s.requests).exec runtime
   match parseFloatArray out.stdout with
-  | .ok results => pure (a, results)
-  | .error err => throw (IO.userError s!"PertM.run: {err}\n{out.stdout}\n{out.stderr}")
+  | .ok results => pure ⟨a, results⟩
+  | .error err => throw (IO.userError s!"BatchM.run: {err}\n{out.stdout}\n{out.stderr}")
 
 end Scipy

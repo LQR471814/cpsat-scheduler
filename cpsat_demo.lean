@@ -3,7 +3,7 @@ import CpsatScheduler.Task
 import CpsatScheduler.TaskVars
 import CpsatScheduler.ConstrainPrereq
 import CpsatScheduler.ConstrainPacking
-import CpsatScheduler.ConstrainPERT
+import CpsatScheduler.PERT
 import CpsatScheduler.Objective
 import CpsatScheduler.Schedule
 
@@ -55,33 +55,33 @@ example : totalAlloc blocked = 1 := by decide
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T01:00:00"))
     (label := some "task_c")
 
-def configA : Constraint.PERT.Config :=
+def configA : PERT.Config :=
   { opt := 1.0, exp := 2.0, pes := 5.0, cost := 1000.0, steps := 2, steps_nonzero := by decide }
 
-def configB : Constraint.PERT.Config :=
+def configB : PERT.Config :=
   { opt := 2.0, exp := 4.0, pes := 9.0, cost := 1000.0, steps := 5, steps_nonzero := by decide }
 
-def configC : Constraint.PERT.Config :=
+def configC : PERT.Config :=
   { opt := 1.0, exp := 3.0, pes := 8.0, cost := 1000.0, steps := 5, steps_nonzero := by decide }
 
 def demoModel : IO (Option Model) := do
-  let (⟨pA, pB, pC⟩, results) ← PertM.run runtime do
-    let pA ← Constraint.PERT.requestCostTable configA
-    let pB ← Constraint.PERT.requestCostTable configB
-    let pC ← Constraint.PERT.requestCostTable configC
-    pure (pA, pB, pC)
-  let some tableA := pA.resolve results atomic | do IO.println "table A failed"; pure none
-  let some tableB := pB.resolve results unit4 | do IO.println "table B failed"; pure none
-  let some tableC := pC.resolve results unit4 | do IO.println "table C failed"; pure none
+  let result ← BatchM.run runtime do
+    let pA ← PERT.Constraint.requestCostTable configA
+    let pB ← PERT.Constraint.requestCostTable configB
+    let pC ← PERT.Constraint.requestCostTable configC
+    pure ()
   pure do
+    let tableA ← pA.resolve results atomic
+    let tableB ← pB.resolve results unit4
+    let tableC ← pC.resolve results unit4
     let blockedValid <- Alloc.checkMany blocked
     let result := Builder.run do
       let a ← TaskVars.of taskA tableA.costHull
       let b ← TaskVars.of taskB tableB.costHull
       let c ← TaskVars.of taskC tableC.costHull
-      Constraint.PERT.costByTable a.vars tableA
-      Constraint.PERT.costByTable b.vars tableB
-      Constraint.PERT.costByTable c.vars tableC
+      PERT.Constraint.costByTable a.vars tableA
+      PERT.Constraint.costByTable b.vars tableB
+      PERT.Constraint.costByTable c.vars tableC
       let _ ← Builder.addConstraint .always
         (.bounded_linear
           (Constraint.prerequisite c.vars.startVar a.vars.startVar
