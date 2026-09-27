@@ -48,10 +48,10 @@ def sched : ScheduleMap :=
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T01:00:00"))
     (label := some "task_c")
 
-def blockedAllocs : List Alloc :=
-  sched.quantizeEventDateTime datetime("2026-01-01T00:30:00") datetime("2026-01-01T01:15:00") unit4
+def blocked : List Alloc :=
+  sched.quantizeEventDateTime datetime("2026-01-01T01:30:00") datetime("2026-01-01T01:45:00") unit4
 
-example : totalAlloc blockedAllocs = 3 := by decide
+example : totalAlloc blocked = 1 := by decide
 
 def configA : Constraint.PERT.Config :=
   { opt := 1.0, exp := 2.0, pes := 5.0, cost := 1000.0, steps := 2, steps_nonzero := by decide }
@@ -63,7 +63,8 @@ def configC : Constraint.PERT.Config :=
   { opt := 1.0, exp := 3.0, pes := 8.0, cost := 1000.0, steps := 5, steps_nonzero := by decide }
 
 def demoModel? (tableA : CostTable atomic) (tableB : CostTable unit4)
-    (tableC : CostTable unit4) : Option Model :=
+    (tableC : CostTable unit4) : Option Model := do
+  let blockedValid <- Alloc.checkMany blocked
   let result := Builder.run do
     let a ← TaskVars.of taskA tableA.costHull
     let b ← TaskVars.of taskB tableB.costHull
@@ -73,7 +74,7 @@ def demoModel? (tableA : CostTable atomic) (tableB : CostTable unit4)
         (Constraint.prerequisite c.vars.startVar a.vars.startVar
           (by rw [a.start_domain]; decide)))
       (some "task_c_before_a")
-    Constraint.packing #[ a.vars, b.vars, c.vars ] blockedAllocs
+    Constraint.packing #[ a.vars, b.vars, c.vars ] blockedValid
     Constraint.PERT.costByTable a.vars tableA
     Constraint.PERT.costByTable b.vars tableB
     Constraint.PERT.costByTable c.vars tableC

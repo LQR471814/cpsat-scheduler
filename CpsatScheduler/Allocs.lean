@@ -6,22 +6,22 @@ open CpsatScheduler.Schedule (Alloc)
 
 namespace CpsatScheduler.Alloc
 
-structure Input where
+structure Nonoverflow where
   bucket : CpsatSolver.Int64
   alloc : CpsatSolver.Int64
 
-def Input.ofAlloc? (a : Alloc) : Option Input :=
+def Nonoverflow.of? (a : Alloc) : Option Nonoverflow :=
   if hb : CpsatSolver.Int64.Nonoverflow a.bucket then
     if ha : CpsatSolver.Int64.Nonoverflow a.alloc then
       some { bucket := ⟨a.bucket, hb⟩, alloc := ⟨a.alloc, ha⟩ }
     else none
   else none
 
-def checkAllocs (allocs : List Alloc) : Option (List Input) :=
-  allocs.mapM Input.ofAlloc?
+def checkMany (allocs : List Alloc) : Option (List Nonoverflow) :=
+  allocs.mapM Nonoverflow.of?
 
-def allocItem
-    (input : Input)
+def cumulativeItem
+    (input : Nonoverflow)
     (label : Option String := none) :
     CpsatSolver.Builder CpsatSolver.CumulativeItem := do
   let startExpr := CpsatSolver.LinearExpr.const input.bucket
@@ -33,14 +33,14 @@ def allocItem
     demand := demandExpr.wrapBounds
   }
 
-def allocItems
-    (allocs : List Input)
+def cumulativeItems
+    (allocs : List Nonoverflow)
     (labelPrefix : Option String := none) :
     CpsatSolver.Builder (Array CpsatSolver.CumulativeItem) := do
   let values ← allocs.zipIdx.mapM
     (fun (input, idx) =>
       let label := labelPrefix.map (fun p => s!"{p}_bg_{idx}")
-      let item := allocItem input label
+      let item := cumulativeItem input label
       item)
   pure values.toArray
 
