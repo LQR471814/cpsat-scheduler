@@ -3,5 +3,6 @@ import CpsatScheduler.Defs
 import CpsatScheduler.Tests
 import CpsatScheduler.CostTable
 import CpsatScheduler.ConstrainPERT
+import CpsatScheduler.ConstrainAlloc
 import CpsatScheduler.ScipyTests
 import CpsatScheduler.Schedule

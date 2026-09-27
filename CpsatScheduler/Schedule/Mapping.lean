@@ -2,8 +2,6 @@ import CpsatScheduler.Task
 
 import Std.Time
 
-set_option linter.style.nativeDecide false
-
 namespace CpsatScheduler.Schedule
 
 open CpsatScheduler
@@ -109,15 +107,10 @@ def ScheduleMap.scheduleTimeBucket
     (m : ScheduleMap) (tsSec : ℤ) (unit : UnitScale) (r : Rounding) : ℤ :=
   m.scheduleTimeSec tsSec r / (unit.val : ℤ)
 
-/-- Atomic-unit offset of `tsSec` from `epochSec`, rounded per `r`. -/
 def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
   | .down => (tsSec - epochSec) / atomicSec
   | .up => (tsSec - epochSec + atomicSec - 1) / atomicSec
 
-/-- Derive a `Horizon` from real second-offset bounds `[startSec, endSec)`:
-`begin` floors the start, `end_` ceils the end, both in atomic units relative to
-`epochSec`. Obligations (nonnegativity via `.toNat`, `begin < end_`, `Int64`
-safety) discharge by `decide` on concrete inputs. -/
 @[simp] def Horizon.ofSec
     (epochSec atomicSec startSec endSec : ℤ)
     (begin : ℕ := (atomicOfSec epochSec atomicSec startSec .down).toNat)
@@ -127,9 +120,6 @@ safety) discharge by `decide` on concrete inputs. -/
     (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) : Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
-/-- Derive a `Horizon` from chronological dates `[start, end)` at the given epoch
-and atomic-unit length. Delegates to `Horizon.ofSec` after converting each
-`PlainDateTime` to a UTC second offset. -/
 @[simp] def Horizon.ofDateTime
     (epoch start «end» : Std.Time.PlainDateTime) (atomicSec : ℤ)
     (begin : ℕ :=
@@ -143,8 +133,6 @@ and atomic-unit length. Delegates to `Horizon.ofSec` after converting each
     (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) : Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
-/-- Declare a task from real second-offset start bounds: `startAfter` rounds up,
-`startBefore` rounds down, giving the inclusive start-bucket range `[kLo, kHi]`. -/
 @[simp] def ScheduleMap.task
     (m : ScheduleMap)
     (id : TaskId)
@@ -186,15 +174,13 @@ def sampleTask : Task sampleScales :=
     (startAfterSec := 8 * 3600) (startBeforeSec := 10 * 3600)
     (label := some "morning_task")
 
-example : (32 : ℤ) ∈ sampleTask.startDomain.domain := by native_decide
-example : (40 : ℤ) ∈ sampleTask.startDomain.domain := by native_decide
-example : (31 : ℤ) ∉ sampleTask.startDomain.domain := by native_decide
-example : (41 : ℤ) ∉ sampleTask.startDomain.domain := by native_decide
+example : (32 : ℤ) ∈ sampleTask.startDomain.domain := by decide
+example : (40 : ℤ) ∈ sampleTask.startDomain.domain := by decide
+example : (31 : ℤ) ∉ sampleTask.startDomain.domain := by decide
+example : (41 : ℤ) ∉ sampleTask.startDomain.domain := by decide
 
--- `Horizon.ofSec`: one day at 15-min (900s) atomic units from epoch 0 → `[0, 96)`.
 example : (Horizon.ofSec 0 900 0 86400).begin = 0 := by decide
 example : (Horizon.ofSec 0 900 0 86400).end_ = 96 := by decide
--- Floor start / ceil end within the atomic grid.
 example : (Horizon.ofSec 0 900 901 3601).begin = 1 := by decide
 example : (Horizon.ofSec 0 900 901 3601).end_ = 5 := by decide
 
