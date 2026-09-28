@@ -7,10 +7,20 @@ namespace PERT
 open CpsatScheduler
 open CpsatSolver
 
-structure DemandEstimate where
-  opt : Float
-  exp : Float
-  pes : Float
+abbrev DemandEstimate.Valid
+  (task : CpsatScheduler.Task S)
+  (opt exp pes : CpsatSolver.Int64) : Prop :=
+    TaskVars.MemDemand task opt.val ∧
+    TaskVars.MemDemand task exp.val ∧
+    TaskVars.MemDemand task pes.val ∧
+    opt.val ≤ exp.val ∧
+    exp.val ≤ pes.val
+
+structure DemandEstimate (S : Timescales) (task : Task S) where
+  opt : CpsatSolver.Int64
+  exp : CpsatSolver.Int64
+  pes : CpsatSolver.Int64
+  valid : DemandEstimate.Valid task opt exp pes
 
 abbrev Cost := { x : CpsatSolver.Int64 // x ≥ (CpsatSolver.Int64.of 0) }
 
@@ -30,14 +40,36 @@ def Cost.hull (c : Cost) : NonemptyDomain :=
   }
 
 def costTable (py : Python.DaemonProcess)
-  (task : CpsatScheduler.Task S) (cost : Cost) (demand : DemandEstimate)
-  (steps : Array Float) :
+  (task : CpsatScheduler.Task S) (cost : Cost)
+  (demand : DemandEstimate S task) (steps : Array Float) :
     IO (Except String
       (CostDemandTable
         (TaskVars.demandDomain task).domain cost.hull.domain)) := do
   let pairs ← Stats.PERT.costDemandPairs
-    py demand.opt demand.exp demand.pes (Float.ofInt cost.val)
+    py
+    demand.opt.val.toFloat
+    demand.exp.val.toFloat
+    demand.pes.val.toFloat
+    (Float.ofInt cost.val)
     steps
+  -- TODO: remove debug
+  let mapped := pairs.map (·.mapM (fun p => do
+    let demand : CpsatSolver.Int64 ←
+      match Int64.ofFloat? p.demand with
+        | .some val => Except.ok val
+        | .none => Except.error "demand float overflowed int64"
+    let cost : CpsatSolver.Int64 ←
+      match Int64.ofFloat? p.cost with
+        | .some val => Except.ok val
+        | .none => Except.error "cost float overflowed int64"
+    Except.ok ({
+      timeDemanded := demand
+      encodedCost := cost
+    } : CostDemandPoint)))
+  IO.println (mapped.map (·.map fun p =>
+    String.intercalate ", "
+      (p.map (fun el => s!"{el.encodedCost} - {el.timeDemanded}")).toList))
+  -- TODO: remove debug (end)
   pure do
     let pairs ← pairs |> .mapError (fun err => s!"Stats.PERT.costDemandPairs: {err}")
     let points ← pairs.mapM (fun p => do
@@ -53,9 +85,14 @@ def costTable (py : Python.DaemonProcess)
         timeDemanded := demand
         encodedCost := cost
       })
-    if h : points.size > 0 then
-      match CostDemandTable.ofPoints
-        (TaskVars.demandDomain task).domain cost.hull.domain points h with
+      |> .mapError (fun err => s!"truncate cost floats: {err}")
+    if nonoverflow : points.size > 0 then
+      match CostDemandTable.ofPoints?
+        (TaskVars.demandDomain task).domain
+        cost.hull.domain
+        points
+        nonoverflow
+      with
         | .some table => .ok table
         | .none =>
           .error "a cost/demand point fell outside the task's demand or cost domain"
@@ -64,9 +101,9 @@ def costTable (py : Python.DaemonProcess)
 
 structure TaskConfig (S : Timescales) where
   cost : Cost
-  demand : DemandEstimate
   steps : Array Float
   task : CpsatScheduler.Task S
+  demand : DemandEstimate S task
 
 structure Task (cfg : TaskConfig S) where
   taskVars : TaskVarsResult S cfg.task cfg.cost.hull

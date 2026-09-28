@@ -242,6 +242,13 @@ theorem Domain.canonicalize_cons_ne_nil (x : Interval) (xs : List Interval) :
 @[simp] def Domain.interval (i : Interval) : Domain :=
   ⟨[i], List.pairwise_singleton _ _⟩
 
+theorem Domain.interval_size {I : Interval} (D : Domain)
+  (eq : D = Domain.interval I) :
+    0 < D.intervals.length := by
+  rw [eq]
+  dsimp [interval]
+  exact Nat.one_pos
+
 theorem Domain.mem_interval (i : Interval) (x : ℤ) :
     x ∈ Domain.interval i ↔ x ∈ i := by
   constructor

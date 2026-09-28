@@ -15,21 +15,22 @@ def CostDemandPoint.toVector (p : CostDemandPoint) :
     #[ p.timeDemanded, p.encodedCost ]
     (by exact Nat.two_eq_digitChar.mp rfl)
 
-structure CostDemandTable (demandDom costDom : Domain) where
-  points : Array CostDemandPoint
-  nonempty : points.size > 0
-  within :
+abbrev PointsInDomain (points : Array CostDemandPoint)
+  (demandDom costDom : Domain) :=
     ∀ p ∈ points,
       ((p.timeDemanded.val : ℤ) ∈ demandDom) ∧
       ((p.encodedCost.val : ℤ) ∈ costDom)
 
-def CostDemandTable.ofPoints (demandDom costDom : Domain)
-  (points : Array CostDemandPoint) (nonempty : points.size > 0) :
+structure CostDemandTable (demandDom costDom : Domain) where
+  points : Array CostDemandPoint
+  nonempty : points.size > 0
+  within : PointsInDomain points demandDom costDom
+
+def CostDemandTable.ofPoints? (demandDom costDom : Domain)
+  (points : Array CostDemandPoint)
+  (nonempty : points.size > 0) :
     Option (CostDemandTable demandDom costDom) :=
-  if h :
-    ∀ p ∈ points,
-      ((p.timeDemanded.val : ℤ) ∈ demandDom) ∧
-      ((p.encodedCost.val : ℤ) ∈ costDom) then
+  if h : PointsInDomain points demandDom costDom then
     some ⟨points, nonempty, h⟩
   else
     none
@@ -37,7 +38,8 @@ def CostDemandTable.ofPoints (demandDom costDom : Domain)
 def CostDemandTable.constrain
   (task : TaskVars S)
   (table : CostDemandTable
-    task.timeDemandedVar.domain.domain task.costVar.domain.domain)
+    task.timeDemandedVar.domain.domain
+    task.costVar.domain.domain)
   (enforcement : Constraint.Enforcement) := do
   let targetVars := Vector.mk
     #[task.timeDemandedVar, task.costVar]

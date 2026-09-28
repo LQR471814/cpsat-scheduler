@@ -17,8 +17,17 @@ open Std.Time
 def runtime : Python.Runtime := { path := ".venv/bin/python3" }
 
 def atomic : UnitScale := UnitScale.mk 1
+def unit2 : UnitScale := UnitScale.mk 2
 def unit4 : UnitScale := UnitScale.mk 4
-def units : CpsatScheduler.Units := CpsatScheduler.Units.of { atomic, unit4 }
+def unit8 : UnitScale := UnitScale.mk 8
+def unit16 : UnitScale := UnitScale.mk 16
+def units : CpsatScheduler.Units := CpsatScheduler.Units.of {
+  atomic,
+  unit2,
+  unit4,
+  unit8,
+  unit16
+}
 
 def horizon : Horizon := Horizon.ofDateTime
   (epoch := datetime("2026-01-01T00:00:00"))
@@ -37,19 +46,19 @@ def blockedAllocs : List Alloc :=
 example : totalAlloc blockedAllocs = 1 := by decide
 
 @[simp] def taskA : Task scales :=
-  sched.task { val := 1 } (Subtype.mk atomic (by decide))
+  sched.task { val := 1 } (Subtype.mk unit4 (by decide))
     (startAfterSec := plainDateTimeToSecUTC datetime("2026-01-01T00:00:00"))
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T02:45:00"))
     (label := some "task_a")
 
 @[simp] def taskB : Task scales :=
-  sched.task { val := 2 } (Subtype.mk unit4 (by decide))
+  sched.task { val := 2 } (Subtype.mk unit8 (by decide))
     (startAfterSec := plainDateTimeToSecUTC datetime("2026-01-01T00:00:00"))
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T01:00:00"))
     (label := some "task_b")
 
 @[simp] def taskC : Task scales :=
-  sched.task { val := 3 } (Subtype.mk unit4 (by decide))
+  sched.task { val := 3 } (Subtype.mk unit16 (by decide))
     (startAfterSec := plainDateTimeToSecUTC datetime("2026-01-01T00:00:00"))
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T01:00:00"))
     (label := some "task_c")
@@ -63,21 +72,36 @@ def demoModel (py : Python.DaemonProcess) : IO (Except String Model) := do
   let cfgA := {
     task := taskA
     cost := PERT.Cost.of 1000
-    demand := ⟨1.0, 2.0, 5.0⟩
+    demand := {
+      opt := i64 1
+      exp := i64 2
+      pes := i64 4
+      valid := by decide
+    }
     steps := pertSteps
   }
   let buildTaskA ← PERT.Task.of py cfgA
   let cfgB := {
     task := taskB
     cost := PERT.Cost.of 1000
-    demand := ⟨2.0, 4.0, 9.0⟩
+    demand := {
+      opt := i64 2
+      exp := i64 3
+      pes := i64 8
+      valid := by decide
+    }
     steps := pertSteps
   }
   let buildTaskB ← PERT.Task.of py cfgB
   let cfgC := {
     task := taskC
     cost := PERT.Cost.of 1000
-    demand := ⟨1.0, 3.0, 8.0⟩
+    demand := {
+      opt := i64 3
+      exp := i64 5
+      pes := i64 9
+      valid := by decide
+    }
     steps := pertSteps
   }
   let buildTaskC ← PERT.Task.of py cfgC
