@@ -2,58 +2,32 @@
 trigger: always_on
 ---
 
-# Lean conventions (cpsat-scheduler)
+# Lean conventions
 
-Toolchain: `leanprover/lean4:v4.34.0-rc2`. Mathlib `v4.34.0-rc2`. lean-regex `v4.32.0`.
-lakefile.toml enables `weak.linter.mathlibStandardSet`, `relaxedAutoImplicit = false`.
-Follow Mathlib standard-set lint.
+Toolchain `leanprover/lean4:v4.34.0-rc2`, Mathlib `v4.34.0-rc2`.
+lakefile enables `weak.linter.mathlibStandardSet`,
+`relaxedAutoImplicit = false`. Follow standard-set lint.
 
-# General code style
-
-- Let code speak for itself, don't comment.
-- In this vein, whenever you finish an implementation, see what
-  you can simplify.
-
-## Structure design pattern
-
-- Structures carry proof obligations as fields (e.g. `UnitScale.pos`,
-  `.nonoverflow`; `Horizon.begin_lt_end`; `Task.bucketsFitHorizon`;
-  `Model.references`, `.variantsWF`, `.presolve`).
-- Provide a `mkRaw ::` raw constructor + a smart `def X.mk` / `X.of` that
-  discharges proofs via `:= by decide` default args. Match this pattern for new
-  types. Callers should never fill proofs manually when `decide` suffices.
-- Smart range/aggregate constructors derive per-element obligations by
-  monotonicity (see `Task.ofBucketRange`). Prefer deriving over per-item proof.
-
-## Nonoverflow discipline
-
-- All solver-facing integers must satisfy `CpsatSolver.Int64.Nonoverflow`.
-  Thread nonoverflow proofs through arithmetic (`LinearExpr` is indexed by
-  `Bounds`; add/sub/mul/neg each take a nonoverflow hypothesis).
-- No `Float` in the model. Convert with `Scipy.Convert.floatToRat` /
-  `roundToInt64?` and track error via `errorBound` (see `CostTable`,
-  `roundingErrorBound`).
-
-## IDs and serialization
-
-- `EntityId` allocated from single `Builder.freshId` counter (StateM). Uniqueness
-  proven in `Model.uniqueInts/Bools/...`.
-- Python identifiers come from IDs, never labels: `EntityId.toPythonName = "e_" ++ id`.
-- `Python.ValidName` requires `ValidName.Proof` (not reserved keyword + valid
-  ident); construct via `ValidName.of "name"` (proof by `decide`).
-- Build Python via the typed AST (`Python.Expr`, `Statement`, `Script`), never raw
-  string concatenation.
-
-## Proof style
-
-- Prefer `by decide` always over `by native_decide`
-- Mutual recursive `repr` uses `termination_by sizeOf` + `decreasing_by`.
-- `namespace CpsatScheduler` for domain, `CpsatSolver` for IR, `Python` for AST,
-  `Scipy` for scipy path. Keep new defs in the matching namespace.
+- No comments; let code speak. Simplify after finishing.
+- Structures carry proof fields. If necessary, provide smart
+  `mk`/`of` that discharge proofs via `:= by decide` defaults.
+  Derive per-element proofs by monotonicity
+  (`Task.ofBucketRange`), never per-item.
+- All solver ints satisfy `CpsatSolver.Int64.Nonoverflow`; thread
+  proofs through arithmetic. No `Float` in model — convert via
+  `Scipy.Convert.floatToRat`/`roundToInt64?`, track `errorBound`.
+- IDs from single `Builder.freshId` (StateM); uniqueness proven in
+  `Model.unique*`. Python names from IDs
+  (`EntityId.toPythonName`), never labels. Build Python via typed
+  AST, never string concat. `Python.ValidName` via `ValidName.of`
+  (proof by `decide`).
+- Prefer `by decide` over `native_decide`. Mutual `repr` uses
+  `termination_by sizeOf`. Namespaces: `CpsatScheduler` domain,
+  `CpsatSolver` IR, `Python` AST, `Scipy` scipy.
 
 ## Adding a module
 
-1. Create `CpsatScheduler/<Name>.lean` in the correct namespace.
-2. Add `import CpsatScheduler.<Name>` to `CpsatScheduler.lean` if it's public API.
-3. Build to verify (see build-and-test rule).
-
+1. Create `CpsatScheduler/<Name>.lean` in correct namespace.
+2. Add `import CpsatScheduler.<Name>` to `CpsatScheduler.lean` if
+   public.
+3. `lake build` to verify.
