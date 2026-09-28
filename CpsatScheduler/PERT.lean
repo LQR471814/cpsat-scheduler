@@ -30,9 +30,11 @@ def Cost.hull (c : Cost) : NonemptyDomain :=
   }
 
 def costTable (py : Python.DaemonProcess)
-  (cost : Cost) (demand : DemandEstimate)
+  (task : CpsatScheduler.Task S) (cost : Cost) (demand : DemandEstimate)
   (steps : Array Float) :
-    IO (Except String CostDemandTable) := do
+    IO (Except String
+      (CostDemandTable
+        (TaskVars.demandDomain task).domain cost.hull.domain)) := do
   let pairs ← Stats.PERT.costDemandPairs
     py demand.opt demand.exp demand.pes (Float.ofInt cost.val)
     steps
@@ -51,7 +53,14 @@ def costTable (py : Python.DaemonProcess)
         timeDemanded := demand
         encodedCost := cost
       })
-    pure ⟨points⟩
+    if h : points.size > 0 then
+      match CostDemandTable.ofPoints
+        (TaskVars.demandDomain task).domain cost.hull.domain points h with
+        | .some table => .ok table
+        | .none =>
+          .error "a cost/demand point fell outside the task's demand or cost domain"
+    else
+      .error "got empty points array"
 
 structure TaskConfig (S : Timescales) where
   cost : Cost
@@ -64,12 +73,25 @@ structure Task (cfg : TaskConfig S) where
 
 def Task.of (py : Python.DaemonProcess) (cfg : TaskConfig S) :
     IO (Except String (Builder (Task cfg))) := do
-  let table ← PERT.costTable py cfg.cost cfg.demand cfg.steps
+  let table ← PERT.costTable py cfg.task cfg.cost cfg.demand cfg.steps
   pure (match table with
     | .ok table =>
       .ok do
         let taskVarsResult ← TaskVars.of cfg.task cfg.cost.hull
-        let _ ← table.constrain taskVarsResult.vars .always
+        let hd :
+          (TaskVars.demandDomain cfg.task).domain
+            = taskVarsResult.vars.timeDemandedVar.domain.domain :=
+          congrArg NonemptyDomain.domain taskVarsResult.demand_domain.symm
+        let hc :
+          cfg.cost.hull.domain
+            = taskVarsResult.vars.costVar.domain.domain :=
+          congrArg NonemptyDomain.domain taskVarsResult.cost_domain.symm
+        let table' :
+          CostDemandTable
+            taskVarsResult.vars.timeDemandedVar.domain.domain
+            taskVarsResult.vars.costVar.domain.domain :=
+          hd ▸ hc ▸ table
+        let _ ← CostDemandTable.constrain taskVarsResult.vars table' .always
         pure ⟨taskVarsResult⟩
     | .error err =>
       .error s!"PERT.costTable: {err}")

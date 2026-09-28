@@ -97,19 +97,28 @@ inductive Constraint.Variant where
   | max_equality
     (target : LinearExpr.WithBounds)
     (exprs : Array LinearExpr.WithBounds)
+    (nonempty : exprs.size > 0 := by decide)
   | div_eq
     (target : LinearExpr.WithBounds)
     (numerator : LinearExpr.WithBounds)
     (divisor : Int64)
-    (divisor_pos : (0 : ℤ) < divisor)
+    (divisor_pos : (0 : ℤ) < divisor := by decide)
   | allowed_assignments {n : Nat}
     (vars : Vector IntVar n)
     (rows : Array (Vector Int64 n))
+    (nonempty : rows.size > 0 := by decide)
+    (within_domain :
+      ∀ row ∈ rows,
+      ∀ i : Fin vars.size,
+        (row[i].val : ℤ) ∈ vars[i].domain.domain
+      := by decide)
   | cumulative
     (items : Array CumulativeItem)
     (capacity : LinearExpr.WithBounds)
   | bool_and (terms : Array BoolLit)
+    (nonempty : terms.size > 0)
   | bool_or (terms : Array BoolLit)
+    (nonempty : terms.size > 0)
   | implication (src : BoolLit) (dst : BoolLit)
 
 structure Constraint where

@@ -136,3 +136,4 @@ def main : IO Unit := do
     | .ok (.infeasible) => IO.println "infeasible"
     | .ok (.modelInvalid) => IO.println "model invalid"
     | .ok (.unknown) => IO.println "unknown"
+  py.child.kill

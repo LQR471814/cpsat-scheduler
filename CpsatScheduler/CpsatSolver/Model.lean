@@ -1,5 +1,6 @@
 import CpsatScheduler.CpsatSolver.LinearExpr
 import CpsatScheduler.CpsatSolver.ToPython
+import CpsatScheduler.CpsatSolver.WellFormed
 
 import Lean.Data.Json.Parser
 
@@ -58,8 +59,6 @@ structure Model where
   uniqueIntervals : idsUnique raw.intervals
   uniqueConstraints : idsUnique raw.constraints
   references : raw.ReferencesWellFormed
-  variantsWF : ∀ c ∈ raw.constraints, c.variant.WellFormed
-  presolve : ∀ c ∈ raw.constraints, c.PassesPresolveSanityChecks
 
 abbrev Builder := StateM RawModel
 
@@ -118,8 +117,9 @@ def Builder.newFixedSizeInterval {b : Bounds}
   pure ⟨v, rfl, rfl⟩
 
 def Builder.addConstraint (enforcement : Constraint.Enforcement)
-    (variant : Constraint.Variant) (label : Option String := none) :
-    Builder (Builder.ConstraintResult enforcement variant label) := do
+    (variant : Constraint.Variant)
+    (label : Option String := none) :
+      Builder (Builder.ConstraintResult enforcement variant label) := do
   let id ← Builder.freshId
   let c : Constraint := {
     id := id, label := label, enforcement := enforcement, variant := variant
@@ -247,9 +247,7 @@ def RawModel.finalize (m : RawModel)
     (uniqueBools : idsUnique m.bools)
     (uniqueIntervals : idsUnique m.intervals)
     (uniqueConstraints : idsUnique m.constraints)
-    (references : m.ReferencesWellFormed)
-    (variantsWF : ∀ c ∈ m.constraints, c.variant.WellFormed)
-    (presolve : ∀ c ∈ m.constraints, c.PassesPresolveSanityChecks) : Model :=
+    (references : m.ReferencesWellFormed) : Model :=
   {
     raw := m
     uniqueInts := uniqueInts
@@ -257,15 +255,7 @@ def RawModel.finalize (m : RawModel)
     uniqueIntervals := uniqueIntervals
     uniqueConstraints := uniqueConstraints
     references := references
-    variantsWF := variantsWF
-    presolve := presolve
   }
-
-def RawModel.wfB (m : RawModel) : Bool :=
-  m.constraints.all (fun c => decide c.variant.WellFormed)
-
-def RawModel.presolveB (m : RawModel) : Bool :=
-  m.constraints.all (fun c => decide c.PassesPresolveSanityChecks)
 
 def RawModel.finalize? (m : RawModel) : Except String Model :=
   if h1 : idsUniqueB m.ints = true then
@@ -273,26 +263,12 @@ def RawModel.finalize? (m : RawModel) : Except String Model :=
   if h3 : idsUniqueB m.intervals = true then
   if h4 : idsUniqueB m.constraints = true then
   if h5 : m.refsOkB = true then
-  if h6 : m.wfB = true then
-  if h7 : m.presolveB = true then
     .ok (m.finalize
       ((idsUniqueB_iff m.ints).mp h1)
       ((idsUniqueB_iff m.bools).mp h2)
       ((idsUniqueB_iff m.intervals).mp h3)
       ((idsUniqueB_iff m.constraints).mp h4)
-      ((RawModel.refsOkB_iff m).mp h5)
-      (by
-        unfold RawModel.wfB at h6
-        intro c hc
-        obtain ⟨i, hi, rfl⟩ := Array.getElem_of_mem hc
-        exact of_decide_eq_true (Array.all_eq_true.mp h6 i hi))
-      (by
-        unfold RawModel.presolveB at h7
-        intro c hc
-        obtain ⟨i, hi, rfl⟩ := Array.getElem_of_mem hc
-        exact of_decide_eq_true (Array.all_eq_true.mp h7 i hi)))
-  else .error "h7"
-  else .error "h6"
+      ((RawModel.refsOkB_iff m).mp h5))
   else .error "h5"
   else .error "h4"
   else .error "h3"
@@ -401,7 +377,7 @@ def BoundedLinearExpr.holds (expr : BoundedLinearExpr) (a : Assignment) : Prop :
 def Constraint.Variant.holdsB (v : Constraint.Variant) (a : Assignment) : Bool :=
   match v with
   | .bounded_linear expr => expr.holdsB a
-  | .max_equality target exprs =>
+  | .max_equality target exprs _ =>
     let tv := target.snd.eval a.valuation
     exprs.all (fun e => decide (e.snd.eval a.valuation ≤ tv)) &&
       (decide (exprs.size = 0) ||
@@ -409,7 +385,7 @@ def Constraint.Variant.holdsB (v : Constraint.Variant) (a : Assignment) : Bool :
   | .div_eq target numerator divisor _ =>
     decide (target.snd.eval a.valuation =
       Int.tdiv (numerator.snd.eval a.valuation) divisor.val)
-  | allowed_assignments vars rows =>
+  | allowed_assignments vars rows _ _ =>
     rows.any fun row =>
       decide (∀ i : Fin vars.size, a.intVal vars[i].id = row[i].val)
   | .cumulative items capacity =>
@@ -421,8 +397,8 @@ def Constraint.Variant.holdsB (v : Constraint.Variant) (a : Assignment) : Bool :
         let sz := it.interval.size.val
         let d := it.demand.snd.eval a.valuation
         if s ≤ t ∧ t < s + sz then acc + d else acc) 0) ≤ cap)
-  | .bool_and terms => terms.toList.all (fun l => l.eval a)
-  | .bool_or terms => terms.toList.any (fun l => l.eval a)
+  | .bool_and terms _ => terms.toList.all (fun l => l.eval a)
+  | .bool_or terms _ => terms.toList.any (fun l => l.eval a)
   | .implication src dst => (!src.eval a || dst.eval a)
 
 def Constraint.Variant.holds (v : Constraint.Variant) (a : Assignment) : Prop :=
@@ -540,11 +516,11 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
       .call (modelDot (Python.ValidName.of "add"))
         #[expr.toPythonExpr]
         #[]
-    | .bool_and terms =>
+    | .bool_and terms _ =>
       .call (modelDot (Python.ValidName.of "add_bool_and"))
         (terms.map (fun t => t.toPythonExpr))
         #[]
-    | .bool_or terms =>
+    | .bool_or terms _ =>
       .call (modelDot (Python.ValidName.of "add_bool_or"))
         (terms.map (fun t => t.toPythonExpr))
         #[]
@@ -552,7 +528,7 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
       .call (modelDot (Python.ValidName.of "add_implication"))
         #[src.toPythonExpr, dst.toPythonExpr]
         #[]
-    | .max_equality target exprs =>
+    | .max_equality target exprs _ =>
       .call (modelDot (Python.ValidName.of "add_max_equality"))
         (#[sigmaExprToPython target] ++ exprs.map sigmaExprToPython)
         #[]
@@ -562,7 +538,7 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
         #[ sigmaExprToPython target, sigmaExprToPython numerator,
           .lit (.int divisor) ]
         #[]
-    | .allowed_assignments vars rows =>
+    | .allowed_assignments vars rows _ _ =>
       .call
         (modelDot (Python.ValidName.of "add_allowed_assignments"))
         #[
@@ -754,6 +730,7 @@ private def Model.interpret (model : Model) (status : SolveStatus)
 
 def Model.solve (model : Model) (py : Python.DaemonProcess) :
     IO (Except String (SolveResult model)) := do
+  IO.println model.script.repr
   let result ← py.execWithJson model.script
   pure do
     let outJson ← result

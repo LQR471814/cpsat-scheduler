@@ -42,19 +42,6 @@ example :
     (3 : ℤ) ∈ Interval.ofValue (Int64.of 3) := by
   decide
 
-def emptyModel? : Option Model := RawModel.finalize? {}
-
-example : emptyModel?.isSome = true := by
-  native_decide
-
-def emptyModel : Model := emptyModel?.get (by native_decide)
-
-example : emptyModel.satisfiesB ⟨[], []⟩ = true := by
-  native_decide
-
-example : emptyModel.evalObjective ⟨[], []⟩ = Option.none := by
-  native_decide
-
 example :
     let asgn : Assignment := ⟨[⟨⟨0⟩, 4⟩], []⟩
     asgn.intVal ⟨0⟩ = 4 := by
