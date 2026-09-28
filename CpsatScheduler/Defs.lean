@@ -101,31 +101,4 @@ structure Task (scales : Timescales) where
       CpsatSolver.Int64.Nonoverflow (k * unit.val.val) ∧
       CpsatSolver.Int64.Nonoverflow ((k + 1) * unit.val.val)
 
-structure CostPoint where
-  timeDemanded : CpsatSolver.Int64
-  encodedCost : CpsatSolver.Int64
-deriving DecidableEq
-
-structure CostTable (unit : UnitScale) where
-  points : Array CostPoint
-  nonempty : 0 < points.size
-  uniqueDemand :
-    ∀ i j : Fin points.size, i ≠ j →
-      points[i].timeDemanded ≠ points[j].timeDemanded
-  demandBounds :
-    ∀ p ∈ points,
-      (0 : ℤ) ≤ p.timeDemanded.val ∧
-      p.timeDemanded.val ≤ unit.val
-  trueCost : ℤ → ℚ
-  errorBound : ℚ
-  error_nonneg : 0 ≤ errorBound
-  encodedClose :
-    ∀ p ∈ points,
-      |trueCost p.timeDemanded.val - p.encodedCost.val| ≤ errorBound
-
-inductive TaskRel where
-  | bucketContainedIn
-  | prerequisite
-deriving DecidableEq
-
 end CpsatScheduler

@@ -12,7 +12,6 @@ import Std.Time
 open CpsatScheduler
 open CpsatScheduler.Schedule
 open CpsatSolver
-open Scipy
 open Std.Time
 
 def runtime : Python.Runtime := { path := ".venv/bin/python3" }
@@ -32,10 +31,10 @@ def scales := Timescales.mk units horizon
 def sched : ScheduleMap :=
   ScheduleMap.ofDateTime scales (epoch := datetime("2026-01-01T00:00:00")) (atomicSec := 900)
 
-def blocked : List Alloc :=
+def blockedAllocs : List Alloc :=
   sched.quantizeEventDateTime datetime("2026-01-01T01:30:00") datetime("2026-01-01T01:45:00") unit4
 
-example : totalAlloc blocked = 1 := by decide
+example : totalAlloc blockedAllocs = 1 := by decide
 
 @[simp] def taskA : Task scales :=
   sched.task { val := 1 } (Subtype.mk atomic (by decide))
@@ -55,42 +54,60 @@ example : totalAlloc blocked = 1 := by decide
     (startBeforeSec := plainDateTimeToSecUTC datetime("2026-01-01T01:00:00"))
     (label := some "task_c")
 
-def configA : PERT.Config :=
-  { opt := 1.0, exp := 2.0, pes := 5.0, cost := 1000.0, steps := 2, steps_nonzero := by decide }
+def pertSteps : Array Float := Stats.PERT.Distribute.cubic 3
 
-def configB : PERT.Config :=
-  { opt := 2.0, exp := 4.0, pes := 9.0, cost := 1000.0, steps := 5, steps_nonzero := by decide }
-
-def configC : PERT.Config :=
-  { opt := 1.0, exp := 3.0, pes := 8.0, cost := 1000.0, steps := 5, steps_nonzero := by decide }
-
-def demoModel : IO (Option Model) := do
-  let result ← BatchM.run runtime do
-    let pA ← PERT.Constraint.requestCostTable configA
-    let pB ← PERT.Constraint.requestCostTable configB
-    let pC ← PERT.Constraint.requestCostTable configC
-    pure ()
-  pure do
-    let tableA ← pA.resolve results atomic
-    let tableB ← pB.resolve results unit4
-    let tableC ← pC.resolve results unit4
-    let blockedValid <- Alloc.checkMany blocked
-    let result := Builder.run do
-      let a ← TaskVars.of taskA tableA.costHull
-      let b ← TaskVars.of taskB tableB.costHull
-      let c ← TaskVars.of taskC tableC.costHull
-      PERT.Constraint.costByTable a.vars tableA
-      PERT.Constraint.costByTable b.vars tableB
-      PERT.Constraint.costByTable c.vars tableC
+def demoModel (py : Python.DaemonProcess) : IO (Except String Model) := do
+  let blockedAllocs ← match Alloc.checkMany blockedAllocs with
+    | .some b => .ok b
+    | .none => .error "allocs were not valid"
+  let cfgA := {
+    task := taskA
+    cost := PERT.Cost.of 1000
+    demand := ⟨1.0, 2.0, 5.0⟩
+    steps := pertSteps
+  }
+  let buildTaskA ← PERT.Task.of py cfgA
+  let cfgB := {
+    task := taskB
+    cost := PERT.Cost.of 1000
+    demand := ⟨2.0, 4.0, 9.0⟩
+    steps := pertSteps
+  }
+  let buildTaskB ← PERT.Task.of py cfgB
+  let cfgC := {
+    task := taskC
+    cost := PERT.Cost.of 1000
+    demand := ⟨1.0, 3.0, 8.0⟩
+    steps := pertSteps
+  }
+  let buildTaskC ← PERT.Task.of py cfgC
+  let result : Except String Model := do
+    let a ← buildTaskA
+    let b ← buildTaskB
+    let c ← buildTaskC
+    let ⟨model, _⟩ := Builder.run do
+      let a ← a;
+      let b ← b;
+      let c ← c;
       let _ ← Builder.addConstraint .always
         (.bounded_linear
-          (Constraint.prerequisite c.vars.startVar a.vars.startVar
-            (by rw [a.start_domain]; decide)))
+          (Constraint.prerequisite c.taskVars.vars.startVar a.taskVars.vars.startVar
+            (by
+              rw [a.taskVars.start_domain]
+              dsimp [cfgA]
+              decide)))
         (some "task_c_before_a")
-      Constraint.packing #[ a.vars, b.vars, c.vars ] blockedValid
-      let _ ← Objective.minimizeCostSum #[ a.vars, b.vars, c.vars ]
+      Constraint.packing #[
+        a.taskVars.vars,
+        b.taskVars.vars,
+        c.taskVars.vars
+      ] blockedAllocs
+      let _ ← Objective.minimizeCostSum #[ a.taskVars.vars, b.taskVars.vars, c.taskVars.vars ]
       pure ()
-    result.1.finalize?
+    let model ← model.finalize?
+      |> .mapError (s!"finalize model: {·}")
+    pure model
+  .ok result
 
 def startDateOf (model : Model) (a : Assignment)
     (label : String) (unit : UnitScale) : Option String :=
@@ -98,13 +115,16 @@ def startDateOf (model : Model) (a : Assignment)
     |>.map fun p => sched.bucketDateString unit p.2
 
 def main : IO Unit := do
+  IO.println "starting python daemon..."
+  let py ← Python.DaemonProcess.spawn runtime #[]
+  Stats.PERT.init py
   IO.println "generating model..."
-  let model? <- demoModel
-  match model? with
-  | none => IO.println "invalid model"
-  | some model =>
+  let model ← demoModel py
+  match model with
+  | .error err => IO.println s!"gen model: {err}"
+  | .ok model =>
     IO.println "solving..."
-    match ← model.solve runtime with
+    match ← model.solve py with
     | .error err => IO.println s!"error: {err}"
     | .ok (.optimal asgn _) =>
       IO.println "optimal schedule:"

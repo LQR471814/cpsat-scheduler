@@ -1,3 +1,0 @@
-
-BatchM
-BatchM.request

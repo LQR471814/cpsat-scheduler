@@ -1,62 +1,77 @@
 import CpsatScheduler.Defs
 import CpsatScheduler.CostTable
-import CpsatScheduler.TaskVars
-import CpsatScheduler.Scipy.PERT
-import CpsatScheduler.Scipy.Batch
-import CpsatScheduler.Scipy.Convert
+import CpsatScheduler.Stats.PERT
 
 namespace PERT
 
 open CpsatScheduler
 open CpsatSolver
 
-structure Config where
+structure DemandEstimate where
   opt : Float
   exp : Float
   pes : Float
-  cost : Float
-  steps : ℕ
-  steps_nonzero : steps > 0
 
-namespace Constraint
+abbrev Cost := { x : CpsatSolver.Int64 // x ≥ (CpsatSolver.Int64.of 0) }
 
-open Scipy
+def Cost.of (v : ℤ)
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow v := by decide)
+  (nonzero : v ≥ (0 : ℤ) := by decide) : Cost :=
+  Subtype.mk (Subtype.mk v nonoverflow) nonzero
 
-def costPrecision : ℕ := 6
+def Cost.hull (c : Cost) : NonemptyDomain :=
+  {
+    domain := Domain.interval {
+      left := CpsatSolver.Int64.of 0
+      right := c
+      left_le_right := c.prop
+    },
+    nonempty := by simp
+  }
 
-structure CostTableHandle where
-  config : Config
-  start : Nat
+def costTable (py : Python.DaemonProcess)
+  (cost : Cost) (demand : DemandEstimate)
+  (steps : Array Float) :
+    IO (Except String CostDemandTable) := do
+  let pairs ← Stats.PERT.costDemandPairs
+    py demand.opt demand.exp demand.pes (Float.ofInt cost.val)
+    steps
+  pure do
+    let pairs ← pairs |> .mapError (fun err => s!"Stats.PERT.costDemandPairs: {err}")
+    let points ← pairs.mapM (fun p => do
+      let demand : CpsatSolver.Int64 ←
+        match Int64.ofFloat? p.demand with
+          | .some val => .ok val
+          | .none => .error "demand float overflowed int64"
+      let cost : CpsatSolver.Int64 ←
+        match Int64.ofFloat? p.cost with
+          | .some val => .ok val
+          | .none => .error "cost float overflowed int64"
+      .ok {
+        timeDemanded := demand
+        encodedCost := cost
+      })
+    pure ⟨points⟩
 
-def requestCostTable (config : Config) : BatchM CostTableHandle := do
-  let start := (← get).requests.size
-  for δ in Array.range config.steps do
-    let _ ← BatchM.request
-      (pertCostExpr config.opt config.exp config.pes config.cost δ.toFloat)
-  pure { config := config, start := start }
+structure TaskConfig (S : Timescales) where
+  cost : Cost
+  demand : DemandEstimate
+  steps : Array Float
+  task : CpsatScheduler.Task S
 
-private def pointAt (handle : CostTableHandle) (results : Array Float) (i : ℕ) :
-    Option (CostPoint × ℚ) := do
-  let cost ← results[handle.start + i]?
-  let demand ← Scipy.Convert.int64? (i : ℤ)
-  let encoded ← Scipy.Convert.roundToInt64? cost
-  pure (⟨demand, encoded⟩, Scipy.Convert.floatToRat cost costPrecision)
+structure Task (cfg : TaskConfig S) where
+  taskVars : TaskVarsResult S cfg.task cfg.cost.hull
 
-def CostTableHandle.resolve (handle : CostTableHandle) (results : Array Float)
-    (unit : UnitScale) : Option (CostTable unit) := do
-  let entries ← (Array.range handle.config.steps).mapM (pointAt handle results)
-  let costOf (demand : ℤ) : ℚ :=
-    (entries.find? (fun e => e.fst.timeDemanded.val == demand)).map (·.snd) |>.getD 0
-  CostTable.ofPoints? unit (entries.map (·.fst)) costOf Scipy.Convert.roundingErrorBound
-
-def costByTable {scales : Timescales} {unit : UnitScale}
-    (vars : TaskVars scales) (table : CostTable unit) : Builder Unit := do
-  let cols : Vector IntVar 2 := ⟨#[vars.timeDemandedVar, vars.costVar], rfl⟩
-  let _ ← Builder.addConstraint .always
-    (.allowed_assignments cols table.allowedRows)
-    (some s!"task_{vars.task.id.val}_pert_cost")
-  pure ()
-
-end Constraint
+def Task.of (py : Python.DaemonProcess) (cfg : TaskConfig S) :
+    IO (Except String (Builder (Task cfg))) := do
+  let table ← PERT.costTable py cfg.cost cfg.demand cfg.steps
+  pure (match table with
+    | .ok table =>
+      .ok do
+        let taskVarsResult ← TaskVars.of cfg.task cfg.cost.hull
+        let _ ← table.constrain taskVarsResult.vars .always
+        pure ⟨taskVarsResult⟩
+    | .error err =>
+      .error s!"PERT.costTable: {err}")
 
 end PERT

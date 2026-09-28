@@ -10,9 +10,6 @@ import Lean.Data.Json.Parser
 namespace CpsatSolver
 
 namespace Model.Python.Name
-private def print := Python.ValidName.of "print"
-private def json := Python.ValidName.of "json"
-private def dumps := Python.ValidName.of "dumps"
 private def cpModelLib := Python.ValidName.of "cp_model"
 private def model := Python.ValidName.of "__cpsat_model"
 private def cpsatSolver := Python.ValidName.of "__cpsat_solver"
@@ -270,7 +267,7 @@ def RawModel.wfB (m : RawModel) : Bool :=
 def RawModel.presolveB (m : RawModel) : Bool :=
   m.constraints.all (fun c => decide c.PassesPresolveSanityChecks)
 
-def RawModel.finalize? (m : RawModel) : Option Model :=
+def RawModel.finalize? (m : RawModel) : Except String Model :=
   if h1 : idsUniqueB m.ints = true then
   if h2 : idsUniqueB m.bools = true then
   if h3 : idsUniqueB m.intervals = true then
@@ -278,7 +275,7 @@ def RawModel.finalize? (m : RawModel) : Option Model :=
   if h5 : m.refsOkB = true then
   if h6 : m.wfB = true then
   if h7 : m.presolveB = true then
-    some (m.finalize
+    .ok (m.finalize
       ((idsUniqueB_iff m.ints).mp h1)
       ((idsUniqueB_iff m.bools).mp h2)
       ((idsUniqueB_iff m.intervals).mp h3)
@@ -294,7 +291,13 @@ def RawModel.finalize? (m : RawModel) : Option Model :=
         intro c hc
         obtain ⟨i, hi, rfl⟩ := Array.getElem_of_mem hc
         exact of_decide_eq_true (Array.all_eq_true.mp h7 i hi)))
-  else none else none else none else none else none else none else none
+  else .error "h7"
+  else .error "h6"
+  else .error "h5"
+  else .error "h4"
+  else .error "h3"
+  else .error "h2"
+  else .error "h1"
 
 namespace LinearExpr
 
@@ -480,48 +483,52 @@ private def Model.Python.domainExpr (d : Domain) : Python.Expr :=
     (.dot
       (.dot
         (.id Model.Python.Name.cpModelLib)
-        (Python.ValidName.mk "Domain" (by decide)))
-      (Python.ValidName.mk "from_intervals" (by decide)))
+        (Python.ValidName.of "Domain"))
+      (Python.ValidName.of "from_intervals"))
     #[.lit (.array
       (d.intervals.toArray.map fun i =>
         .lit (.array #[
           .lit (.int i.left),
           .lit (.int i.right)])))]
+    #[]
 
 private def Model.Python.boolVar (var : BoolVar) : Python.Statement :=
-  .exprLine (.assign (.id var.id.toPythonName) (
+  .assignLine (.id var.id.toPythonName) (
     .call
       (.dot
         (.id Model.Python.Name.model)
-        (Python.ValidName.mk "new_bool_var" (by decide)))
+        (Python.ValidName.of "new_bool_var"))
       #[.lit (.str (var.label.getD var.id.toPythonName.val))]
-  ))
+      #[]
+  )
 
 private def Model.Python.intVar (var : IntVar) : Python.Statement :=
-  .exprLine (.assign (.id var.id.toPythonName) (
+  .assignLine (.id var.id.toPythonName) (
     .call
       (.dot
         (.id Model.Python.Name.model)
-        (Python.ValidName.mk "new_int_var_from_domain" (by decide)))
+        (Python.ValidName.of "new_int_var_from_domain"))
       #[
         Model.Python.domainExpr var.domain.domain,
         .lit (.str (var.label.getD var.id.toPythonName.val))
       ]
-  ))
+      #[]
+  )
 
 private def Model.Python.fixedSizeIntervalVar
     (var : FixedSizeIntervalVar) : Python.Statement :=
-  .exprLine (.assign (.id var.id.toPythonName) (
+  .assignLine (.id var.id.toPythonName) (
     .call
       (.dot
         (.id Model.Python.Name.model)
-        (Python.ValidName.mk "new_fixed_size_interval_var" (by decide)))
+        (Python.ValidName.of "new_fixed_size_interval_var"))
       #[
         (@LinearExpr.toPythonExpr var.startBounds var.start),
         .lit (.int var.size),
         .lit (.str (var.label.getD var.id.toPythonName.val))
       ]
-  ))
+      #[]
+  )
 
 private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
   let sigmaExprToPython (e : LinearExpr.WithBounds) : Python.Expr :=
@@ -530,28 +537,34 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
     .dot (.id Model.Python.Name.model) attr
   let constraint : Python.Expr := match cnst.variant with
     | .bounded_linear expr =>
-      .call (modelDot (Python.ValidName.mk "add" (by decide)))
+      .call (modelDot (Python.ValidName.of "add"))
         #[expr.toPythonExpr]
+        #[]
     | .bool_and terms =>
-      .call (modelDot (Python.ValidName.mk "add_bool_and" (by decide)))
+      .call (modelDot (Python.ValidName.of "add_bool_and"))
         (terms.map (fun t => t.toPythonExpr))
+        #[]
     | .bool_or terms =>
-      .call (modelDot (Python.ValidName.mk "add_bool_or" (by decide)))
+      .call (modelDot (Python.ValidName.of "add_bool_or"))
         (terms.map (fun t => t.toPythonExpr))
+        #[]
     | .implication src dst =>
-      .call (modelDot (Python.ValidName.mk "add_implication" (by decide)))
+      .call (modelDot (Python.ValidName.of "add_implication"))
         #[src.toPythonExpr, dst.toPythonExpr]
+        #[]
     | .max_equality target exprs =>
-      .call (modelDot (Python.ValidName.mk "add_max_equality" (by decide)))
+      .call (modelDot (Python.ValidName.of "add_max_equality"))
         (#[sigmaExprToPython target] ++ exprs.map sigmaExprToPython)
+        #[]
     | .div_eq target numerator divisor _ =>
       .call
-        (modelDot (Python.ValidName.mk "add_division_equality" (by decide)))
-        #[sigmaExprToPython target, sigmaExprToPython numerator,
-          .lit (.int divisor)]
+        (modelDot (Python.ValidName.of "add_division_equality"))
+        #[ sigmaExprToPython target, sigmaExprToPython numerator,
+          .lit (.int divisor) ]
+        #[]
     | .allowed_assignments vars rows =>
       .call
-        (modelDot (Python.ValidName.mk "add_allowed_assignments" (by decide)))
+        (modelDot (Python.ValidName.of "add_allowed_assignments"))
         #[
           .lit (.array
             (vars.toArray.map (fun v => v.toPythonExpr))),
@@ -560,32 +573,32 @@ private def Model.Python.constraint (cnst : Constraint) : Python.Statement :=
               .lit (.array
                 (row.toArray.map fun n =>
                   .lit (.int n.val)))))
-        ]
+        ] #[]
     | .cumulative items capacity =>
-      .call (modelDot (Python.ValidName.mk "add_cumulative" (by decide)))
+      .call (modelDot (Python.ValidName.of "add_cumulative"))
         #[
           .lit (.array
             (items.map fun it => it.interval.toPythonExpr)),
           .lit (.array
             (items.map fun it => sigmaExprToPython it.demand)),
           sigmaExprToPython capacity
-        ]
+        ] #[]
   let labeled :=
     match cnst.label with
     | some lab =>
       .call
-        (.dot constraint (Python.ValidName.mk "with_name" (by decide)))
-        #[.lit (.str lab)]
+        (.dot constraint (Python.ValidName.of "with_name"))
+        #[.lit (.str lab)] #[]
     | none =>
       .call
-        (.dot constraint (Python.ValidName.mk "with_name" (by decide)))
-        #[.lit (.str cnst.id.toPythonName.val)]
+        (.dot constraint (Python.ValidName.of "with_name"))
+        #[.lit (.str cnst.id.toPythonName.val)] #[]
   match cnst.enforcement with
   | Constraint.Enforcement.always => .exprLine labeled
   | Constraint.Enforcement.onlyWhenAll literals =>
     .exprLine (.call
-      (.dot labeled (Python.ValidName.mk "only_enforce_if" (by decide)))
-      (literals.map (fun l : BoolLit => l.toPythonExpr)).toArray)
+      (.dot labeled (Python.ValidName.of "only_enforce_if"))
+      (literals.map (fun l : BoolLit => l.toPythonExpr)).toArray #[])
 
 private def Model.Python.objective (obj : Objective) : Array Python.Statement :=
   match obj with
@@ -593,34 +606,33 @@ private def Model.Python.objective (obj : Objective) : Array Python.Statement :=
   | .minimize e =>
     #[.exprLine (.call
       (.dot (.id Model.Python.Name.model)
-        (Python.ValidName.mk "minimize" (by decide)))
-      #[@LinearExpr.toPythonExpr e.fst e.snd])]
+        (Python.ValidName.of "minimize"))
+      #[@LinearExpr.toPythonExpr e.fst e.snd] #[])]
   | .maximize e =>
     #[.exprLine (.call
       (.dot (.id Model.Python.Name.model)
-        (Python.ValidName.mk "maximize" (by decide)))
-      #[@LinearExpr.toPythonExpr e.fst e.snd])]
+        (Python.ValidName.of "maximize"))
+      #[@LinearExpr.toPythonExpr e.fst e.snd] #[])]
 
 private def Model.Python.imports : Array Python.Statement := #[
   .importLine
     (.fromForm
-      #[Python.ValidName.mk "ortools" (by decide),
-        Python.ValidName.mk "sat" (by decide),
-        Python.ValidName.mk "python" (by decide)]
+      #[Python.ValidName.of "ortools",
+        Python.ValidName.of "sat",
+        Python.ValidName.of "python"]
       #[Python.NameAs.unaliased Model.Python.Name.cpModelLib]),
   .importLine
     (.fromForm
-      #[Model.Python.Name.json]
-      #[Python.NameAs.unaliased Model.Python.Name.dumps])
+      #[Python.StdName.json]
+      #[Python.NameAs.unaliased Python.StdName.dumps])
 ]
 
 private def Model.Python.modelDef (model : Model) : Array Python.Statement :=
   let frontmatter : Array Python.Statement := #[
-    .exprLine (.assign
-      (.id Model.Python.Name.model)
+    .assignLine (.id Model.Python.Name.model)
       (.call
         (.dot (.id Model.Python.Name.cpModelLib)
-          (Python.ValidName.mk "CpModel" (by decide))) #[]))
+          (Python.ValidName.of "CpModel")) #[] #[])
   ]
   frontmatter ++
     (model.raw.ints.map Model.Python.intVar) ++
@@ -631,19 +643,16 @@ private def Model.Python.modelDef (model : Model) : Array Python.Statement :=
 
 private def Model.Python.reportSolution (model : Model) : Array Python.Statement :=
   #[
-    .exprLine (.assign
-      (.id Model.Python.Name.cpsatSolver)
+    .assignLine (.id Model.Python.Name.cpsatSolver)
       (.call
         (.dot (.id Model.Python.Name.cpModelLib)
-          (Python.ValidName.mk "CpSolver" (by decide))) #[])),
-    .exprLine (.assign
-      (.id Model.Python.Name.solveStatus)
+          (Python.ValidName.of "CpSolver")) #[] #[]),
+    .assignLine (.id Model.Python.Name.solveStatus)
       (.call
         (.dot (.id Model.Python.Name.cpsatSolver)
-          (Python.ValidName.mk "solve" (by decide)))
-        #[.id Model.Python.Name.model])),
-    .exprLine (.assign
-      (.id Model.Python.Name.output)
+          (Python.ValidName.of "solve"))
+        #[.id Model.Python.Name.model] #[]),
+    .assignLine (.id Model.Python.Name.output)
       (.lit (.dict #[
         (Prod.mk
           (.lit (.str Model.Python.Literals.ints))
@@ -652,8 +661,8 @@ private def Model.Python.reportSolution (model : Model) : Array Python.Statement
               (.lit (.str v.id.toPythonName.val),
                 .call
                   (.dot (.id Model.Python.Name.cpsatSolver)
-                    (Python.ValidName.mk "value" (by decide)))
-                  #[v.toPythonExpr]))))),
+                    (Python.ValidName.of "value"))
+                  #[v.toPythonExpr] #[]))))),
         (Prod.mk
           (.lit (.str Model.Python.Literals.bools))
           (.lit (.dict
@@ -661,22 +670,21 @@ private def Model.Python.reportSolution (model : Model) : Array Python.Statement
               (.lit (.str v.id.toPythonName.val),
                 .call
                   (.dot (.id Model.Python.Name.cpsatSolver)
-                    (Python.ValidName.mk "value" (by decide)))
-                  #[.id v.id.toPythonName]))))),
+                    (Python.ValidName.of "value"))
+                  #[.id v.id.toPythonName] #[]))))),
         (Prod.mk
           (.lit (.str Model.Python.Literals.status))
-          (.call (.id (Python.ValidName.mk "str" (by decide)))
-            #[.id Model.Python.Name.solveStatus])),
+          (.call (.id (Python.ValidName.of "str"))
+            #[.id Model.Python.Name.solveStatus] #[])),
         (Prod.mk
           (.lit (.str Model.Python.Literals.solverObjective))
           (.dot (.id Model.Python.Name.cpsatSolver)
-            (Python.ValidName.mk "objective_value" (by decide))))
-      ]))),
-    .exprLine (.call
-      (.id Model.Python.Name.print)
-      #[.call
-        (.id (Python.ValidName.mk "dumps" (by decide)))
-        #[.id Model.Python.Name.output]])
+            (Python.ValidName.of "objective_value")))
+      ])),
+    .exprLine (Python.print
+      (.call
+        (.id (Python.ValidName.of "dumps"))
+        #[.id Model.Python.Name.output] #[]))
   ]
 
 def Model.script (model : Model) : Python.Script := {
@@ -726,20 +734,8 @@ private def parseNamedBools (model : Model)
       | none => Except.error s!"Missing bool {v.id.toPythonName.val}"
   | _ => Except.error "Missing bools object."
 
-def Model.parseScriptOutput (model : Model) (scriptOutput : String) :
-    Except String (SolveStatus × Assignment) :=
-  match Lean.Json.parse scriptOutput with
-  | .error err => Except.error s!"Parse JSON: {err}"
-  | .ok (.obj map) =>
-    match parseStatus map, parseNamedInts model map, parseNamedBools model map with
-    | .ok status, .ok ints, .ok bools =>
-      Except.ok (status, { ints := ints, bools := bools })
-    | .error err, _, _ => Except.error s!"status: {err}"
-    | _, .error err, _ => Except.error s!"ints: {err}"
-    | _, _, .error err => Except.error s!"bools: {err}"
-  | .ok _ => Except.error "Expected JSON object."
-
-def Model.interpret (model : Model) (status : SolveStatus) (asgn : Assignment) :
+private def Model.interpret (model : Model) (status : SolveStatus)
+  (asgn : Assignment) :
     Except String (SolveResult model) :=
   match status with
   | .infeasible => .ok .infeasible
@@ -756,11 +752,24 @@ def Model.interpret (model : Model) (status : SolveStatus) (asgn : Assignment) :
     else
       .error "Returned assignment does not satisfy the model."
 
-def Model.solve (model : Model) (pythonRuntime : Python.Runtime) :
+def Model.solve (model : Model) (py : Python.DaemonProcess) :
     IO (Except String (SolveResult model)) := do
-  let out ← Python.Script.exec pythonRuntime model.script
-  match Model.parseScriptOutput model out.stdout with
-  | .error err => return .error err
-  | .ok (status, asgn) => return model.interpret status asgn
+  let result ← py.execWithJson model.script
+  pure do
+    let outJson ← result
+    let map ← match outJson with
+      | .obj map => .ok map
+      | _ => .error "Expected JSON object"
+    let (status, asgn) ← match
+      parseStatus map,
+      parseNamedInts model map,
+      parseNamedBools model map
+    with
+      | .ok status, .ok ints, .ok bools =>
+        Except.ok (status, ⟨ints, bools⟩)
+      | .error err, _, _ => Except.error s!"status: {err}"
+      | _, .error err, _ => Except.error s!"ints: {err}"
+      | _, _, .error err => Except.error s!"bools: {err}"
+    Model.interpret model status asgn
 
 end CpsatSolver
