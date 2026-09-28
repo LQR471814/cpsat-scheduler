@@ -730,7 +730,6 @@ private def Model.interpret (model : Model) (status : SolveStatus)
 
 def Model.solve (model : Model) (py : Python.DaemonProcess) :
     IO (Except String (SolveResult model)) := do
-  IO.println model.script.repr
   let result ← py.execWithJson model.script
   pure do
     let outJson ← result

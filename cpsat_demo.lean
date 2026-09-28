@@ -115,10 +115,12 @@ def demoModel (py : Python.DaemonProcess) : IO (Except String Model) := do
       let c ← c;
       let _ ← Builder.addConstraint .always
         (.bounded_linear
-          (Constraint.prerequisite c.taskVars.vars.startVar a.taskVars.vars.startVar
+          -- `prerequisite succ pred` encodes `succ >= pred + 1`.
+          -- "C before A" means A starts after C: succ = A, pred = C.
+          (Constraint.prerequisite a.taskVars.vars.startVar c.taskVars.vars.startVar
             (by
-              rw [a.taskVars.start_domain]
-              dsimp [cfgA]
+              rw [c.taskVars.start_domain]
+              dsimp [cfgC]
               decide)))
         (some "task_c_before_a")
       Constraint.packing #[
