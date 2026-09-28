@@ -52,24 +52,6 @@ def costTable (py : Python.DaemonProcess)
     demand.pes.val.toFloat
     (Float.ofInt cost.val)
     steps
-  -- TODO: remove debug
-  let mapped := pairs.map (·.mapM (fun p => do
-    let demand : CpsatSolver.Int64 ←
-      match Int64.ofFloat? p.demand with
-        | .some val => Except.ok val
-        | .none => Except.error "demand float overflowed int64"
-    let cost : CpsatSolver.Int64 ←
-      match Int64.ofFloat? p.cost with
-        | .some val => Except.ok val
-        | .none => Except.error "cost float overflowed int64"
-    Except.ok ({
-      timeDemanded := demand
-      encodedCost := cost
-    } : CostDemandPoint)))
-  IO.println (mapped.map (·.map fun p =>
-    String.intercalate ", "
-      (p.map (fun el => s!"{el.encodedCost} - {el.timeDemanded}")).toList))
-  -- TODO: remove debug (end)
   pure do
     let pairs ← pairs |> .mapError (fun err => s!"Stats.PERT.costDemandPairs: {err}")
     let points ← pairs.mapM (fun p => do
