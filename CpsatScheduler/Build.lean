@@ -62,7 +62,7 @@ structure BuildSpec (scales : Timescales) where
   prereqs : List (PrereqEdge scales) := []
   withins : List (WithinEdge scales) := []
   blocked : List Alloc := []
-  blockedUnit : UnitScale := UnitScale.atomic
+  blockedUnit : UnitScale
 
 private abbrev Built (scales : Timescales) :=
   Registered scales × TaskVars scales × SolvedTaskRef
