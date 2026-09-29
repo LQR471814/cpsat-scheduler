@@ -60,21 +60,21 @@ def pertSteps : Array Float := Stats.PERT.Distribute.cubic 3
 def taskAConfig : PERT.TaskConfig scales := {
   task := taskA
   cost := PERT.Cost.of 1000
-  demand := { opt := i64 1, exp := i64 2, pes := i64 4, valid := by decide }
+  demand := { opt := int 1, exp := int 2, pes := int 4, valid := by decide }
   steps := pertSteps
 }
 
 def taskBConfig : PERT.TaskConfig scales := {
   task := taskB
   cost := PERT.Cost.of 1000
-  demand := { opt := i64 2, exp := i64 3, pes := i64 8, valid := by decide }
+  demand := { opt := int 2, exp := int 3, pes := int 8, valid := by decide }
   steps := pertSteps
 }
 
 def taskCConfig : PERT.TaskConfig scales := {
   task := taskC
   cost := PERT.Cost.of 1000
-  demand := { opt := i64 3, exp := i64 5, pes := i64 9, valid := by decide }
+  demand := { opt := int 3, exp := int 5, pes := int 9, valid := by decide }
   steps := pertSteps
 }
 

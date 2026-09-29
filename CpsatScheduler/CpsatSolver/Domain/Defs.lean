@@ -97,7 +97,7 @@ def NonemptyDomain.of (domain : Domain)
 
 end CpsatSolver
 
-abbrev i64 (n : ℤ)
+abbrev int (n : ℤ)
   (h : CpsatSolver.Int64.Nonoverflow n := by decide) :=
   CpsatSolver.Int64.of n h
 
