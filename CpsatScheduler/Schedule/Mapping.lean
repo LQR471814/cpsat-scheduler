@@ -136,8 +136,8 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
 @[simp] def ScheduleMap.task
     (m : ScheduleMap)
     (unit : { u : UnitScale // u ∈ m.scales.units.set })
-    (startAfterSec : ℤ)
-    (startBeforeSec : ℤ)
+    (startAfterSec : ℤ := m.realTimeSec m.scales.horizon.begin)
+    (startBeforeSec : ℤ := m.realTimeSec m.scales.horizon.end_ - 1)
     (kLo : ℤ := m.scheduleTimeBucket startAfterSec unit.val .up)
     (kHi : ℤ := m.scheduleTimeBucket startBeforeSec unit.val .down)
     (hle : kLo ≤ kHi := by decide)
@@ -177,6 +177,14 @@ example : (32 : ℤ) ∈ sampleTask.startDomain.domain := by decide
 example : (40 : ℤ) ∈ sampleTask.startDomain.domain := by decide
 example : (31 : ℤ) ∉ sampleTask.startDomain.domain := by decide
 example : (41 : ℤ) ∉ sampleTask.startDomain.domain := by decide
+
+def sampleTaskFull : Task sampleScales :=
+  sampleMap.task (Subtype.mk UnitScale.atomic (by decide))
+    (label := some "any_time")
+
+example : (0 : ℤ) ∈ sampleTaskFull.startDomain.domain := by decide
+example : (95 : ℤ) ∈ sampleTaskFull.startDomain.domain := by decide
+example : (96 : ℤ) ∉ sampleTaskFull.startDomain.domain := by decide
 
 example : (Horizon.ofSec 0 900 0 86400).begin = 0 := by decide
 example : (Horizon.ofSec 0 900 0 86400).end_ = 96 := by decide
