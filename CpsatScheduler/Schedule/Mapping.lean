@@ -136,8 +136,14 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
 @[simp] def ScheduleMap.task
     (m : ScheduleMap)
     (unit : { u : UnitScale // u ∈ m.scales.units.set })
-    (startAfterSec : ℤ := m.realTimeSec m.scales.horizon.begin)
-    (startBeforeSec : ℤ := m.realTimeSec m.scales.horizon.end_ - 1)
+    (startAfter : Option Std.Time.PlainDateTime := none)
+    (startBefore : Option Std.Time.PlainDateTime := none)
+    (startAfterSec : ℤ :=
+      (startAfter.map plainDateTimeToSecUTC).getD
+        (m.realTimeSec m.scales.horizon.begin))
+    (startBeforeSec : ℤ :=
+      (startBefore.map plainDateTimeToSecUTC).getD
+        (m.realTimeSec m.scales.horizon.end_ - 1))
     (kLo : ℤ := m.scheduleTimeBucket startAfterSec unit.val .up)
     (kHi : ℤ := m.scheduleTimeBucket startBeforeSec unit.val .down)
     (hle : kLo ≤ kHi := by decide)
