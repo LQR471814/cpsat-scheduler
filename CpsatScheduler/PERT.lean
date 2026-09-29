@@ -7,7 +7,7 @@ namespace PERT
 open CpsatScheduler
 open CpsatSolver
 
-@[simp] abbrev DemandEstimate.Valid
+abbrev DemandEstimate.Valid
   (task : CpsatScheduler.Task S)
   (opt exp pes : CpsatSolver.Int64) : Prop :=
     TaskVars.MemDemand task opt.val ∧
