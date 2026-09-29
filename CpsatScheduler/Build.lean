@@ -62,6 +62,7 @@ structure BuildSpec (scales : Timescales) where
   prereqs : List (PrereqEdge scales) := []
   withins : List (WithinEdge scales) := []
   blocked : List Alloc := []
+  blockedUnit : UnitScale := UnitScale.atomic
 
 private abbrev Built (scales : Timescales) :=
   Registered scales × TaskVars scales × SolvedTaskRef
@@ -141,7 +142,7 @@ def buildModel {scales : Timescales}
         match find? builtTasks edge.child.taskId, find? builtTasks edge.parent.taskId with
         | some c, some p => addWithin c.2.1 p.2.1 edge.child.taskId.val edge.parent.taskId.val
         | _, _ => pure ()
-      Constraint.packing varsArr blocked
+      Constraint.packing varsArr blocked built.blockedUnit
       let _ ← Objective.minimizeCostSum varsArr
       pure (builtTasks.map (·.2.2))
     let model ← rawModel.finalize?

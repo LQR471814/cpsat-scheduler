@@ -2,6 +2,7 @@ import CpsatScheduler.CpsatSolver.Model
 import CpsatScheduler.Task
 import CpsatScheduler.Optimality
 import CpsatScheduler.UnitScale
+import CpsatScheduler.ConstrainPacking
 
 set_option linter.style.setOption false
 set_option linter.style.nativeDecide false
@@ -100,3 +101,40 @@ example : (5 : ℤ) ∈ coarseTask.startDomain.domain := by native_decide
 
 /-- Bucket index `6` overflows the horizon and is excluded. -/
 example : (6 : ℤ) ∉ coarseTask.startDomain.domain := by native_decide
+
+/-- Bug B regression: blocked allocs quantized at `allocUnit` are only injected
+into the layer whose unit matches `allocUnit`. On any other layer (e.g. the
+capacity-1 atomic layer) the cumulative constraint carries zero alloc items, so a
+four_hour-quantized demand of `> 1` never lands on the atomic layer where it would
+be unsatisfiable. -/
+private def gatingScales : Timescales :=
+  let unit4 : UnitScale := ⟨4, by decide, by decide⟩
+  { units :=
+      { set := {UnitScale.atomic, unit4}
+        has_atomic := by decide
+        divisibility := by decide }
+    horizon :=
+      { begin := 0, end_ := 24, begin_lt_end := by decide,
+        begin_safe := by decide, end_safe := by decide } }
+
+private def gatingAlloc : Alloc.Nonoverflow :=
+  { bucket := ⟨1, by decide⟩, alloc := ⟨11, by decide⟩ }
+
+private def gatingLayerItemCount (u : UnitScale) (hu : u ∈ gatingScales.units.set)
+    (allocUnit : UnitScale) : Nat :=
+  let (_, variant) := CpsatSolver.Builder.run
+    (Constraint.packSingleLayer (scales := gatingScales) u hu #[] [gatingAlloc] allocUnit)
+  match variant with
+  | .cumulative items _ => items.size
+  | _ => 0
+
+/-- Matching layer (`u = allocUnit = 4`): the alloc item is present. -/
+example :
+    gatingLayerItemCount ⟨4, by decide, by decide⟩ (by decide)
+      ⟨4, by decide, by decide⟩ = 1 := by native_decide
+
+/-- Non-matching atomic layer (`u = 1`, `allocUnit = 4`): no alloc items, so the
+demand-11 item never reaches the capacity-1 layer. -/
+example :
+    gatingLayerItemCount UnitScale.atomic (by decide)
+      ⟨4, by decide, by decide⟩ = 0 := by native_decide

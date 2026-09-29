@@ -11,6 +11,7 @@ def Constraint.packSingleLayer
   (u_in_scales : u ∈ scales.units.set := by decide)
   (tasks : Array (TaskVars scales))
   (allocs : List Alloc.Nonoverflow)
+  (allocUnit : UnitScale)
     : CpsatSolver.Builder CpsatSolver.Constraint.Variant := do
   let tasksUnitEq := tasks.filter
     (fun x => decide (x.task.unit = u))
@@ -70,7 +71,9 @@ def Constraint.packSingleLayer
       }
       snd := .const u
     }
-  let itemsAlloc <- Alloc.cumulativeItems allocs
+  let itemsAlloc <-
+    if u = allocUnit then Alloc.cumulativeItems allocs
+    else pure #[]
   let result : CpsatSolver.Constraint.Variant :=
     .cumulative
       (itemsUnitEq
@@ -83,6 +86,7 @@ def Constraint.packing
   {scales : Timescales}
   (tasks : Array (TaskVars scales))
   (allocs : List Alloc.Nonoverflow)
+  (allocUnit : UnitScale)
     : CpsatSolver.Builder Unit := do
   let _ <- (UnitScale.sort scales.units.set).attach.mapM
     (fun unit => do
@@ -90,7 +94,8 @@ def Constraint.packing
         unit.val
         (unit.val.mem_sort unit.prop)
         tasks
-        allocs)
+        allocs
+        allocUnit)
       let _ <- CpsatSolver.Builder.addConstraint .always cnstr none)
   pure ()
 

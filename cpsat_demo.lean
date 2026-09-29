@@ -87,6 +87,7 @@ def spec (py : Python.DaemonProcess) : Registrar (BuildSpec scales) := do
     prereqs := [{ succ := a, pred := c }]
     withins := [{ child := a, parent := b }]
     blocked := blockedAllocs
+    blockedUnit := unit4
   }
 
 def specFile : String := "schedule.spec.json"
