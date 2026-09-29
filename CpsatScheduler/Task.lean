@@ -10,7 +10,6 @@ The caller supplies only the two horizon-fit facts at the range endpoints:
 `Task.bucketsFitHorizon` — including both `Int64` nonoverflow bounds — is derived
 by monotonicity in `k` and from the horizon's own `Int64` safety proof. -/
 @[simp] def Task.ofBucketRange (scales : Timescales)
-    (id : TaskId)
     (unit : { u : UnitScale // u ∈ scales.units.set })
     (kLo : ℤ := scales.horizon.begin)
     (kHi : ℤ := scales.horizon.end_ / unit.val.val - 1)
@@ -47,7 +46,6 @@ by monotonicity in `k` and from the horizon's own `Int64` safety proof. -/
     have : kHi ≤ kHi * u := by nlinarith [hu1, hkHi0]
     linarith [le_trans this hkHiu_le_end, hendMax]
   {
-    id := id
     label := label
     unit := unit
     startDomain :=

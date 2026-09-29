@@ -24,7 +24,7 @@ private def demoMap : ScheduleMap :=
   ScheduleMap.mk demoScales (epochSec := 0) (atomicSec := 900)
 
 def demoTask : Task demoScales :=
-  demoMap.task { val := 100 } (Subtype.mk UnitScale.atomic (by decide))
+  demoMap.task (Subtype.mk UnitScale.atomic (by decide))
     (startAfterSec := 8 * 3600) (startBeforeSec := 12 * 3600)
     (label := some "study_block")
 

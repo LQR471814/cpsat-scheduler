@@ -88,7 +88,7 @@ def coarseTask :
       { begin := 0, end_ := 24, begin_lt_end := by decide,
         begin_safe := by decide, end_safe := by decide }
     Task (Timescales.mk units horizon) :=
-  Task.ofBucketRange _ { val := 7 } (Subtype.mk ⟨4, by decide, by decide⟩ (by decide))
+  Task.ofBucketRange _ (Subtype.mk ⟨4, by decide, by decide⟩ (by decide))
     (kLo := 0) (kHi := 5)
     (hle := by decide)
     (hbegin := by decide)

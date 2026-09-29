@@ -88,7 +88,6 @@ structure TaskId where
 deriving DecidableEq
 
 structure Task (scales : Timescales) where
-  id : TaskId
   label : Option String := none
   unit : { u : UnitScale // u ∈ scales.units.set }
   startDomain : CpsatSolver.NonemptyDomain

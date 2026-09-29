@@ -11,31 +11,12 @@ import CpsatScheduler.Schedule
 
 import Lean.Data.Json
 
-/-!
-# Model assembly helpers
-
-Reusable scaffolding for turning a list of PERT task configs plus declarative
-constraint edges into a finalized CP-SAT `Model`, together with a homogeneous
-record of solved-variable ids for reporting.
-
-The design keeps every proof obligation off the demo/author:
-
-* task ids come from a single monotonic counter (`freshTaskId`);
-* `registerTask` rewrites the id onto a concrete config, preserving all proofs
-  (`PERT.TaskConfig.setId`);
-* prerequisite and containment ("within") edges are resolved by id, with their
-  `Int64` nonoverflow obligations discharged by the generic `Task.*` lemmas —
-  no `decide` on solver variables or runtime units.
--/
-
 namespace CpsatScheduler.Build
 
 open CpsatScheduler
 open CpsatScheduler.Schedule
 open CpsatSolver
 
-/-- Homogeneous, dependent-index-free record captured once a task is built.
-Everything needed to report a task's solved values lives here. -/
 structure SolvedTaskRef where
   taskId : Nat
   label : String
@@ -44,51 +25,44 @@ structure SolvedTaskRef where
   costId : EntityId
   demandId : EntityId
 
-/-- A registered task: its assigned id, concrete `Task`, and the builder action
-that allocates its variables. -/
 structure Registered (scales : Timescales) where
   taskId : TaskId
   task : Task scales
   build : Builder (TaskVars scales)
 
-/-- Allocate a fresh task id from a monotonic counter. -/
-def freshTaskId : StateT Nat IO TaskId := do
+abbrev Registrar := StateT Nat (ExceptT String IO)
+
+def register {scales : Timescales}
+    (py : Python.DaemonProcess) (cfg : PERT.TaskConfig scales) :
+    Registrar (Registered scales) := do
   let n ← get
   set (n + 1)
-  pure ⟨n⟩
-
-/-- Register a task: allocate a fresh id, rewrite it onto the concrete config
-(the id appears in no proof, so `PERT.TaskConfig.setId` preserves every proof
-field), and run the Python-backed cost-table construction. -/
-def registerTask {scales : Timescales}
-    (py : Python.DaemonProcess) (base : PERT.TaskConfig scales) :
-    StateT Nat IO (Except String (Registered scales)) := do
-  let id ← freshTaskId
-  let cfg : PERT.TaskConfig scales := PERT.TaskConfig.setId base id
   let built ← PERT.Task.of py cfg
-  pure do
-    let builder ← built
+  match built with
+  | .error e => throw e
+  | .ok builder =>
     pure {
-      taskId := id
+      taskId := ⟨n⟩
       task := cfg.task
       build := do
         let t ← builder
         pure t.taskVars.vars
     }
 
-/-- A prerequisite edge: `pred` must finish before `succ` starts. -/
-structure PrereqEdge where
-  succ : TaskId
-  pred : TaskId
+structure PrereqEdge (scales : Timescales) where
+  succ : Registered scales
+  pred : Registered scales
 
-/-- A containment ("within") edge: the `child` task's bucket must fall inside the
-`parent` task's bucket. The scale ratio is derived as `parentUnit / childUnit`,
-so no ratio needs to be supplied. -/
-structure WithinEdge where
-  child : TaskId
-  parent : TaskId
+structure WithinEdge (scales : Timescales) where
+  child : Registered scales
+  parent : Registered scales
 
-/-- One built task paired with its captured reference record. -/
+structure BuildSpec (scales : Timescales) where
+  tasks : List (Registered scales)
+  prereqs : List (PrereqEdge scales) := []
+  withins : List (WithinEdge scales) := []
+  blocked : List Alloc := []
+
 private abbrev Built (scales : Timescales) :=
   Registered scales × TaskVars scales × SolvedTaskRef
 
@@ -109,8 +83,6 @@ private def find? {scales : Timescales}
     (built : List (Built scales)) (id : TaskId) : Option (Built scales) :=
   built.find? (fun b => b.1.taskId == id)
 
-/-- Add a `succ ≥ pred + 1` prerequisite constraint for a resolved edge. The
-nonoverflow obligation is discharged generically. -/
 private def addPrerequisite {scales : Timescales}
     (s p : TaskVars scales) (succId predId : Nat) : Builder Unit := do
   let _ ← Builder.addConstraint .always
@@ -120,10 +92,6 @@ private def addPrerequisite {scales : Timescales}
     (some s!"prereq_{predId}_before_{succId}")
   pure ()
 
-/-- Add a containment ("within") constraint for a resolved edge. `ratio =
-parentUnit / childUnit`; the bound `ratio ≤ parentUnit` holds by
-`Int.ediv_le_self`, and scaled-endpoint safety comes from the `Task.within_*`
-lemmas. -/
 private def addWithin {scales : Timescales}
     (child parent : TaskVars scales) (childId parentId : Nat) : Builder Unit := do
   let pu : ℤ := (parent.task.unit.val.val : ℤ)
@@ -150,57 +118,36 @@ private def addWithin {scales : Timescales}
     (some s!"within_{childId}_in_{parentId}_hi")
   pure ()
 
-/-- Assemble a finalized model from task configs and declarative edges.
-
-Steps: validate blocked allocations, register each config (fresh ids + Python
-cost tables), build all task variables, add prerequisite / within / packing
-constraints and the cost-minimization objective, then finalize. Returns the
-model together with the reporting records. Unresolved edge ids are a hard
-error. -/
 def buildModel {scales : Timescales}
     (py : Python.DaemonProcess)
     (sched : ScheduleMap)
-    (configs : List (PERT.TaskConfig scales))
-    (prereqEdges : List PrereqEdge := [])
-    (withinEdges : List WithinEdge := [])
-    (blockedAllocs : List Alloc := []) :
+    (spec : Registrar (BuildSpec scales)) :
     IO (Except String (Model × List SolvedTaskRef)) := do
-  let _ := sched
-  let blockedNonoverflow : Except String (List Alloc.Nonoverflow) :=
-    match Alloc.checkMany blockedAllocs with
-    | .some b => .ok b
-    | .none => .error "blocked allocations were not valid"
-  let (registeredResults, _) ← (configs.mapM (registerTask py ·)).run 0
-  let registered : Except String (List (Registered scales)) :=
-    registeredResults.mapM id
+  let _ := (py, sched)
+  let specResult ← (spec.run 0).run
   pure do
-    let blocked ← blockedNonoverflow
-    let regBuilders ← registered
-    let result : Except String (RawModel × List SolvedTaskRef) := Id.run do
-      let ⟨rawModel, out⟩ := Builder.run (do
-        let built ← regBuilders.mapM capture
-        let varsArr : Array (TaskVars scales) := (built.map (·.2.1)).toArray
-        let mut err : Option String := none
-        for edge in prereqEdges do
-          match find? built edge.succ, find? built edge.pred with
-          | some s, some p => addPrerequisite s.2.1 p.2.1 edge.succ.val edge.pred.val
-          | _, _ => err := some s!"prerequisite edge references unknown task id"
-        for edge in withinEdges do
-          match find? built edge.child, find? built edge.parent with
-          | some c, some p => addWithin c.2.1 p.2.1 edge.child.val edge.parent.val
-          | _, _ => err := some s!"within edge references unknown task id"
-        Constraint.packing varsArr blocked
-        let _ ← Objective.minimizeCostSum varsArr
-        pure (err, built.map (·.2.2)))
-      match out.1 with
-      | some e => pure (.error e)
-      | none => pure (.ok (rawModel, out.2))
-    let ⟨rawModel, refs⟩ ← result
+    let (built, _) ← specResult
+    let blocked ← match Alloc.checkMany built.blocked with
+      | .some b => .ok b
+      | .none => .error "blocked allocations were not valid"
+    let ⟨rawModel, refs⟩ := Builder.run do
+      let builtTasks ← built.tasks.mapM capture
+      let varsArr : Array (TaskVars scales) := (builtTasks.map (·.2.1)).toArray
+      for edge in built.prereqs do
+        match find? builtTasks edge.succ.taskId, find? builtTasks edge.pred.taskId with
+        | some s, some p => addPrerequisite s.2.1 p.2.1 edge.succ.taskId.val edge.pred.taskId.val
+        | _, _ => pure ()
+      for edge in built.withins do
+        match find? builtTasks edge.child.taskId, find? builtTasks edge.parent.taskId with
+        | some c, some p => addWithin c.2.1 p.2.1 edge.child.taskId.val edge.parent.taskId.val
+        | _, _ => pure ()
+      Constraint.packing varsArr blocked
+      let _ ← Objective.minimizeCostSum varsArr
+      pure (builtTasks.map (·.2.2))
     let model ← rawModel.finalize?
       |> Except.mapError (s!"finalize model: {·}")
     pure (model, refs)
 
-/-- Solution status label. -/
 def statusLabel {model : Model} : SolveResult model → String
   | .optimal _ _ => "optimal"
   | .feasible _ _ => "feasible"
@@ -208,8 +155,6 @@ def statusLabel {model : Model} : SolveResult model → String
   | .modelInvalid => "model_invalid"
   | .unknown => "unknown"
 
-/-- Task-specification JSON (independent of any solution): the scheduling
-horizon plus per-task label and unit. -/
 def specJson (sched : ScheduleMap) (refs : List SolvedTaskRef) : Lean.Json :=
   let hBegin : Int := (sched.scales.horizon.begin : Int)
   let hEnd : Int := (sched.scales.horizon.end_ : Int)
@@ -227,8 +172,6 @@ def specJson (sched : ScheduleMap) (refs : List SolvedTaskRef) : Lean.Json :=
       ])))
   ]
 
-/-- Solution JSON: solve status plus per-task solved datetime, cost, and demand.
-The reported datetime uses each task's own unit. -/
 def solutionJson (sched : ScheduleMap) (status : String)
     (asgn : Assignment) (refs : List SolvedTaskRef) : Lean.Json :=
   Lean.Json.mkObj [

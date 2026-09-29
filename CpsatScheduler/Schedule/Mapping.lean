@@ -135,7 +135,6 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
 
 @[simp] def ScheduleMap.task
     (m : ScheduleMap)
-    (id : TaskId)
     (unit : { u : UnitScale // u ∈ m.scales.units.set })
     (startAfterSec : ℤ)
     (startBeforeSec : ℤ)
@@ -146,7 +145,7 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
     (hend : (kHi + 1) * unit.val.val ≤ m.scales.horizon.end_ := by decide)
     (label : Option String := none) :
     Task m.scales :=
-  Task.ofBucketRange m.scales id unit kLo kHi hle hbegin hend label
+  Task.ofBucketRange m.scales unit kLo kHi hle hbegin hend label
 
 section Test
 
@@ -170,7 +169,7 @@ example : sampleMap.scheduleDurationSec 2701 .up = 4 := by decide
 example : sampleMap.realTimeSec (sampleMap.scheduleTimeSec 950 .down) = 900 := by decide
 
 def sampleTask : Task sampleScales :=
-  sampleMap.task { val := 1 } (Subtype.mk UnitScale.atomic (by decide))
+  sampleMap.task (Subtype.mk UnitScale.atomic (by decide))
     (startAfterSec := 8 * 3600) (startBeforeSec := 10 * 3600)
     (label := some "morning_task")
 

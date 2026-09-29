@@ -95,16 +95,17 @@ structure TaskVarsResult (S : Timescales) (t : Task S)
 
 def TaskVars.of (t : Task S) (costDomain : NonemptyDomain) :
     Builder (TaskVarsResult S t costDomain) := do
-  let prefix_ := t.label.getD s!"task_{t.id.val}"
+  let labelFor (suffix : String) : Option String :=
+    t.label.map (s!"{·}_{suffix}")
   let start ← Builder.newIntVar
     (TaskVars.startDomain t)
-    (some s!"{prefix_}_start")
+    (labelFor "start")
   let cost ← Builder.newIntVar
     costDomain
-    (some s!"{prefix_}_cost")
+    (labelFor "cost")
   let demand ← Builder.newIntVar
     (TaskVars.demandDomain t)
-    (some s!"{prefix_}_demand")
+    (labelFor "demand")
   let vars : TaskVars S := {
     task := t
     startVar := start.val
