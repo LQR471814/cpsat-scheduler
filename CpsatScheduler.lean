@@ -7,4 +7,5 @@ import CpsatScheduler.PERT
 import CpsatScheduler.ConstrainPacking
 import CpsatScheduler.ConstrainBucket
 import CpsatScheduler.ConstrainPrereq
+import CpsatScheduler.Build
 import CpsatScheduler.Schedule

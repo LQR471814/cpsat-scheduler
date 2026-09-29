@@ -1,3 +1,9 @@
-{"2": {"unit": 16, "label": "task_c"},
- "1": {"unit": 8, "label": "task_b"},
- "0": {"unit": 4, "label": "task_a"}}
+{"tasks":
+ {"2": {"unit": 16, "label": "task_c"},
+  "1": {"unit": 8, "label": "task_b"},
+  "0": {"unit": 4, "label": "task_a"}},
+ "horizon":
+ {"endBucket": 16,
+  "end": "2026-01-01T04:00:00.000000000",
+  "beginBucket": 0,
+  "begin": "2026-01-01T00:00:00.000000000"}}
