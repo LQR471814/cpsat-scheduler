@@ -160,6 +160,7 @@ def specJson (sched : ScheduleMap) (refs : List SolvedTaskRef) : Lean.Json :=
   let hBegin : Int := (sched.scales.horizon.begin : Int)
   let hEnd : Int := (sched.scales.horizon.end_ : Int)
   Lean.Json.mkObj [
+    ("atomicSec", Lean.Json.num sched.atomicSec),
     ("horizon", Lean.Json.mkObj [
       ("beginBucket", Lean.Json.num hBegin),
       ("endBucket", Lean.Json.num hEnd),
@@ -181,7 +182,7 @@ def solutionJson (sched : ScheduleMap) (status : String)
       (toString r.taskId, Lean.Json.mkObj [
         ("datetime", Lean.Json.str (sched.bucketDateString r.unit (asgn.intVal r.startId))),
         ("cost", Lean.Json.num (asgn.intVal r.costId)),
-        ("demand", Lean.Json.num (asgn.intVal r.demandId))
+        ("demandAtomic", Lean.Json.num (asgn.intVal r.demandId))
       ])))
   ]
 
