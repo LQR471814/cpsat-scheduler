@@ -17,8 +17,7 @@ def Constraint.packSingleLayer
   let itemsUnitEq <- tasksUnitEq.mapM
     (fun (t : TaskVars scales) => do
       let interval <- CpsatSolver.Builder.newFixedSizeInterval
-        (.var t.startVar) u
-        (by exact Int.natCast_nonneg u.val)
+        (.var t.startVar) (CpsatSolver.Int64.of 1) (by decide)
       let result : CpsatSolver.CumulativeItem := {
         interval := interval.val
         demand := (
@@ -53,8 +52,7 @@ def Constraint.packSingleLayer
             taskunit_le_u)
           none
       let interval <- CpsatSolver.Builder.newFixedSizeInterval
-        (.var normalized.var) u
-        (by exact Int.natCast_nonneg u.val)
+        (.var normalized.var) (CpsatSolver.Int64.of 1) (by decide)
       let result : CpsatSolver.CumulativeItem := {
         interval := interval.val
         demand := (
