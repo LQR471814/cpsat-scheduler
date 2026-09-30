@@ -1,8 +1,8 @@
-- [ ] Early biasing
-  - [ ] Compute different "cost categories" after solution.
-- [ ] Energy levels
-  - [ ] Energy level encoding on the task object
-  - [ ] Schedule-synced recurring cost topology
-- [ ] Routine tasks
-- [ ] Parameter tuning
-
+- [x] Test prereq/within
+- [x] Test non-overflow constraint
+- [x] Test cost assignment
+- [x] Chronological (schedule) declaration layer
+- [x] Define events
+- [ ] Process factors:
+   - [ ] Early biasing cost
+   - [ ] Energy level cost

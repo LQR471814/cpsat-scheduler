@@ -24,6 +24,7 @@
   - [Context-switching](#context-switching)
   - [Encoding context-switching cost](#encoding-context-switching-cost)
   - [Tuning Constants](#tuning-constants)
+  - [Composite Cost](#composite-cost)
 <!--toc:end-->
 
 # Timescale hierarchy
@@ -482,17 +483,14 @@ There is a lot of uncertainty involved here, if we had enough
 information and a sufficiently sophisticated model along with
 sufficiently powerful compute infrastructure, we may be able to
 predict a few days into the future with acceptable precision. But
-the problem is such that it is more tenable to focus on more
-reliable optimization, such as the effects of human psychology on
-productivity given a schedule, or external considerations on the
+it is often much more tenable to focus on *process factors* that
+likely drive the resulting outcome, for instance, human cognitive
+influences on productivity, or external considerations on the
 profitability of certain work.
-
-We will call the factors which influence the process of working,
-"process factors".
 
 ## Early biasing
 
-We want to be able to force the scheduler to avoid regions of
+We want to be able to tell the scheduler to avoid regions of
 "empty space" in the middle of the schedule which may arise if
 there are not enough defined tasks to saturate the entire
 scheduling horizon defined.
@@ -504,7 +502,7 @@ important" tasks towards earlier completion and have a schedule
 that incurs less cost overall from changes in deadlines or
 durations.
 
-Thus, The cost $f_{E}(t)$ associated for any task $t$ scales
+Thus, the cost $f_{E}(t)$ associated for any task $t$ scales
 linearly with the scheduled time it is in and is parametrized by
 two constants. Namely:
 
@@ -515,15 +513,20 @@ $$
 Where $P_{t}$ is a constant that scales the size of early bias
 cost for this particular task.
 
+> [!NOTE]
+> If we are using a PERT construction of a task, the "max cost" of
+> a task acts as a nice proxy for the "external importance" of a
+> task.
+
 The complete cost of all tasks due to early biasing is simply the
 sum of all individual task costs.
 
 $$
-F_{E} = K_{E} \sum_{t \in T} f_{E}(t)
+F_{E} = \sum_{t \in T} f_{E}(t)
 $$
 
-Where $K_{E}$ is a constant that scales the size of the early bias
-cost across all tasks.
+$K_{E}$ is a constant that scales the size of the early bias cost
+across all tasks.
 
 ## Cognitive performance
 
@@ -573,16 +576,16 @@ suboptimally) is then proportional to complement of cognitive
 performance weighted by the cognitive sensitivity of the task.
 
 $$
-f_{S}(t) = K_{S} S_{t} \left(1 - G_{D_{t}[s]}\right)
+f_{S}(t) = S_{t} \left(1 - G_{D_{t}[s]}\right)
+$$
+
+$$
+F_{S} = \sum_{t \in T} f_{S}(t)
 $$
 
 Similar to [[#Early%20biasing]], the global cost is the sum
 across all tasks scaled by a constant $K_{S}$ which determines the
 size of cognitive sensitivity costs across all tasks.
-
-$$
-F_{S} = \sum_{t \in T} f_{S}(t)
-$$
 
 ## Context-switching
 
@@ -642,6 +645,27 @@ else being equal, we move a task back one 4-hour time block.
 Then let's say that the increase in costs resulting from
 [[#Early%20biasing]] should equal twice the cost of
 
+## Composite Cost
+
+The total cost will be a weighted sum of individual cost
+categories.
+
+$$
+F = K_{C} F_{C} + K_{E} F_{E} + K_{S} F_{S}
+$$
+
+Where:
+
+- $F_{C}$ is the total-expected cost associated with demand
+  chosen.
+- $F_{E}$ is the total early bias cost.
+- $F_{S}$ is the total cognitive sensitivity cost.
+- $K_{C}$, $K_E$, and $K_S$ are constants which modulate the
+  effect size of each cost category.
+
+I would probably choose constants in a way like: $K_{C}=2K_{S}$,
+$K_{S}=10K_{E}$.
+
 [^1]: Dijk, Derk-Jan, Jeanne F. Duffy, and Charles A. Czeisler.
        “Circadian and Sleep/Wake Dependent Aspects of Subjective
        Alertness and Cognitive Performance.” Journal of Sleep
@@ -662,27 +686,25 @@ Then let's say that the increase in costs resulting from
        Sleep Propensity.” Sleep 32, no. 3 (2009): 392–98.
        https://doi.org/10.1093/sleep/32.3.392.
 [^5]: Shekleton, Julia A., Shantha M. W. Rajaratnam, Joshua J.
-       Gooley, Eliza Van Reen, Charles A. Czeisler, and Steven W.
-       Lockley. “Improved Neurobehavioral Performance during the
-       Wake Maintenance Zone.” Journal of Clinical Sleep
-       Medicine : JCSM : Official Publication of the American
-       Academy of Sleep Medicine 9, no. 4 (2013): 353–62.
-       https://doi.org/10.5664/jcsm.2588.
+    Gooley, Eliza Van Reen, Charles A. Czeisler, and Steven W.
+    Lockley. “Improved Neurobehavioral Performance during the Wake
+    Maintenance Zone.” Journal of Clinical Sleep Medicine : JCSM :
+    Official Publication of the American Academy of Sleep Medicine
+    9, no. 4 (2013): 353–62. https://doi.org/10.5664/jcsm.2588.
 [^6]: Pashler, Harold. “Dual-Task Interference in Simple Tasks:
-       Data and Theory.” Psychological Bulletin (US) 116, no. 2
-       (1994): 220–44.
-       https://doi.org/10.1037/0033-2909.116.2.220.
+    Data and Theory.” Psychological Bulletin (US) 116, no. 2
+    (1994): 220–44. https://doi.org/10.1037/0033-2909.116.2.220.
 [^7]: Monsell, Stephen. “Task Switching.” Trends in Cognitive
-       Sciences 7, no. 3 (2003): 134–40.
-       https://doi.org/10.1016/s1364-6613(03)00028-7.
+    Sciences 7, no. 3 (2003): 134–40.
+    https://doi.org/10.1016/s1364-6613(03)00028-7.
 [^8]: Leroy, Sophie. “Why Is It so Hard to Do My Work? The
-       Challenge of Attention Residue When Switching between Work
-       Tasks.” Organizational Behavior and Human Decision
-       Processes 109, no. 2 (2009): 168–81.
-       https://doi.org/10.1016/j.obhdp.2009.04.002.
+    Challenge of Attention Residue When Switching between Work
+    Tasks.” Organizational Behavior and Human Decision Processes
+    109, no. 2 (2009): 168–81.
+    https://doi.org/10.1016/j.obhdp.2009.04.002.
 [^9]: Mark, Gloria, Victor M. Gonzalez, and Justin Harris. “No
-       Task Left behind? Examining the Nature of Fragmented Work.”
-       Proceedings of the SIGCHI Conference on Human Factors in
-       Computing Systems (New York, NY, USA), CHI ’05, April 2,
-       2005, 321–30. https://doi.org/10.1145/1054972.1055017.
+    Task Left behind? Examining the Nature of Fragmented Work.”
+    Proceedings of the SIGCHI Conference on Human Factors in
+    Computing Systems (New York, NY, USA), CHI ’05, April 2, 2005,
+    321–30. https://doi.org/10.1145/1054972.1055017.
 
