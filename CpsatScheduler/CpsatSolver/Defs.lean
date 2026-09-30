@@ -32,38 +32,48 @@ structure IntVar where
   label : Option String := none
 deriving DecidableEq
 
+abbrev LinearExpr.Nonoverflow.Neg (b : Bounds) :=
+  Int64.Nonoverflow (-b.right : ℤ) ∧
+  Int64.Nonoverflow (-b.left : ℤ)
+
+abbrev LinearExpr.Nonoverflow.Mul (b : Bounds) (v : Int64) :=
+  Int64.Nonoverflow (b.mulLower (Interval.ofValue v)) ∧
+  Int64.Nonoverflow (b.mulUpper (Interval.ofValue v))
+
+abbrev LinearExpr.Nonoverflow.Add (a b : Bounds) :=
+  Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
+  Int64.Nonoverflow ((a.right : ℤ) + b.right)
+
+abbrev LinearExpr.Nonoverflow.Sub (a b : Bounds) :=
+  Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
+  Int64.Nonoverflow ((a.right : ℤ) - b.left)
+
 inductive LinearExpr : Bounds → Type where
   | fromVar (value : IntVar) : LinearExpr value.domain.hull
   | fromConst (value : Int64) : LinearExpr (Interval.ofValue value)
   | fromNeg
-    (a : LinearExpr α)
-    (neg_nonoverflow : Int64.Nonoverflow (-α.right : ℤ) ∧ Int64.Nonoverflow (-α.left : ℤ))
-      : LinearExpr (α.neg neg_nonoverflow)
+    (a : LinearExpr B)
+    (h : LinearExpr.Nonoverflow.Neg B)
+      : LinearExpr (B.neg h)
   | fromMulConst
-    (a : LinearExpr α) (value : Int64)
-    (mul_nonoverflow :
-      Int64.Nonoverflow (α.mulLower (Interval.ofValue value)) ∧
-      Int64.Nonoverflow (α.mulUpper (Interval.ofValue value)))
-      : LinearExpr (α.mul (Interval.ofValue value) mul_nonoverflow)
+    (a : LinearExpr B) (v : Int64)
+    (h : LinearExpr.Nonoverflow.Mul B v)
+      : LinearExpr (B.mul (Interval.ofValue v) h)
   | fromAdd
-    (a : LinearExpr α) (b : LinearExpr β)
-    (add_nonoverflow :
-      Int64.Nonoverflow ((α.left : ℤ) + β.left) ∧
-      Int64.Nonoverflow ((α.right : ℤ) + β.right))
-      : LinearExpr (α.add β add_nonoverflow)
+    (a : LinearExpr A) (b : LinearExpr B)
+    (h : LinearExpr.Nonoverflow.Add A B)
+      : LinearExpr (A.add B h)
   | fromSub
-    (a : LinearExpr α) (b : LinearExpr β)
-    (sub_nonoverflow :
-      Int64.Nonoverflow ((α.left : ℤ) - β.right) ∧
-      Int64.Nonoverflow ((α.right : ℤ) - β.left))
-      : LinearExpr (α.sub β sub_nonoverflow)
+    (a : LinearExpr A) (b : LinearExpr B)
+    (h : LinearExpr.Nonoverflow.Sub A B)
+      : LinearExpr (A.sub B h)
 
 abbrev LinearExpr.WithBounds := Σ b : Bounds, LinearExpr b
 
 def LinearExpr.wrapBounds (e : LinearExpr α) : LinearExpr.WithBounds :=
   Sigma.mk α e
 
-/-- Half-open interval `[start, start + size)`. -/
+/-- Half-open interval `[start, start + size`. -/
 structure FixedSizeIntervalVar where
   id : EntityId
   startBounds : Bounds
