@@ -10,9 +10,9 @@ open CpsatSolver
 abbrev DemandEstimate.Valid
   (task : CpsatScheduler.Task S)
   (opt exp pes : CpsatSolver.Int64) : Prop :=
-    TaskVars.MemDemand task opt.val ∧
-    TaskVars.MemDemand task exp.val ∧
-    TaskVars.MemDemand task pes.val ∧
+    Task.MemDemand task opt.val ∧
+    Task.MemDemand task exp.val ∧
+    Task.MemDemand task pes.val ∧
     opt.val ≤ exp.val ∧
     exp.val ≤ pes.val
 
@@ -44,7 +44,7 @@ def costTable (py : Python.DaemonProcess)
   (demand : DemandEstimate S task) (steps : Array Float) :
     IO (Except String
       (CostDemandTable
-        (TaskVars.demandDomain task).domain cost.hull.domain)) := do
+        (Task.demandDomain task).domain cost.hull.domain)) := do
   let pairs ← Stats.PERT.costDemandPairs
     py
     demand.opt.val.toFloat
@@ -70,7 +70,7 @@ def costTable (py : Python.DaemonProcess)
       |> .mapError (fun err => s!"truncate cost floats: {err}")
     if nonoverflow : points.size > 0 then
       match CostDemandTable.ofPoints?
-        (TaskVars.demandDomain task).domain
+        (Task.demandDomain task).domain
         cost.hull.domain
         points
         nonoverflow
@@ -98,7 +98,7 @@ def Task.of (py : Python.DaemonProcess) (cfg : TaskConfig S) :
       .ok do
         let taskVarsResult ← TaskVars.of cfg.task cfg.cost.hull
         let hd :
-          (TaskVars.demandDomain cfg.task).domain
+          (Task.demandDomain cfg.task).domain
             = taskVarsResult.vars.timeDemandedVar.domain.domain :=
           congrArg NonemptyDomain.domain taskVarsResult.demand_domain.symm
         let hc :

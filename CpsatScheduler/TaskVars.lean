@@ -17,23 +17,21 @@ structure TaskVars (S : Timescales) where
     timeDemandedVar.domain.min ≥ (0 : ℤ) ∧
     timeDemandedVar.domain.max.val ≤ task.unit.val
 
-@[simp] def TaskVars.startDomain (task : Task S) := task.startDomain
-
-@[simp] def TaskVars.demandDomain (task : Task S) :=
+@[simp] def Task.demandDomain (task : Task S) :=
   (NonemptyDomain.interval
     (CpsatSolver.Interval.of 0 task.unit
       (hl := by decide)
       (hr := task.unit.val.nonoverflow)
       (hlr := by exact Int.natCast_nonneg task.unit.val)))
 
-def TaskVars.MemDemandInterval (task : Task S) (x : ℤ) : Prop :=
-  (TaskVars.demandDomain task).domain.intervals[0].mem x
+def Task.MemDemandInterval (task : Task S) (x : ℤ) : Prop :=
+  (Task.demandDomain task).domain.intervals[0].mem x
 
-instance : Decidable (TaskVars.MemDemandInterval T x) :=
+instance : Decidable (Task.MemDemandInterval T x) :=
   if h : 0 ≤ x ∧ x ≤ T.unit.val then
     Decidable.isTrue (by
       dsimp [
-        TaskVars.MemDemandInterval,
+        Task.MemDemandInterval,
         GetElem.getElem,
         Interval.mem
       ]
@@ -41,21 +39,21 @@ instance : Decidable (TaskVars.MemDemandInterval T x) :=
   else
     Decidable.isFalse (by
       dsimp [
-        TaskVars.MemDemandInterval,
+        Task.MemDemandInterval,
         GetElem.getElem,
         Interval.mem
       ]
       exact h)
 
-@[simp] def TaskVars.MemDemand (task : Task S) (x : ℤ) :=
-  x ∈ (TaskVars.demandDomain task).domain
+@[simp] def Task.MemDemand (task : Task S) (x : ℤ) :=
+  x ∈ (Task.demandDomain task).domain
 
-theorem TaskVars.mem_demand_domain (task : Task S) (x : ℤ)
-  : TaskVars.MemDemandInterval task x ↔ TaskVars.MemDemand task x
+theorem Task.mem_demand_domain (task : Task S) (x : ℤ)
+  : Task.MemDemandInterval task x ↔ Task.MemDemand task x
   := by
     constructor
     · intro h
-      let d := (TaskVars.demandDomain task).domain
+      let d := (Task.demandDomain task).domain
       change x ∈ d
       dsimp [Membership.mem]
       let w := d.intervals[0]'(d.interval_size (Eq.refl d))
@@ -64,8 +62,8 @@ theorem TaskVars.mem_demand_domain (task : Task S) (x : ℤ)
       · exact List.mem_of_getElem (a := w) rfl
       · exact h
     · intro h
-      dsimp [MemDemandInterval, GetElem.getElem, Interval.mem]
-      let d := (TaskVars.demandDomain task).domain
+      dsimp [Task.MemDemandInterval, GetElem.getElem, Interval.mem]
+      let d := (Task.demandDomain task).domain
       let fst_intv := d.intervals[0]'(d.interval_size (Eq.refl d))
       dsimp [Membership.mem] at h
       cases h
@@ -77,34 +75,33 @@ theorem TaskVars.mem_demand_domain (task : Task S) (x : ℤ)
       dsimp [Interval.mem] at x_mem_w
       exact x_mem_w
 
-instance : Decidable (TaskVars.MemDemand T x) :=
-  if h : TaskVars.MemDemandInterval T x then
-    Decidable.isTrue ((TaskVars.mem_demand_domain T x).mp
+theorem Task.memDemand_iff (task : Task S) (x : ℤ) :
+    Task.MemDemand task x ↔ 0 ≤ x ∧ x ≤ task.unit.val :=
+  (Task.mem_demand_domain task x).symm
+
+instance : Decidable (Task.MemDemand T x) :=
+  if h : Task.MemDemandInterval T x then
+    Decidable.isTrue ((Task.mem_demand_domain T x).mp
       h)
   else
     Decidable.isFalse (fun assump => by
-      have h1 := (TaskVars.mem_demand_domain T x).mpr assump
+      have h1 := (Task.mem_demand_domain T x).mpr assump
       exact h h1)
 
 structure TaskVarsResult (S : Timescales) (t : Task S)
     (costDomain : NonemptyDomain) where
   vars : TaskVars S
-  start_domain : vars.startVar.domain = (TaskVars.startDomain t)
+  start_domain : vars.startVar.domain = t.startDomain
   cost_domain : vars.costVar.domain = costDomain
-  demand_domain : vars.timeDemandedVar.domain = (TaskVars.demandDomain t)
+  demand_domain : vars.timeDemandedVar.domain = t.demandDomain
 
 def TaskVars.of (t : Task S) (costDomain : NonemptyDomain) :
     Builder (TaskVarsResult S t costDomain) := do
   let labelFor (suffix : String) : Option String :=
     t.label.map (s!"{·}_{suffix}")
-  let start ← Builder.newIntVar
-    (TaskVars.startDomain t)
-    (labelFor "start")
-  let cost ← Builder.newIntVar
-    costDomain
-    (labelFor "cost")
-  let demand ← Builder.newIntVar
-    (TaskVars.demandDomain t)
+  let start ← Builder.newIntVar t.startDomain (labelFor "start")
+  let cost ← Builder.newIntVar costDomain (labelFor "cost")
+  let demand ← Builder.newIntVar (Task.demandDomain t)
     (labelFor "demand")
   let vars : TaskVars S := {
     task := t
