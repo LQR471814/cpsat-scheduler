@@ -111,7 +111,7 @@ def logarithmic (factor : Float) (steps : ℕ) : Array Float :=
     if i = 0 then
       0
     else
-      ((Float.log i.toFloat / steps.toFloat) + factor) / factor)
+      ((Float.log (i.toFloat / steps.toFloat)) + factor) / factor)
 
 end Distribute
 
