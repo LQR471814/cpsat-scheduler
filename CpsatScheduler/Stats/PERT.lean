@@ -105,9 +105,13 @@ def cubic (steps : ℕ) : Array Float :=
 -- where p is the probability requested, x is the step normalized to [0, 1],
 -- and a is a growth scaling factor which makes the growth towards 1 faster the
 -- larger it is
+-- when x is 0, p = 0 to avoid infinity
 def logarithmic (factor : Float) (steps : ℕ) : Array Float :=
   (Array.range steps).map (fun i =>
-    ((Float.log i.toFloat / steps.toFloat) + factor) / factor)
+    if i = 0 then
+      0
+    else
+      ((Float.log i.toFloat / steps.toFloat) + factor) / factor)
 
 end Distribute
 
