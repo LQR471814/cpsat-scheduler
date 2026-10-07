@@ -89,13 +89,25 @@ def costDemandPairs (py : Python.DaemonProcess)
 
 namespace Distribute
 
+-- linear is the function p = x
+-- where p is the probability requested and x is the step normalized to [0, 1]
 def linear (steps : ℕ) : Array Float :=
   (Array.range steps).map (fun i =>
     i.toFloat / steps.toFloat)
 
+-- cubic is the function p = x^(1/3)
+-- where p is the probability requested and x is the step normalized to [0, 1]
 def cubic (steps : ℕ) : Array Float :=
   (Array.range steps).map (fun i =>
     (i.toFloat / steps.toFloat)^(1.0 / 3.0))
+
+-- logarithmic is the function p = (ln(x)+a)/a
+-- where p is the probability requested, x is the step normalized to [0, 1],
+-- and a is a growth scaling factor which makes the growth towards 1 faster the
+-- larger it is
+def logarithmic (factor : Float) (steps : ℕ) : Array Float :=
+  (Array.range steps).map (fun i =>
+    ((Float.log i.toFloat / steps.toFloat) + factor) / factor)
 
 end Distribute
 
