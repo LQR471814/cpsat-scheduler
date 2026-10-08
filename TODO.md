@@ -4,6 +4,5 @@
 - [x] Chronological (schedule) declaration layer
 - [x] Define events
 - [ ] Process factors:
-   - [ ] Refactor into different types of cost
    - [ ] Early biasing cost
    - [ ] Energy level cost

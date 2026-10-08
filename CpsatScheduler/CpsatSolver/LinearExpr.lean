@@ -41,38 +41,34 @@ theorem LinearExpr.eval_mem_bounds (valuation : EntityId → ℤ)
       (iha (fun v hv => inDomain v (List.mem_append.mpr (Or.inl hv))))
       (ihb (fun v hv => inDomain v (List.mem_append.mpr (Or.inr hv))))
 
-def LinearExpr.var (value : IntVar) : LinearExpr value.domain.hull := .fromVar value
+def LinearExpr.var (value : IntVar) :
+    LinearExpr value.domain.hull :=
+  .fromVar value
 
-def LinearExpr.const (value : Int64) : LinearExpr (Interval.ofValue value) :=
+def LinearExpr.const (value : Int64) :
+    LinearExpr (Interval.ofValue value) :=
   .fromConst value
 
-def LinearExpr.neg {bounds : Bounds} (a : LinearExpr bounds)
-    (nonoverflow : Int64.Nonoverflow (-bounds.right : ℤ) ∧
-      Int64.Nonoverflow (-bounds.left : ℤ)) :
-    LinearExpr (bounds.neg nonoverflow) :=
-  .fromNeg a nonoverflow
+def LinearExpr.neg {b : Bounds} (a : LinearExpr b)
+  (h : LinearExpr.Nonoverflow.Neg b) :
+    LinearExpr (b.neg h) :=
+  .fromNeg a h
 
-def LinearExpr.mul {bounds : Bounds} (a : LinearExpr bounds) (value : Int64)
-    (nonoverflow :
-      Int64.Nonoverflow (bounds.mulLower (Interval.ofValue value)) ∧
-      Int64.Nonoverflow (bounds.mulUpper (Interval.ofValue value))) :
-    LinearExpr (bounds.mul (Interval.ofValue value) nonoverflow) :=
-  .fromMulConst a value nonoverflow
+def LinearExpr.mul {b : Bounds} (a : LinearExpr b) (v : Int64)
+  (h : LinearExpr.Nonoverflow.Mul b v) :
+    LinearExpr (b.mul (Interval.ofValue v) h) :=
+  .fromMulConst a v h
 
-def LinearExpr.add {leftBounds rightBounds : Bounds}
-    (left : LinearExpr leftBounds) (right : LinearExpr rightBounds)
-    (nonoverflow :
-      Int64.Nonoverflow ((leftBounds.left : ℤ) + rightBounds.left) ∧
-      Int64.Nonoverflow ((leftBounds.right : ℤ) + rightBounds.right)) :
-    LinearExpr (leftBounds.add rightBounds nonoverflow) :=
-  .fromAdd left right nonoverflow
+def LinearExpr.add {L R : Bounds}
+  (l : LinearExpr L) (r : LinearExpr R)
+  (h : LinearExpr.Nonoverflow.Add L R) :
+    LinearExpr (L.add R h) :=
+  .fromAdd l r h
 
-def LinearExpr.sub {leftBounds rightBounds : Bounds}
-    (left : LinearExpr leftBounds) (right : LinearExpr rightBounds)
-    (nonoverflow :
-      Int64.Nonoverflow ((leftBounds.left : ℤ) - rightBounds.right) ∧
-      Int64.Nonoverflow ((leftBounds.right : ℤ) - rightBounds.left)) :
-    LinearExpr (leftBounds.sub rightBounds nonoverflow) :=
-  .fromSub left right nonoverflow
+def LinearExpr.sub {L R : Bounds}
+  (l : LinearExpr L) (r : LinearExpr R)
+  (h : LinearExpr.Nonoverflow.Sub L R) :
+    LinearExpr (L.sub R h) :=
+  .fromSub l r h
 
 end CpsatSolver

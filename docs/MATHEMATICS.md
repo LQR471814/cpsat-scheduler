@@ -24,6 +24,7 @@
   - [Context-switching](#context-switching)
   - [Encoding context-switching cost](#encoding-context-switching-cost)
   - [Tuning Constants](#tuning-constants)
+  - [Composite Cost](#composite-cost)
 <!--toc:end-->
 
 # Timescale hierarchy
@@ -482,17 +483,14 @@ There is a lot of uncertainty involved here, if we had enough
 information and a sufficiently sophisticated model along with
 sufficiently powerful compute infrastructure, we may be able to
 predict a few days into the future with acceptable precision. But
-the problem is such that it is more tenable to focus on more
-reliable optimization, such as the effects of human psychology on
-productivity given a schedule, or external considerations on the
+it is often much more tenable to focus on *process factors* that
+likely drive the resulting outcome, for instance, human cognitive
+influences on productivity, or external considerations on the
 profitability of certain work.
-
-We will call the factors which influence the process of working,
-"process factors".
 
 ## Early biasing
 
-We want to be able to force the scheduler to avoid regions of
+We want to be able to tell the scheduler to avoid regions of
 "empty space" in the middle of the schedule which may arise if
 there are not enough defined tasks to saturate the entire
 scheduling horizon defined.
@@ -504,7 +502,7 @@ important" tasks towards earlier completion and have a schedule
 that incurs less cost overall from changes in deadlines or
 durations.
 
-Thus, The cost $f_{E}(t)$ associated for any task $t$ scales
+Thus, the cost $f_{E}(t)$ associated for any task $t$ scales
 linearly with the scheduled time it is in and is parametrized by
 two constants. Namely:
 
@@ -515,15 +513,20 @@ $$
 Where $P_{t}$ is a constant that scales the size of early bias
 cost for this particular task.
 
+> [!NOTE]
+> If we are using a PERT construction of a task, the "max cost" of
+> a task acts as a nice proxy for the "external importance" of a
+> task.
+
 The complete cost of all tasks due to early biasing is simply the
 sum of all individual task costs.
 
 $$
-F_{E} = K_{E} \sum_{t \in T} f_{E}(t)
+F_{E} = \sum_{t \in T} f_{E}(t)
 $$
 
-Where $K_{E}$ is a constant that scales the size of the early bias
-cost across all tasks.
+$K_{E}$ is a constant that scales the size of the early bias cost
+across all tasks.
 
 ## Cognitive performance
 
@@ -573,16 +576,16 @@ suboptimally) is then proportional to complement of cognitive
 performance weighted by the cognitive sensitivity of the task.
 
 $$
-f_{S}(t) = K_{S} S_{t} \left(1 - G_{D_{t}[s]}\right)
+f_{S}(t) = S_{t} \left(1 - G_{D_{t}[s]}\right)
+$$
+
+$$
+F_{S} = \sum_{t \in T} f_{S}(t)
 $$
 
 Similar to [[#Early%20biasing]], the global cost is the sum
 across all tasks scaled by a constant $K_{S}$ which determines the
 size of cognitive sensitivity costs across all tasks.
-
-$$
-F_{S} = \sum_{t \in T} f_{S}(t)
-$$
 
 ## Context-switching
 
@@ -642,19 +645,26 @@ else being equal, we move a task back one 4-hour time block.
 Then let's say that the increase in costs resulting from
 [[#Early%20biasing]] should equal twice the cost of
 
-# Optimizing intervals
+## Composite Cost
 
-We might approach optimizing interval resolution in a manner
-similar to binary search.
+The total cost will be a weighted sum of individual cost
+categories.
 
-Namely, instead of making each interval its own constraint, we
-make each constraint divide the set of possible intervals in half.
+$$
+F = K_{C} F_{C} + K_{E} F_{E} + K_{S} F_{S}
+$$
 
-After pruning to a single possible interval, we can then add a
-check for it.
+Where:
 
-For $n$ intervals, this should yield $\log_{2}(n)+1$ constraints
-with $\log_{2}(n)$ intermediate boolean variables.
+- $F_{C}$ is the total-expected cost associated with demand
+  chosen.
+- $F_{E}$ is the total early bias cost.
+- $F_{S}$ is the total cognitive sensitivity cost.
+- $K_{C}$, $K_E$, and $K_S$ are constants which modulate the
+  effect size of each cost category.
+
+I would probably choose constants in a way like: $K_{C}=2K_{S}$,
+$K_{S}=10K_{E}$.
 
 [^1]: Dijk, Derk-Jan, Jeanne F. Duffy, and Charles A. Czeisler.
        “Circadian and Sleep/Wake Dependent Aspects of Subjective
