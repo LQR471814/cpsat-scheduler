@@ -1,39 +1,54 @@
 # CP-SAT Scheduler
 
-CP-SAT Scheduler is an experimental scheduler that uses Google
-OR-Tools' CP-SAT solver to place tasks on a discrete time grid.
-The current codebase is a Python package for building scheduling
-models, expressing costs and constraints, solving them, and
-printing or viewing the resulting schedule.
+> Declarative time management with a globally optimizing
+> constraint solver powered by [Google's or-tools](https://developers.google.com/optimization).
 
-## Project Layout
-- `src/cpsatscheduler/backend/` - core CP-SAT model configuration,
-  task builders, unit types, and solution printing helpers.
-- `src/cpsatscheduler/frontend/` - higher-level scheduling helpers
-  for real datetimes, time units, PERT-style estimates, and cost
-      topology utilities.
-- `examples/` - Examples of scheduling scenarios.
-- `tests/` - pytest coverage for CP-SAT behavior demos and
-  expected solver output.
-- `docs/` - design notes and reference material for the scheduler
-  model and planned architecture.
+## Justification
 
-## Development
+Typically, time management looks like a calendar with blocked out
+sections, a TO-DO list, or a routine. This is all well and good
+for many people, and many cases, but things get more difficult
+   once one wishes to answer questions like:
 
-This project targets Python 3.13 and uses `uv`.
+- "What happens to my schedule and my other responsibilities if I
+  take on this project?"
+- "What if I trade off time on less important (but urgent) tasks
+  for increased risk of not completing on time, but gain time to
+     do more important tasks (that might be less urgent)?"
+- "Can I still meet my deadlines if I break up a large task into
+  many smaller chunks to be done on different days, in light of my
+  other deadlines?"
+- "What if I want to prefer complex work to be done at times in
+  the day when I have more mental energy?" (see ["Cognitive
+  Performance"](/docs/MATHEMATICS.md#cognitive-performance))
 
-```sh
-uv sync
-uv run pytest
-uv run ruff check
-uv run ty check
-```
+The real trouble is that every part of a schedule can affect every
+other part of the schedule. If I suddenly find out that it will
+take me twice as long to do some large task, I will need to
+reevaluate all the timetables for all the other tasks which had
+previously been formulated on the assumption that I would have
+much more time than I do now. I would also need to weigh the
+trade-offs for tasks which can have variable durations or flexible
+deadlines, as well as their effects on the tasks which depend on
+those tasks, etc...
+
+All in all, this means that manual scheduling has serious scaling
+limits. For every task and responsibility you take on, the amount
+of *options* you have for your schedule grows extremely fast.
+
+As such, it would be useful to have a solver that allows one to
+*declare* components, constraints, and trade-offs they are subject
+to, then have the solver compute an optimal schedule under the
+model you have defined. This solver would also make it trivial to
+examine the effects of changing components, adding
+responsibilities, etc...
+
+This is what this project aims to do,
 
 ## Documentation
 
 - [Mathematics](docs/MATHEMATICS.md) - formal model for scheduling
-- [CP-SAT proto](docs/cp_model.proto) - local copy/reference for
-  CP-SAT model protobuf structures.
+- [Architecture](/docs/ARCHITECTURE.md) - software architecture
 
 ## Additional resources
 
