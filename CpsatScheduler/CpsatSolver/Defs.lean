@@ -1,22 +1,11 @@
 import Mathlib.Data.Char
-import CpsatScheduler.Python
+import CpsatScheduler.Python.Basic
 import CpsatScheduler.CpsatSolver.Domain.NonemptyDomain
 
 namespace CpsatSolver
 
-/-- Opaque solver entity identity, allocated from one global builder counter. -/
-structure EntityId where
-  val : Nat
-deriving DecidableEq, Repr
-
-instance : LT EntityId where
-  lt a b := a.val < b.val
-
-instance : DecidableLT EntityId :=
-  fun a b => inferInstanceAs (Decidable (a.val < b.val))
-
 structure BoolVar where
-  id : EntityId
+  id : Nat
   label : Option String := none
 deriving DecidableEq
 
@@ -27,7 +16,7 @@ deriving DecidableEq
 
 /-- Integer variable with a nonempty canonical domain. -/
 structure IntVar where
-  id : EntityId
+  id : Nat
   domain : NonemptyDomain
   label : Option String := none
 deriving DecidableEq
@@ -75,7 +64,7 @@ def LinearExpr.wrapBounds (e : LinearExpr α) : LinearExpr.WithBounds :=
 
 /-- Half-open interval `[start, start + size`. -/
 structure FixedSizeIntervalVar where
-  id : EntityId
+  id : Nat
   startBounds : Bounds
   start : LinearExpr startBounds
   size : Int64
@@ -132,7 +121,7 @@ inductive Constraint.Variant where
   | implication (src : BoolLit) (dst : BoolLit)
 
 structure Constraint where
-  id : EntityId
+  id : Nat
   label : Option String := none
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
