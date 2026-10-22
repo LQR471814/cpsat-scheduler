@@ -17,7 +17,6 @@ def UnitValue.nsmul {u : UnitScale} (k : ℤ) (a : UnitValue u)
     UnitValue u :=
   ⟨⟨k * a.coeff.val, nonoverflow⟩⟩
 
-/-- Exact division by a positive constant that divides the coefficient. -/
 def UnitValue.edivConst {u : UnitScale} (a : UnitValue u) (d : ℕ)
     (_hd : 0 < d)
     (_divides : (d : ℤ) ∣ a.coeff.val)
@@ -25,7 +24,6 @@ def UnitValue.edivConst {u : UnitScale} (a : UnitValue u) (d : ℕ)
     UnitValue u :=
   ⟨⟨a.coeff.val / d, nonoverflow⟩⟩
 
-/-- Truncating division toward zero by a positive constant. -/
 def UnitValue.tdivConst {u : UnitScale} (a : UnitValue u) (d : ℕ)
     (_hd : 0 < d)
     (nonoverflow : CpsatSolver.Int64.Nonoverflow (Int.tdiv a.coeff.val d)) :

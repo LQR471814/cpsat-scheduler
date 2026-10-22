@@ -2,6 +2,32 @@ import CpsatScheduler.CpsatSolver.Defs
 
 namespace CpsatSolver
 
+-- IDs are allocated from a given ID space
+--
+-- if you can guarantee resulting EntityID is a member of that given space, you
+-- have proven that is unique within that space
+--
+-- a given space can have multiple disjoint subspaces, there may be a proof
+-- written about the uniqueness of all IDs in this space
+--
+-- this can be chained together to imply that an ID that is a member of a space
+-- is unique within that space and all spaces above it
+--
+-- to prevent the same ID from being used in multiple places, we must clearly
+-- specify which space an ID comes from, two IDs from different spaces cannot
+-- be alike
+--
+-- ex. you have a struct with two different ID fields, simply specify in the
+-- type of each field, a different space which its ID should come from
+--
+-- this does imply that from one space can only come exactly one unique ID, so
+-- the name "space" seems a bit silly
+--
+-- thus, we can call it a "IDGroup" or something
+--
+-- really we are just allowing the construction of unique IDs from other unique
+-- IDs.
+
 abbrev EntityID := ℕ
 
 def BoolLit.varId : BoolLit → EntityID

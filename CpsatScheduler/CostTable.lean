@@ -36,16 +36,19 @@ def CostDemandTable.ofPoints? (demandDom costDom : Domain)
     none
 
 def CostDemandTable.constrain
+  (constraintID : EntityID)
   (task : TaskVars S)
   (table : CostDemandTable
     task.timeDemandedVar.domain.domain
     task.costVar.domain.domain)
-  (enforcement : Constraint.Enforcement) := do
+  (enforcement : Constraint.Enforcement) :
+    Constraint :=
   let targetVars := Vector.mk
     #[task.timeDemandedVar, task.costVar]
     (by exact Nat.add_zero ([task.costVar].length + 1))
-  Builder.addConstraint enforcement
-    (.allowed_assignments (n := 2)
+  {
+    id := constraintID
+    variant := (.allowed_assignments (n := 2)
       targetVars
       (table.points.map (fun p => CostDemandPoint.toVector p))
       (by
@@ -66,4 +69,6 @@ def CostDemandTable.constrain
         interval_cases iv
         · exact (table.within p hp).1
         · exact (table.within p hp).2))
-    (.some s!"cost_demand_{task.task.label}")
+    enforcement := enforcement
+    label := .some s!"cost_demand_{task.task.label}"
+  }

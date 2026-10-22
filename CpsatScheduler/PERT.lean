@@ -88,30 +88,24 @@ structure TaskConfig (S : Timescales) where
   demand : DemandEstimate S task
 
 structure Task (cfg : TaskConfig S) where
-  taskVars : TaskVarsResult S cfg.task cfg.cost.hull
+  taskVars : TaskVars S
+  constraint : Constraint
 
-def Task.of (py : Python.DaemonProcess) (cfg : TaskConfig S) :
-    IO (Except String (Builder (Task cfg))) := do
+def Task.of (py : Python.DaemonProcess) (cfg : TaskConfig S)
+  (startVarID costVarID timeDemandedVarID constraintID : EntityID) :
+    IO (Except String (Task cfg)) := do
   let table ← PERT.costTable py cfg.task cfg.cost cfg.demand cfg.steps
   pure (match table with
     | .ok table =>
-      .ok do
-        let taskVarsResult ← TaskVars.of cfg.task cfg.cost.hull
-        let hd :
-          (Task.demandDomain cfg.task).domain
-            = taskVarsResult.vars.timeDemandedVar.domain.domain :=
-          congrArg NonemptyDomain.domain taskVarsResult.demand_domain.symm
-        let hc :
-          cfg.cost.hull.domain
-            = taskVarsResult.vars.costVar.domain.domain :=
-          congrArg NonemptyDomain.domain taskVarsResult.cost_domain.symm
-        let table' :
-          CostDemandTable
-            taskVarsResult.vars.timeDemandedVar.domain.domain
-            taskVarsResult.vars.costVar.domain.domain :=
-          hd ▸ hc ▸ table
-        let _ ← CostDemandTable.constrain taskVarsResult.vars table' .always
-        pure ⟨taskVarsResult⟩
+      let taskVarsResult := TaskVars.of
+        cfg.task cfg.cost.hull
+        startVarID costVarID timeDemandedVarID
+      let constraint := CostDemandTable.constrain
+        constraintID taskVarsResult table .always
+      .ok {
+        taskVars := taskVarsResult
+        constraint := constraint
+      }
     | .error err =>
       .error s!"PERT.costTable: {err}")
 

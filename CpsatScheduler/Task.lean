@@ -2,13 +2,6 @@ import CpsatScheduler.Defs
 
 namespace CpsatScheduler
 
-/-- Generic task constructor over a contiguous range of start-bucket indices
-`[kLo, kHi]` in `unit` coordinates.
-
-The caller supplies only the two horizon-fit facts at the range endpoints:
-`begin ≤ kLo * u` and `(kHi + 1) * u ≤ end_`. Every per-bucket obligation of
-`Task.bucketsFitHorizon` — including both `Int64` nonoverflow bounds — is derived
-by monotonicity in `k` and from the horizon's own `Int64` safety proof. -/
 @[simp] def Task.ofBucketRange (scales : Timescales)
     (unit : { u : UnitScale // u ∈ scales.units.set })
     (kLo : ℤ := scales.horizon.begin)

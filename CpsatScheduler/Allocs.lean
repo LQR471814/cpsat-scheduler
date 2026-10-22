@@ -1,4 +1,5 @@
 import CpsatScheduler.CpsatSolver.Model
+import CpsatScheduler.CpsatSolver.LinearExpr
 import CpsatScheduler.TaskVars
 import CpsatScheduler.Schedule.Event
 
@@ -10,39 +11,39 @@ structure Nonoverflow where
   bucket : CpsatSolver.Int64
   alloc : CpsatSolver.Int64
 
-def Nonoverflow.of? (a : Alloc) : Option Nonoverflow :=
-  if hb : CpsatSolver.Int64.Nonoverflow a.bucket then
-    if ha : CpsatSolver.Int64.Nonoverflow a.alloc then
-      some { bucket := ⟨a.bucket, hb⟩, alloc := ⟨a.alloc, ha⟩ }
-    else none
-  else none
-
-def checkMany (allocs : List Alloc) : Option (List Nonoverflow) :=
-  allocs.mapM Nonoverflow.of?
-
 def cumulativeItem
+    (intervalID : CpsatSolver.EntityID)
     (input : Nonoverflow)
     (label : Option String := none) :
-    CpsatSolver.Builder CpsatSolver.CumulativeItem := do
+      CpsatSolver.CumulativeItem :=
   let startExpr := CpsatSolver.LinearExpr.const input.bucket
-  let interval ← CpsatSolver.Builder.newFixedSizeInterval
-    startExpr (CpsatSolver.Int64.of 1) (by decide) label
+  let interval : CpsatSolver.FixedSizeIntervalVar := {
+    id := intervalID
+    label := label
+    startBounds := CpsatSolver.Interval.ofValue input.bucket
+    start := startExpr
+    size := CpsatSolver.Int64.of 1
+    size_nonneg := by decide
+  }
   let demandExpr := CpsatSolver.LinearExpr.const input.alloc
-  pure {
-    interval := interval.val
+  {
+    interval := interval
     demand := demandExpr.wrapBounds
   }
 
 def cumulativeItems
     (allocs : List Nonoverflow)
     (labelPrefix : Option String := none) :
-    CpsatSolver.Builder (Array CpsatSolver.CumulativeItem) := do
+      Array CpsatSolver.CumulativeItem := do
   let values ← allocs.zipIdx.mapM
     (fun (input, idx) =>
       let label := labelPrefix.map (fun p => s!"{p}_bg_{idx}")
       let item := cumulativeItem input label
       item)
   pure values.toArray
+
+-- TODO: finish migrating CpsatSolver refactors to the rest of the package
+-- TODO: figure out a better way of allocating ids without requiring monadic builders
 
 end CpsatScheduler.Alloc
 

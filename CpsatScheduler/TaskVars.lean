@@ -6,7 +6,6 @@ open CpsatSolver
 
 namespace CpsatScheduler
 
-/-- Nonnegative task start in bucket-index coordinates. -/
 structure TaskVars (S : Timescales) where
   task : Task S
   startVar : CpsatSolver.IntVar
@@ -88,36 +87,30 @@ instance : Decidable (Task.MemDemand T x) :=
       have h1 := (Task.mem_demand_domain T x).mpr assump
       exact h h1)
 
-structure TaskVarsResult (S : Timescales) (t : Task S)
-    (costDomain : NonemptyDomain) where
-  vars : TaskVars S
-  start_domain : vars.startVar.domain = t.startDomain
-  cost_domain : vars.costVar.domain = costDomain
-  demand_domain : vars.timeDemandedVar.domain = t.demandDomain
-
-def TaskVars.of (t : Task S) (costDomain : NonemptyDomain) :
-    Builder (TaskVarsResult S t costDomain) := do
+def TaskVars.of (t : Task S) (costDomain : NonemptyDomain)
+    (startVarID costVarID timeDemandedVarID : EntityID) :=
   let labelFor (suffix : String) : Option String :=
     t.label.map (s!"{·}_{suffix}")
-  let start ← Builder.newIntVar t.startDomain (labelFor "start")
-  let cost ← Builder.newIntVar costDomain (labelFor "cost")
-  let demand ← Builder.newIntVar (Task.demandDomain t)
-    (labelFor "demand")
   let vars : TaskVars S := {
     task := t
-    startVar := start.val
-    costVar := cost.val
-    timeDemandedVar := demand.val
-    unit_eq := start.property.1
-    time_demanded_le_unit := by
-      rw [demand.property.1]
-      simp
+    startVar := {
+      id := startVarID
+      domain := t.startDomain
+      label := labelFor "start"
+    }
+    costVar := {
+      id := costVarID
+      domain := costDomain
+      label := labelFor "cost"
+    }
+    timeDemandedVar := {
+      id := timeDemandedVarID
+      domain := Task.demandDomain t
+      label := labelFor "demand"
+    }
+    unit_eq := rfl
+    time_demanded_le_unit := by simp
   }
-  pure {
-    vars := vars
-    start_domain := start.prop.1
-    cost_domain := cost.prop.1
-    demand_domain := demand.prop.1
-  }
+  vars
 
 end CpsatScheduler

@@ -1,4 +1,6 @@
 import CpsatScheduler.UnitScale
+import CpsatScheduler.CpsatSolver.LinearExpr
+import CpsatScheduler.CpsatSolver.Constraints
 
 namespace CpsatScheduler.UnitAware
 
@@ -33,8 +35,6 @@ def LinearExpr.sub {u : UnitScale} (a b : LinearExpr u)
     CpsatSolver.LinearExpr.sub a.snd b.snd nonoverflow
   ⟩
 
-/-- Exact conversion from a coarser unit `u` to a finer unit `v` by multiplying
-by the integral scale ratio `u/v`. -/
 def LinearExpr.rescaleExact {u v : UnitScale}
     (e : LinearExpr u) (hv : v.val ∣ u.val)
     (mul_nonoverflow :
@@ -58,19 +58,21 @@ structure CumulativeItem (timeline demandU : UnitScale) where
   interval : FixedSizeInterval timeline
   demand : LinearExpr demandU
 
-/-- Coarser conversion from unit `u` to `v` (`u ∣ v`): auxiliary quotient plus
-truncating division equality. -/
 def truncCoarsen {u v : UnitScale}
+    (quotVarID constraintID : CpsatSolver.EntityID)
     (e : UnitAware.LinearExpr u) (huv : u.val ∣ v.val)
     (label : Option String := none) :
-    CpsatSolver.Builder (UnitAware.IntVar v) := do
+    CpsatSolver.Constraint.TruncCoarsen :=
   let ratio := UnitScale.exactRatio v u huv
   have hdiv : (0 : ℤ) < ratio.val := by
     change (0 : ℤ) < ((v.val / u.val : ℕ) : ℤ)
     have hle : u.val ≤ v.val := Nat.le_of_dvd v.pos huv
     have hpos : 0 < v.val / u.val := Nat.div_pos hle u.pos
     exact_mod_cast hpos
-  let q ← CpsatSolver.Builder.truncCoarsen e.snd ratio hdiv label
-  pure ⟨q⟩
+  let result := CpsatSolver.Constraint.truncCoarsen
+    quotVarID constraintID
+    e.snd ratio hdiv
+    .always label
+  result
 
 end CpsatScheduler.UnitAware
