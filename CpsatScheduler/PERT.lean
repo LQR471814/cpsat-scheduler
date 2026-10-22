@@ -7,7 +7,7 @@ namespace PERT
 open CpsatScheduler
 open CpsatSolver
 
-abbrev DemandEstimate.Valid
+def DemandEstimate.Valid
   (task : CpsatScheduler.Task S)
   (opt exp pes : CpsatSolver.Int64) : Prop :=
     Task.MemDemand task opt.val ∧
@@ -15,6 +15,11 @@ abbrev DemandEstimate.Valid
     Task.MemDemand task pes.val ∧
     opt.val ≤ exp.val ∧
     exp.val ≤ pes.val
+
+instance (task : CpsatScheduler.Task S) (opt exp pes : CpsatSolver.Int64) :
+    Decidable (DemandEstimate.Valid task opt exp pes) := by
+  unfold DemandEstimate.Valid
+  infer_instance
 
 structure DemandEstimate (S : Timescales) (task : Task S) where
   opt : CpsatSolver.Int64

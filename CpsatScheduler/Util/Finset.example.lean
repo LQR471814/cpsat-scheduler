@@ -12,8 +12,12 @@ def nameOf (ofSet : exSet) := ofSet.val.val
 lemma nameOf_injective : Function.Injective nameOf :=
   by decide
 
-private abbrev nameLE (a b : exSet) : Prop :=
+private def nameLE (a b : exSet) : Prop :=
   nameOf a ≤ nameOf b
+
+instance (a b : exSet) : Decidable (nameLE a b) := by
+  unfold nameLE
+  infer_instance
 
 instance : LE exSet where
   le := nameLE
@@ -35,6 +39,12 @@ instance : Std.Antisymm nameLE where
             (And.intro bLtA (lt_asymm aLtB))))
         (fun bEqA => nameOf_injective bEqA.symm))
       (fun aEqB => nameOf_injective aEqB)
+
+instance : IsTrans exSet nameLE where
+  trans _ _ _ rab rbc := le_trans rab rbc
+
+instance : Std.Total nameLE where
+  total a b := le_total (nameOf a) (nameOf b)
 
 def ranking := exSet.attach.sort (fun a b => nameLE a b)
 

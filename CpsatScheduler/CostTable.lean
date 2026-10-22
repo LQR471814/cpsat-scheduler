@@ -15,11 +15,16 @@ def CostDemandPoint.toVector (p : CostDemandPoint) :
     #[ p.timeDemanded, p.encodedCost ]
     (by exact Nat.two_eq_digitChar.mp rfl)
 
-abbrev PointsInDomain (points : Array CostDemandPoint)
-  (demandDom costDom : Domain) :=
+def PointsInDomain (points : Array CostDemandPoint)
+  (demandDom costDom : Domain) : Prop :=
     ∀ p ∈ points,
       ((p.timeDemanded.val : ℤ) ∈ demandDom) ∧
       ((p.encodedCost.val : ℤ) ∈ costDom)
+
+instance (points : Array CostDemandPoint) (demandDom costDom : Domain) :
+    Decidable (PointsInDomain points demandDom costDom) := by
+  unfold PointsInDomain
+  infer_instance
 
 structure CostDemandTable (demandDom costDom : Domain) where
   points : Array CostDemandPoint

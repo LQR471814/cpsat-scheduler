@@ -10,7 +10,7 @@ structure ModelSpec where
   constraints : Finset Constraint
   objective : Objective
 
-abbrev AllRefsExist {α : Type} [RefVars α]
+def AllRefsExist {α : Type} [RefVars α]
     (spec : ModelSpec) (set : Finset α) : Prop :=
   ∀ a ∈ set,
     ∀ v ∈ (RefVars.intVars a), v ∈ spec.ints ∧

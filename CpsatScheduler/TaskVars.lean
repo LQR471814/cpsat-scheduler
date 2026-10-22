@@ -44,7 +44,7 @@ instance : Decidable (Task.MemDemandInterval T x) :=
       ]
       exact h)
 
-@[simp] def Task.MemDemand (task : Task S) (x : ℤ) :=
+def Task.MemDemand (task : Task S) (x : ℤ) : Prop :=
   x ∈ (Task.demandDomain task).domain
 
 theorem Task.mem_demand_domain (task : Task S) (x : ℤ)
@@ -64,7 +64,7 @@ theorem Task.mem_demand_domain (task : Task S) (x : ℤ)
       dsimp [Task.MemDemandInterval, GetElem.getElem, Interval.mem]
       let d := (Task.demandDomain task).domain
       let fst_intv := d.intervals[0]'(d.interval_size (Eq.refl d))
-      dsimp [Membership.mem] at h
+      dsimp [Task.MemDemand, Membership.mem] at h
       cases h
       rename_i w h
       cases h

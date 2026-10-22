@@ -35,8 +35,12 @@ instance : LT UnitScale where
 @[simp] def UnitScale.atomic : UnitScale :=
   ⟨1, Nat.succ_pos 0, by decide⟩
 
-abbrev Units.Divisibility (set : Finset UnitScale) :=
+def Units.Divisibility (set : Finset UnitScale) : Prop :=
   ∀ a ∈ set, ∀ b ∈ set, b ≤ a → (b.val : ℕ) ∣ a.val
+
+instance (set : Finset UnitScale) : Decidable (Units.Divisibility set) := by
+  unfold Units.Divisibility
+  infer_instance
 
 structure Units where
   set : Finset UnitScale

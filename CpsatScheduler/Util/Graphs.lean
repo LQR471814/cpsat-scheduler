@@ -13,24 +13,23 @@ structure FinDigraph (α : Type) where
 abbrev FinDigraph.rank (g : FinDigraph α) :=
   Fin g.nodes.card
 
-abbrev FinDigraph.IsAcyclic [DecidableEq α] (g : FinDigraph α) : Prop :=
-  -- since g.nodes, g.rank, and the ∀ predicate are finite, ∃ is decidable via
-  -- infer_instance
+def FinDigraph.IsAcyclic [DecidableEq α] (g : FinDigraph α) : Prop :=
   ∃ rank : g.nodes → g.rank,
-    -- since g.edges is finite and rank a < rank b is decidable, ∀ is decidable
     ∀ edge : g.edges, rank edge.val.src < rank edge.val.dst
 
 instance [DecidableEq α] (g : FinDigraph α)
-  : Decidable g.IsAcyclic := inferInstance
+  : Decidable g.IsAcyclic := by
+  unfold FinDigraph.IsAcyclic
+  infer_instance
 
--- we ensure that if dst are the same, src must also be
--- this means that dst is the parent
-abbrev FinDigraph.IsTree (g : FinDigraph α) : Prop :=
+def FinDigraph.IsTree (g : FinDigraph α) : Prop :=
   ∀ n : g.nodes, ∀ e₁ e₂ : g.edges,
     e₁.val.dst = n ∧ e₂.val.dst = n → e₁ = e₂
 
 instance [DecidableEq α] (g : FinDigraph α)
-  : Decidable g.IsTree := inferInstance
+  : Decidable g.IsTree := by
+  unfold FinDigraph.IsTree
+  infer_instance
 
 
 

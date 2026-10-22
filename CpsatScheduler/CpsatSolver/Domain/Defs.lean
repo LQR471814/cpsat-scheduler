@@ -5,8 +5,12 @@ namespace CpsatSolver
 
 @[simp] abbrev Int64.min : ℤ := -(2 : ℤ) ^ 63
 @[simp] abbrev Int64.max : ℤ := (2 : ℤ) ^ 63 - 1
-@[simp] abbrev Int64.Nonoverflow (b : ℤ) : Prop :=
+def Int64.Nonoverflow (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
+
+instance (b : ℤ) : Decidable (Int64.Nonoverflow b) := by
+  unfold Int64.Nonoverflow
+  infer_instance
 
 @[simp] abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
 
@@ -20,7 +24,8 @@ namespace CpsatSolver
     .some (Subtype.mk
       (f.toInt64.toInt)
       (by
-        dsimp [Int64.toInt,
+        dsimp [Int64.Nonoverflow,
+          Int64.toInt,
           Float.toInt64,
           Float.toModel,
           BitVec.toInt]

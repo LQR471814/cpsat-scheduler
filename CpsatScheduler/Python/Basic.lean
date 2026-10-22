@@ -41,12 +41,16 @@ def ReservedKeywords : Finset String := {
   "yield"
 }
 
-abbrev ValidIdent (str : String) : Prop :=
+def ValidIdent (str : String) : Prop :=
   ∀ i : Fin str.toList.length, let c := str.toList[i];
     (c ≥ 'A' ∧ c ≤ 'Z') ∨
     (c ≥ 'a' ∧ c ≤ 'z') ∨
     c = '_' ∨
     (i.toNat > 0 → c ≥ '0' ∨ c ≤ '9')
+
+instance (str : String) : Decidable (ValidIdent str) := by
+  unfold ValidIdent
+  infer_instance
 
 def ValidName.Proof (name : String) : Prop :=
   ¬ (name ∈ ReservedKeywords) ∧ (ValidIdent name)

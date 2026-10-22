@@ -21,21 +21,37 @@ structure IntVar where
   label : Option String := none
 deriving DecidableEq
 
-abbrev LinearExpr.Nonoverflow.Neg (b : Bounds) :=
+def LinearExpr.Nonoverflow.Neg (b : Bounds) : Prop :=
   Int64.Nonoverflow (-b.right : ℤ) ∧
   Int64.Nonoverflow (-b.left : ℤ)
 
-abbrev LinearExpr.Nonoverflow.Mul (b : Bounds) (v : Int64) :=
+instance (b : Bounds) : Decidable (LinearExpr.Nonoverflow.Neg b) := by
+  unfold LinearExpr.Nonoverflow.Neg
+  infer_instance
+
+def LinearExpr.Nonoverflow.Mul (b : Bounds) (v : Int64) : Prop :=
   Int64.Nonoverflow (b.mulLower (Interval.ofValue v)) ∧
   Int64.Nonoverflow (b.mulUpper (Interval.ofValue v))
 
-abbrev LinearExpr.Nonoverflow.Add (a b : Bounds) :=
+instance (b : Bounds) (v : Int64) : Decidable (LinearExpr.Nonoverflow.Mul b v) := by
+  unfold LinearExpr.Nonoverflow.Mul
+  infer_instance
+
+def LinearExpr.Nonoverflow.Add (a b : Bounds) : Prop :=
   Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
   Int64.Nonoverflow ((a.right : ℤ) + b.right)
 
-abbrev LinearExpr.Nonoverflow.Sub (a b : Bounds) :=
+instance (a b : Bounds) : Decidable (LinearExpr.Nonoverflow.Add a b) := by
+  unfold LinearExpr.Nonoverflow.Add
+  infer_instance
+
+def LinearExpr.Nonoverflow.Sub (a b : Bounds) : Prop :=
   Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
   Int64.Nonoverflow ((a.right : ℤ) - b.left)
+
+instance (a b : Bounds) : Decidable (LinearExpr.Nonoverflow.Sub a b) := by
+  unfold LinearExpr.Nonoverflow.Sub
+  infer_instance
 
 inductive LinearExpr : Bounds → Type where
   | fromVar (value : IntVar) : LinearExpr value.domain.hull
