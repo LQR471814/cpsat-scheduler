@@ -18,7 +18,7 @@ structure ScheduleMap where
   atomicSec : ℤ
   atomic_pos : 0 < atomicSec
 
-@[simp] def ScheduleMap.mk
+def ScheduleMap.mk
     (scales : Timescales) (epochSec atomicSec : ℤ)
     (atomic_pos : 0 < atomicSec := by decide) : ScheduleMap :=
   ⟨scales, epochSec, atomicSec, atomic_pos⟩
@@ -111,7 +111,7 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
   | .down => (tsSec - epochSec) / atomicSec
   | .up => (tsSec - epochSec + atomicSec - 1) / atomicSec
 
-@[simp] def Horizon.ofSec
+def Horizon.ofSec
     (epochSec atomicSec startSec endSec : ℤ)
     (begin : ℕ := (atomicOfSec epochSec atomicSec startSec .down).toNat)
     (end_ : ℕ := (atomicOfSec epochSec atomicSec endSec .up).toNat)
@@ -120,7 +120,7 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
     (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) : Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
-@[simp] def Horizon.ofDateTime
+def Horizon.ofDateTime
     (epoch start «end» : Std.Time.PlainDateTime) (atomicSec : ℤ)
     (begin : ℕ :=
       (atomicOfSec (plainDateTimeToSecUTC epoch) atomicSec
@@ -133,7 +133,7 @@ def atomicOfSec (epochSec atomicSec tsSec : ℤ) : Rounding → ℤ
     (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) : Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
-@[simp] def ScheduleMap.task
+def ScheduleMap.task
     (m : ScheduleMap)
     (unit : { u : UnitScale // u ∈ m.scales.units.set })
     (startAfter : Option Std.Time.PlainDateTime := none)

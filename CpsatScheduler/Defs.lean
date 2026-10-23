@@ -32,7 +32,7 @@ instance : LE UnitScale where
 instance : LT UnitScale where
   lt a b := a.val < b.val
 
-@[simp] def UnitScale.atomic : UnitScale :=
+def UnitScale.atomic : UnitScale :=
   ⟨1, Nat.succ_pos 0, by decide⟩
 
 def Units.Divisibility (set : Finset UnitScale) : Prop :=
@@ -47,13 +47,13 @@ structure Units where
   has_atomic : UnitScale.atomic ∈ set
   divisibility : Units.Divisibility set
 
-@[simp] def Units.of
+def Units.of
   (set : Finset UnitScale)
   (has_atomic : UnitScale.atomic ∈ set := by decide)
   (divisibility : Units.Divisibility set := by decide) : Units :=
   ⟨set, has_atomic, divisibility⟩
 
-@[simp] def Units.atomic (_units : Units) : UnitScale := UnitScale.atomic
+def Units.atomic (_units : Units) : UnitScale := UnitScale.atomic
 
 /-- Solver-facing quantity indexed by its unit. -/
 structure UnitValue (u : UnitScale) where
@@ -75,7 +75,7 @@ structure Horizon where
   begin_safe : CpsatSolver.Int64.Nonoverflow begin
   end_safe : CpsatSolver.Int64.Nonoverflow end_
 
-@[simp] def Horizon.mk
+def Horizon.mk
   (begin end_ : ℕ)
   (begin_lt_end : begin < end_ := by decide)
   (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by decide)

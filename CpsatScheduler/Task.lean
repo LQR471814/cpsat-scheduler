@@ -2,7 +2,7 @@ import CpsatScheduler.Defs
 
 namespace CpsatScheduler
 
-@[simp] def Task.ofBucketRange (scales : Timescales)
+def Task.ofBucketRange (scales : Timescales)
     (unit : { u : UnitScale // u ∈ scales.units.set })
     (kLo : ℤ := scales.horizon.begin)
     (kHi : ℤ := scales.horizon.end_ / unit.val.val - 1)

@@ -19,7 +19,7 @@ theorem Domain.mem_singleton (v : Int64) (x : ℤ) :
     exact ⟨Interval.ofValue v, by simp [Domain.singleton],
       (Interval.mem_ofValue v _).mpr rfl⟩
 
-@[simp] def Domain.contains (d : Domain) (x : ℤ) : Bool :=
+def Domain.contains (d : Domain) (x : ℤ) : Bool :=
   d.intervals.any fun i => decide (x ∈ i)
 
 theorem Domain.contains_iff (d : Domain) (x : ℤ) :
@@ -35,10 +35,10 @@ theorem Domain.contains_iff (d : Domain) (x : ℤ) :
 instance {d : Domain} {x : ℤ} : Decidable (x ∈ d) :=
   decidable_of_bool (d.contains x) (Domain.contains_iff d x)
 
-@[simp] def Domain.min? (d : Domain) : Option Int64 :=
+def Domain.min? (d : Domain) : Option Int64 :=
   d.intervals.head?.map (·.left)
 
-@[simp] def Domain.max? (d : Domain) : Option Int64 :=
+def Domain.max? (d : Domain) : Option Int64 :=
   d.intervals.getLast?.map (·.right)
 
 private theorem mem_head_cons {α : Type} {a : α} {t : List α} : a ∈ a :: t :=
@@ -65,7 +65,7 @@ theorem Domain.head_le_getLast {l : List Interval}
     rw [List.head_cons, hlast]
     exact le_trans hle ih
 
-@[simp] def Domain.hullOf (d : Domain) (hne : d.intervals ≠ []) : Interval :=
+def Domain.hullOf (d : Domain) (hne : d.intervals ≠ []) : Interval :=
   {
     left := d.intervals.head hne |>.left
     right := d.intervals.getLast hne |>.right
@@ -216,30 +216,30 @@ theorem Domain.canonicalize_pairwise (l : List Interval) :
   | nil => exact List.Pairwise.nil
   | cons x xs ih => exact Domain.mergeOne_pairwise x _ ih
 
-@[simp] def Domain.ofList (xs : List Interval) : Domain :=
+def Domain.ofList (xs : List Interval) : Domain :=
   ⟨Domain.canonicalize xs, Domain.canonicalize_pairwise xs⟩
 
 theorem Domain.canonicalize_cons_ne_nil (x : Interval) (xs : List Interval) :
     Domain.canonicalize (x :: xs) ≠ [] :=
   Domain.mergeOne_ne_nil x (Domain.canonicalize xs)
 
-@[simp] def Domain.ofArray (xs : Array Interval) : Domain :=
+def Domain.ofArray (xs : Array Interval) : Domain :=
   Domain.ofList xs.toList
 
-@[simp] def Domain.ofValues (xs : Array CpsatSolver.Int64) : Domain :=
+def Domain.ofValues (xs : Array CpsatSolver.Int64) : Domain :=
   Domain.ofList (xs.toList.map (Interval.ofValue ·))
 
-@[simp] def Domain.insert (d : Domain) (i : Interval) : Domain :=
+def Domain.insert (d : Domain) (i : Interval) : Domain :=
   ⟨Domain.mergeOne i d.intervals, Domain.mergeOne_pairwise i d.intervals d.pairwise⟩
 
-@[simp] def Domain.union (a b : Domain) : Domain :=
+def Domain.union (a b : Domain) : Domain :=
   b.intervals.foldl Domain.insert a
 
-@[simp] def Domain.inter (a b : Domain) : Domain :=
+def Domain.inter (a b : Domain) : Domain :=
   Domain.ofList (a.intervals.flatMap fun ia =>
     b.intervals.filterMap (fun ib => ia.inter? ib))
 
-@[simp] def Domain.interval (i : Interval) : Domain :=
+def Domain.interval (i : Interval) : Domain :=
   ⟨[i], List.pairwise_singleton _ _⟩
 
 theorem Domain.interval_size {I : Interval} (D : Domain)

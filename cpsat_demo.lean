@@ -39,19 +39,19 @@ def blockedAllocs : List Alloc :=
 
 def pertSteps : Array Float := Stats.PERT.Distribute.cubic 3
 
-@[simp] def taskA : Task scales :=
+def taskA : Task scales :=
   sched.task (Subtype.mk unit4 (by decide))
     (startAfter := datetime("2026-01-01T00:00:00"))
     (startBefore := datetime("2026-01-01T02:45:00"))
     (label := some "task_a")
 
-@[simp] def taskB : Task scales :=
+def taskB : Task scales :=
   sched.task (Subtype.mk unit8 (by decide))
     (startAfter := datetime("2026-01-01T00:00:00"))
     (startBefore := datetime("2026-01-01T01:00:00"))
     (label := some "task_b")
 
-@[simp] def taskC : Task scales :=
+def taskC : Task scales :=
   sched.task (Subtype.mk unit16 (by decide))
     (startAfter := datetime("2026-01-01T00:00:00"))
     (startBefore := datetime("2026-01-01T01:00:00"))

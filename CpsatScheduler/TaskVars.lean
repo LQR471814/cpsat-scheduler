@@ -16,7 +16,7 @@ structure TaskVars (S : Timescales) where
     timeDemandedVar.domain.min ≥ (0 : ℤ) ∧
     timeDemandedVar.domain.max.val ≤ task.unit.val
 
-@[simp] def Task.demandDomain (task : Task S) :=
+def Task.demandDomain (task : Task S) :=
   (NonemptyDomain.interval
     (CpsatSolver.Interval.of 0 task.unit
       (hl := by decide)
@@ -24,13 +24,18 @@ structure TaskVars (S : Timescales) where
       (hlr := by exact Int.natCast_nonneg task.unit.val)))
 
 def Task.MemDemandInterval (task : Task S) (x : ℤ) : Prop :=
-  (Task.demandDomain task).domain.intervals[0].mem x
+  have h : 0 < (Task.demandDomain task).domain.intervals.length :=
+    (Task.demandDomain task).domain.interval_size rfl
+  ((Task.demandDomain task).domain.intervals[0]'h).mem x
 
 instance : Decidable (Task.MemDemandInterval T x) :=
   if h : 0 ≤ x ∧ x ≤ T.unit.val then
     Decidable.isTrue (by
       dsimp [
         Task.MemDemandInterval,
+        Task.demandDomain,
+        NonemptyDomain.interval,
+        Domain.interval,
         GetElem.getElem,
         Interval.mem
       ]
@@ -39,6 +44,9 @@ instance : Decidable (Task.MemDemandInterval T x) :=
     Decidable.isFalse (by
       dsimp [
         Task.MemDemandInterval,
+        Task.demandDomain,
+        NonemptyDomain.interval,
+        Domain.interval,
         GetElem.getElem,
         Interval.mem
       ]
@@ -61,7 +69,8 @@ theorem Task.mem_demand_domain (task : Task S) (x : ℤ)
       · exact List.mem_of_getElem (a := w) rfl
       · exact h
     · intro h
-      dsimp [Task.MemDemandInterval, GetElem.getElem, Interval.mem]
+      dsimp [Task.MemDemandInterval, Task.demandDomain,
+        NonemptyDomain.interval, Domain.interval, GetElem.getElem, Interval.mem]
       let d := (Task.demandDomain task).domain
       let fst_intv := d.intervals[0]'(d.interval_size (Eq.refl d))
       dsimp [Task.MemDemand, Membership.mem] at h
@@ -109,7 +118,11 @@ def TaskVars.of (t : Task S) (costDomain : NonemptyDomain)
       label := labelFor "demand"
     }
     unit_eq := rfl
-    time_demanded_le_unit := by simp
+    time_demanded_le_unit := by
+      simp only [Task.demandDomain, NonemptyDomain.min, NonemptyDomain.max,
+        NonemptyDomain.interval, Domain.interval, List.head, List.getLast,
+        Interval.of]
+      exact ⟨Int.natCast_nonneg _, le_rfl⟩
   }
   vars
 

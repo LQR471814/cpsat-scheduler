@@ -134,7 +134,7 @@ theorem Interval.separated_trans {x a y : Interval}
   have : (x.right : ℤ) + 1 < (y.left : ℤ) := by linarith
   exact this
 
-@[simp] def Interval.span (a b : Interval) : Interval :=
+def Interval.span (a b : Interval) : Interval :=
   {
     left := if (a.left : ℤ) ≤ b.left then a.left else b.left
     right := if (a.right : ℤ) ≤ b.right then b.right else a.right

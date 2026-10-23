@@ -2,7 +2,7 @@ import CpsatScheduler.Defs
 
 namespace CpsatScheduler
 
-@[simp] def RatQuantity.ofUnitValue {u : UnitScale} (v : UnitValue u) : RatQuantity :=
+def RatQuantity.ofUnitValue {u : UnitScale} (v : UnitValue u) : RatQuantity :=
   {
     coeff := v.coeff.val
     scale := u.val
@@ -10,7 +10,7 @@ namespace CpsatScheduler
       exact Nat.cast_pos.mpr u.pos
   }
 
-@[simp] def RatQuantity.mul (a b : RatQuantity) : RatQuantity :=
+def RatQuantity.mul (a b : RatQuantity) : RatQuantity :=
   {
     coeff := a.coeff * b.coeff
     scale := a.scale * b.scale
@@ -19,7 +19,7 @@ namespace CpsatScheduler
 
 /-- Quotient of rational quantities. The scale stays positive by folding the
 sign of `b.coeff` into the result coefficient. -/
-@[simp] def RatQuantity.div (a b : RatQuantity) (hb : b.coeff ≠ 0) : RatQuantity :=
+def RatQuantity.div (a b : RatQuantity) (hb : b.coeff ≠ 0) : RatQuantity :=
   {
     coeff := a.coeff * Int.sign b.coeff
     scale := a.scale / ((b.coeff.natAbs : ℚ) * b.scale)
@@ -29,7 +29,7 @@ sign of `b.coeff` into the result coefficient. -/
       exact div_pos a.scale_pos (mul_pos habs b.scale_pos)
   }
 
-@[simp] def RatQuantity.lower {u : UnitScale} (q : RatQuantity)
+def RatQuantity.lower {u : UnitScale} (q : RatQuantity)
     (n : ℤ)
     (_hn : (q.coeff : ℚ) * q.scale = (n : ℚ) * (u.val : ℚ))
     (safe : CpsatSolver.Int64.Nonoverflow n) :

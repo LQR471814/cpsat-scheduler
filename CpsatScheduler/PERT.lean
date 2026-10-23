@@ -41,7 +41,7 @@ def Cost.hull (c : Cost) : NonemptyDomain :=
       right := c
       left_le_right := c.prop
     },
-    nonempty := by simp
+    nonempty := by simp [Domain.interval]
   }
 
 def costTable (py : Python.DaemonProcess)

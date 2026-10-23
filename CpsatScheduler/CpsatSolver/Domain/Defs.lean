@@ -3,8 +3,8 @@ import Mathlib.Algebra.Group.Int.Defs
 
 namespace CpsatSolver
 
-@[simp] abbrev Int64.min : ℤ := -(2 : ℤ) ^ 63
-@[simp] abbrev Int64.max : ℤ := (2 : ℤ) ^ 63 - 1
+abbrev Int64.min : ℤ := -(2 : ℤ) ^ 63
+abbrev Int64.max : ℤ := (2 : ℤ) ^ 63 - 1
 def Int64.Nonoverflow (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 
@@ -12,12 +12,12 @@ instance (b : ℤ) : Decidable (Int64.Nonoverflow b) := by
   unfold Int64.Nonoverflow
   infer_instance
 
-@[simp] abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
+abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
 
-@[simp] def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by decide) : Int64 :=
+def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by decide) : Int64 :=
   ⟨n, h⟩
 
-@[simp] def Int64.ofFloat? (f : Float) : Option Int64 :=
+def Int64.ofFloat? (f : Float) : Option Int64 :=
   if h :
     f ≥ CpsatSolver.Int64.min.toFloat ∧
     f ≤ CpsatSolver.Int64.max.toFloat then
@@ -25,6 +25,8 @@ instance (b : ℤ) : Decidable (Int64.Nonoverflow b) := by
       (f.toInt64.toInt)
       (by
         dsimp [Int64.Nonoverflow,
+          Int64.min,
+          Int64.max,
           Int64.toInt,
           Float.toInt64,
           Float.toModel,
@@ -40,7 +42,7 @@ structure Interval where
   left_le_right : (left : ℤ) ≤ right
 deriving DecidableEq
 
-@[simp] def Interval.of (l r : ℤ)
+def Interval.of (l r : ℤ)
   (hl : Int64.Nonoverflow l := by decide)
   (hr : Int64.Nonoverflow r := by decide)
   (hlr : l ≤ r := by decide) : Interval :=
@@ -64,7 +66,7 @@ abbrev Bounds := Interval
 def Interval.toSet (i : Interval) : Set ℤ :=
   Set.Icc (i.left : ℤ) i.right
 
-@[simp] def Interval.ofValue (v : Int64) : Interval :=
+def Interval.ofValue (v : Int64) : Interval :=
   { left := v, right := v, left_le_right := le_rfl }
 
 /-- Consecutive domain fragments must have a gap of at least one integer. -/
