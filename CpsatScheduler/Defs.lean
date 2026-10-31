@@ -4,61 +4,6 @@ import Mathlib.Data.Rat.Star
 
 namespace CpsatScheduler
 
-/-- Positive natural unit scale that fits in CP-SAT `Int64`. -/
-structure UnitScale where
-  mkRaw ::
-  val : ℕ
-  pos : 0 < val
-  nonoverflow : CpsatSolver.Int64.Nonoverflow (val : ℤ)
-deriving DecidableEq
-
-def UnitScale.mk
-  (val : ℕ)
-  (pos : 0 < val := by decide)
-  (nonoverflow
-    : CpsatSolver.Int64.Nonoverflow (val : ℤ)
-    := by decide) : UnitScale :=
-  ⟨val, pos, nonoverflow⟩
-
-instance : Coe UnitScale ℕ where
-  coe u := u.val
-
-instance : Coe UnitScale ℤ where
-  coe u := u.val
-
-instance : LE UnitScale where
-  le a b := a.val ≤ b.val
-
-instance : LT UnitScale where
-  lt a b := a.val < b.val
-
-def UnitScale.atomic : UnitScale :=
-  ⟨1, Nat.succ_pos 0, by decide⟩
-
-def Units.Divisibility (set : Finset UnitScale) : Prop :=
-  ∀ a ∈ set, ∀ b ∈ set, b ≤ a → (b.val : ℕ) ∣ a.val
-
-instance (set : Finset UnitScale) : Decidable (Units.Divisibility set) := by
-  unfold Units.Divisibility
-  infer_instance
-
-structure Units where
-  set : Finset UnitScale
-  has_atomic : UnitScale.atomic ∈ set
-  divisibility : Units.Divisibility set
-
-def Units.of
-  (set : Finset UnitScale)
-  (has_atomic : UnitScale.atomic ∈ set := by decide)
-  (divisibility : Units.Divisibility set := by decide) : Units :=
-  ⟨set, has_atomic, divisibility⟩
-
-def Units.atomic (_units : Units) : UnitScale := UnitScale.atomic
-
-/-- Solver-facing quantity indexed by its unit. -/
-structure UnitValue (u : UnitScale) where
-  coeff : CpsatSolver.Int64
-deriving DecidableEq
 
 /-- Rational scale/quantity for arbitrary unit arithmetic. -/
 structure RatQuantity where
@@ -66,7 +11,7 @@ structure RatQuantity where
   scale : ℚ
   scale_pos : 0 < scale
 
-/-- Nonnegative atomic-unit half-open horizon `[begin, end)`. -/
+/-- Nonnegative atomic-unit half-open horizon `[begin, end`. -/
 structure Horizon where
   mkRaw ::
   begin : ℕ
@@ -77,9 +22,9 @@ structure Horizon where
 
 def Horizon.mk
   (begin end_ : ℕ)
-  (begin_lt_end : begin < end_ := by decide)
-  (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by decide)
-  (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) :
+  (begin_lt_end : begin < end_ := by native_decide)
+  (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by native_decide)
+  (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by native_decide) :
     Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 

@@ -8,7 +8,7 @@ namespace CpsatScheduler
 def Constraint.packSingleLayer
   {scales : Timescales}
   (u : UnitScale)
-  (u_in_scales : u ∈ scales.units.set := by decide)
+  (u_in_scales : u ∈ scales.units.set := by native_decide)
   (tasks : Array (TaskVars scales))
   (allocs : List Alloc.Nonoverflow)
   (allocUnit : UnitScale)
@@ -18,12 +18,12 @@ def Constraint.packSingleLayer
   let itemsUnitEq <- tasksUnitEq.mapM
     (fun (t : TaskVars scales) => do
       let interval <- CpsatSolver.Builder.newFixedSizeInterval
-        (.var t.startVar) (CpsatSolver.Int64.of 1) (by decide)
+        (.var t.startVar) (CpsatSolver.Int64.of 1) (by native_decide)
       let result : CpsatSolver.CumulativeItem := {
         interval := interval.val
         demand := (
           CpsatSolver.LinearExpr.var t.timeDemandedVar
-        ).wrapBounds
+        ).wrapInterval
       }
       pure result)
   let tasksUnitLt :=
@@ -53,16 +53,16 @@ def Constraint.packSingleLayer
             taskunit_le_u)
           none
       let interval <- CpsatSolver.Builder.newFixedSizeInterval
-        (.var normalized.var) (CpsatSolver.Int64.of 1) (by decide)
+        (.var normalized.var) (CpsatSolver.Int64.of 1) (by native_decide)
       let result : CpsatSolver.CumulativeItem := {
         interval := interval.val
         demand := (
           CpsatSolver.LinearExpr.var el.val.timeDemandedVar
-        ).wrapBounds
+        ).wrapInterval
       }
       pure result
     )
-  let capacity : CpsatSolver.LinearExpr.WithBounds :=
+  let capacity : CpsatSolver.LinearExpr.WithInterval :=
     {
       fst := {
         left := u

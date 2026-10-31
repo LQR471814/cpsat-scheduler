@@ -30,8 +30,8 @@ structure DemandEstimate (S : Timescales) (task : Task S) where
 abbrev Cost := { x : CpsatSolver.Int64 // x ≥ (CpsatSolver.Int64.of 0) }
 
 def Cost.of (v : ℤ)
-  (nonoverflow : CpsatSolver.Int64.Nonoverflow v := by decide)
-  (nonzero : v ≥ (0 : ℤ) := by decide) : Cost :=
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow v := by native_decide)
+  (nonzero : v ≥ (0 : ℤ) := by native_decide) : Cost :=
   Subtype.mk (Subtype.mk v nonoverflow) nonzero
 
 def Cost.hull (c : Cost) : NonemptyDomain :=

@@ -20,7 +20,7 @@ structure ScheduleMap where
 
 def ScheduleMap.mk
     (scales : Timescales) (epochSec atomicSec : ℤ)
-    (atomic_pos : 0 < atomicSec := by decide) : ScheduleMap :=
+    (atomic_pos : 0 < atomicSec := by native_decide) : ScheduleMap :=
   ⟨scales, epochSec, atomicSec, atomic_pos⟩
 
 def ScheduleMap.scheduleDurationSec
@@ -83,7 +83,7 @@ def plainDateTimeToSecUTC (dt : Std.Time.PlainDateTime) : ℤ :=
 def ScheduleMap.ofDateTime
     (scales : Timescales)
     (epoch : Std.Time.PlainDateTime) (atomicSec : ℤ)
-    (atomic_pos : 0 < atomicSec := by decide) : ScheduleMap :=
+    (atomic_pos : 0 < atomicSec := by native_decide) : ScheduleMap :=
   ⟨scales, plainDateTimeToSecUTC epoch, atomicSec, atomic_pos⟩
 
 def ScheduleMap.scheduleDateTime
@@ -115,9 +115,9 @@ def Horizon.ofSec
     (epochSec atomicSec startSec endSec : ℤ)
     (begin : ℕ := (atomicOfSec epochSec atomicSec startSec .down).toNat)
     (end_ : ℕ := (atomicOfSec epochSec atomicSec endSec .up).toNat)
-    (begin_lt_end : begin < end_ := by decide)
-    (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by decide)
-    (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) : Horizon :=
+    (begin_lt_end : begin < end_ := by native_decide)
+    (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by native_decide)
+    (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by native_decide) : Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
 def Horizon.ofDateTime
@@ -128,9 +128,9 @@ def Horizon.ofDateTime
     (end_ : ℕ :=
       (atomicOfSec (plainDateTimeToSecUTC epoch) atomicSec
         (plainDateTimeToSecUTC «end») .up).toNat)
-    (begin_lt_end : begin < end_ := by decide)
-    (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by decide)
-    (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by decide) : Horizon :=
+    (begin_lt_end : begin < end_ := by native_decide)
+    (begin_safe : CpsatSolver.Int64.Nonoverflow begin := by native_decide)
+    (end_safe : CpsatSolver.Int64.Nonoverflow end_ := by native_decide) : Horizon :=
   ⟨begin, end_, begin_lt_end, begin_safe, end_safe⟩
 
 def ScheduleMap.task
@@ -146,9 +146,9 @@ def ScheduleMap.task
         (m.realTimeSec m.scales.horizon.end_ - 1))
     (kLo : ℤ := m.scheduleTimeBucket startAfterSec unit.val .up)
     (kHi : ℤ := m.scheduleTimeBucket startBeforeSec unit.val .down)
-    (hle : kLo ≤ kHi := by decide)
-    (hbegin : (m.scales.horizon.begin : ℤ) ≤ kLo * unit.val.val := by decide)
-    (hend : (kHi + 1) * unit.val.val ≤ m.scales.horizon.end_ := by decide)
+    (hle : kLo ≤ kHi := by native_decide)
+    (hbegin : (m.scales.horizon.begin : ℤ) ≤ kLo * unit.val.val := by native_decide)
+    (hend : (kHi + 1) * unit.val.val ≤ m.scales.horizon.end_ := by native_decide)
     (label : Option String := none) :
     Task m.scales :=
   Task.ofBucketRange m.scales unit kLo kHi hle hbegin hend label
@@ -158,22 +158,22 @@ section Test
 private def sampleScales : Timescales :=
   { units :=
       { set := {UnitScale.atomic}
-        has_atomic := by decide
-        divisibility := by decide }
+        has_atomic := by native_decide
+        divisibility := by native_decide }
     horizon :=
-      { begin := 0, end_ := 96, begin_lt_end := by decide,
-        begin_safe := by decide, end_safe := by decide } }
+      { begin := 0, end_ := 96, begin_lt_end := by native_decide,
+        begin_safe := by native_decide, end_safe := by native_decide } }
 
 private def sampleMap : ScheduleMap :=
   ScheduleMap.mk sampleScales (epochSec := 0) (atomicSec := 900)
 
 def sampleTask : Task sampleScales :=
-  sampleMap.task (Subtype.mk UnitScale.atomic (by decide))
+  sampleMap.task (Subtype.mk UnitScale.atomic (by native_decide))
     (startAfterSec := 8 * 3600) (startBeforeSec := 10 * 3600)
     (label := some "morning_task")
 
 def sampleTaskFull : Task sampleScales :=
-  sampleMap.task (Subtype.mk UnitScale.atomic (by decide))
+  sampleMap.task (Subtype.mk UnitScale.atomic (by native_decide))
     (label := some "any_time")
 
 

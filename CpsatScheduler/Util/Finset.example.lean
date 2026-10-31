@@ -10,7 +10,7 @@ def exSet : Finset Python.ValidName := {
 def nameOf (ofSet : exSet) := ofSet.val.val
 
 lemma nameOf_injective : Function.Injective nameOf :=
-  by decide
+  by native_decide
 
 private def nameLE (a b : exSet) : Prop :=
   nameOf a ≤ nameOf b

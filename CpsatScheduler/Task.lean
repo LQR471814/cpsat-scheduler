@@ -6,9 +6,9 @@ def Task.ofBucketRange (scales : Timescales)
     (unit : { u : UnitScale // u ∈ scales.units.set })
     (kLo : ℤ := scales.horizon.begin)
     (kHi : ℤ := scales.horizon.end_ / unit.val.val - 1)
-    (hle : kLo ≤ kHi := by decide)
-    (hbegin : (scales.horizon.begin : ℤ) ≤ kLo * unit.val.val := by decide)
-    (hend : (kHi + 1) * unit.val.val ≤ scales.horizon.end_ := by decide)
+    (hle : kLo ≤ kHi := by native_decide)
+    (hbegin : (scales.horizon.begin : ℤ) ≤ kLo * unit.val.val := by native_decide)
+    (hend : (kHi + 1) * unit.val.val ≤ scales.horizon.end_ := by native_decide)
     (label : Option String := none) :
     Task scales :=
   let u : ℤ := unit.val.val
@@ -25,7 +25,7 @@ def Task.ofBucketRange (scales : Timescales)
   -- Horizon end is within Int64.
   have hendMax : (scales.horizon.end_ : ℤ) ≤ CpsatSolver.Int64.max :=
     scales.horizon.end_safe.2
-  have hminNonpos : CpsatSolver.Int64.min ≤ (0 : ℤ) := by decide
+  have hminNonpos : CpsatSolver.Int64.min ≤ (0 : ℤ) := by native_decide
   -- Upper anchor: everything in range is `≤ (kHi + 1) * u ≤ end_ ≤ max`.
   have hkHiu_le_end : kHi * u ≤ (scales.horizon.end_ : ℤ) := by nlinarith [hend, hu0]
   -- Interval endpoints are within Int64.

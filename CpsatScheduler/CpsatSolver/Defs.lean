@@ -1,6 +1,7 @@
 import Mathlib.Data.Char
 import CpsatScheduler.Python.Basic
 import CpsatScheduler.CpsatSolver.Domain.NonemptyDomain
+import CpsatScheduler.CpsatSolver.Unit.Set
 
 namespace CpsatSolver
 
@@ -21,39 +22,43 @@ structure IntVar where
   label : Option String := none
 deriving DecidableEq
 
-def LinearExpr.Nonoverflow.Neg (b : Bounds) : Prop :=
+structure UnitAwareIntVar (us : Unit.Set) where
+  intVar : IntVar
+  scale : us.elem
+
+def LinearExpr.Nonoverflow.Neg (b : Interval) : Prop :=
   Int64.Nonoverflow (-b.right : ℤ) ∧
   Int64.Nonoverflow (-b.left : ℤ)
 
-instance (b : Bounds) : Decidable (LinearExpr.Nonoverflow.Neg b) := by
-  unfold LinearExpr.Nonoverflow.Neg
-  infer_instance
-
-def LinearExpr.Nonoverflow.Mul (b : Bounds) (v : Int64) : Prop :=
+def LinearExpr.Nonoverflow.Mul (b : Interval) (v : Int64) : Prop :=
   Int64.Nonoverflow (b.mulLower (Interval.ofValue v)) ∧
   Int64.Nonoverflow (b.mulUpper (Interval.ofValue v))
 
-instance (b : Bounds) (v : Int64) : Decidable (LinearExpr.Nonoverflow.Mul b v) := by
-  unfold LinearExpr.Nonoverflow.Mul
-  infer_instance
-
-def LinearExpr.Nonoverflow.Add (a b : Bounds) : Prop :=
+def LinearExpr.Nonoverflow.Add (a b : Interval) : Prop :=
   Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
   Int64.Nonoverflow ((a.right : ℤ) + b.right)
 
-instance (a b : Bounds) : Decidable (LinearExpr.Nonoverflow.Add a b) := by
-  unfold LinearExpr.Nonoverflow.Add
-  infer_instance
-
-def LinearExpr.Nonoverflow.Sub (a b : Bounds) : Prop :=
+def LinearExpr.Nonoverflow.Sub (a b : Interval) : Prop :=
   Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
   Int64.Nonoverflow ((a.right : ℤ) - b.left)
 
-instance (a b : Bounds) : Decidable (LinearExpr.Nonoverflow.Sub a b) := by
+instance (b : Interval) : Decidable (LinearExpr.Nonoverflow.Neg b) := by
+  unfold LinearExpr.Nonoverflow.Neg
+  infer_instance
+
+instance (b : Interval) (v : Int64) : Decidable (LinearExpr.Nonoverflow.Mul b v) := by
+  unfold LinearExpr.Nonoverflow.Mul
+  infer_instance
+
+instance (a b : Interval) : Decidable (LinearExpr.Nonoverflow.Add a b) := by
+  unfold LinearExpr.Nonoverflow.Add
+  infer_instance
+
+instance (a b : Interval) : Decidable (LinearExpr.Nonoverflow.Sub a b) := by
   unfold LinearExpr.Nonoverflow.Sub
   infer_instance
 
-inductive LinearExpr : Bounds → Type where
+inductive LinearExpr : Interval → Type where
   | fromVar (value : IntVar) : LinearExpr value.domain.hull
   | fromConst (value : Int64) : LinearExpr (Interval.ofValue value)
   | fromNeg
@@ -73,16 +78,16 @@ inductive LinearExpr : Bounds → Type where
     (h : LinearExpr.Nonoverflow.Sub A B)
       : LinearExpr (A.sub B h)
 
-abbrev LinearExpr.WithBounds := Σ b : Bounds, LinearExpr b
+abbrev LinearExpr.WithInterval := Σ b : Interval, LinearExpr b
 
-def LinearExpr.wrapBounds (e : LinearExpr α) : LinearExpr.WithBounds :=
+def LinearExpr.wrapInterval (e : LinearExpr α) : LinearExpr.WithInterval :=
   Sigma.mk α e
 
 /-- Half-open interval `[start, start + size`. -/
 structure FixedSizeIntervalVar where
   id : Nat
-  startBounds : Bounds
-  start : LinearExpr startBounds
+  startInterval : Interval
+  start : LinearExpr startInterval
   size : Int64
   size_nonneg : (0 : ℤ) ≤ size
   label : Option String := none
@@ -93,10 +98,10 @@ deriving DecidableEq
 
 structure BoundedLinearExpr where
   rel : BoundedLinearExpr.Rel
-  leftBounds : Bounds
-  rightBounds : Bounds
-  left : LinearExpr leftBounds
-  right : LinearExpr rightBounds
+  leftInterval : Interval
+  rightInterval : Interval
+  left : LinearExpr leftInterval
+  right : LinearExpr rightInterval
 
 inductive Constraint.Enforcement where
   | always
@@ -105,31 +110,31 @@ deriving DecidableEq
 
 structure CumulativeItem where
   interval : FixedSizeIntervalVar
-  demand : LinearExpr.WithBounds
+  demand : LinearExpr.WithInterval
 
 inductive Constraint.Variant where
   | bounded_linear (expr : BoundedLinearExpr)
   | max_equality
-    (target : LinearExpr.WithBounds)
-    (exprs : Array LinearExpr.WithBounds)
-    (nonempty : exprs.size > 0 := by decide)
+    (target : LinearExpr.WithInterval)
+    (exprs : Array LinearExpr.WithInterval)
+    (nonempty : exprs.size > 0 := by native_decide)
   | div_eq
-    (target : LinearExpr.WithBounds)
-    (numerator : LinearExpr.WithBounds)
+    (target : LinearExpr.WithInterval)
+    (numerator : LinearExpr.WithInterval)
     (divisor : Int64)
-    (divisor_pos : (0 : ℤ) < divisor := by decide)
+    (divisor_pos : (0 : ℤ) < divisor := by native_decide)
   | allowed_assignments {n : Nat}
     (vars : Vector IntVar n)
     (rows : Array (Vector Int64 n))
-    (nonempty : rows.size > 0 := by decide)
+    (nonempty : rows.size > 0 := by native_decide)
     (within_domain :
       ∀ row ∈ rows,
       ∀ i : Fin vars.size,
         (row[i].val : ℤ) ∈ vars[i].domain.domain
-      := by decide)
+      := by native_decide)
   | cumulative
     (items : Array CumulativeItem)
-    (capacity : LinearExpr.WithBounds)
+    (capacity : LinearExpr.WithInterval)
   | bool_and (terms : Array BoolLit)
     (nonempty : terms.size > 0)
   | bool_or (terms : Array BoolLit)
@@ -144,7 +149,7 @@ structure Constraint where
 
 inductive Objective where
   | none
-  | minimize (expr : LinearExpr.WithBounds)
-  | maximize (expr : LinearExpr.WithBounds)
+  | minimize (expr : LinearExpr.WithInterval)
+  | maximize (expr : LinearExpr.WithInterval)
 
 end CpsatSolver

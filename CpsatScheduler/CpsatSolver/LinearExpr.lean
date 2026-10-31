@@ -3,7 +3,7 @@ import CpsatScheduler.CpsatSolver.Entity
 namespace CpsatSolver.LinearExpr
 
 def eval (valuation : EntityID → ℤ)
-    {bounds : Bounds} : LinearExpr bounds → ℤ
+    {bounds : Interval} : LinearExpr bounds → ℤ
   | .fromVar value => valuation value.id
   | .fromConst value => value.val
   | .fromNeg a _ => -eval valuation a
@@ -14,7 +14,7 @@ def eval (valuation : EntityID → ℤ)
 /-- Expression bounds are a sound over-approximation under domain-respecting
 assignments. -/
 theorem eval_mem_bounds (valuation : EntityID → ℤ)
-    {bounds : Bounds} (expr : LinearExpr bounds)
+    {bounds : Interval} (expr : LinearExpr bounds)
     (inDomain : ∀ v ∈ expr.intVars,
       valuation v.id ∈ v.domain.domain) :
     expr.eval valuation ∈ bounds := by
@@ -49,36 +49,36 @@ def const (value : Int64) :
     LinearExpr (Interval.ofValue value) :=
   .fromConst value
 
-def neg {b : Bounds} (a : LinearExpr b)
+def neg {b : Interval} (a : LinearExpr b)
   (h : LinearExpr.Nonoverflow.Neg b) :
     LinearExpr (b.neg h) :=
   .fromNeg a h
 
-def mul {b : Bounds} (a : LinearExpr b) (v : Int64)
+def mul {b : Interval} (a : LinearExpr b) (v : Int64)
   (h : LinearExpr.Nonoverflow.Mul b v) :
     LinearExpr (b.mul (Interval.ofValue v) h) :=
   .fromMulConst a v h
 
-def add {L R : Bounds}
+def add {L R : Interval}
   (l : LinearExpr L) (r : LinearExpr R)
   (h : LinearExpr.Nonoverflow.Add L R) :
     LinearExpr (L.add R h) :=
   .fromAdd l r h
 
-def sub {L R : Bounds}
+def sub {L R : Interval}
   (l : LinearExpr L) (r : LinearExpr R)
   (h : LinearExpr.Nonoverflow.Sub L R) :
     LinearExpr (L.sub R h) :=
   .fromSub l r h
 
-def meaning {bounds : Bounds} (expr : LinearExpr bounds) :
+def meaning {bounds : Interval} (expr : LinearExpr bounds) :
     Set ((EntityID → ℤ) × ℤ) :=
   {pair | pair.2 = expr.eval pair.1}
 
-def possibleValues {bounds : Bounds} (expr : LinearExpr bounds) : Set ℤ :=
+def possibleValues {bounds : Interval} (expr : LinearExpr bounds) : Set ℤ :=
   {value | ∃ valuation : EntityID → ℤ, (valuation, value) ∈ expr.meaning}
 
-theorem meaning_eq_iff {α β : Bounds}
+theorem meaning_eq_iff {α β : Interval}
     (a : LinearExpr α) (b : LinearExpr β) :
     @meaning α a = @meaning β b ↔ ∀ valuation : EntityID → ℤ,
       a.eval valuation = b.eval valuation := by
@@ -90,7 +90,7 @@ theorem meaning_eq_iff {α β : Bounds}
     ext pair
     simp [meaning, h]
 
-theorem meaning_double_neg {α : Bounds}
+theorem meaning_double_neg {α : Interval}
     (a : LinearExpr α)
     (h₁ : Int64.Nonoverflow (-α.right : ℤ) ∧ Int64.Nonoverflow (-α.left : ℤ))
     (h₂ : Int64.Nonoverflow (-(α.neg h₁).right : ℤ) ∧
@@ -100,7 +100,7 @@ theorem meaning_double_neg {α : Bounds}
   intro valuation
   simp [LinearExpr.eval]
 
-theorem meaning_add_sub_cancel {α β : Bounds}
+theorem meaning_add_sub_cancel {α β : Interval}
     (a : LinearExpr α) (b : LinearExpr β)
     (hAdd : Int64.Nonoverflow ((α.left : ℤ) + β.left) ∧
       Int64.Nonoverflow ((α.right : ℤ) + β.right))
@@ -112,11 +112,11 @@ theorem meaning_add_sub_cancel {α β : Bounds}
   intro valuation
   simp [LinearExpr.eval]
 
-theorem meaning_sub_self {α : Bounds} (a : LinearExpr α)
+theorem meaning_sub_self {α : Interval} (a : LinearExpr α)
     (hSub : Int64.Nonoverflow ((α.left : ℤ) - α.right) ∧
       Int64.Nonoverflow ((α.right : ℤ) - α.left)) :
     meaning (LinearExpr.fromSub a a hSub) =
-      meaning (LinearExpr.fromConst (Subtype.mk 0 (by decide))) := by
+      meaning (LinearExpr.fromConst (Subtype.mk 0 (by native_decide))) := by
   apply (meaning_eq_iff _ _).mpr
   intro
   simp [LinearExpr.eval]

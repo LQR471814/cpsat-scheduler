@@ -34,16 +34,16 @@ def Constraint.bucketContainedIn
   {
     fst := {
       rel := .gte
-      leftBounds := child.domain.hull
-      rightBounds := parent.domain.hull.mul (CpsatSolver.Interval.ofValue ratio) mul₁
+      leftInterval := child.domain.hull
+      rightInterval := parent.domain.hull.mul (CpsatSolver.Interval.ofValue ratio) mul₁
       left := childE
       right := parentScaled
     },
     snd := {
       rel := .lte
-      leftBounds := child.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1))
+      leftInterval := child.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1))
         addChild
-      rightBounds :=
+      rightInterval :=
         (parent.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁).mul
           (CpsatSolver.Interval.ofValue ratio) mul₂
       left := childPlus

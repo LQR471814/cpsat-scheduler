@@ -186,12 +186,12 @@ theorem totalAlloc_quantizeAtomic
 
 section Test
 
-example : quantizeAtomic 198 232 16 = [⟨12, 10⟩, ⟨13, 16⟩, ⟨14, 8⟩] := by decide
-example : quantizeAtomic 234 235 16 = [⟨14, 1⟩] := by decide
-example : quantizeAtomic 236 254 16 = [⟨14, 4⟩, ⟨15, 14⟩] := by decide
-example : totalAlloc (quantizeAtomic 198 232 16) = 232 - 198 := by decide
-example : (198 : ℤ) - 16 * startBucket 198 16 < 16 := by decide
-example : startBucket 198 16 ≤ startBucket 236 16 := by decide
+example : quantizeAtomic 198 232 16 = [⟨12, 10⟩, ⟨13, 16⟩, ⟨14, 8⟩] := by native_decide
+example : quantizeAtomic 234 235 16 = [⟨14, 1⟩] := by native_decide
+example : quantizeAtomic 236 254 16 = [⟨14, 4⟩, ⟨15, 14⟩] := by native_decide
+example : totalAlloc (quantizeAtomic 198 232 16) = 232 - 198 := by native_decide
+example : (198 : ℤ) - 16 * startBucket 198 16 < 16 := by native_decide
+example : startBucket 198 16 ≤ startBucket 236 16 := by native_decide
 
 end Test
 

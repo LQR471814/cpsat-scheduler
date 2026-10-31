@@ -41,7 +41,7 @@ def CostDemandTable.ofPoints? (demandDom costDom : Domain)
     none
 
 def CostDemandTable.constrain
-  (constraintID : EntityID)
+  (id : EntityID)
   (task : TaskVars S)
   (table : CostDemandTable
     task.timeDemandedVar.domain.domain
@@ -52,7 +52,7 @@ def CostDemandTable.constrain
     #[task.timeDemandedVar, task.costVar]
     (by exact Nat.add_zero ([task.costVar].length + 1))
   {
-    id := constraintID
+    id := id
     variant := (.allowed_assignments (n := 2)
       targetVars
       (table.points.map (fun p => CostDemandPoint.toVector p))

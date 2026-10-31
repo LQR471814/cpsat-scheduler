@@ -20,30 +20,34 @@ def cumulativeItem
   let interval : CpsatSolver.FixedSizeIntervalVar := {
     id := intervalID
     label := label
-    startBounds := CpsatSolver.Interval.ofValue input.bucket
+    startInterval := CpsatSolver.Interval.ofValue input.bucket
     start := startExpr
     size := CpsatSolver.Int64.of 1
-    size_nonneg := by decide
+    size_nonneg := by native_decide
   }
   let demandExpr := CpsatSolver.LinearExpr.const input.alloc
   {
     interval := interval
-    demand := demandExpr.wrapBounds
+    demand := demandExpr.wrapInterval
   }
 
-def cumulativeItems
-    (allocs : List Nonoverflow)
-    (labelPrefix : Option String := none) :
-      Array CpsatSolver.CumulativeItem := do
-  let values ← allocs.zipIdx.mapM
-    (fun (input, idx) =>
-      let label := labelPrefix.map (fun p => s!"{p}_bg_{idx}")
-      let item := cumulativeItem input label
-      item)
-  pure values.toArray
-
--- TODO: finish migrating CpsatSolver refactors to the rest of the package
--- TODO: figure out a better way of allocating ids without requiring monadic builders
+def cumulative
+    (id : CpsatSolver.EntityID)
+    (allocs : Array Nonoverflow)
+    (capacity : CpsatSolver.LinearExpr.WithInterval)
+    (enforcement : CpsatSolver.Constraint.Enforcement)
+    (label : Option String := none) :
+      CpsatSolver.Constraint :=
+  let items := allocs.zipIdx.map
+    (fun (item, idx) =>
+      let label := label.map (fun p => s!"{p}_intv_{id + idx}")
+      cumulativeItem id item label)
+  {
+    id := id
+    label := label
+    enforcement := enforcement
+    variant := .cumulative items capacity
+  }
 
 end CpsatScheduler.Alloc
 

@@ -63,7 +63,7 @@ private def fixedSizeIntervalVar
         (.id Name.model)
         (Python.ValidName.of "new_fixed_size_interval_var"))
       #[
-        (@LinearExpr.toPythonExpr var.startBounds var.start),
+        (@LinearExpr.toPythonExpr var.startInterval var.start),
         .lit (.int var.size),
         .lit (.str (var.label.getD (EntityID.toPythonName var.id).val))
       ]
@@ -71,7 +71,7 @@ private def fixedSizeIntervalVar
   )
 
 private def constraint (cnst : Constraint) : Python.Statement :=
-  let sigmaExprToPython (e : LinearExpr.WithBounds) : Python.Expr :=
+  let sigmaExprToPython (e : LinearExpr.WithInterval) : Python.Expr :=
     @LinearExpr.toPythonExpr e.fst e.snd
   let modelDot (attr : Python.ValidName) : Python.Expr :=
     .dot (.id Name.model) attr

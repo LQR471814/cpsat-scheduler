@@ -2,39 +2,13 @@ import CpsatScheduler.CpsatSolver.Defs
 
 namespace CpsatSolver
 
--- IDs are allocated from a given ID space
---
--- if you can guarantee resulting EntityID is a member of that given space, you
--- have proven that is unique within that space
---
--- a given space can have multiple disjoint subspaces, there may be a proof
--- written about the uniqueness of all IDs in this space
---
--- this can be chained together to imply that an ID that is a member of a space
--- is unique within that space and all spaces above it
---
--- to prevent the same ID from being used in multiple places, we must clearly
--- specify which space an ID comes from, two IDs from different spaces cannot
--- be alike
---
--- ex. you have a struct with two different ID fields, simply specify in the
--- type of each field, a different space which its ID should come from
---
--- this does imply that from one space can only come exactly one unique ID, so
--- the name "space" seems a bit silly
---
--- thus, we can call it a "IDGroup" or something
---
--- really we are just allowing the construction of unique IDs from other unique
--- IDs.
-
 abbrev EntityID := ℕ
 
 def BoolLit.varId : BoolLit → EntityID
   | .var v => v.id
   | .neg v => v.id
 
-def LinearExpr.intVars {bounds : Bounds} : LinearExpr bounds → Array IntVar
+def LinearExpr.intVars {bounds : Interval} : LinearExpr bounds → Array IntVar
   | .fromVar value => #[value]
   | .fromConst _ => #[]
   | .fromNeg a _ => a.intVars
@@ -45,7 +19,7 @@ def LinearExpr.intVars {bounds : Bounds} : LinearExpr bounds → Array IntVar
 def BoundedLinearExpr.intVars (v : BoundedLinearExpr) : Array IntVar :=
   v.left.intVars ++ v.right.intVars
 
-def LinearExpr.WithBounds.intVars (e : LinearExpr.WithBounds) : Array IntVar :=
+def LinearExpr.WithInterval.intVars (e : LinearExpr.WithInterval) : Array IntVar :=
   e.snd.intVars
 
 def FixedSizeIntervalVar.intVars (v : FixedSizeIntervalVar) : Array IntVar :=
@@ -112,6 +86,9 @@ instance : Entity FixedSizeIntervalVar where
 
 instance : Entity Constraint where
   id c := c.id
+
+instance : Entity (UnitAwareIntVar U) where
+  id v := v.intVar.id
 
 
 class RefVars (α : Type) where

@@ -19,7 +19,7 @@ structure TaskVars (S : Timescales) where
 def Task.demandDomain (task : Task S) :=
   (NonemptyDomain.interval
     (CpsatSolver.Interval.of 0 task.unit
-      (hl := by decide)
+      (hl := by native_decide)
       (hr := task.unit.val.nonoverflow)
       (hlr := by exact Int.natCast_nonneg task.unit.val)))
 

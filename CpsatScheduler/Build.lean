@@ -102,7 +102,7 @@ private def addWithin {scales : Timescales}
   have hratio0 : 0 ≤ pu / cu := Int.ediv_nonneg hpu0 (Int.natCast_nonneg _)
   have hratioLe : pu / cu ≤ pu := Int.ediv_le_self _ hpu0
   let ratio : CpsatSolver.Int64 :=
-    ⟨pu / cu, ⟨le_trans (by decide) hratio0, le_trans hratioLe hpuMax⟩⟩
+    ⟨pu / cu, ⟨le_trans (by native_decide) hratio0, le_trans hratioLe hpuMax⟩⟩
   let hp := parent.unit_eq
   let hc := child.unit_eq
   let hr0 : 0 ≤ (ratio : ℤ) := hratio0

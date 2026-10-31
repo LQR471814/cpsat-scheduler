@@ -40,19 +40,19 @@ def blockedAllocs : List Alloc :=
 def pertSteps : Array Float := Stats.PERT.Distribute.cubic 3
 
 def taskA : Task scales :=
-  sched.task (Subtype.mk unit4 (by decide))
+  sched.task (Subtype.mk unit4 (by native_decide))
     (startAfter := datetime("2026-01-01T00:00:00"))
     (startBefore := datetime("2026-01-01T02:45:00"))
     (label := some "task_a")
 
 def taskB : Task scales :=
-  sched.task (Subtype.mk unit8 (by decide))
+  sched.task (Subtype.mk unit8 (by native_decide))
     (startAfter := datetime("2026-01-01T00:00:00"))
     (startBefore := datetime("2026-01-01T01:00:00"))
     (label := some "task_b")
 
 def taskC : Task scales :=
-  sched.task (Subtype.mk unit16 (by decide))
+  sched.task (Subtype.mk unit16 (by native_decide))
     (startAfter := datetime("2026-01-01T00:00:00"))
     (startBefore := datetime("2026-01-01T01:00:00"))
     (label := some "task_c")
@@ -60,21 +60,21 @@ def taskC : Task scales :=
 def taskAConfig : PERT.TaskConfig scales := {
   task := taskA
   cost := PERT.Cost.of 1000
-  demand := { opt := int 1, exp := int 2, pes := int 4, valid := by decide }
+  demand := { opt := int 1, exp := int 2, pes := int 4, valid := by native_decide }
   steps := pertSteps
 }
 
 def taskBConfig : PERT.TaskConfig scales := {
   task := taskB
   cost := PERT.Cost.of 1000
-  demand := { opt := int 2, exp := int 3, pes := int 8, valid := by decide }
+  demand := { opt := int 2, exp := int 3, pes := int 8, valid := by native_decide }
   steps := pertSteps
 }
 
 def taskCConfig : PERT.TaskConfig scales := {
   task := taskC
   cost := PERT.Cost.of 1000
-  demand := { opt := int 3, exp := int 5, pes := int 9, valid := by decide }
+  demand := { opt := int 3, exp := int 5, pes := int 9, valid := by native_decide }
   steps := pertSteps
 }
 

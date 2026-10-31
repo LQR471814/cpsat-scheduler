@@ -29,7 +29,7 @@ theorem Task.succ_nonoverflow_of_mem (t : Task S) {k : ℤ}
   have hk0 : (0 : ℤ) ≤ k := by nlinarith [hbegin, hbegin0, hu0]
   have hk1_le : k + 1 ≤ (k + 1) * u := by nlinarith [hu1, hk0]
   refine ⟨?_, ?_⟩
-  · have : CpsatSolver.Int64.min ≤ (0 : ℤ) := by decide
+  · have : CpsatSolver.Int64.min ≤ (0 : ℤ) := by native_decide
     linarith [hk0]
   · exact le_trans hk1_le hk1u.2
 
@@ -54,7 +54,7 @@ theorem Task.scaled_nonoverflow_of_mem (t : Task S) {k : ℤ} (ratio : ℤ)
   have hu0 : (0 : ℤ) < u := lt_of_lt_of_le zero_lt_one hu1
   have hbegin0 : (0 : ℤ) ≤ (S.horizon.begin : ℤ) := Int.natCast_nonneg _
   have hk0 : (0 : ℤ) ≤ k := by nlinarith [hbegin, hbegin0, hu0]
-  have hmin : CpsatSolver.Int64.min ≤ (0 : ℤ) := by decide
+  have hmin : CpsatSolver.Int64.min ≤ (0 : ℤ) := by native_decide
   have hkr0 : (0 : ℤ) ≤ k * ratio := by positivity
   have hk1r0 : (0 : ℤ) ≤ (k + 1) * ratio := by positivity
   refine ⟨⟨le_trans hmin hkr0, ?_⟩, ⟨le_trans hmin hk1r0, ?_⟩⟩

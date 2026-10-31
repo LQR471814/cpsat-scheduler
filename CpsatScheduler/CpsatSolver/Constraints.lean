@@ -2,52 +2,42 @@ import CpsatScheduler.CpsatSolver.LinearExpr
 
 namespace CpsatSolver.Constraint
 
-def truncDivEq {nb : Bounds}
-    (constraintID : EntityID)
-    (numerator : LinearExpr nb)
-    (divisor : Int64)
-    (hdiv : (0 : ℤ) < divisor) :=
-  let nt := nb.divPosConst divisor hdiv
-  let curried
-    (target : LinearExpr nt)
-    (label : Option String := none)
-    (enforcement : Constraint.Enforcement) :
-      Constraint :=
+structure Division where
+  quotient : IntVar
+  constraint : Constraint
+
+def divPosConst {N : Interval}
+  (quotientID constraintID : EntityID)
+  (numerator : LinearExpr N) (denominator : Int64)
+  (hdiv : (0 : ℤ) < denominator)
+  (enforcement : Enforcement) (label : Option String := none) :
+    Division :=
+  let resultDomain := NonemptyDomain.interval
+    (N.divPosConst denominator hdiv)
+  let quotVar : IntVar := {
+    id := quotientID
+    domain := resultDomain
+    label := label
+  }
+  let quotVarExpr : LinearExpr (Interval.divPosConst N (↑denominator) hdiv) :=
+    by
+      have quot_div_eq := NonemptyDomain.hull_interval_eq
+        resultDomain rfl
+      rw [quot_div_eq.symm]
+      exact LinearExpr.var quotVar
+  let constraint : Constraint :=
+    let Q := N.divPosConst denominator hdiv
     {
       id := constraintID
       label := label
       enforcement := enforcement
-      variant := .div_eq ⟨nt, target⟩ ⟨nb, numerator⟩ divisor hdiv
+      variant := .div_eq
+        ⟨Q, quotVarExpr⟩
+        ⟨N, numerator⟩
+        denominator
+        hdiv
     }
-  curried
-
-structure TruncCoarsen where
-  quotient : IntVar
-  constraint : Constraint
-
-def truncCoarsen {nb : Bounds} (quotVarID constraintID : EntityID)
-    (numerator : LinearExpr nb) (divisor : Int64) (hdiv : (0 : ℤ) < divisor)
-    (enforcement : Enforcement)
-    (label : Option String := none) : TruncCoarsen :=
-  let quotDomain := NonemptyDomain.interval
-    (nb.divPosConst divisor hdiv)
-  let quotVar : IntVar := {
-    id := quotVarID
-    domain := quotDomain
-    label := label
-  }
-  let divTarget : LinearExpr (Interval.divPosConst nb (↑divisor) hdiv) :=
-    let quotVarExpr := LinearExpr.var quotVar
-    by
-      have quot_div_eq := NonemptyDomain.hull_interval_eq
-        quotDomain rfl
-      rw [quot_div_eq.symm]
-      exact quotVarExpr
-  let cnstr : Constraint :=
-    .truncDivEq constraintID
-      numerator divisor hdiv divTarget
-      enforcement
-  ⟨quotVar, cnstr⟩
+  ⟨quotVar, constraint⟩
 
 end CpsatSolver.Constraint
 

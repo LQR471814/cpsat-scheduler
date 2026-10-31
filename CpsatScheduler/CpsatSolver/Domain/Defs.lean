@@ -14,7 +14,7 @@ instance (b : ℤ) : Decidable (Int64.Nonoverflow b) := by
 
 abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
 
-def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by decide) : Int64 :=
+def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by native_decide) : Int64 :=
   ⟨n, h⟩
 
 def Int64.ofFloat? (f : Float) : Option Int64 :=
@@ -43,9 +43,9 @@ structure Interval where
 deriving DecidableEq
 
 def Interval.of (l r : ℤ)
-  (hl : Int64.Nonoverflow l := by decide)
-  (hr : Int64.Nonoverflow r := by decide)
-  (hlr : l ≤ r := by decide) : Interval :=
+  (hl : Int64.Nonoverflow l := by native_decide)
+  (hr : Int64.Nonoverflow r := by native_decide)
+  (hlr : l ≤ r := by native_decide) : Interval :=
   {
     left := Subtype.mk l hl
     right := Subtype.mk r hr
@@ -60,8 +60,6 @@ instance : Membership ℤ Interval where
 
 instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) :=
   inferInstanceAs (Decidable ((i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)))
-
-abbrev Bounds := Interval
 
 def Interval.toSet (i : Interval) : Set ℤ :=
   Set.Icc (i.left : ℤ) i.right
@@ -105,6 +103,6 @@ def NonemptyDomain.of (domain : Domain)
 end CpsatSolver
 
 abbrev int (n : ℤ)
-  (h : CpsatSolver.Int64.Nonoverflow n := by decide) :=
+  (h : CpsatSolver.Int64.Nonoverflow n := by native_decide) :=
   CpsatSolver.Int64.of n h
 

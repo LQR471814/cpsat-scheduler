@@ -37,21 +37,21 @@ private def exampleGraph : FinDigraph String := {
   nodes := { "a", "b", "c" },
   edges := {
     {
-      src := { val := "a", property := by decide },
-      dst := { val := "b", property := by decide }
+      src := { val := "a", property := by native_decide },
+      dst := { val := "b", property := by native_decide }
     },
     {
-      src := { val := "b", property := by decide },
-      dst := { val := "c", property := by decide }
+      src := { val := "b", property := by native_decide },
+      dst := { val := "c", property := by native_decide }
     },
     {
-      src := { val := "a", property := by decide },
-      dst := { val := "c", property := by decide }
+      src := { val := "a", property := by native_decide },
+      dst := { val := "c", property := by native_decide }
     }
   }
 }
 
-example : exampleGraph.IsAcyclic := by decide
+example : exampleGraph.IsAcyclic := by native_decide
 
-example : ¬ exampleGraph.IsTree := by decide
+example : ¬ exampleGraph.IsTree := by native_decide
 

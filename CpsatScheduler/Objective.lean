@@ -15,8 +15,5 @@ def weightedSum.SumNoOverflow (ts : weightedSum.Terms) : Prop :=
     (fun acc t => sorry)
     (LinearExpr.Nonoverflow.Add )
 
-def weightedSum (ts : weightedSum.Terms)
-
 end CpsatScheduler.Objective
-
 
