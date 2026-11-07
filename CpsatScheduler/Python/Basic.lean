@@ -1,13 +1,9 @@
-module
-
-public import Mathlib.Data.Finset.Defs
-
 import Mathlib.Data.Finset.Insert
 import Mathlib.Algebra.Order.Group.Nat
 
 namespace Python
 
-public def ReservedKeywords : Finset String := {
+def ReservedKeywords : Finset String := {
   "False",
   "await",
   "else",
@@ -45,61 +41,58 @@ public def ReservedKeywords : Finset String := {
   "yield"
 }
 
-@[expose]
-public def ValidIdent (str : String) : Prop :=
+def ValidIdent (str : String) : Prop :=
   ∀ i : Fin str.toList.length, let c := str.toList[i];
     (c ≥ 'A' ∧ c ≤ 'Z') ∨
     (c ≥ 'a' ∧ c ≤ 'z') ∨
     c = '_' ∨
     (i.toNat > 0 → c ≥ '0' ∨ c ≤ '9')
 
-public instance (str : String) : Decidable (ValidIdent str) := by
+instance (str : String) : Decidable (ValidIdent str) := by
   unfold ValidIdent
   infer_instance
 
-@[expose]
-public def ValidName.Proof (name : String) : Prop :=
+def ValidName.Proof (name : String) : Prop :=
   ¬ (name ∈ ReservedKeywords) ∧ (ValidIdent name)
 
-public instance : Decidable (ValidName.Proof α) :=
+instance : Decidable (ValidName.Proof α) :=
   (inferInstance : Decidable (
     ¬ (α ∈ ReservedKeywords) ∧ (ValidIdent α)
   ))
 
-public structure ValidName where
+structure ValidName where
   val : String
   proof : ValidName.Proof val
   deriving DecidableEq
 
-@[expose]
-public def ValidName.of (val : String)
+def ValidName.of (val : String)
   (h : ValidName.Proof val := by native_decide) :
     ValidName :=
   ValidName.mk val h
 
 namespace StdName
 
-public def stdin := ValidName.of "stdin"
-public def read := ValidName.of "read"
-public def len := ValidName.of "len"
-public def append := ValidName.of "append"
-public def eval := ValidName.of "eval"
-public def exec :=  ValidName.of "exec"
-public def join := ValidName.of "join"
-public def print := Python.ValidName.of "print"
-public def float := Python.ValidName.of "float"
-public def json := Python.ValidName.of "json"
-public def dumps := Python.ValidName.of "dumps"
-public def sys := ValidName.of "sys"
-public def list := ValidName.of "list"
-public def split := ValidName.of "split"
-public def flush := ValidName.of "flush"
+def stdin := ValidName.of "stdin"
+def read := ValidName.of "read"
+def len := ValidName.of "len"
+def append := ValidName.of "append"
+def eval := ValidName.of "eval"
+def exec :=  ValidName.of "exec"
+def join := ValidName.of "join"
+def print := Python.ValidName.of "print"
+def float := Python.ValidName.of "float"
+def json := Python.ValidName.of "json"
+def dumps := Python.ValidName.of "dumps"
+def sys := ValidName.of "sys"
+def list := ValidName.of "list"
+def split := ValidName.of "split"
+def flush := ValidName.of "flush"
 
 end StdName
 
 mutual
 
-public inductive Literal where
+inductive Literal where
   | bool (val : Bool)
   | int (val : ℤ)
   | float (val : Float)
@@ -108,11 +101,11 @@ public inductive Literal where
   | dict (pairs : Array (Expr × Expr))
   | none
 
-public structure Kwarg where
+structure Kwarg where
   key : ValidName
   value : Expr
 
-public inductive Expr where
+inductive Expr where
   | id (name : ValidName)
   | dot (expr : Expr) (field : ValidName)
   | lit (literal : Literal)
@@ -135,7 +128,7 @@ end
 
 mutual
 
-public def Kwarg.repr (kw : Kwarg) : String :=
+def Kwarg.repr (kw : Kwarg) : String :=
   s!"{kw.key.val}={kw.value.repr}"
 termination_by sizeOf kw
 -- TODO: understand this later
@@ -143,7 +136,7 @@ decreasing_by
   obtain ⟨key, value⟩ := kw
   simp_wf
 
-public def Literal.repr (lit : Literal) : String :=
+def Literal.repr (lit : Literal) : String :=
   match lit with
   | .bool b => match b with
     | Bool.true => "True"
@@ -171,7 +164,7 @@ decreasing_by
       simp_all
       omega
 
-public def Expr.repr (expr : Expr) : String :=
+def Expr.repr (expr : Expr) : String :=
   match expr with
   | .id name => name.val
   | .lit l => l.repr
@@ -202,29 +195,29 @@ termination_by sizeOf expr
 
 end
 
-public instance : ToString Expr where
+instance : ToString Expr where
   toString := Expr.repr
 
-public structure NameAs where
+structure NameAs where
   name : ValidName
   as : Option ValidName
 
-public def NameAs.unaliased (n : ValidName) : NameAs :=
+def NameAs.unaliased (n : ValidName) : NameAs :=
   { name := n, as := Option.none }
 
-public def NameAs.aliased (n : ValidName) (as : ValidName) : NameAs :=
+def NameAs.aliased (n : ValidName) (as : ValidName) : NameAs :=
   { name := n, as := Option.some as }
 
-public def NameAs.repr (a : NameAs) : String :=
+def NameAs.repr (a : NameAs) : String :=
   match a.as with
   | Option.some as => s!"{a.name.val} as {as.val}"
   | Option.none => a.name.val
 
-public inductive Import where
+inductive Import where
   | basicForm (pkg : Array ValidName) (as : Option ValidName)
   | fromForm (pkg : Array ValidName) (names : Array NameAs)
 
-public def Import.repr (i : Import) := match i with
+def Import.repr (i : Import) := match i with
   | basicForm pkg as =>
     let path := String.intercalate "."
       (pkg.map (fun (x : ValidName) => x.val)).toList
@@ -242,16 +235,16 @@ public def Import.repr (i : Import) := match i with
 
 mutual
 
-public inductive IfContinuation where
+inductive IfContinuation where
   | elif (case : IfStatement)
   | «else» (body : Array Statement)
 
-public structure IfStatement where
+structure IfStatement where
   cond : Expr
   body : Array Statement
   next : Option IfContinuation
 
-public inductive Statement where
+inductive Statement where
   | importLine (i : Import)
   | exprLine (e : Expr)
   | assignLine (lhs : Expr) (rhs : Expr)
@@ -266,16 +259,16 @@ end
 
 mutual
 
-public def indent (s : String) : String :=
+def indent (s : String) : String :=
   s.replace "\n" "\n\t"
 
-public def Block.repr (b : Array Statement) : String :=
+def Block.repr (b : Array Statement) : String :=
   let lines := "\n".intercalate
     (b.map (fun x => x.repr)).toList
   indent s!"\t{lines}"
 termination_by sizeOf b
 
-public def IfStatement.repr (case : IfStatement) : String :=
+def IfStatement.repr (case : IfStatement) : String :=
   let following := match _h1 : case.next with
     | .some cont => match _h2 : cont with
       | .elif nextCase => IfStatement.repr nextCase
@@ -297,7 +290,7 @@ decreasing_by
        simp_wf
        omega)
 
-public def Statement.repr (s : Statement) : String := match s with
+def Statement.repr (s : Statement) : String := match s with
   | .importLine i => i.repr
   | .exprLine e => e.repr
   | .assignLine l r => s!"{l.repr} = {r.repr}"
@@ -311,27 +304,27 @@ termination_by sizeOf s
 
 end
 
-public instance : LE Python.Statement where
+instance : LE Python.Statement where
   le a b := a.repr ≤ b.repr
 
-public instance : DecidableLE Python.Statement :=
+instance : DecidableLE Python.Statement :=
   fun a b => if h : a.repr ≤ b.repr then
     Decidable.isTrue h
   else
     Decidable.isFalse h
 
-public def print (expr : Expr) : Expr :=
+def print (expr : Expr) : Expr :=
   .call (.id StdName.print) #[ expr ]
     #[ ⟨StdName.flush, .lit (.bool true)⟩ ]
 
-public structure Script where
+structure Script where
   statements : Array Statement
 
-public def Script.repr (s : Script) : String :=
+def Script.repr (s : Script) : String :=
   String.intercalate "\n"
     (s.statements.map (fun stmt => stmt.repr)).toList
 
-public def Script.serializeJson (expr : Expr) : Script :=
+def Script.serializeJson (expr : Expr) : Script :=
   ⟨#[
     -- import json
     .importLine (Import.fromForm
