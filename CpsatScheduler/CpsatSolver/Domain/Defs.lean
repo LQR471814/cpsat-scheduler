@@ -58,6 +58,9 @@ def Interval.mem (i : Interval) (x : ℤ) : Prop :=
 instance : Membership ℤ Interval where
   mem i x := i.mem x
 
+instance : HasSubset Interval where
+  Subset a b := b.left ≤ a.left ∧ a.right ≤ b.right
+
 instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) :=
   inferInstanceAs (Decidable ((i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)))
 

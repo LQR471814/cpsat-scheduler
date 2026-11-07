@@ -7,14 +7,14 @@ defaultTargets = ["CpsatScheduler"]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
-weak.linter.style.nativeDecide = false
+weak.linter.style.native = false
 maxSynthPendingDepth = 3
 linter.style.header = false
 
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.34.0-rc2"
+rev = "v4.35.0"
 
 [[lean_lib]]
 name = "CpsatScheduler"

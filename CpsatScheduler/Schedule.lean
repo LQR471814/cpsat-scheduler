@@ -1,8 +1,6 @@
 import CpsatScheduler.Schedule.Mapping
 import CpsatScheduler.Schedule.Event
 
-set_option linter.style.nativeDecide false
-
 namespace CpsatScheduler.Schedule
 
 open CpsatScheduler
