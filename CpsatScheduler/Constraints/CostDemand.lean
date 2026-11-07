@@ -1,61 +1,65 @@
-import CpsatScheduler.TaskVars
+import CpsatScheduler.CpsatSolver
+import CpsatScheduler.Defs
+import CpsatScheduler.Task
+
 import Mathlib.Tactic.IntervalCases
 
-open CpsatSolver
-open CpsatScheduler
+namespace CpsatScheduler.Constraint.CostDemand
 
-structure CostDemandPoint where
+open CpsatSolver
+
+structure Point where
   timeDemanded : CpsatSolver.Int64
   encodedCost : CpsatSolver.Int64
 deriving DecidableEq
 
-def CostDemandPoint.toVector (p : CostDemandPoint) :
+def PointsInDomain (points : Array Point)
+  (demand cost : Domain) : Prop :=
+    ∀ p ∈ points,
+      ((p.timeDemanded.val : ℤ) ∈ demand) ∧
+      ((p.encodedCost.val : ℤ) ∈ cost)
+
+structure Table (demand cost : Domain) where
+  points : Array Point
+  nonempty : points.size > 0
+  within : PointsInDomain points demand cost
+
+def Point.toVector (p : Point) :
     Vector CpsatSolver.Int64 2 :=
   Vector.mk
     #[ p.timeDemanded, p.encodedCost ]
     (by exact Nat.two_eq_digitChar.mp rfl)
 
-def PointsInDomain (points : Array CostDemandPoint)
-  (demandDom costDom : Domain) : Prop :=
-    ∀ p ∈ points,
-      ((p.timeDemanded.val : ℤ) ∈ demandDom) ∧
-      ((p.encodedCost.val : ℤ) ∈ costDom)
-
-instance (points : Array CostDemandPoint) (demandDom costDom : Domain) :
-    Decidable (PointsInDomain points demandDom costDom) := by
+instance (points : Array Point) (demand costDom : Domain) :
+    Decidable (PointsInDomain points demand costDom) := by
   unfold PointsInDomain
   infer_instance
 
-structure CostDemandTable (demandDom costDom : Domain) where
-  points : Array CostDemandPoint
-  nonempty : points.size > 0
-  within : PointsInDomain points demandDom costDom
-
-def CostDemandTable.ofPoints? (demandDom costDom : Domain)
-  (points : Array CostDemandPoint)
+def Table.ofPoints? (demand cost : Domain)
+  (points : Array Point)
   (nonempty : points.size > 0) :
-    Option (CostDemandTable demandDom costDom) :=
-  if h : PointsInDomain points demandDom costDom then
+    Option (Table demand cost) :=
+  if h : PointsInDomain points demand cost then
     some ⟨points, nonempty, h⟩
   else
     none
 
-def CostDemandTable.constrain
+def Table.constrain
   (id : EntityID)
-  (task : TaskVars S)
-  (table : CostDemandTable
-    task.timeDemandedVar.domain.domain
-    task.costVar.domain.domain)
+  (task : Task S)
+  (table : Table
+    task.demand.domain
+    task.cost.domain)
   (enforcement : Constraint.Enforcement) :
     Constraint :=
   let targetVars := Vector.mk
-    #[task.timeDemandedVar, task.costVar]
-    (by exact Nat.add_zero ([task.costVar].length + 1))
+    #[task.demand, task.cost]
+    (by exact Nat.add_zero ([task.cost].length + 1))
   {
     id := id
     variant := (.allowed_assignments (n := 2)
       targetVars
-      (table.points.map (fun p => CostDemandPoint.toVector p))
+      (table.points.map (fun p => Point.toVector p))
       (by
         -- size of a mapped array equals the size of the original
         rw [Array.size_map]
@@ -75,5 +79,8 @@ def CostDemandTable.constrain
         · exact (table.within p hp).1
         · exact (table.within p hp).2))
     enforcement := enforcement
-    label := .some s!"cost_demand_{task.task.label}"
+    label := .some s!"cost_demand_{task.label}"
   }
+
+end CpsatScheduler.Constraint.CostDemand
+

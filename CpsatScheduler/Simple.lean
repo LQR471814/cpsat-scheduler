@@ -1,7 +1,6 @@
 import CpsatScheduler.CpsatSolver
--- import CpsatScheduler.CpsatSolver.Domain.Interval
 
-namespace CpsatScheduler.New
+namespace CpsatScheduler
 
 -- we can use decl_name% (Lean.Name.hash.toNat) for ID
 -- we can also use global macro
@@ -31,7 +30,7 @@ structure Task (P : TaskParams) where
   demand : CpsatSolver.IntVar
   cost : CpsatSolver.IntVar
   start_in_horizon :
-    P.horizon.contains_interval start.intVar.domain.hull
+    P.horizon.contains_interval start.intVar.domainHull
 
-end CpsatScheduler.New
+end CpsatScheduler
 

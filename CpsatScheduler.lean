@@ -5,7 +5,6 @@ import CpsatScheduler.ConstrainPacking
 import CpsatScheduler.ConstrainPrereq
 import CpsatScheduler.CostTable
 import CpsatScheduler.CpsatSolver
-import CpsatScheduler.Defs
 import CpsatScheduler.Finset
 import CpsatScheduler.Graphs
 import CpsatScheduler.Objective

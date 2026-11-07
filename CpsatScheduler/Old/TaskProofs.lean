@@ -6,16 +6,6 @@ namespace CpsatScheduler
 
 open CpsatSolver
 
-theorem NonemptyDomain.hull_left_mem (d : CpsatSolver.NonemptyDomain) :
-    (d.hull.left : ℤ) ∈ d.domain := by
-  refine ⟨d.domain.intervals.head d.nonempty, List.head_mem d.nonempty, ?_⟩
-  exact ⟨le_rfl, (d.domain.intervals.head d.nonempty).left_le_right⟩
-
-theorem NonemptyDomain.hull_right_mem (d : CpsatSolver.NonemptyDomain) :
-    (d.hull.right : ℤ) ∈ d.domain := by
-  refine ⟨d.domain.intervals.getLast d.nonempty, List.getLast_mem d.nonempty, ?_⟩
-  exact ⟨(d.domain.intervals.getLast d.nonempty).left_le_right, le_rfl⟩
-
 theorem Task.succ_nonoverflow_of_mem (t : Task S) {k : ℤ}
     (hk : k ∈ t.startDomain.domain) :
     CpsatSolver.Int64.Nonoverflow (k + 1) := by
@@ -35,8 +25,8 @@ theorem Task.succ_nonoverflow_of_mem (t : Task S) {k : ℤ}
 
 theorem Task.prereq_nonoverflow (t : Task S) (v : CpsatSolver.IntVar)
     (hv : v.domain = t.startDomain) :
-    CpsatSolver.Int64.Nonoverflow ((v.domain.hull.left : ℤ) + 1) ∧
-    CpsatSolver.Int64.Nonoverflow ((v.domain.hull.right : ℤ) + 1) := by
+    CpsatSolver.Int64.Nonoverflow ((v.domainHull.left : ℤ) + 1) ∧
+    CpsatSolver.Int64.Nonoverflow ((v.domainHull.right : ℤ) + 1) := by
   rw [hv]
   exact ⟨Task.succ_nonoverflow_of_mem t (NonemptyDomain.hull_left_mem t.startDomain),
     Task.succ_nonoverflow_of_mem t (NonemptyDomain.hull_right_mem t.startDomain)⟩
@@ -63,42 +53,19 @@ theorem Task.scaled_nonoverflow_of_mem (t : Task S) {k : ℤ} (ratio : ℤ)
   · have : (k + 1) * ratio ≤ (k + 1) * u := by nlinarith [hk0, hr0, hru]
     exact le_trans this hk1u.2
 
-theorem Int64.nonoverflow_min {a b : ℤ}
-    (ha : CpsatSolver.Int64.Nonoverflow a) (hb : CpsatSolver.Int64.Nonoverflow b) :
-    CpsatSolver.Int64.Nonoverflow (min a b) :=
-  ⟨le_min ha.1 hb.1, le_trans (min_le_left a b) ha.2⟩
-
-theorem Int64.nonoverflow_max {a b : ℤ}
-    (ha : CpsatSolver.Int64.Nonoverflow a) (hb : CpsatSolver.Int64.Nonoverflow b) :
-    CpsatSolver.Int64.Nonoverflow (max a b) :=
-  ⟨le_trans ha.1 (le_max_left a b), max_le ha.2 hb.2⟩
-
-theorem Interval.scaled_nonoverflow (i : CpsatSolver.Interval) (ratio : CpsatSolver.Int64)
-    (hL : CpsatSolver.Int64.Nonoverflow ((i.left : ℤ) * ratio))
-    (hR : CpsatSolver.Int64.Nonoverflow ((i.right : ℤ) * ratio)) :
-    CpsatSolver.Int64.Nonoverflow (i.mulLower (CpsatSolver.Interval.ofValue ratio)) ∧
-    CpsatSolver.Int64.Nonoverflow (i.mulUpper (CpsatSolver.Interval.ofValue ratio)) := by
-  refine ⟨?_, ?_⟩
-  · unfold CpsatSolver.Interval.mulLower
-    simp only [CpsatSolver.Interval.ofValue, min_self]
-    exact Int64.nonoverflow_min hL hR
-  · unfold CpsatSolver.Interval.mulUpper
-    simp only [CpsatSolver.Interval.ofValue, max_self]
-    exact Int64.nonoverflow_max hL hR
-
 theorem Task.within_mul_group (t : Task S) (v : CpsatSolver.IntVar)
     (ratio : CpsatSolver.Int64)
     (hv : v.domain = t.startDomain)
     (hr0 : 0 ≤ (ratio : ℤ)) (hru : (ratio : ℤ) ≤ (t.unit.val.val : ℤ)) :
     CpsatSolver.Int64.Nonoverflow
-        (v.domain.hull.mulLower (CpsatSolver.Interval.ofValue ratio)) ∧
+        (v.domainHull.mulLower (CpsatSolver.Interval.ofValue ratio)) ∧
     CpsatSolver.Int64.Nonoverflow
-        (v.domain.hull.mulUpper (CpsatSolver.Interval.ofValue ratio)) := by
-  have hLmem : (v.domain.hull.left : ℤ) ∈ t.startDomain.domain := by
+        (v.domainHull.mulUpper (CpsatSolver.Interval.ofValue ratio)) := by
+  have hLmem : (v.domainHull.left : ℤ) ∈ t.startDomain.domain := by
     rw [hv]; exact NonemptyDomain.hull_left_mem t.startDomain
-  have hRmem : (v.domain.hull.right : ℤ) ∈ t.startDomain.domain := by
+  have hRmem : (v.domainHull.right : ℤ) ∈ t.startDomain.domain := by
     rw [hv]; exact NonemptyDomain.hull_right_mem t.startDomain
-  exact Interval.scaled_nonoverflow v.domain.hull ratio
+  exact Interval.scaled_nonoverflow v.domainHull ratio
     (Task.scaled_nonoverflow_of_mem t (ratio : ℤ) hLmem hr0 hru).1
     (Task.scaled_nonoverflow_of_mem t (ratio : ℤ) hRmem hr0 hru).1
 
@@ -107,24 +74,24 @@ theorem Task.within_succ_mul_group (t : Task S) (v : CpsatSolver.IntVar)
     (hv : v.domain = t.startDomain)
     (hr0 : 0 ≤ (ratio : ℤ)) (hru : (ratio : ℤ) ≤ (t.unit.val.val : ℤ))
     (add₁ :
-      CpsatSolver.Int64.Nonoverflow ((v.domain.hull.left : ℤ) + 1) ∧
-      CpsatSolver.Int64.Nonoverflow ((v.domain.hull.right : ℤ) + 1)) :
+      CpsatSolver.Int64.Nonoverflow ((v.domainHull.left : ℤ) + 1) ∧
+      CpsatSolver.Int64.Nonoverflow ((v.domainHull.right : ℤ) + 1)) :
     CpsatSolver.Int64.Nonoverflow
-        ((v.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁).mulLower
+        ((v.domainHull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁).mulLower
           (CpsatSolver.Interval.ofValue ratio)) ∧
     CpsatSolver.Int64.Nonoverflow
-        ((v.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁).mulUpper
+        ((v.domainHull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁).mulUpper
           (CpsatSolver.Interval.ofValue ratio)) := by
-  have hLmem : (v.domain.hull.left : ℤ) ∈ t.startDomain.domain := by
+  have hLmem : (v.domainHull.left : ℤ) ∈ t.startDomain.domain := by
     rw [hv]; exact NonemptyDomain.hull_left_mem t.startDomain
-  have hRmem : (v.domain.hull.right : ℤ) ∈ t.startDomain.domain := by
+  have hRmem : (v.domainHull.right : ℤ) ∈ t.startDomain.domain := by
     rw [hv]; exact NonemptyDomain.hull_right_mem t.startDomain
-  have hLsucc : CpsatSolver.Int64.Nonoverflow (((v.domain.hull.left : ℤ) + 1) * ratio) :=
+  have hLsucc : CpsatSolver.Int64.Nonoverflow (((v.domainHull.left : ℤ) + 1) * ratio) :=
     (Task.scaled_nonoverflow_of_mem t (ratio : ℤ) hLmem hr0 hru).2
-  have hRsucc : CpsatSolver.Int64.Nonoverflow (((v.domain.hull.right : ℤ) + 1) * ratio) :=
+  have hRsucc : CpsatSolver.Int64.Nonoverflow (((v.domainHull.right : ℤ) + 1) * ratio) :=
     (Task.scaled_nonoverflow_of_mem t (ratio : ℤ) hRmem hr0 hru).2
   exact Interval.scaled_nonoverflow
-    (v.domain.hull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁) ratio
+    (v.domainHull.add (CpsatSolver.Interval.ofValue (CpsatSolver.Int64.of 1)) add₁) ratio
     hLsucc hRsucc
 
 end CpsatScheduler

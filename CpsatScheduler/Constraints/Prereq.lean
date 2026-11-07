@@ -1,13 +1,13 @@
 import CpsatScheduler.CpsatSolver.LinearExpr
 
-namespace CpsatScheduler
+namespace CpsatScheduler.Constraint
 
 open CpsatSolver
 
-def Constraint.prerequisite (succ pred : IntVar)
+def prerequisite (succ pred : IntVar)
     (nonoverflow :
-      Int64.Nonoverflow ((pred.domain.hull.left : ℤ) + 1) ∧
-      Int64.Nonoverflow ((pred.domain.hull.right : ℤ) + 1)) :
+      Int64.Nonoverflow ((pred.domainHull.left : ℤ) + 1) ∧
+      Int64.Nonoverflow ((pred.domainHull.right : ℤ) + 1)) :
     BoundedLinearExpr :=
   let succE := LinearExpr.var succ
   let predE := LinearExpr.var pred
@@ -16,12 +16,12 @@ def Constraint.prerequisite (succ pred : IntVar)
   let predEnd := LinearExpr.add predE one nonoverflow
   {
     rel := .gte
-    leftInterval := succ.domain.hull
-    rightInterval := pred.domain.hull.add
+    leftInterval := succ.domainHull
+    rightInterval := pred.domainHull.add
       (Interval.ofValue (Int64.of 1)) nonoverflow
     left := succE
     right := predEnd
   }
 
-end CpsatScheduler
+end CpsatScheduler.Constraint
 

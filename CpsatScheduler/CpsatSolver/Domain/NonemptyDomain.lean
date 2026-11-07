@@ -34,4 +34,14 @@ theorem NonemptyDomain.hull_interval_eq {i : Interval}
       rw [heq]
       dsimp [NonemptyDomain.interval, Domain.interval, List.head]
 
+theorem NonemptyDomain.hull_left_mem (d : NonemptyDomain) :
+    (d.hull.left : ℤ) ∈ d.domain := by
+  refine ⟨d.domain.intervals.head d.nonempty, List.head_mem d.nonempty, ?_⟩
+  exact ⟨le_rfl, (d.domain.intervals.head d.nonempty).left_le_right⟩
+
+theorem NonemptyDomain.hull_right_mem (d : NonemptyDomain) :
+    (d.hull.right : ℤ) ∈ d.domain := by
+  refine ⟨d.domain.intervals.getLast d.nonempty, List.getLast_mem d.nonempty, ?_⟩
+  exact ⟨(d.domain.intervals.getLast d.nonempty).left_le_right, le_rfl⟩
+
 end CpsatSolver

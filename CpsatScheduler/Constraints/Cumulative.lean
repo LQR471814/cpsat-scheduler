@@ -1,19 +1,15 @@
 import CpsatScheduler.CpsatSolver.Model
 import CpsatScheduler.CpsatSolver.LinearExpr
-import CpsatScheduler.TaskVars
-import CpsatScheduler.Schedule.Event
 
-open CpsatScheduler.Schedule (Alloc)
+namespace CpsatScheduler.Constraints.Cumulative
 
-namespace CpsatScheduler.Alloc
-
-structure Nonoverflow where
+structure Alloc where
   bucket : CpsatSolver.Int64
-  alloc : CpsatSolver.Int64
+  value : CpsatSolver.Int64
 
-def cumulativeItem
+def itemOf
     (intervalID : CpsatSolver.EntityID)
-    (input : Nonoverflow)
+    (input : Alloc)
     (label : Option String := none) :
       CpsatSolver.CumulativeItem :=
   let startExpr := CpsatSolver.LinearExpr.const input.bucket
@@ -25,15 +21,15 @@ def cumulativeItem
     size := CpsatSolver.Int64.of 1
     size_nonneg := by native_decide
   }
-  let demandExpr := CpsatSolver.LinearExpr.const input.alloc
+  let demandExpr := CpsatSolver.LinearExpr.const input.value
   {
     interval := interval
     demand := demandExpr.wrapInterval
   }
 
-def cumulative
+def constraint
     (id : CpsatSolver.EntityID)
-    (allocs : Array Nonoverflow)
+    (allocs : Array Alloc)
     (capacity : CpsatSolver.LinearExpr.WithInterval)
     (enforcement : CpsatSolver.Constraint.Enforcement)
     (label : Option String := none) :
@@ -41,7 +37,7 @@ def cumulative
   let items := allocs.zipIdx.map
     (fun (item, idx) =>
       let label := label.map (fun p => s!"{p}_intv_{id + idx}")
-      cumulativeItem id item label)
+      itemOf id item label)
   {
     id := id
     label := label
@@ -49,5 +45,4 @@ def cumulative
     variant := .cumulative items capacity
   }
 
-end CpsatScheduler.Alloc
-
+end CpsatScheduler.Constraints.Cumulative

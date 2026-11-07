@@ -23,6 +23,9 @@ structure IntVar where
   label : Option String := none
 deriving DecidableEq
 
+def IntVar.domainHull (i : IntVar) : Interval :=
+  i.domain.hull
+
 structure UnitAwareIntVar (us : Unit.Set) where
   intVar : IntVar
   scale : us.elem
@@ -60,7 +63,7 @@ instance (a b : Interval) : Decidable (LinearExpr.Nonoverflow.Sub a b) := by
   infer_instance
 
 inductive LinearExpr : Interval → Type where
-  | fromVar (value : IntVar) : LinearExpr value.domain.hull
+  | fromVar (value : IntVar) : LinearExpr value.domainHull
   | fromConst (value : Int64) : LinearExpr (Interval.ofValue value)
   | fromNeg
     (a : LinearExpr B)

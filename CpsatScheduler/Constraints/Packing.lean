@@ -1,18 +1,17 @@
-import CpsatScheduler.UnitAware
-import CpsatScheduler.TaskVars
-import CpsatScheduler.Allocs
+import CpsatScheduler.Constraints.Cumulative
+import CpsatScheduler.Task
 
-namespace CpsatScheduler
+namespace CpsatScheduler.Constraints
+
+open CpsatSolver
 
 -- add_cumulative constraint for a single timescale
-def Constraint.packSingleLayer
-  {scales : Timescales}
-  (u : UnitScale)
-  (u_in_scales : u ∈ scales.units.set := by native_decide)
-  (tasks : Array (TaskVars scales))
-  (allocs : List Alloc.Nonoverflow)
-  (allocUnit : UnitScale)
-    : CpsatSolver.Builder CpsatSolver.Constraint.Variant := do
+private def packSingleLayer {TP : TaskParams}
+  (u : TP.units.elem)
+  (tasks : Array (Task TP))
+  (allocs : Array Cumulative.Alloc)
+  (allocUnit : TP.units.elem)
+    : CpsatSolver.Constraint.Variant :=
   let tasksUnitEq := tasks.filter
     (fun x => decide (x.task.unit = u))
   let itemsUnitEq <- tasksUnitEq.mapM
@@ -44,7 +43,7 @@ def Constraint.packSingleLayer
       let normalized : UnitAware.IntVar u <-
         UnitAware.truncCoarsen
           (u := task.unit) (v := u)
-          ⟨startVar.domain.hull, startLinExpr⟩
+          ⟨startVar.domainHull, startLinExpr⟩
           (scales.units.divisibility
             u
             u_in_scales
@@ -82,21 +81,19 @@ def Constraint.packSingleLayer
       capacity
   pure result
 
-def Constraint.packing
-  {scales : Timescales}
-  (tasks : Array (TaskVars scales))
-  (allocs : List Alloc.Nonoverflow)
-  (allocUnit : UnitScale)
-    : CpsatSolver.Builder Unit := do
-  let _ <- (UnitScale.sort scales.units.set).attach.mapM
-    (fun unit => do
-      let cnstr <- (Constraint.packSingleLayer
-        unit.val
-        (unit.val.mem_sort unit.prop)
-        tasks
-        allocs
-        allocUnit)
-      let _ <- CpsatSolver.Builder.addConstraint .always cnstr none)
-  pure ()
+def pack {TP : TaskParams}
+  (tasks : Array (Task TP))
+  (allocs : Array Cumulative.Alloc)
+  (allocUnit : TP.units.elem) : Array Constraint :=
+  (TP.units.fs.sort.attach.map
+    (fun unit =>
+      {
+        variant := packSingleLayer
+          ⟨unit.val, (unit.val.mem_sort unit.prop)⟩
+          tasks
+          allocs
+          allocUnit
+        enforcement := .always
+      }))
 
-end CpsatScheduler
+end CpsatScheduler.Constraints

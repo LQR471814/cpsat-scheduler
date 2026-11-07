@@ -258,4 +258,17 @@ theorem Interval.mem_const_div (i : Interval)
       · exact pos
       · exact x_mem_i.2
 
+theorem Interval.scaled_nonoverflow (i : CpsatSolver.Interval) (ratio : CpsatSolver.Int64)
+    (hL : CpsatSolver.Int64.Nonoverflow ((i.left : ℤ) * ratio))
+    (hR : CpsatSolver.Int64.Nonoverflow ((i.right : ℤ) * ratio)) :
+    CpsatSolver.Int64.Nonoverflow (i.mulLower (CpsatSolver.Interval.ofValue ratio)) ∧
+    CpsatSolver.Int64.Nonoverflow (i.mulUpper (CpsatSolver.Interval.ofValue ratio)) := by
+  refine ⟨?_, ?_⟩
+  · unfold CpsatSolver.Interval.mulLower
+    simp only [CpsatSolver.Interval.ofValue, min_self]
+    exact Int64.nonoverflow_min hL hR
+  · unfold CpsatSolver.Interval.mulUpper
+    simp only [CpsatSolver.Interval.ofValue, max_self]
+    exact Int64.nonoverflow_max hL hR
+
 end CpsatSolver

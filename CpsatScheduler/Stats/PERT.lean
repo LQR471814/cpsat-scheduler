@@ -2,7 +2,7 @@ import CpsatScheduler.Python.Basic
 import CpsatScheduler.Python.Runtime
 
 import Mathlib.Data.Rat.Defs
-import Mathlib.Data.Rat.Star
+import Mathlib.Algebra.Order.Star.Rat
 
 namespace Stats.PERT
 

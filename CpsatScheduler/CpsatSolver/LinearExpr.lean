@@ -42,7 +42,7 @@ theorem eval_mem_bounds (valuation : EntityID → ℤ)
       (ihb (fun v hv => inDomain v (Array.mem_append.mpr (Or.inr hv))))
 
 def var (value : IntVar) :
-    LinearExpr value.domain.hull :=
+    LinearExpr value.domainHull :=
   .fromVar value
 
 def const (value : Int64) :
