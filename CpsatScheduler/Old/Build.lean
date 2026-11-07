@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Model
+import CpsatSolver.Model
 import CpsatScheduler.Task
 import CpsatScheduler.TaskProofs
 import CpsatScheduler.TaskVars

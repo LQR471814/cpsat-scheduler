@@ -1,11 +1,11 @@
-import Mathlib.Data.Int.ConditionallyCompleteOrder
-import Mathlib.Data.Int.Star
+import Mathlib.Order.Int.ConditionallyCompleteOrder
+import Mathlib.Algebra.Order.Star.Int
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Tactic.Linarith.Frontend
 import Mathlib.Tactic.NormNum.Ineq
 import Mathlib.Algebra.Order.Ring.Star
 
-import CpsatScheduler.CpsatSolver.Domain.Defs
+import CpsatSolver.Domain.Defs
 
 namespace CpsatSolver.Int64
 

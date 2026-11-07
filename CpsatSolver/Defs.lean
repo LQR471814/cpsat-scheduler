@@ -1,8 +1,8 @@
 import Mathlib.Data.Char
 
 import CpsatScheduler.Python.Basic
-import CpsatScheduler.CpsatSolver.Domain.NonemptyDomain
-import CpsatScheduler.CpsatSolver.Unit.Set
+import CpsatSolver.Domain.NonemptyDomain
+import CpsatSolver.Unit.Set
 
 namespace CpsatSolver
 

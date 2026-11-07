@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Unit.Set
+import CpsatSolver.Unit.Set
 
 namespace CpsatScheduler.StandardUnits
 

@@ -1,5 +1,5 @@
-import CpsatScheduler.CpsatSolver.Defs
-import CpsatScheduler.CpsatSolver.Entity
+import CpsatSolver.Defs
+import CpsatSolver.Entity
 
 namespace CpsatSolver
 

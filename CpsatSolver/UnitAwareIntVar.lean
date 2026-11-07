@@ -1,5 +1,5 @@
-import CpsatScheduler.CpsatSolver.Defs
-import CpsatScheduler.CpsatSolver.LinearExpr
+import CpsatSolver.Defs
+import CpsatSolver.LinearExpr
 
 import Mathlib.Algebra.Order.Module.Defs
 import Mathlib.Algebra.Order.GroupWithZero.Defs

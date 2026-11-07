@@ -1,5 +1,5 @@
 import CpsatScheduler.Defs
-import CpsatScheduler.CpsatSolver.Domain.Defs
+import CpsatSolver.Domain.Defs
 
 namespace CpsatScheduler
 

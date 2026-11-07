@@ -1,5 +1,5 @@
-import CpsatScheduler.CpsatSolver.Model
-import CpsatScheduler.CpsatSolver.LinearExpr
+import CpsatSolver.Model
+import CpsatSolver.LinearExpr
 
 namespace CpsatScheduler.Constraints.Cumulative
 

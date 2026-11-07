@@ -1,6 +1,6 @@
-import CpsatScheduler.CpsatSolver.Model
-import CpsatScheduler.CpsatSolver.LinearExpr
-import CpsatScheduler.CpsatSolver.Python.Model
+import CpsatSolver.Model
+import CpsatSolver.LinearExpr
+import CpsatSolver.Python.Model
 import CpsatScheduler.Python.Runtime
 
 namespace CpsatSolver

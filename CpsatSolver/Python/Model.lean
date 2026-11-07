@@ -1,5 +1,5 @@
-import CpsatScheduler.CpsatSolver.Python.Basic
-import CpsatScheduler.CpsatSolver.Model
+import CpsatSolver.Python.Basic
+import CpsatSolver.Model
 
 namespace CpsatSolver.Model.Python
 

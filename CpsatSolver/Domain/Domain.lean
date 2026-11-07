@@ -1,5 +1,6 @@
-import CpsatScheduler.CpsatSolver.Domain.Interval
-import Mathlib.Data.Nat.SuccPred
+import Mathlib.Order.SuccPred.Nat
+
+import CpsatSolver.Domain.Interval
 
 namespace CpsatSolver
 

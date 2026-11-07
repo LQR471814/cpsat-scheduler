@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.LinearExpr
+import CpsatSolver.LinearExpr
 
 namespace CpsatSolver.Constraint
 

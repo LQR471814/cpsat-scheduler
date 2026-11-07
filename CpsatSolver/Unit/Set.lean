@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Unit.Scale
+import CpsatSolver.Unit.Scale
 
 namespace CpsatSolver.Unit
 

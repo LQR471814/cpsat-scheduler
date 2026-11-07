@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Domain.Int64
+import CpsatSolver.Domain.Int64
 
 namespace CpsatSolver
 

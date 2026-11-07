@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Entity
+import CpsatSolver.Entity
 
 namespace CpsatSolver.LinearExpr
 

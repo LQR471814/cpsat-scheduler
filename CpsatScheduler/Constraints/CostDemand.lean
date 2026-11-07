@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver
+import CpsatSolver
 import CpsatScheduler.Defs
 import CpsatScheduler.Task
 

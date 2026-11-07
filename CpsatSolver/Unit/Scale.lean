@@ -1,4 +1,4 @@
-import CpsatScheduler.CpsatSolver.Domain.Defs
+import CpsatSolver.Domain.Defs
 import CpsatScheduler.Util.Finset
 
 import Mathlib.Order.Int.ConditionallyCompleteOrder
