@@ -6,10 +6,12 @@ defaultTargets = ["CpsatScheduler"]
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 relaxedAutoImplicit = false
-weak.linter.mathlibStandardSet = true
-weak.linter.style.native = false
 maxSynthPendingDepth = 3
-linter.style.header = false
+
+[leanOptions.weak.linter]
+mathlibStandardSet = true
+style.native = false
+style.header = false
 
 [[require]]
 name = "mathlib"
