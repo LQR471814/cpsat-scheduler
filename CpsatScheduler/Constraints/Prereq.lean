@@ -1,6 +1,6 @@
 import CpsatSolver.LinearExpr
 
-namespace CpsatScheduler.Constraint
+namespace CpsatScheduler.Constraints
 
 open CpsatSolver
 
@@ -23,5 +23,5 @@ def prerequisite (succ pred : IntVar)
     right := predEnd
   }
 
-end CpsatScheduler.Constraint
+end CpsatScheduler.Constraints
 

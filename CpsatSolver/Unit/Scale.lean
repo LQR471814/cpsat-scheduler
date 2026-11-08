@@ -6,18 +6,19 @@ import Mathlib.Order.ConditionallyCompleteLattice.Basic
 import Mathlib.Algebra.Order.Star.Int
 import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Data.Nat.Cast.Order.Ring
+import Mathlib.Data.Int.Order.Basic
 
 namespace CpsatSolver.Unit
 
 @[ext]
 structure Scale where
-  val : ℕ
+  val : ℤ
   pos : 0 < val
-  nonoverflow : CpsatSolver.Int64.Nonoverflow (val : ℤ)
+  nonoverflow : CpsatSolver.Int64.Nonoverflow val
 deriving DecidableEq
 
 instance : Coe Scale ℕ where
-  coe u := u.val
+  coe u := u.val.toNat
 
 instance : Coe Scale ℤ where
   coe u := u.val
@@ -36,9 +37,9 @@ instance : DecidableLE Scale := by infer_instance
 instance : DecidableLT Scale := by infer_instance
 
 def Scale.of
-  (val : ℕ)
+  (val : ℤ)
   (pos : 0 < val := by native_decide)
-  (nonoverflow : CpsatSolver.Int64.Nonoverflow (val : ℤ) := by native_decide) :
+  (nonoverflow : CpsatSolver.Int64.Nonoverflow val := by native_decide) :
     Scale :=
   {
     val := val
@@ -49,16 +50,20 @@ def Scale.of
 def Scale.atomic : Scale :=
   {
     val := 1
-    pos := Nat.succ_pos 0
+    pos := by native_decide
     nonoverflow := by native_decide
   }
 
 theorem Scale.ratio_nonoverflow (u v : Scale) :
-    CpsatSolver.Int64.Nonoverflow ((u.val / v.val : ℕ) : ℤ) := by
+    CpsatSolver.Int64.Nonoverflow (u.val / v.val) := by
   have hu := u.nonoverflow
-  have hnn : (0 : ℤ) ≤ ((u.val / v.val : ℕ) : ℤ) := Nat.cast_nonneg _
-  have hle : ((u.val / v.val : ℕ) : ℤ) ≤ (u.val : ℤ) := by
-    exact_mod_cast Nat.div_le_self u.val v.val
+  have hnn : 0 ≤ (u.val / v.val) := by
+    apply Int.ediv_nonneg
+    · exact Int.le_of_lt u.pos
+    · exact Int.le_of_lt v.pos
+  have hle : (u.val / v.val) ≤ (u.val : ℤ) := by
+    apply Int.ediv_le_self
+    exact Int.le_of_lt u.pos
   constructor
   · have hmin : CpsatSolver.Int64.min ≤ 0 := by native_decide
     exact le_trans hmin hnn
@@ -71,7 +76,7 @@ def Scale.exactRatio (u v : Scale) (_hv : v.val ∣ u.val) :
 instance : Coe Scale CpsatSolver.Int64 where
   coe v := Subtype.mk (v.val : ℤ) v.nonoverflow
 
-private def scaleSetKey (s : Finset Scale) : s → ℕ :=
+private def scaleSetKey (s : Finset Scale) : s → ℤ :=
   fun x => x.val.val
 
 private theorem scaleSetKey_inj (s : Finset Scale) :

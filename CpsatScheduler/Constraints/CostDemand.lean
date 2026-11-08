@@ -4,7 +4,7 @@ import CpsatScheduler.Task
 
 import Mathlib.Tactic.IntervalCases
 
-namespace CpsatScheduler.Constraint.CostDemand
+namespace CpsatScheduler.Constraints.CostDemand
 
 open CpsatSolver
 
@@ -82,5 +82,5 @@ def Table.constrain
     label := .some s!"cost_demand_{task.label}"
   }
 
-end CpsatScheduler.Constraint.CostDemand
+end CpsatScheduler.Constraints.CostDemand
 

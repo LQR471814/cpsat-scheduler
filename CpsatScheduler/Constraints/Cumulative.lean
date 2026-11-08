@@ -8,10 +8,10 @@ structure Alloc where
   value : CpsatSolver.Int64
 
 def itemOf
-    (intervalID : CpsatSolver.EntityID)
-    (input : Alloc)
-    (label : Option String := none) :
-      CpsatSolver.CumulativeItem :=
+  (intervalID : CpsatSolver.EntityID)
+  (input : Alloc)
+  (label : Option String := none) :
+    CpsatSolver.CumulativeItem :=
   let startExpr := CpsatSolver.LinearExpr.const input.bucket
   let interval : CpsatSolver.FixedSizeIntervalVar := {
     id := intervalID
@@ -28,12 +28,12 @@ def itemOf
   }
 
 def constraint
-    (id : CpsatSolver.EntityID)
-    (allocs : Array Alloc)
-    (capacity : CpsatSolver.LinearExpr.WithInterval)
-    (enforcement : CpsatSolver.Constraint.Enforcement)
-    (label : Option String := none) :
-      CpsatSolver.Constraint :=
+  (id : CpsatSolver.EntityID)
+  (allocs : Array Alloc)
+  (capacity : CpsatSolver.LinearExpr.WithInterval)
+  (enforcement : CpsatSolver.Constraint.Enforcement)
+  (label : Option String := none) :
+    CpsatSolver.Constraint :=
   let items := allocs.zipIdx.map
     (fun (item, idx) =>
       let label := label.map (fun p => s!"{p}_intv_{id + idx}")
