@@ -5,38 +5,45 @@ namespace CpsatScheduler.Constraints
 
 open CpsatSolver
 
+-- for each unit layer, we have one unique fixed size interval allocated for
+-- each task with unit ≤ to the the unit layer
+
 -- add_cumulative constraint for a single timescale
 private def packSingleLayer {TP : TaskParams}
   (u : TP.units.elem)
   (tasks : Array (Task TP))
   (allocs : Array Cumulative.Alloc)
   (allocUnit : TP.units.elem)
-    : CpsatSolver.Constraint.Variant :=
-  let tasksUnitEq := tasks.filter
-    (fun x => decide (x.task.unit = u))
-  let itemsUnitEq <- tasksUnitEq.mapM
-    (fun (t : TaskVars scales) => do
-      let interval <- CpsatSolver.Builder.newFixedSizeInterval
-        (.var t.startVar) (CpsatSolver.Int64.of 1) (by native_decide)
-      let result : CpsatSolver.CumulativeItem := {
-        interval := interval.val
-        demand := (
-          CpsatSolver.LinearExpr.var t.timeDemandedVar
-        ).wrapInterval
+    : Constraint.Variant :=
+  let itemsUnitEq := tasks
+    |> Array.filter fun t => decide (t.unit = u)
+    |> Array.map fun t =>
+      let interval : FixedSizeIntervalVar := {
+        id := sorry
+        startInterval := t.start
+        start := .var t.start
+        size := Int64.of 1
+        size_nonneg := by native_decide
+        label := .none
       }
-      pure result)
-  let tasksUnitLt :=
-    (tasks.filter
-      (fun x => decide (x.task.unit < u))).attachWith
-        (fun x => decide (x.task.unit < u) = true)
-        (fun x hx => (Array.mem_filter.mp hx).2)
+      let result : CumulativeItem := {
+        interval := interval.val
+        demand :=
+          (LinearExpr.var t.timeDemandedVar).wrapInterval
+      }
+      result
+  let tasksUnitLt := tasks
+    |> Array.filter fun x => decide (x.task.unit < u)
+    |> Array.attachWith
+        fun x => decide (x.task.unit < u) = true
+        fun x hx => (Array.mem_filter.mp hx).2
   let itemsUnitLt <- tasksUnitLt.mapM
     (α := { x : TaskVars scales // decide (↑x.task.unit < u) = true })
-    (β := CpsatSolver.CumulativeItem)
+    (β := CumulativeItem)
     (fun el => do
       let task := el.val.task
       let startVar := el.val.startVar
-      let startLinExpr := CpsatSolver.LinearExpr.var startVar
+      let startLinExpr := LinearExpr.var startVar
       have taskunit_lt_u : task.unit < u := of_decide_eq_true el.prop
       have taskunit_le_u : task.unit.val ≤ u.val :=
         LT.lt.le (a := task.unit.val.val) (b := u.val) taskunit_lt_u
@@ -51,17 +58,17 @@ private def packSingleLayer {TP : TaskParams}
             task.unit.mem
             taskunit_le_u)
           none
-      let interval <- CpsatSolver.Builder.newFixedSizeInterval
-        (.var normalized.var) (CpsatSolver.Int64.of 1) (by native_decide)
-      let result : CpsatSolver.CumulativeItem := {
+      let interval <- Builder.newFixedSizeInterval
+        (.var normalized.var) (Int64.of 1) (by native_decide)
+      let result : CumulativeItem := {
         interval := interval.val
         demand := (
-          CpsatSolver.LinearExpr.var el.val.timeDemandedVar
+          LinearExpr.var el.val.timeDemandedVar
         ).wrapInterval
       }
       pure result
     )
-  let capacity : CpsatSolver.LinearExpr.WithInterval :=
+  let capacity : LinearExpr.WithInterval :=
     {
       fst := {
         left := u
@@ -73,7 +80,7 @@ private def packSingleLayer {TP : TaskParams}
   let itemsAlloc <-
     if u = allocUnit then Alloc.cumulativeItems allocs
     else pure #[]
-  let result : CpsatSolver.Constraint.Variant :=
+  let result : Constraint.Variant :=
     .cumulative
       (itemsUnitEq
         ++ itemsUnitLt
