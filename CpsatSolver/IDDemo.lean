@@ -22,6 +22,7 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Char
 import Mathlib.Data.Nat.Pairing
 import Mathlib.Logic.Equiv.Nat
+import Mathlib.Logic.Equiv.List
 import Mathlib.Logic.Encodable.Basic
 
 import CpsatScheduler.Python.Basic
@@ -30,58 +31,59 @@ import CpsatSolver.Unit.Set
 
 namespace CpsatSolver
 
-class HasID (α : Type) where
-  id (x : α) : ℕ
-  inj : Function.Injective id
+instance : Encodable Char where
+  encode := Char.toNat
+  decode n := if h : n.isValidChar then
+    .some (Char.ofNat n)
+  else
+    .none
+  encodek c := by
+    split
+    · apply congrArg Option.some
+      exact Char.ofNat_toNat c
+    · rename_i nh
+      absurd nh
+      exact c.valid
 
-structure DerivedIdentity (α : Type) [HasID α] where
+instance : Encodable String :=
+  Encodable.ofLeftInverse
+    String.toList String.ofList
+    (fun _ => by exact String.ofList_toList)
+
+/--
+structure DerivedIdentity (α : Type) [Encodable α] where
   object : α
   otherID : ℕ
 deriving DecidableEq
 
-instance {α : Type} [HasID α] : HasID (DerivedIdentity α) where
-  id x := Nat.pair (HasID.id x.object) x.otherID
-  inj := by
-    intro a₁ a₂ h
-    simp only [Nat.pair_eq_pair] at h
-    cases a₁
-    cases a₂
-    simp only [DerivedIdentity.mk.injEq]
-    exact ⟨HasID.inj h.1, h.2⟩
+instance {α : Type} [Encodable α] : Encodable (DerivedIdentity α) where
+  encode a := Nat.pair (Encodable.encode a.object) a.otherID
+  decode n :=
+    let pair := Nat.unpair n
+    let decoded := Encodable.decode pair.fst
+    if h : decoded.isSome then
+      .some {
+        object := decoded.get h
+        otherID := pair.snd
+      }
+    else
+      .none
+  encodek a := by simp
 
-def encodeOption {α : Type} (f : α → ℕ) : Option α → ℕ
-  | .none => 0
-  | .some a => f a + 1
 
-theorem encodeOption_inj {α : Type} {f : α → ℕ} (hf : Function.Injective f) :
-    Function.Injective (encodeOption f) := by
-  intro a b h
-  cases a <;> cases b <;> simp only [encodeOption] at h
-  · rfl
-  · exact absurd h.symm (Nat.succ_ne_zero _)
-  · exact absurd h (Nat.succ_ne_zero _)
-  · exact congrArg _ (hf (Nat.succ_injective h))
 
-def encodeList {α : Type} (f : α → ℕ) : List α → ℕ
-  | [] => 0
-  | a :: t => Nat.pair (f a + 1) (encodeList f t) + 1
+Built-in types which implement encodable:
 
-theorem encodeList_inj {α : Type} {f : α → ℕ} (hf : Function.Injective f) :
-    Function.Injective (encodeList f) := by
-  intro a
-  induction a with
-  | nil =>
-    intro b h
-    cases b with
-    | nil => rfl
-    | cons bh bt => exact absurd h.symm (Nat.succ_ne_zero _)
-  | cons ah at' ih =>
-    intro b h
-    cases b with
-    | nil => exact absurd h (Nat.succ_ne_zero _)
-    | cons bh bt =>
-      simp only [encodeList, Nat.succ.injEq, Nat.pair_eq_pair] at h
-      exact congr (congrArg _ (hf h.1)) (ih h.2)
+* Prod
+* Option
+* List
+* Nat/Int/Bool
+
+-/
+
+def foo : Interval := Interval.of 1 3
+
+#eval Encodable.encode foo
 
 /--
 instance : HasID Int64 where

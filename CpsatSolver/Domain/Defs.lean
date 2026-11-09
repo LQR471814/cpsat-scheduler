@@ -1,5 +1,7 @@
 import Mathlib.Order.Interval.Basic
 import Mathlib.Algebra.Group.Int.Defs
+import Mathlib.Logic.Encodable.Basic
+import Mathlib.Tactic.DeriveEncodable
 
 namespace CpsatSolver
 
@@ -61,8 +63,9 @@ instance : Membership ℤ Interval where
 instance : HasSubset Interval where
   Subset a b := b.left ≤ a.left ∧ a.right ≤ b.right
 
-instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) :=
-  inferInstanceAs (Decidable ((i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)))
+instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) := by
+  simp only [Membership.mem, Interval.mem]
+  infer_instance
 
 def Interval.toSet (i : Interval) : Set ℤ :=
   Set.Icc (i.left : ℤ) i.right
