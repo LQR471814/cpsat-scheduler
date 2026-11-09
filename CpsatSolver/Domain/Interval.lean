@@ -122,9 +122,6 @@ theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
     · exact (min_le_right _ _).trans (h2.trans_eq (mul_comm x value.val))
     · refine (le_of_eq (mul_comm value.val x)).trans (h1.trans (le_max_left _ _))
 
-instance : DecidableRel Interval.separated :=
-  fun a b => inferInstanceAs (Decidable ((a.right : ℤ) + 1 < (b.left : ℤ)))
-
 theorem Interval.separated_trans {x a y : Interval}
     (hxa : Interval.separated x a) (hay : Interval.separated a y) :
     Interval.separated x y := by

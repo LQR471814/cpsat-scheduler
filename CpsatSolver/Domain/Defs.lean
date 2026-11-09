@@ -1,7 +1,7 @@
 import Mathlib.Order.Interval.Basic
 import Mathlib.Algebra.Group.Int.Defs
 import Mathlib.Logic.Encodable.Basic
-import Mathlib.Tactic.DeriveEncodable
+import Mathlib.Logic.Equiv.List
 
 namespace CpsatSolver
 
@@ -15,6 +15,8 @@ instance (b : ℤ) : Decidable (Int64.Nonoverflow b) := by
   infer_instance
 
 abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
+
+instance : Encodable Int64 := Subtype.encodable
 
 def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by native_decide) : Int64 :=
   ⟨n, h⟩
@@ -43,6 +45,16 @@ structure Interval where
   right : Int64
   left_le_right : (left : ℤ) ≤ right
 deriving DecidableEq
+
+instance : Encodable Interval :=
+  Encodable.ofLeftInjection
+    (fun i => (i.left, i.right))
+    (fun (l, r) =>
+      if h : (l : ℤ) ≤ r then
+        some { left := l, right := r, left_le_right := h }
+      else
+        none)
+    (fun i => by simp [i.left_le_right])
 
 def Interval.of (l r : ℤ)
   (hl : Int64.Nonoverflow l := by native_decide)
@@ -77,12 +89,23 @@ def Interval.ofValue (v : Int64) : Interval :=
 def Interval.separated (a b : Interval) : Prop :=
   (a.right : ℤ) + 1 < (b.left : ℤ)
 
-/-- Canonical sparse domain: pairwise separated, hence sorted, disjoint, and
-nonadjacent. Empty domains are allowed. -/
+instance : DecidableRel Interval.separated :=
+  fun a b => inferInstanceAs (Decidable ((a.right : ℤ) + 1 < (b.left : ℤ)))
+
 structure Domain where
   intervals : List Interval
   pairwise : intervals.Pairwise Interval.separated
 deriving DecidableEq
+
+instance : Encodable Domain :=
+  Encodable.ofLeftInjection
+    (fun d => d.intervals)
+    (fun xs =>
+      if h : xs.Pairwise Interval.separated then
+        some ⟨xs, h⟩
+      else
+        none)
+    (fun d => by simp [d.pairwise])
 
 def Domain.singleton (v : Int64) : Domain :=
   ⟨[Interval.ofValue v], List.pairwise_singleton _ _⟩
@@ -99,6 +122,16 @@ structure NonemptyDomain where
   domain : Domain
   nonempty : domain.intervals ≠ []
 deriving DecidableEq
+
+instance : Encodable NonemptyDomain :=
+  Encodable.ofLeftInjection
+    (fun d => d.domain)
+    (fun dom =>
+      if h : dom.intervals ≠ [] then
+        some ⟨dom, h⟩
+      else
+        none)
+    (fun d => by simp [d.nonempty])
 
 def NonemptyDomain.of (domain : Domain)
     (h : domain.intervals ≠ [] :=
