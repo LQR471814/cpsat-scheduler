@@ -2,42 +2,39 @@ import CpsatSolver.LinearExpr
 
 namespace CpsatSolver.Constraint
 
+/-- A division constraint together with the freshly-introduced quotient
+    variable it constrains. -/
 structure Division where
   quotient : IntVar
   constraint : Constraint
 
-def divPosConst {N : Interval}
-  (quotientID constraintID : EntityID)
-  (numerator : LinearExpr N) (denominator : Int64)
+/-- `numerator / denominator = quotient`, with `denominator` a positive
+    constant. The quotient variable's domain is the elementwise division of
+    the numerator's bounding interval, so it is tight by construction.
+
+    Identity is structural: the quotient variable is determined entirely by
+    its domain (and optional label), so two `divPosConst` calls with identical
+    inputs produce the same variable. -/
+def divPosConst
+  (numerator : LinearExpr) (denominator : Int64)
   (hdiv : (0 : ℤ) < denominator)
-  (enforcement : Enforcement) (label : Option String := none) :
+  (enforcement : Constraint.Enforcement) (label : Option String := none) :
     Division :=
   let resultDomain := NonemptyDomain.interval
-    (N.divPosConst denominator hdiv)
+    (numerator.interval.divPosConst denominator hdiv)
   let quotVar : IntVar := {
-    id := quotientID
     domain := resultDomain
     label := label
   }
-  let quotVarExpr : LinearExpr (Interval.divPosConst N (↑denominator) hdiv) :=
-    by
-      have quot_div_eq := NonemptyDomain.hull_interval_eq
-        resultDomain rfl
-      rw [quot_div_eq.symm]
-      exact LinearExpr.var quotVar
-  let constraint : Constraint :=
-    let Q := N.divPosConst denominator hdiv
-    {
-      id := constraintID
-      label := label
-      enforcement := enforcement
-      variant := .div_eq
-        ⟨Q, quotVarExpr⟩
-        ⟨N, numerator⟩
-        denominator
-        hdiv
-    }
+  let constraint : Constraint := {
+    label := label
+    enforcement := enforcement
+    variant := .div_eq
+      (LinearExpr.var quotVar)
+      numerator
+      denominator
+      hdiv
+  }
   ⟨quotVar, constraint⟩
 
 end CpsatSolver.Constraint
-
