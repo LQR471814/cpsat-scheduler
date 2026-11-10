@@ -2,123 +2,111 @@ import CpsatSolver.Defs
 
 namespace CpsatSolver.LinearExpr
 
-def eval (valuation : EntityID → ℤ)
-    {bounds : Interval} : LinearExpr bounds → ℤ
-  | .fromVar value => valuation value.id
+/-- A valuation assigns an integer to every `IntVar`. Identity is structural
+    (`DecidableEq`/`Encodable`), so variables with the same label and domain
+    receive the same value by construction. -/
+abbrev Valuation := IntVar → ℤ
+
+/-- Evaluate a raw linear expression under a valuation. -/
+def Raw.eval (valuation : Valuation) : LinearExpr.Raw → ℤ
+  | .fromVar value => valuation value
   | .fromConst value => value.val
-  | .fromNeg a _ => -eval valuation a
-  | .fromMulConst a value _ => value.val * eval valuation a
-  | .fromAdd a b _ => eval valuation a + eval valuation b
-  | .fromSub a b _ => eval valuation a - eval valuation b
+  | .fromNeg a => -a.eval valuation
+  | .fromMulConst a value => value.val * a.eval valuation
+  | .fromAdd a b => a.eval valuation + b.eval valuation
+  | .fromSub a b => a.eval valuation - b.eval valuation
+
+/-- The variables appearing in a raw expression (leaves), in traversal order. -/
+def Raw.intVars : LinearExpr.Raw → Array IntVar
+  | .fromVar value => #[value]
+  | .fromConst _ => #[]
+  | .fromNeg a => a.intVars
+  | .fromMulConst a _ => a.intVars
+  | .fromAdd a b => a.intVars ++ b.intVars
+  | .fromSub a b => a.intVars ++ b.intVars
+
+/-- Evaluate a linear expression (via its raw representation). -/
+def eval (valuation : Valuation) (expr : LinearExpr) : ℤ :=
+  expr.raw.eval valuation
+
+/-- The variables appearing in a linear expression. -/
+def intVars (expr : LinearExpr) : Array IntVar :=
+  expr.raw.intVars
+
+/-- Soundness of the bounding interval: if every variable is assigned a value
+    within its domain, the expression evaluates inside its certified interval.
+
+    Proved by induction on the `Proof` relation, which ties each raw node to
+    the interval it produces. -/
+theorem Raw.eval_mem_of_proof
+    (valuation : Valuation) :
+    ∀ {R : LinearExpr.Raw} {I : Interval},
+      LinearExpr.Proof R I →
+      (∀ v ∈ R.intVars, valuation v ∈ v.domain.domain) →
+      R.eval valuation ∈ I := by
+  intro R I hP
+  induction hP with
+  | fromVar value =>
+    intro inDomain
+    exact NonemptyDomain.mem_hull value.domain
+      (inDomain value (by simp [Raw.intVars]))
+  | fromConst value =>
+    intro _
+    simp only [Raw.eval]
+    exact (Interval.mem_ofValue value value.val).mpr rfl
+  | fromNeg ha h ih =>
+    intro inDomain
+    exact Interval.eval_neg _ h (ih (fun v hv => inDomain v hv))
+  | fromMulConst value ha h ih =>
+    intro inDomain
+    simpa [Raw.eval] using
+      Interval.mul_const_mem _ value _ (ih (fun v hv => inDomain v hv)) h
+  | fromAdd ha hb h iha ihb =>
+    intro inDomain
+    exact Interval.eval_add _ _ h
+      (iha (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inl hv)))
+      (ihb (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inr hv)))
+  | fromSub ha hb h iha ihb =>
+    intro inDomain
+    exact Interval.eval_sub _ _ h
+      (iha (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inl hv)))
+      (ihb (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inr hv)))
 
 /-- Expression bounds are a sound over-approximation under domain-respecting
-assignments. -/
-theorem eval_mem_bounds (valuation : EntityID → ℤ)
-    {bounds : Interval} (expr : LinearExpr bounds)
-    (inDomain : ∀ v ∈ expr.intVars,
-      valuation v.id ∈ v.domain.domain) :
-    expr.eval valuation ∈ bounds := by
-  induction expr with
-  | fromVar value =>
-    exact NonemptyDomain.mem_hull value.domain
-      (inDomain value (Array.mem_singleton.mpr rfl))
-  | fromConst value =>
-    simp only [Interval.ofValue]
-    apply (Interval.mem_ofValue value value.val).mpr
-    rfl
-  | fromNeg a h ih =>
-    exact Interval.eval_neg _ h (ih (fun v hv => inDomain v hv))
-  | fromMulConst a value h ih =>
-    simpa [LinearExpr.eval] using
-      Interval.mul_const_mem _ value _
-        (ih (fun v hv => inDomain v hv)) h
-  | fromAdd a b h iha ihb =>
-    exact Interval.eval_add _ _ h
-      (iha (fun v hv => inDomain v (Array.mem_append.mpr (Or.inl hv))))
-      (ihb (fun v hv => inDomain v (Array.mem_append.mpr (Or.inr hv))))
-  | fromSub a b h iha ihb =>
-    exact Interval.eval_sub _ _ h
-      (iha (fun v hv => inDomain v (Array.mem_append.mpr (Or.inl hv))))
-      (ihb (fun v hv => inDomain v (Array.mem_append.mpr (Or.inr hv))))
+    assignments. -/
+theorem eval_mem_bounds (valuation : Valuation) (expr : LinearExpr)
+    (inDomain : ∀ v ∈ expr.intVars, valuation v ∈ v.domain.domain) :
+    expr.eval valuation ∈ expr.interval :=
+  Raw.eval_mem_of_proof valuation expr.proof inDomain
 
-def var (value : IntVar) :
-    LinearExpr value.domainHull :=
-  .fromVar value
+/-! ### Smart constructors
 
-def const (value : Int64) :
-    LinearExpr (Interval.ofValue value) :=
-  .fromConst value
+Each builds a `LinearExpr` (raw payload + certified interval + proof). The
+arithmetic constructors require the corresponding non-overflow witness. -/
 
-def neg {b : Interval} (a : LinearExpr b)
-  (h : LinearExpr.Nonoverflow.Neg b) :
-    LinearExpr (b.neg h) :=
-  .fromNeg a h
+def var (value : IntVar) : LinearExpr :=
+  ⟨.fromVar value, value.domainHull, .fromVar value⟩
 
-def mul {b : Interval} (a : LinearExpr b) (v : Int64)
-  (h : LinearExpr.Nonoverflow.Mul b v) :
-    LinearExpr (b.mul (Interval.ofValue v) h) :=
-  .fromMulConst a v h
+def const (value : Int64) : LinearExpr :=
+  ⟨.fromConst value, Interval.ofValue value, .fromConst value⟩
 
-def add {L R : Interval}
-  (l : LinearExpr L) (r : LinearExpr R)
-  (h : LinearExpr.Nonoverflow.Add L R) :
-    LinearExpr (L.add R h) :=
-  .fromAdd l r h
+def neg (a : LinearExpr) (h : LinearExpr.Nonoverflow.Neg a.interval) :
+    LinearExpr :=
+  ⟨.fromNeg a.raw, a.interval.neg h, .fromNeg a.proof h⟩
 
-def sub {L R : Interval}
-  (l : LinearExpr L) (r : LinearExpr R)
-  (h : LinearExpr.Nonoverflow.Sub L R) :
-    LinearExpr (L.sub R h) :=
-  .fromSub l r h
+def mul (a : LinearExpr) (v : Int64)
+    (h : LinearExpr.Nonoverflow.Mul a.interval v) : LinearExpr :=
+  ⟨.fromMulConst a.raw v, a.interval.mul (Interval.ofValue v) h,
+    .fromMulConst v a.proof h⟩
 
-def meaning {bounds : Interval} (expr : LinearExpr bounds) :
-    Set ((EntityID → ℤ) × ℤ) :=
-  {pair | pair.2 = expr.eval pair.1}
+def add (l r : LinearExpr)
+    (h : LinearExpr.Nonoverflow.Add l.interval r.interval) : LinearExpr :=
+  ⟨.fromAdd l.raw r.raw, l.interval.add r.interval h,
+    .fromAdd l.proof r.proof h⟩
 
-def possibleValues {bounds : Interval} (expr : LinearExpr bounds) : Set ℤ :=
-  {value | ∃ valuation : EntityID → ℤ, (valuation, value) ∈ expr.meaning}
-
-theorem meaning_eq_iff {α β : Interval}
-    (a : LinearExpr α) (b : LinearExpr β) :
-    @meaning α a = @meaning β b ↔ ∀ valuation : EntityID → ℤ,
-      a.eval valuation = b.eval valuation := by
-  constructor
-  · intro h valuation
-    have := Set.ext_iff.mp h (valuation, a.eval valuation)
-    simpa [meaning] using this.mp rfl
-  · intro h
-    ext pair
-    simp [meaning, h]
-
-theorem meaning_double_neg {α : Interval}
-    (a : LinearExpr α)
-    (h₁ : Int64.Nonoverflow (-α.right : ℤ) ∧ Int64.Nonoverflow (-α.left : ℤ))
-    (h₂ : Int64.Nonoverflow (-(α.neg h₁).right : ℤ) ∧
-      Int64.Nonoverflow (-(α.neg h₁).left : ℤ)) :
-    meaning (LinearExpr.fromNeg (LinearExpr.fromNeg a h₁) h₂) = meaning a := by
-  apply (meaning_eq_iff _ _).mpr
-  intro valuation
-  simp [LinearExpr.eval]
-
-theorem meaning_add_sub_cancel {α β : Interval}
-    (a : LinearExpr α) (b : LinearExpr β)
-    (hAdd : Int64.Nonoverflow ((α.left : ℤ) + β.left) ∧
-      Int64.Nonoverflow ((α.right : ℤ) + β.right))
-    (hSub : Int64.Nonoverflow (((α.add β hAdd).left : ℤ) - β.right) ∧
-      Int64.Nonoverflow (((α.add β hAdd).right : ℤ) - β.left)) :
-    meaning (LinearExpr.fromSub (LinearExpr.fromAdd a b hAdd) b hSub) =
-      meaning a := by
-  apply (meaning_eq_iff _ _).mpr
-  intro valuation
-  simp [LinearExpr.eval]
-
-theorem meaning_sub_self {α : Interval} (a : LinearExpr α)
-    (hSub : Int64.Nonoverflow ((α.left : ℤ) - α.right) ∧
-      Int64.Nonoverflow ((α.right : ℤ) - α.left)) :
-    meaning (LinearExpr.fromSub a a hSub) =
-      meaning (LinearExpr.fromConst (Subtype.mk 0 (by native_decide))) := by
-  apply (meaning_eq_iff _ _).mpr
-  intro
-  simp [LinearExpr.eval]
+def sub (l r : LinearExpr)
+    (h : LinearExpr.Nonoverflow.Sub l.interval r.interval) : LinearExpr :=
+  ⟨.fromSub l.raw r.raw, l.interval.sub r.interval h,
+    .fromSub l.proof r.proof h⟩
 
 end CpsatSolver.LinearExpr

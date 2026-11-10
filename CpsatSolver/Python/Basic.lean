@@ -1,4 +1,4 @@
-import CpsatSolver.Entity
+import CpsatSolver.Defs
 
 namespace CpsatSolver
 
@@ -7,12 +7,12 @@ private theorem char_ge_zero_or_le_nine (c : Char) : '0' ≤ c ∨ c ≤ '9' := 
   · exact Or.inl h
   · exact Or.inr (le_of_lt (lt_of_lt_of_le (lt_of_not_ge h) (by native_decide)))
 
-private theorem EntityID.validIdent_e_suffix (s : String) :
+private theorem validIdent_e_suffix (s : String) :
     Python.ValidIdent ("e_" ++ s) := by
   intro i
   exact Or.inr (Or.inr (Or.inr fun _ => char_ge_zero_or_le_nine _))
 
-private theorem EntityID.not_reserved_e_suffix (s : String) :
+private theorem not_reserved_e_suffix (s : String) :
     ¬ ("e_" ++ s) ∈ Python.ReservedKeywords := by
   have hkw : ∀ kw ∈ Python.ReservedKeywords, '_' ∉ kw.toList := by
     decide
@@ -21,38 +21,63 @@ private theorem EntityID.not_reserved_e_suffix (s : String) :
     simp [String.toList_append]
   exact (hkw _ hmem) this
 
-theorem EntityID.toPythonName_proof (n : Nat) :
+/-- `"e_" ++ toString n` is always a valid, non-reserved Python identifier. -/
+theorem pythonName_proof (n : Nat) :
     Python.ValidName.Proof ("e_" ++ toString n) :=
-  ⟨EntityID.not_reserved_e_suffix (toString n),
-    EntityID.validIdent_e_suffix (toString n)⟩
+  ⟨not_reserved_e_suffix (toString n), validIdent_e_suffix (toString n)⟩
 
-def EntityID.toPythonName (id : EntityID) : Python.ValidName :=
-  ⟨"e_" ++ toString id, EntityID.toPythonName_proof id⟩
+/-- Build a Python variable name from a `Nat` identity (or rank).
 
-def BoolLit.toPythonExpr (b : BoolLit) : Python.Expr :=
+    Identity throughout the solver is `Encodable.encode`; the model's code
+    generator typically passes a *rank* here (the position of the encoded id
+    within the sorted set of ids in the model) so that generated names stay
+    short and dense. -/
+def pythonName (n : Nat) : Python.ValidName :=
+  ⟨"e_" ++ toString n, pythonName_proof n⟩
+
+/-- A name resolver maps a structural identity (`Encodable.encode` value) to a
+    concrete Python name. The default resolver uses the raw encoded id. -/
+abbrev NameResolver := Nat → Python.ValidName
+
+/-- Default resolver: name directly from the encoded id (no remapping). -/
+def NameResolver.raw : NameResolver := pythonName
+
+/-- Resolve the Python name of any encodable object under a resolver. -/
+def NameResolver.of {α : Type*} [Encodable α]
+    (r : NameResolver) (x : α) : Python.ValidName :=
+  r (Encodable.encode x)
+
+def BoolLit.toPythonExpr (r : NameResolver) (b : BoolLit) : Python.Expr :=
   match b with
-  | .var v => .id (EntityID.toPythonName v.id)
-  | .neg v => .bitwiseNot (.id (EntityID.toPythonName v.id))
+  | .var v => .id (r.of v)
+  | .neg v => .bitwiseNot (.id (r.of v))
 
-def IntVar.toPythonExpr (var : IntVar) : Python.Expr :=
-  .id (EntityID.toPythonName var.id)
+def IntVar.toPythonExpr (r : NameResolver) (var : IntVar) : Python.Expr :=
+  .id (r.of var)
 
-def FixedSizeIntervalVar.toPythonExpr (var : FixedSizeIntervalVar) : Python.Expr :=
-  .id (EntityID.toPythonName var.id)
+def FixedSizeIntervalVar.toPythonExpr
+    (r : NameResolver) (var : FixedSizeIntervalVar) : Python.Expr :=
+  .id (r.of var)
 
-def LinearExpr.toPythonExpr {bounds : Interval} (expr : LinearExpr bounds) : Python.Expr :=
-  match expr with
-  | .fromVar value => value.toPythonExpr
+/-- Lower a raw linear expression to a Python expression. Variables are named
+    via the resolver applied to the (structural) identity of each `IntVar`. -/
+def LinearExpr.Raw.toPythonExpr (r : NameResolver) :
+    LinearExpr.Raw → Python.Expr
+  | .fromVar value => .id (r.of value)
   | .fromConst value => .lit (.int value.val)
-  | .fromNeg a _ => .neg a.toPythonExpr
-  | .fromMulConst a value _ =>
-    .mul (.lit (.int value.val)) a.toPythonExpr
-  | .fromAdd a b _ => .add a.toPythonExpr b.toPythonExpr
-  | .fromSub a b _ => .sub a.toPythonExpr b.toPythonExpr
+  | .fromNeg a => .neg (a.toPythonExpr r)
+  | .fromMulConst a value =>
+    .mul (.lit (.int value.val)) (a.toPythonExpr r)
+  | .fromAdd a b => .add (a.toPythonExpr r) (b.toPythonExpr r)
+  | .fromSub a b => .sub (a.toPythonExpr r) (b.toPythonExpr r)
 
-def BoundedLinearExpr.toPythonExpr (expr : BoundedLinearExpr) : Python.Expr :=
-  let left := @LinearExpr.toPythonExpr expr.leftInterval expr.left
-  let right := @LinearExpr.toPythonExpr expr.rightInterval expr.right
+def LinearExpr.toPythonExpr (r : NameResolver) (expr : LinearExpr) : Python.Expr :=
+  expr.raw.toPythonExpr r
+
+def BoundedLinearExpr.toPythonExpr
+    (r : NameResolver) (expr : BoundedLinearExpr) : Python.Expr :=
+  let left := expr.left.toPythonExpr r
+  let right := expr.right.toPythonExpr r
   match expr.rel with
     | .eq => .eq left right
     | .neq => .neq left right
