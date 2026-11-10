@@ -7,6 +7,8 @@ import Mathlib.Algebra.Order.Star.Int
 import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Data.Nat.Cast.Order.Ring
 import Mathlib.Data.Int.Order.Basic
+import Mathlib.Logic.Encodable.Basic
+import Mathlib.Tactic.DeriveEncodable
 
 namespace CpsatSolver.Unit
 
@@ -16,6 +18,15 @@ structure Scale where
   pos : 0 < val
   nonoverflow : CpsatSolver.Int64.Nonoverflow val
 deriving DecidableEq
+
+instance : Encodable Scale :=
+  Encodable.ofLeftInjection
+    (fun s => s.val)
+    (fun v => if h : 0 < v ∧ CpsatSolver.Int64.Nonoverflow v then
+      .some ⟨v, h.1, h.2⟩
+    else
+      .none)
+    (fun d => by simp [d.pos, d.nonoverflow])
 
 instance : Coe Scale ℕ where
   coe u := u.val.toNat
