@@ -282,7 +282,7 @@ structure BoundedLinearExpr where
   left : LinearExpr
   right : LinearExpr
 deriving DecidableEq
-deriving instance Encodable for BoundedLinearExpr.Rel
+deriving instance Encodable for BoundedLinearExpr
 
 structure Constraint.CumulativeItem where
   interval : FixedSizeIntervalVar
@@ -332,6 +332,16 @@ instance : Encodable Constraint.Enforcement where
           Option.dite_none_left_eq_some, exists_prop, and_true]
         exact lit_nonempty
 
+/-- `Vector α n` is `{ toArray : Array α // toArray.size = n }`; the size
+    predicate is decidable, so we can encode via the underlying array and
+    re-check the length on decode. -/
+instance {α : Type*} [Encodable α] (n : Nat) : Encodable (Vector α n) :=
+  Encodable.ofLeftInjection
+    (fun v => v.toArray)
+    (fun a =>
+      if h : a.size = n then some ⟨a, h⟩ else none)
+    (fun v => by simp)
+
 inductive Constraint.Variant where
   | bounded_linear (expr : BoundedLinearExpr)
   | max_equality
@@ -362,13 +372,114 @@ inductive Constraint.Variant where
   | implication (src : BoolLit) (dst : BoolLit)
 deriving DecidableEq
 
+/-- Hand-written `Encodable` for `Constraint.Variant`.
+
+    Each constructor is tagged with a `Nat` and paired (via `Nat.pair`) with
+    the `Encodable.encode` of its DATA payload. PROOF/auto-param fields
+    (`nonempty`, `divisor_pos`, `within_domain`) are NOT serialized — they are
+    decidable predicates over the data and are regenerated on decode via
+    `dite`, exactly like the `Enforcement` instance and
+    `derive_encodable_with_props`.
+
+    `allowed_assignments` additionally serializes its existential length `n`
+    as part of the payload tuple so the sized vectors can be reconstructed. -/
+instance : Encodable Constraint.Variant where
+  encode v := match v with
+    | .bounded_linear expr =>
+      Nat.pair 0 (Encodable.encode expr)
+    | .max_equality target exprs _ =>
+      Nat.pair 1 (Encodable.encode (target, exprs))
+    | .div_eq target numerator divisor _ =>
+      Nat.pair 2 (Encodable.encode (target, numerator, divisor))
+    | .allowed_assignments (n := n) vars rows _ _ =>
+      Nat.pair 3 (Encodable.encode
+        (⟨n, vars, rows⟩ : Σ n : Nat, Vector IntVar n × Array (Vector Int64 n)))
+    | .cumulative items capacity =>
+      Nat.pair 4 (Encodable.encode (items, capacity))
+    | .bool_and terms _ =>
+      Nat.pair 5 (Encodable.encode terms)
+    | .bool_or terms _ =>
+      Nat.pair 6 (Encodable.encode terms)
+    | .implication src dst =>
+      Nat.pair 7 (Encodable.encode (src, dst))
+  decode n :=
+    match Nat.unpair n with
+    | (tag, payload) =>
+    match tag with
+    | 0 =>
+      (Encodable.decode payload : Option BoundedLinearExpr).map
+        Constraint.Variant.bounded_linear
+    | 1 =>
+      (Encodable.decode payload : Option (LinearExpr × Array LinearExpr)).bind
+        fun (target, exprs) =>
+          if h : exprs.size > 0 then
+            some (.max_equality target exprs h)
+          else none
+    | 2 =>
+      (Encodable.decode payload : Option (LinearExpr × LinearExpr × Int64)).bind
+        fun (target, numerator, divisor) =>
+          if h : (0 : ℤ) < divisor then
+            some (.div_eq target numerator divisor h)
+          else none
+    | 3 =>
+      (Encodable.decode payload :
+          Option (Σ n : Nat, Vector IntVar n × Array (Vector Int64 n))).bind
+        fun ⟨_, vars, rows⟩ =>
+          if hne : rows.size > 0 then
+            if hwd :
+                (∀ row ∈ rows, ∀ i : Fin vars.size,
+                  (row[i].val : ℤ) ∈ vars[i].domain.domain) then
+              some (.allowed_assignments vars rows hne hwd)
+            else none
+          else none
+    | 4 =>
+      (Encodable.decode payload :
+          Option (Array Constraint.CumulativeItem × LinearExpr)).map
+        fun (items, capacity) => .cumulative items capacity
+    | 5 =>
+      (Encodable.decode payload : Option (Array BoolLit)).bind
+        fun terms =>
+          if h : terms.size > 0 then some (.bool_and terms h) else none
+    | 6 =>
+      (Encodable.decode payload : Option (Array BoolLit)).bind
+        fun terms =>
+          if h : terms.size > 0 then some (.bool_or terms h) else none
+    | 7 =>
+      (Encodable.decode payload : Option (BoolLit × BoolLit)).map
+        fun (src, dst) => .implication src dst
+    | _ => none
+  encodek v := by
+    cases v with
+    | bounded_linear expr =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.map_some]
+    | max_equality target exprs nonempty =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.bind_some,
+        nonempty, dite_true]
+    | div_eq target numerator divisor divisor_pos =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.bind_some,
+        divisor_pos, dite_true]
+    | allowed_assignments vars rows nonempty within_domain =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.bind_some]
+      rw [dite_eq_left_of_eq_true (eq_true nonempty),
+        dite_eq_left_of_eq_true (eq_true within_domain)]
+    | cumulative items capacity =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.map_some]
+    | bool_and terms nonempty =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.bind_some,
+        nonempty, dite_true]
+    | bool_or terms nonempty =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.bind_some,
+        nonempty, dite_true]
+    | implication src dst =>
+      simp only [Nat.unpair_pair, Encodable.encodek, Option.map_some]
+
 structure Constraint where
   id : Nat
   label : Option String := none
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
 deriving DecidableEq
-derive_encodable_with_props Constraint.CumulativeItem
+deriving instance Encodable for Constraint
 
 inductive Objective where
   | none
