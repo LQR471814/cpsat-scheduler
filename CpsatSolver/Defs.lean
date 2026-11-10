@@ -60,7 +60,6 @@ deriving DecidableEq
 deriving instance Encodable for IntVar
 
 structure BoolVar where
-  id : Nat
   label : Option String := none
 deriving DecidableEq
 deriving instance Encodable for BoolVar
@@ -262,7 +261,6 @@ derive_encodable_with_props LinearExpr
 
 /-- Half-open interval `[start, start + size)`. -/
 structure FixedSizeIntervalVar where
-  id : Nat
   start : LinearExpr
   size : Int64
   size_nonneg : (0 : ℤ) ≤ size
@@ -474,7 +472,6 @@ instance : Encodable Constraint.Variant where
       simp only [Nat.unpair_pair, Encodable.encodek, Option.map_some]
 
 structure Constraint where
-  id : Nat
   label : Option String := none
   enforcement : Constraint.Enforcement
   variant : Constraint.Variant
