@@ -5,36 +5,33 @@ import CpsatScheduler.Python.Runtime
 
 namespace CpsatSolver
 
+/-- A solution assignment. Variables are keyed by their *structural identity*
+    (`IntVar`/`BoolVar` themselves), matching how `LinearExpr.eval` looks up
+    values. -/
 structure Assignment where
-  ints : List (EntityID × ℤ)
-  bools : List (EntityID × Bool)
+  ints : List (IntVar × ℤ)
+  bools : List (BoolVar × Bool)
 
-def Assignment.intVal (a : Assignment) (id : EntityID) : ℤ :=
-  match a.ints.find? (fun p => p.1 == id) with
+def Assignment.intVal (a : Assignment) (v : IntVar) : ℤ :=
+  match a.ints.find? (fun p => p.1 = v) with
   | some p => p.2
   | none => 0
 
-def Assignment.boolVal (a : Assignment) (id : EntityID) : Bool :=
-  match a.bools.find? (fun p => p.1 == id) with
+def Assignment.boolVal (a : Assignment) (v : BoolVar) : Bool :=
+  match a.bools.find? (fun p => p.1 = v) with
   | some p => p.2
   | none => false
 
-def Assignment.valuation (a : Assignment) : EntityID → ℤ :=
-  fun id => a.intVal id
-
-/-- Look up the label of a declared variable (int, bool, or interval) by its id. -/
-def Model.labelOf (model : Model) (id : EntityID) : Option String :=
-  (model.spec.ints.find? (fun v => v.id == id)).bind (·.label)
-  |>.orElse fun _ => (model.spec.bools.find? (fun v => v.id == id)).bind (·.label)
-  |>.orElse fun _ => (model.spec.intervals.find? (fun v => v.id == id)).bind (·.label)
+def Assignment.valuation (a : Assignment) : LinearExpr.Valuation :=
+  fun v => a.intVal v
 
 def BoolLit.eval (a : Assignment) : BoolLit → Bool
-  | .var v => a.boolVal v.id
-  | .neg v => !a.boolVal v.id
+  | .var v => a.boolVal v
+  | .neg v => !a.boolVal v
 
 def Constraint.Enforcement.active (a : Assignment) : Constraint.Enforcement → Bool
   | .always => true
-  | .onlyWhenAll literals => literals.toList.all (fun l => l.eval a)
+  | .onlyWhenAll literals _ => literals.toList.all (fun l => l.eval a)
 
 def BoundedLinearExpr.holdsB (expr : BoundedLinearExpr) (a : Assignment) : Bool :=
   let l := expr.left.eval a.valuation
@@ -54,24 +51,24 @@ def Constraint.Variant.holdsB (v : Constraint.Variant) (a : Assignment) : Bool :
   match v with
   | .bounded_linear expr => expr.holdsB a
   | .max_equality target exprs _ =>
-    let tv := target.snd.eval a.valuation
-    exprs.all (fun e => decide (e.snd.eval a.valuation ≤ tv)) &&
+    let tv := target.eval a.valuation
+    exprs.all (fun e => decide (e.eval a.valuation ≤ tv)) &&
       (decide (exprs.size = 0) ||
-        exprs.any (fun e => decide (e.snd.eval a.valuation = tv)))
+        exprs.any (fun e => decide (e.eval a.valuation = tv)))
   | .div_eq target numerator divisor _ =>
-    decide (target.snd.eval a.valuation =
-      Int.tdiv (numerator.snd.eval a.valuation) divisor.val)
+    decide (target.eval a.valuation =
+      Int.tdiv (numerator.eval a.valuation) divisor.val)
   | allowed_assignments vars rows _ _ =>
     rows.any fun row =>
-      decide (∀ i : Fin vars.size, a.intVal vars[i].id = row[i].val)
+      decide (∀ i : Fin vars.size, a.intVal vars[i] = row[i].val)
   | .cumulative items capacity =>
-    let cap := capacity.snd.eval a.valuation
+    let cap := capacity.eval a.valuation
     let starts := items.toList.map fun it => it.interval.start.eval a.valuation
     starts.all fun t =>
       decide ((items.toList.foldl (fun acc it =>
         let s := it.interval.start.eval a.valuation
         let sz := it.interval.size.val
-        let d := it.demand.snd.eval a.valuation
+        let d := it.demand.eval a.valuation
         if s ≤ t ∧ t < s + sz then acc + d else acc) 0) ≤ cap)
   | .bool_and terms _ => terms.toList.all (fun l => l.eval a)
   | .bool_or terms _ => terms.toList.any (fun l => l.eval a)
@@ -92,8 +89,8 @@ theorem Constraint.holdsB_iff (c : Constraint) (a : Assignment) :
     Constraint.Variant.holds]
 
 def Model.domainOkB (model : Model) (a : Assignment) : Bool :=
-  model.spec.ints.all (fun v => v.domain.domain.contains (a.intVal v.id)) &&
-    model.spec.bools.all (fun v => (a.bools.find? (fun p => p.1 == v.id)).isSome)
+  model.spec.ints.all (fun v => v.domain.domain.contains (a.intVal v)) &&
+    model.spec.bools.all (fun v => (a.bools.find? (fun p => p.1 = v)).isSome)
 
 def Model.domainOk (model : Model) (a : Assignment) : Prop :=
   model.domainOkB a = true
@@ -110,8 +107,8 @@ theorem Model.satisfiesB_iff (model : Model) (a : Assignment) :
 def Objective.eval (obj : Objective) (a : Assignment) : Option ℤ :=
   match obj with
   | Objective.none => Option.none
-  | Objective.minimize e => Option.some (e.snd.eval a.valuation)
-  | Objective.maximize e => Option.some (e.snd.eval a.valuation)
+  | Objective.minimize e => Option.some (e.eval a.valuation)
+  | Objective.maximize e => Option.some (e.eval a.valuation)
 
 def Model.evalObjective (model : Model) (a : Assignment) : Option ℤ :=
   model.spec.objective.eval a
@@ -150,26 +147,26 @@ private def parseStatus (map : Std.TreeMap.Raw String Lean.Json compare) :
       | _ => SolveStatus.unknown)
   | some _ => Except.error "Expected string status."
 
-private def parseNamedInts (model : Model)
+private def parseNamedInts (model : Model) (r : NameResolver)
     (map : Std.TreeMap.Raw String Lean.Json compare) :
-    Except String (List (EntityID × ℤ)) :=
+    Except String (List (IntVar × ℤ)) :=
   match map.get? Model.Python.Literals.ints with
   | some (.obj obj) =>
     model.spec.ints.toList.mapM fun v =>
-      match obj.get? (EntityID.toPythonName v.id).val with
-      | some j => parseJsonInteger j |>.map fun n => (v.id, n)
-      | none => Except.error s!"Missing int {(EntityID.toPythonName v.id).val}"
+      match obj.get? (r.of v).val with
+      | some j => parseJsonInteger j |>.map fun n => (v, n)
+      | none => Except.error s!"Missing int {(r.of v).val}"
   | _ => Except.error "Missing ints object."
 
-private def parseNamedBools (model : Model)
+private def parseNamedBools (model : Model) (r : NameResolver)
     (map : Std.TreeMap.Raw String Lean.Json compare) :
-    Except String (List (EntityID × Bool)) :=
+    Except String (List (BoolVar × Bool)) :=
   match map.get? Model.Python.Literals.bools with
   | some (.obj obj) =>
     model.spec.bools.toList.mapM fun v =>
-      match obj.get? (EntityID.toPythonName v.id).val with
-      | some j => parseJsonInteger j |>.map fun n => (v.id, n ≠ 0)
-      | none => Except.error s!"Missing bool {(EntityID.toPythonName v.id).val}"
+      match obj.get? (r.of v).val with
+      | some j => parseJsonInteger j |>.map fun n => (v, n ≠ 0)
+      | none => Except.error s!"Missing bool {(r.of v).val}"
   | _ => Except.error "Missing bools object."
 
 private def Model.interpret (model : Model) (status : SolveStatus)
@@ -193,6 +190,7 @@ private def Model.interpret (model : Model) (status : SolveStatus)
 def Model.solve (model : Model) (py : Python.DaemonProcess) :
     IO (Except String (SolveResult model)) := do
   let result ← py.execWithJson (Model.Python.script model)
+  let r := Model.Python.nameResolver model
   pure do
     let outJson ← result
     let map ← match outJson with
@@ -200,8 +198,8 @@ def Model.solve (model : Model) (py : Python.DaemonProcess) :
       | _ => .error "Expected JSON object"
     let (status, asgn) ← match
       parseStatus map,
-      parseNamedInts model map,
-      parseNamedBools model map
+      parseNamedInts model r map,
+      parseNamedBools model r map
     with
       | .ok status, .ok ints, .ok bools =>
         Except.ok (status, ⟨ints, bools⟩)
@@ -211,4 +209,3 @@ def Model.solve (model : Model) (py : Python.DaemonProcess) :
     Model.interpret model status asgn
 
 end CpsatSolver
-
