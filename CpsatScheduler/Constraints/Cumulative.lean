@@ -11,7 +11,7 @@ def itemOf
   (intervalID : CpsatSolver.EntityID)
   (input : Alloc)
   (label : Option String := none) :
-    CpsatSolver.CumulativeItem :=
+    Constraint.CumulativeItem :=
   let startExpr := CpsatSolver.LinearExpr.const input.bucket
   let interval : CpsatSolver.FixedSizeIntervalVar := {
     id := intervalID

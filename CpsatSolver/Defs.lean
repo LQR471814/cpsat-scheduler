@@ -284,6 +284,14 @@ structure BoundedLinearExpr where
 deriving DecidableEq
 deriving instance Encodable for BoundedLinearExpr.Rel
 
+structure Constraint.CumulativeItem where
+  interval : FixedSizeIntervalVar
+  demand : LinearExpr.Raw
+  demandInterval : Interval
+  demand_proof : LinearExpr.Proof demand demandInterval
+deriving DecidableEq
+derive_encodable_with_props Constraint.CumulativeItem
+
 inductive Constraint.Enforcement where
   | always
   | onlyWhenAll (literals : Array BoolLit) (h : literals ≠ #[])
@@ -324,13 +332,43 @@ instance : Encodable Constraint.Enforcement where
           Option.dite_none_left_eq_some, exists_prop, and_true]
         exact lit_nonempty
 
-structure CumulativeItem where
-  interval : FixedSizeIntervalVar
-  demand : LinearExpr.Raw
-  demandInterval : Interval
-  demand_proof : LinearExpr.Proof demand demandInterval
+inductive Constraint.Variant where
+  | bounded_linear (expr : BoundedLinearExpr)
+  | max_equality
+    (target : LinearExpr)
+    (exprs : Array LinearExpr)
+    (nonempty : exprs.size > 0 := by native_decide)
+  | div_eq
+    (target : LinearExpr)
+    (numerator : LinearExpr)
+    (divisor : Int64)
+    (divisor_pos : (0 : ℤ) < divisor := by native_decide)
+  | allowed_assignments {n : Nat}
+    (vars : Vector IntVar n)
+    (rows : Array (Vector Int64 n))
+    (nonempty : rows.size > 0 := by native_decide)
+    (within_domain :
+      ∀ row ∈ rows,
+      ∀ i : Fin vars.size,
+        (row[i].val : ℤ) ∈ vars[i].domain.domain
+      := by native_decide)
+  | cumulative
+    (items : Array Constraint.CumulativeItem)
+    (capacity : LinearExpr)
+  | bool_and (terms : Array BoolLit)
+    (nonempty : terms.size > 0)
+  | bool_or (terms : Array BoolLit)
+    (nonempty : terms.size > 0)
+  | implication (src : BoolLit) (dst : BoolLit)
 deriving DecidableEq
-derive_encodable_with_props CumulativeItem
+
+structure Constraint where
+  id : Nat
+  label : Option String := none
+  enforcement : Constraint.Enforcement
+  variant : Constraint.Variant
+deriving DecidableEq
+derive_encodable_with_props Constraint.CumulativeItem
 
 inductive Objective where
   | none
