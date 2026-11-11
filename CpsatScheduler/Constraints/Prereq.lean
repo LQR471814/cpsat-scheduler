@@ -11,14 +11,13 @@ def prerequisite (succ pred : IntVar)
     BoundedLinearExpr :=
   let succE := LinearExpr.var succ
   let predE := LinearExpr.var pred
-  let one : LinearExpr _ :=
+  let one : LinearExpr :=
     LinearExpr.const (Int64.of 1)
   let predEnd := LinearExpr.add predE one nonoverflow
   {
     rel := .gte
-    leftInterval := succ.domainHull
-    rightInterval := pred.domainHull.add
-      (Interval.ofValue (Int64.of 1)) nonoverflow
+    leftInterval := succE.interval
+    rightInterval := predEnd.interval
     left := succE
     right := predEnd
   }

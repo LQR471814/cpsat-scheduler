@@ -45,7 +45,6 @@ def Table.ofPoints? (demand cost : Domain)
     none
 
 def Table.constrain
-  (id : EntityID)
   (task : Task S)
   (table : Table
     task.demand.domain
@@ -56,7 +55,6 @@ def Table.constrain
     #[task.demand, task.cost]
     (by exact Nat.add_zero ([task.cost].length + 1))
   {
-    id := id
     variant := (.allowed_assignments (n := 2)
       targetVars
       (table.points.map (fun p => Point.toVector p))

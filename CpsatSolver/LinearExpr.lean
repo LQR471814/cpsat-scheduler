@@ -43,34 +43,43 @@ theorem Raw.eval_mem_of_proof
     ∀ {R : LinearExpr.Raw} {I : Interval},
       LinearExpr.Proof R I →
       (∀ v ∈ R.intVars, valuation v ∈ v.domain.domain) →
-      R.eval valuation ∈ I := by
-  intro R I hP
-  induction hP with
-  | fromVar value =>
-    intro inDomain
-    exact NonemptyDomain.mem_hull value.domain
-      (inDomain value (by simp [Raw.intVars]))
-  | fromConst value =>
-    intro _
-    simp only [Raw.eval]
-    exact (Interval.mem_ofValue value value.val).mpr rfl
-  | fromNeg ha h ih =>
-    intro inDomain
-    exact Interval.eval_neg _ h (ih (fun v hv => inDomain v hv))
-  | fromMulConst value ha h ih =>
-    intro inDomain
-    simpa [Raw.eval] using
-      Interval.mul_const_mem _ value _ (ih (fun v hv => inDomain v hv)) h
-  | fromAdd ha hb h iha ihb =>
-    intro inDomain
-    exact Interval.eval_add _ _ h
-      (iha (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inl hv)))
-      (ihb (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inr hv)))
-  | fromSub ha hb h iha ihb =>
-    intro inDomain
-    exact Interval.eval_sub _ _ h
-      (iha (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inl hv)))
-      (ihb (fun v hv => inDomain v (by simp [Raw.intVars]; exact Or.inr hv)))
+      R.eval valuation ∈ I :=
+  by
+    intro R I hP
+    induction hP with
+    | fromVar value =>
+      intro inDomain
+      exact NonemptyDomain.mem_hull value.domain
+        (inDomain value (by simp [Raw.intVars]))
+    | fromConst value =>
+      intro _
+      simp only [Raw.eval]
+      exact (Interval.mem_ofValue value value.val).mpr rfl
+    | fromNeg ha h ih =>
+      intro inDomain
+      exact Interval.eval_neg _ h (ih (fun v hv => inDomain v hv))
+    | fromMulConst value ha h ih =>
+      intro inDomain
+      simpa [Raw.eval] using
+        Interval.mul_const_mem _ value _ (ih (fun v hv => inDomain v hv)) h
+    | fromAdd ha hb h iha ihb =>
+      intro inDomain
+      exact Interval.eval_add _ _ h
+        (iha fun v hv => inDomain v (by
+          simp only [intVars, Array.mem_append]
+          exact Or.inl hv))
+        (ihb fun v hv => inDomain v (by
+          simp only [intVars, Array.mem_append]
+          exact Or.inr hv))
+    | fromSub ha hb h iha ihb =>
+      intro inDomain
+      exact Interval.eval_sub _ _ h
+        (iha fun v hv => inDomain v (by
+          simp only [intVars, Array.mem_append]
+          exact Or.inl hv))
+        (ihb fun v hv => inDomain v (by
+          simp only [intVars, Array.mem_append]
+          exact Or.inr hv))
 
 /-- Expression bounds are a sound over-approximation under domain-respecting
     assignments. -/

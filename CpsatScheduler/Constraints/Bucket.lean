@@ -19,21 +19,24 @@ def bucketContainedIn
     BoundedLinearExpr × BoundedLinearExpr :=
   let childE := LinearExpr.var child
   let parentE := LinearExpr.var parent
-  let one : LinearExpr _ := LinearExpr.const (CpsatSolver.Int64.of 1)
+  let one : LinearExpr := LinearExpr.const (CpsatSolver.Int64.of 1)
+  let lower := LinearExpr.mul parentE ratio mul₁
+  let childPlusOne := LinearExpr.add childE one addChild
+  let upper := LinearExpr.mul (LinearExpr.add parentE one add₁) ratio mul₂
   {
     fst := {
       rel := .gte
-      leftInterval := _
-      rightInterval := _
+      leftInterval := childE.interval
+      rightInterval := lower.interval
       left := childE
-      right := LinearExpr.mul parentE ratio mul₁
+      right := lower
     },
     snd := {
       rel := .lte
-      leftInterval := _
-      rightInterval := _
-      left := LinearExpr.add childE one addChild
-      right := LinearExpr.mul (LinearExpr.add parentE one add₁) ratio mul₂
+      leftInterval := childPlusOne.interval
+      rightInterval := upper.interval
+      left := childPlusOne
+      right := upper
     }
   }
 
