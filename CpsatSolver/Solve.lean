@@ -89,14 +89,17 @@ theorem Constraint.holdsB_iff (c : Constraint) (a : Assignment) :
     Constraint.Variant.holds]
 
 def Model.domainOkB (model : Model) (a : Assignment) : Bool :=
-  model.spec.ints.all (fun v => v.domain.domain.contains (a.intVal v)) &&
-    model.spec.bools.all (fun v => (a.bools.find? (fun p => p.1 = v)).isSome)
+  (Finset.sortedByEncode model.spec.ints).all
+      (fun v => v.domain.domain.contains (a.intVal v)) &&
+    (Finset.sortedByEncode model.spec.bools).all
+      (fun v => (a.bools.find? (fun p => p.1 = v)).isSome)
 
 def Model.domainOk (model : Model) (a : Assignment) : Prop :=
   model.domainOkB a = true
 
 def Model.satisfiesB (model : Model) (a : Assignment) : Bool :=
-  model.domainOkB a && model.spec.constraints.all (fun c => c.holdsB a)
+  model.domainOkB a &&
+    (Finset.sortedByEncode model.spec.constraints).all (fun c => c.holdsB a)
 
 def Model.Satisfies (model : Model) (a : Assignment) : Prop :=
   model.satisfiesB a = true
@@ -152,7 +155,7 @@ private def parseNamedInts (model : Model) (r : NameResolver)
     Except String (List (IntVar × ℤ)) :=
   match map.get? Model.Python.Literals.ints with
   | some (.obj obj) =>
-    model.spec.ints.toList.mapM fun v =>
+    (Finset.sortedByEncode model.spec.ints).mapM fun v =>
       match obj.get? (r.of v).val with
       | some j => parseJsonInteger j |>.map fun n => (v, n)
       | none => Except.error s!"Missing int {(r.of v).val}"
@@ -163,7 +166,7 @@ private def parseNamedBools (model : Model) (r : NameResolver)
     Except String (List (BoolVar × Bool)) :=
   match map.get? Model.Python.Literals.bools with
   | some (.obj obj) =>
-    model.spec.bools.toList.mapM fun v =>
+    (Finset.sortedByEncode model.spec.bools).mapM fun v =>
       match obj.get? (r.of v).val with
       | some j => parseJsonInteger j |>.map fun n => (v, n ≠ 0)
       | none => Except.error s!"Missing bool {(r.of v).val}"

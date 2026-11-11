@@ -33,7 +33,8 @@ private def intIds (model : Model) : Array Nat :=
     e.raw.intVars.map Encodable.encode
   let fromRaw (r : LinearExpr.Raw) : Array Nat :=
     r.intVars.map Encodable.encode
-  let declared := model.spec.ints.map Encodable.encode
+  let declared :=
+    (Finset.sortedByEncode model.spec.ints).toArray.map Encodable.encode
   let fromConstraint (c : Constraint) : Array Nat :=
     match c.variant with
     | .bounded_linear e => fromExpr e.left ++ fromExpr e.right
@@ -50,7 +51,7 @@ private def intIds (model : Model) : Array Nat :=
     | .none => #[]
     | .minimize e | .maximize e => fromExpr e
   let all := declared
-    ++ model.spec.constraints.flatMap fromConstraint
+    ++ (Finset.sortedByEncode model.spec.constraints).toArray.flatMap fromConstraint
     ++ fromObjective
   all.toList.dedup.toArray
 
@@ -58,7 +59,8 @@ private def intIds (model : Model) : Array Nat :=
 private def boolIds (model : Model) : Array Nat :=
   let litId : BoolLit → Nat
     | .var v | .neg v => Encodable.encode v
-  let declared := model.spec.bools.map Encodable.encode
+  let declared :=
+    (Finset.sortedByEncode model.spec.bools).toArray.map Encodable.encode
   let fromEnforcement : Constraint.Enforcement → Array Nat
     | .always => #[]
     | .onlyWhenAll lits _ => lits.map litId
@@ -69,7 +71,7 @@ private def boolIds (model : Model) : Array Nat :=
       | .implication src dst => #[litId src, litId dst]
       | _ => #[])
   let all := declared
-    ++ model.spec.constraints.flatMap fromConstraint
+    ++ (Finset.sortedByEncode model.spec.constraints).toArray.flatMap fromConstraint
   all.toList.dedup.toArray
 
 /-- Rank-based resolver over a sorted id table: an id maps to `e_<index>`,
@@ -251,13 +253,25 @@ private def modelDef (model : Model) (r : CpsatSolver.NameResolver) : Array Pyth
           (Python.ValidName.of "CpModel")) #[] #[])
   ]
   frontmatter ++
-    (model.spec.ints.map (intVar r)) ++
-    (model.spec.bools.map (boolVar r)) ++
-    (model.spec.intervals.map (fixedSizeIntervalVar r)) ++
-    (model.spec.constraints.map (constraint r)) ++
+    ((Finset.sortedByEncode model.spec.ints).map (intVar r)).toArray ++
+    ((Finset.sortedByEncode model.spec.bools).map (boolVar r)).toArray ++
+    ((Finset.sortedByEncode model.spec.intervals).map (fixedSizeIntervalVar r)).toArray ++
+    ((Finset.sortedByEncode model.spec.constraints).map (constraint r)).toArray ++
     objective r model.spec.objective
 
 private def reportSolution (model : Model) (r : CpsatSolver.NameResolver) : Array Python.Statement :=
+  let intPairs : Array (Python.Expr × Python.Expr) :=
+    ((Finset.sortedByEncode model.spec.ints).map fun v =>
+      (Python.Expr.lit (.str (r.of v).val),
+        Python.Expr.call
+          (.dot (.id Name.cpsatSolver) (Python.ValidName.of "value"))
+          #[v.toPythonExpr r] #[])).toArray
+  let boolPairs : Array (Python.Expr × Python.Expr) :=
+    ((Finset.sortedByEncode model.spec.bools).map fun v =>
+      (Python.Expr.lit (.str (r.of v).val),
+        Python.Expr.call
+          (.dot (.id Name.cpsatSolver) (Python.ValidName.of "value"))
+          #[.id (r.of v)] #[])).toArray
   #[
     .assignLine (.id Name.cpsatSolver)
       (.call
@@ -272,22 +286,10 @@ private def reportSolution (model : Model) (r : CpsatSolver.NameResolver) : Arra
       (.lit (.dict #[
         (Prod.mk
           (.lit (.str Literals.ints))
-          (.lit (.dict
-            (model.spec.ints.map fun v =>
-              (.lit (.str (r.of v).val),
-                .call
-                  (.dot (.id Name.cpsatSolver)
-                    (Python.ValidName.of "value"))
-                  #[v.toPythonExpr r] #[]))))),
+          (.lit (.dict intPairs))),
         (Prod.mk
           (.lit (.str Literals.bools))
-          (.lit (.dict
-            (model.spec.bools.map fun v =>
-              (.lit (.str (r.of v).val),
-                .call
-                  (.dot (.id Name.cpsatSolver)
-                    (Python.ValidName.of "value"))
-                  #[.id (r.of v)] #[]))))),
+          (.lit (.dict boolPairs))),
         (Prod.mk
           (.lit (.str Literals.status))
           (.call (.id (Python.ValidName.of "str"))
