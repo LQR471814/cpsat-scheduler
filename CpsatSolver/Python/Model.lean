@@ -259,7 +259,8 @@ private def modelDef (model : Model) (r : CpsatSolver.NameResolver) : Array Pyth
     ((Finset.sortedByEncode model.spec.constraints).map (constraint r)).toArray ++
     objective r model.spec.objective
 
-private def reportSolution (model : Model) (r : CpsatSolver.NameResolver) : Array Python.Statement :=
+private def reportSolution (model : Model) (r : CpsatSolver.NameResolver) :
+    Array Python.Statement :=
   let intPairs : Array (Python.Expr × Python.Expr) :=
     ((Finset.sortedByEncode model.spec.ints).map fun v =>
       (Python.Expr.lit (.str (r.of v).val),
