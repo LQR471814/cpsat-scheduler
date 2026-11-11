@@ -2,6 +2,50 @@ import CpsatSolver.Domain.Int64
 
 namespace CpsatSolver
 
+def Interval.mulLower (a b : Interval) : ℤ :=
+  min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
+      (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
+
+def Interval.mulUpper (a b : Interval) : ℤ :=
+  max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
+      (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
+
+namespace Interval.Nonoverflow
+
+def Neg (i : Interval) : Prop :=
+  Int64.Nonoverflow (-i.right : ℤ) ∧
+  Int64.Nonoverflow (-i.left : ℤ)
+
+def Add (a b : Interval) : Prop :=
+  Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
+  Int64.Nonoverflow ((a.right : ℤ) + b.right)
+
+def Sub (a b : Interval) : Prop :=
+  Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
+  Int64.Nonoverflow ((a.right : ℤ) - b.left)
+
+def MulConst (i : Interval) (v : Int64) : Prop :=
+  Int64.Nonoverflow (i.mulLower (Interval.ofValue v)) ∧
+  Int64.Nonoverflow (i.mulUpper (Interval.ofValue v))
+
+def Mul (a b : Interval) : Prop :=
+  Int64.Nonoverflow (a.mulLower b) ∧
+  Int64.Nonoverflow (a.mulUpper b)
+
+instance (b : Interval) : Decidable (Neg b) := by
+  unfold Neg; infer_instance
+
+instance (b : Interval) (v : Int64) : Decidable (MulConst b v) := by
+  unfold MulConst; infer_instance
+
+instance (a b : Interval) : Decidable (Add a b) := by
+  unfold Add; infer_instance
+
+instance (a b : Interval) : Decidable (Sub a b) := by
+  unfold Sub; infer_instance
+
+end Interval.Nonoverflow
+
 theorem Interval.mem_toSet (i : Interval) (x : ℤ) :
     x ∈ i.toSet ↔ x ∈ i := Iff.rfl
 
@@ -14,8 +58,7 @@ theorem Interval.mem_ofValue (v : Int64) (x : ℤ) :
     subst h
     exact ⟨le_rfl, le_rfl⟩
 
-def Interval.neg (i : Interval)
-    (h : Int64.Nonoverflow (-i.right : ℤ) ∧ Int64.Nonoverflow (-i.left : ℤ)) :
+def Interval.neg (i : Interval) (h : Nonoverflow.Neg i) :
     Interval :=
   {
     left := Subtype.mk (-(i.right : ℤ)) h.left
@@ -24,56 +67,40 @@ def Interval.neg (i : Interval)
   }
 
 theorem Interval.eval_neg (i : Interval)
-    (h : Int64.Nonoverflow (-i.right : ℤ) ∧ Int64.Nonoverflow (-i.left : ℤ))
-    {x : ℤ} (hx : x ∈ i) : -x ∈ i.neg h := by
+    (h : Nonoverflow.Neg i)
+    (hx : x ∈ i) : -x ∈ i.neg h := by
   have hx1 := hx.1
   have hx2 := hx.2
   change (-i.right : ℤ) ≤ -x ∧ -x ≤ (-i.left : ℤ)
   constructor <;> linarith
 
 def Interval.add (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
-      Int64.Nonoverflow ((a.right : ℤ) + b.right)) : Interval :=
+    (nonoverflow : Nonoverflow.Add a b) : Interval :=
   Interval.of ((a.left : ℤ) + b.left) ((a.right : ℤ) + b.right)
     (hl := nonoverflow.1)
     (hr := nonoverflow.2)
     (hlr := add_le_add a.left_le_right b.left_le_right)
 
 theorem Interval.eval_add (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
-      Int64.Nonoverflow ((a.right : ℤ) + b.right))
-    {x y : ℤ} (hx : x ∈ a) (hy : y ∈ b) :
+    (nonoverflow : Nonoverflow.Add a b)
+    (hx : x ∈ a) (hy : y ∈ b) :
     x + y ∈ a.add b nonoverflow := by
   change (a.left : ℤ) + b.left ≤ x + y ∧ x + y ≤ (a.right : ℤ) + b.right
   constructor <;> linarith [hx.1, hx.2, hy.1, hy.2]
 
 def Interval.sub (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
-      Int64.Nonoverflow ((a.right : ℤ) - b.left)) : Interval :=
+    (nonoverflow : Nonoverflow.Sub a b) : Interval :=
   Interval.of ((a.left : ℤ) - b.right) ((a.right : ℤ) - b.left)
     (hl := nonoverflow.1)
     (hr := nonoverflow.2)
     (hlr := by linarith [a.left_le_right, b.left_le_right])
 
 theorem Interval.eval_sub (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
-      Int64.Nonoverflow ((a.right : ℤ) - b.left))
-    {x y : ℤ} (hx : x ∈ a) (hy : y ∈ b) :
+    (nonoverflow : Nonoverflow.Sub a b)
+    (hx : x ∈ a) (hy : y ∈ b) :
     x - y ∈ a.sub b nonoverflow := by
   change (a.left : ℤ) - b.right ≤ x - y ∧ x - y ≤ (a.right : ℤ) - b.left
   constructor <;> linarith [hx.1, hx.2, hy.1, hy.2]
-
-def Interval.mulLower (a b : Interval) : ℤ :=
-  min (min ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-      (min ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
-
-def Interval.mulUpper (a b : Interval) : ℤ :=
-  max (max ((a.left : ℤ) * b.left) ((a.left : ℤ) * b.right))
-      (max ((a.right : ℤ) * b.left) ((a.right : ℤ) * b.right))
 
 theorem Interval.mulLower_le_mulUpper (a b : Interval) :
     a.mulLower b ≤ a.mulUpper b := by
@@ -83,20 +110,17 @@ theorem Interval.mulLower_le_mulUpper (a b : Interval) :
       (min_le_left _ _).trans (
         (le_max_left _ _).trans (
           le_max_left _ _)))
+
 def Interval.mul (a b : Interval)
-    (nonoverflow :
-      Int64.Nonoverflow (a.mulLower b) ∧
-      Int64.Nonoverflow (a.mulUpper b)) : Interval :=
+    (nonoverflow : Nonoverflow.Mul a b) : Interval :=
   Interval.of (a.mulLower b) (a.mulUpper b)
     (hl := nonoverflow.1)
     (hr := nonoverflow.2)
     (hlr := a.mulLower_le_mulUpper b)
 
 theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
-    (hx : x ∈ a)
-    (nonoverflow :
-      Int64.Nonoverflow (a.mulLower (Interval.ofValue value)) ∧
-      Int64.Nonoverflow (a.mulUpper (Interval.ofValue value))) :
+  (hx : x ∈ a)
+  (nonoverflow : Nonoverflow.MulConst a value) :
     value.val * x ∈ a.mul (Interval.ofValue value) nonoverflow := by
   change
     a.mulLower (Interval.ofValue value) ≤ value.val * x ∧
@@ -122,8 +146,8 @@ theorem Interval.mul_const_mem (a : Interval) (value : Int64) (x : ℤ)
     · exact (min_le_right _ _).trans (h2.trans_eq (mul_comm x value.val))
     · refine (le_of_eq (mul_comm value.val x)).trans (h1.trans (le_max_left _ _))
 
-theorem Interval.separated_trans {x a y : Interval}
-    (hxa : Interval.separated x a) (hay : Interval.separated a y) :
+theorem Interval.separated_trans
+  (hxa : Interval.separated x a) (hay : Interval.separated a y) :
     Interval.separated x y := by
   have hlr := a.left_le_right
   have hx : (x.right : ℤ) + 1 < (a.left : ℤ) := hxa

@@ -27,7 +27,6 @@ import Mathlib.Logic.Equiv.Array
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Tactic.DeriveEncodable
 
-import CpsatScheduler.Python.Basic
 import CpsatSolver.Domain.NonemptyDomain
 import CpsatSolver.Unit.Set
 import CpsatSolver.DeriveEncodableWithProps
@@ -76,36 +75,8 @@ structure UnitAwareIntVar (us : Unit.Set) where
 deriving DecidableEq
 deriving instance Encodable for UnitAwareIntVar
 
-def LinearExpr.Nonoverflow.Neg (b : Interval) : Prop :=
-  Int64.Nonoverflow (-b.right : ℤ) ∧
-  Int64.Nonoverflow (-b.left : ℤ)
-
-def LinearExpr.Nonoverflow.Mul (b : Interval) (v : Int64) : Prop :=
-  Int64.Nonoverflow (b.mulLower (Interval.ofValue v)) ∧
-  Int64.Nonoverflow (b.mulUpper (Interval.ofValue v))
-
-def LinearExpr.Nonoverflow.Add (a b : Interval) : Prop :=
-  Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
-  Int64.Nonoverflow ((a.right : ℤ) + b.right)
-
-def LinearExpr.Nonoverflow.Sub (a b : Interval) : Prop :=
-  Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
-  Int64.Nonoverflow ((a.right : ℤ) - b.left)
-
 def IntVar.domainHull (i : IntVar) : Interval :=
   i.domain.hull
-
-instance (b : Interval) : Decidable (LinearExpr.Nonoverflow.Neg b) := by
-  unfold LinearExpr.Nonoverflow.Neg; infer_instance
-
-instance (b : Interval) (v : Int64) : Decidable (LinearExpr.Nonoverflow.Mul b v) := by
-  unfold LinearExpr.Nonoverflow.Mul; infer_instance
-
-instance (a b : Interval) : Decidable (LinearExpr.Nonoverflow.Add a b) := by
-  unfold LinearExpr.Nonoverflow.Add; infer_instance
-
-instance (a b : Interval) : Decidable (LinearExpr.Nonoverflow.Sub a b) := by
-  unfold LinearExpr.Nonoverflow.Sub; infer_instance
 
 inductive LinearExpr.Raw where
   | fromVar (value : IntVar)
@@ -123,22 +94,22 @@ inductive LinearExpr.Proof : LinearExpr.Raw → Interval → Prop where
   | fromConst (value : Int64) :
       LinearExpr.Proof (.fromConst value) (Interval.ofValue value)
   | fromNeg {a : LinearExpr.Raw} {B : Interval}
-      (ha : LinearExpr.Proof a B) (h : LinearExpr.Nonoverflow.Neg B) :
+      (ha : LinearExpr.Proof a B) (h : Interval.Nonoverflow.Neg B) :
         LinearExpr.Proof (.fromNeg a) (B.neg h)
   | fromMulConst {a : LinearExpr.Raw} {B : Interval} (v : Int64)
-      (ha : LinearExpr.Proof a B) (h : LinearExpr.Nonoverflow.Mul B v) :
+      (ha : LinearExpr.Proof a B) (h : Interval.Nonoverflow.MulConst B v) :
         LinearExpr.Proof
           (.fromMulConst a v)
           (B.mul (Interval.ofValue v) h)
   | fromAdd {a b : LinearExpr.Raw} {A B : Interval}
       (ha : LinearExpr.Proof a A)
       (hb : LinearExpr.Proof b B)
-      (h : LinearExpr.Nonoverflow.Add A B) :
+      (h : Interval.Nonoverflow.Add A B) :
         LinearExpr.Proof (.fromAdd a b) (A.add B h)
   | fromSub {a b : LinearExpr.Raw} {A B : Interval}
       (ha : LinearExpr.Proof a A)
       (hb : LinearExpr.Proof b B)
-      (h : LinearExpr.Nonoverflow.Sub A B) :
+      (h : Interval.Nonoverflow.Sub A B) :
         LinearExpr.Proof (.fromSub a b) (A.sub B h)
 
 /-- compute the bounding interval of a raw expression,
@@ -148,20 +119,20 @@ def LinearExpr.Raw.interval? : LinearExpr.Raw → Option Interval
   | .fromConst v => some (Interval.ofValue v)
   | .fromNeg a => do
     let B ← interval? a
-    if h : LinearExpr.Nonoverflow.Neg B then some (B.neg h) else none
+    if h : Interval.Nonoverflow.Neg B then some (B.neg h) else none
   | .fromMulConst a v => do
     let B ← interval? a
-    if h : LinearExpr.Nonoverflow.Mul B v then
+    if h : Interval.Nonoverflow.MulConst B v then
       some (B.mul (Interval.ofValue v) h)
     else none
   | .fromAdd a b => do
     let A ← interval? a
     let B ← interval? b
-    if h : LinearExpr.Nonoverflow.Add A B then some (A.add B h) else none
+    if h : Interval.Nonoverflow.Add A B then some (A.add B h) else none
   | .fromSub a b => do
     let A ← interval? a
     let B ← interval? b
-    if h : LinearExpr.Nonoverflow.Sub A B then some (A.sub B h) else none
+    if h : Interval.Nonoverflow.Sub A B then some (A.sub B h) else none
 
 /-- The checker and the relation agree: `interval? R = some I ↔ Proof R I`.
     Keystone lemma — gives decidability and uniqueness below. -/
@@ -284,11 +255,9 @@ deriving instance Encodable for BoundedLinearExpr
 
 structure Constraint.CumulativeItem where
   interval : FixedSizeIntervalVar
-  demand : LinearExpr.Raw
-  demandInterval : Interval
-  demand_proof : LinearExpr.Proof demand demandInterval
+  demand : LinearExpr
 deriving DecidableEq
-derive_encodable_with_props Constraint.CumulativeItem
+deriving instance Encodable for Constraint.CumulativeItem
 
 inductive Constraint.Enforcement where
   | always
@@ -370,17 +339,6 @@ inductive Constraint.Variant where
   | implication (src : BoolLit) (dst : BoolLit)
 deriving DecidableEq
 
-/-- Hand-written `Encodable` for `Constraint.Variant`.
-
-    Each constructor is tagged with a `Nat` and paired (via `Nat.pair`) with
-    the `Encodable.encode` of its DATA payload. PROOF/auto-param fields
-    (`nonempty`, `divisor_pos`, `within_domain`) are NOT serialized — they are
-    decidable predicates over the data and are regenerated on decode via
-    `dite`, exactly like the `Enforcement` instance and
-    `derive_encodable_with_props`.
-
-    `allowed_assignments` additionally serializes its existential length `n`
-    as part of the payload tuple so the sized vectors can be reconstructed. -/
 instance : Encodable Constraint.Variant where
   encode v := match v with
     | .bounded_linear expr =>

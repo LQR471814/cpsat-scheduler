@@ -1,5 +1,5 @@
 import CpsatSolver.Defs
-import CpsatSolver.Entity
+import CpsatSolver.RefVars
 
 namespace CpsatSolver
 
@@ -13,9 +13,9 @@ structure ModelSpec where
 def AllRefsExist {α : Type} [RefVars α]
     (spec : ModelSpec) (set : Finset α) : Prop :=
   ∀ a ∈ set,
-    ∀ v ∈ (RefVars.intVars a), v ∈ spec.ints ∧
-    ∀ v ∈ (RefVars.boolVars a), v ∈ spec.bools ∧
-    ∀ v ∈ (RefVars.fixedSizeIntervalVar a), v ∈ spec.intervals
+    ∀ v ∈ (RefVars.ints a), v ∈ spec.ints ∧
+    ∀ v ∈ (RefVars.bools a), v ∈ spec.bools ∧
+    ∀ v ∈ (RefVars.fixedSizeIntervals a), v ∈ spec.intervals
 
 structure Model where
   spec : ModelSpec

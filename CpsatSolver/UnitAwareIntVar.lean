@@ -10,7 +10,7 @@ namespace CpsatSolver.UnitAwareIntVar
 
 def add (a b : UnitAwareIntVar U)
   (_same_scale : a.scale = b.scale)
-  (_nonoverflow : LinearExpr.Nonoverflow.Add
+  (_nonoverflow : Interval.Nonoverflow.Add
     a.intVar.domainHull b.intVar.domainHull) :=
   LinearExpr.add
     (LinearExpr.var a.intVar)
@@ -18,7 +18,7 @@ def add (a b : UnitAwareIntVar U)
 
 def sub (a b : UnitAwareIntVar U)
   (_same_scale : a.scale = b.scale)
-  (_nonoverflow : LinearExpr.Nonoverflow.Add
+  (_nonoverflow : Interval.Nonoverflow.Add
     a.intVar.domainHull b.intVar.domainHull) :=
   LinearExpr.sub
     (LinearExpr.var a.intVar)

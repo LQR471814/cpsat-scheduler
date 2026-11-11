@@ -6,15 +6,15 @@ open CpsatSolver
 
 def bucketContainedIn
     (child parent : IntVar) (ratio : CpsatSolver.Int64)
-    (mul₁ : LinearExpr.Nonoverflow.Mul parent.domainHull ratio)
-    (add₁ : LinearExpr.Nonoverflow.Add parent.domainHull
+    (mul₁ : Interval.Nonoverflow.MulConst parent.domainHull ratio)
+    (add₁ : Interval.Nonoverflow.Add parent.domainHull
       (Interval.ofValue (CpsatSolver.Int64.of 1)))
     (mul₂ :
-      LinearExpr.Nonoverflow.Mul
+      Interval.Nonoverflow.MulConst
         (parent.domainHull.add
           (Interval.ofValue (CpsatSolver.Int64.of 1)) add₁) ratio)
     (addChild :
-      LinearExpr.Nonoverflow.Add child.domainHull
+      Interval.Nonoverflow.Add child.domainHull
         (Interval.ofValue (CpsatSolver.Int64.of 1))) :
     BoundedLinearExpr × BoundedLinearExpr :=
   let childE := LinearExpr.var child
