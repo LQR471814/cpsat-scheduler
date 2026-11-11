@@ -1,4 +1,9 @@
-import CpsatSolver.Domain.Int64
+module
+
+public import CpsatSolver.Domain.Int64
+public import Mathlib.Tactic.Linarith
+
+public section
 
 namespace CpsatSolver
 
@@ -12,22 +17,27 @@ def Interval.mulUpper (a b : Interval) : ℤ :=
 
 namespace Interval.Nonoverflow
 
+@[expose]
 def Neg (i : Interval) : Prop :=
   Int64.Nonoverflow (-i.right : ℤ) ∧
   Int64.Nonoverflow (-i.left : ℤ)
 
+@[expose]
 def Add (a b : Interval) : Prop :=
   Int64.Nonoverflow ((a.left : ℤ) + b.left) ∧
   Int64.Nonoverflow ((a.right : ℤ) + b.right)
 
+@[expose]
 def Sub (a b : Interval) : Prop :=
   Int64.Nonoverflow ((a.left : ℤ) - b.right) ∧
   Int64.Nonoverflow ((a.right : ℤ) - b.left)
 
+@[expose]
 def MulConst (i : Interval) (v : Int64) : Prop :=
   Int64.Nonoverflow (i.mulLower (Interval.ofValue v)) ∧
   Int64.Nonoverflow (i.mulUpper (Interval.ofValue v))
 
+@[expose]
 def Mul (a b : Interval) : Prop :=
   Int64.Nonoverflow (a.mulLower b) ∧
   Int64.Nonoverflow (a.mulUpper b)
@@ -82,10 +92,12 @@ def Interval.add (a b : Interval)
     (hlr := add_le_add a.left_le_right b.left_le_right)
 
 theorem Interval.eval_add (a b : Interval)
-    (nonoverflow : Nonoverflow.Add a b)
-    (hx : x ∈ a) (hy : y ∈ b) :
+  (nonoverflow : Nonoverflow.Add a b)
+  (hx : x ∈ a) (hy : y ∈ b) :
     x + y ∈ a.add b nonoverflow := by
-  change (a.left : ℤ) + b.left ≤ x + y ∧ x + y ≤ (a.right : ℤ) + b.right
+  change
+    a.left + b.left ≤ x + y ∧
+    x + y ≤ a.right + b.right
   constructor <;> linarith [hx.1, hx.2, hy.1, hy.2]
 
 def Interval.sub (a b : Interval)

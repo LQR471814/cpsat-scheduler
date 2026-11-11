@@ -1,3 +1,5 @@
+module
+
 import CpsatSolver.Model
 import CpsatSolver.LinearExpr
 import CpsatSolver.Python.Model

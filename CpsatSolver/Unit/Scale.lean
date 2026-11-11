@@ -1,5 +1,8 @@
+module
+
 import CpsatSolver.Domain.Defs
-import CpsatScheduler.Util.Finset
+public meta import CpsatSolver.Domain.Defs
+public import CpsatScheduler.Util.Finset
 
 import Mathlib.Order.Int.ConditionallyCompleteOrder
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
@@ -9,6 +12,10 @@ import Mathlib.Data.Nat.Cast.Order.Ring
 import Mathlib.Data.Int.Order.Basic
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Tactic.DeriveEncodable
+
+public import Mathlib.Tactic
+
+public section
 
 namespace CpsatSolver.Unit
 

@@ -1,5 +1,9 @@
-import CpsatSolver.Defs
-import CpsatSolver.RefVars
+module
+
+public import CpsatSolver.Defs
+public import CpsatSolver.RefVars
+
+public section
 
 namespace CpsatSolver
 

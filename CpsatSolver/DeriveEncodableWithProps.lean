@@ -17,17 +17,19 @@ So PROOFS ARE NOT SERIALIZED — they are regenerated on decode. Identity
 therefore rides on the data fields only, exactly as in the manual instances.
 -/
 
-import Mathlib.Logic.Encodable.Basic
-import Lean
+module
 
-set_option linter.style.emptyLine false
+public import Mathlib.Logic.Encodable.Basic
+public meta import Lean.Elab.Command
 
 open Lean Elab Command Meta Term
+
+public section
 
 namespace CpsatSolver
 
 /-- Classification of a structure field. -/
-private structure FieldKind where
+private meta structure FieldKind where
   name : Name
   /-- `true` if the field's type is a `Prop` (a proof field). -/
   isProof : Bool
@@ -35,7 +37,7 @@ deriving Inhabited
 
 /-- Inspect `structName`'s constructor telescope and classify each explicit
     field as data or proof, in declaration order. -/
-private def classifyFields (structName : Name) : MetaM (Array FieldKind) := do
+private meta def classifyFields (structName : Name) : MetaM (Array FieldKind) := do
   let env ← getEnv
   let some _ := getStructureInfo? env structName
     | throwError "`{structName}` is not a structure"
@@ -57,7 +59,7 @@ private def classifyFields (structName : Name) : MetaM (Array FieldKind) := do
     return out
 
 /-- Build the full instance command syntax for `structName`. -/
-private def mkInstance (structName : Name) : CommandElabM (TSyntax `command) := do
+private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command) := do
   let fields ← liftTermElabM <| classifyFields structName
   let dataFields  := fields.filter (!·.isProof)
   let proofFields := fields.filter (·.isProof)
@@ -171,9 +173,9 @@ private def mkInstance (structName : Name) : CommandElabM (TSyntax `command) := 
         Option.bind_some, dite_true])
 
   `(command|
-    instance : Encodable $structId:ident :=
-      Encodable.ofLeftInjection
-        (fun $x:ident => Encodable.encode $encodeTuple:term)
+    instance : $(mkCIdent ``Encodable) $structId:ident :=
+      $(mkCIdent ``Encodable.ofLeftInjection)
+        (fun $x:ident => $(mkCIdent ``Encodable.encode) $encodeTuple:term)
         $decodeFun:term
         $linv:term)
 
@@ -182,7 +184,7 @@ syntax (name := deriveEncWithProps)
   "derive_encodable_with_props " ident : command
 
 @[command_elab deriveEncWithProps]
-def elabDeriveEncWithProps : CommandElab := fun stx => do
+meta def elabDeriveEncWithProps : CommandElab := fun stx => do
   match stx with
   | `(derive_encodable_with_props $id:ident) => do
     let structName ← liftCoreM <| realizeGlobalConstNoOverloadWithInfo id

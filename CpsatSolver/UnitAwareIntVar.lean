@@ -1,10 +1,14 @@
-import CpsatSolver.Defs
-import CpsatSolver.LinearExpr
+module
+
+public import CpsatSolver.Defs
+public import CpsatSolver.LinearExpr
 
 import Mathlib.Algebra.Order.Module.Defs
 import Mathlib.Algebra.Order.GroupWithZero.Defs
 import Mathlib.Tactic.LinearCombination.Lemmas
 import Mathlib.Algebra.Order.Group.Unbundled.Basic
+
+public section
 
 namespace CpsatSolver.UnitAwareIntVar
 

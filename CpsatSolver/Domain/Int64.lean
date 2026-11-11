@@ -1,11 +1,9 @@
-import Mathlib.Order.Int.ConditionallyCompleteOrder
-import Mathlib.Algebra.Order.Star.Int
-import Mathlib.Order.ConditionallyCompleteLattice.Basic
-import Mathlib.Tactic.Linarith.Frontend
-import Mathlib.Tactic.NormNum.Ineq
-import Mathlib.Algebra.Order.Ring.Star
+module
 
-import CpsatSolver.Domain.Defs
+public import CpsatSolver.Domain.Defs
+public import Mathlib.Tactic.Linarith
+
+public section
 
 namespace CpsatSolver.Int64
 
@@ -79,9 +77,11 @@ theorem proof_of_mul {a b : ℤ}
 instance : Coe Int64 ℤ where
   coe proven := proven.val
 
+@[expose]
 def max' (a b : Int64) : Int64 :=
   if (a : ℤ) ≤ b then b else a
 
+@[expose]
 def min' (a b : Int64) : Int64 :=
   if (a : ℤ) ≤ b then a else b
 

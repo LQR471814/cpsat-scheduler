@@ -1,4 +1,8 @@
-import CpsatSolver.LinearExpr
+module
+
+public import CpsatSolver.LinearExpr
+
+public section
 
 namespace CpsatSolver.Constraint
 

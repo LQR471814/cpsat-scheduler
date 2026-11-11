@@ -1,7 +1,12 @@
-import CpsatSolver.Unit.Scale
+module
+
+public import CpsatSolver.Unit.Scale
+
+public section
 
 namespace CpsatSolver.Unit
 
+@[expose]
 def Set.Divisibility (fs : Finset Scale) : Prop :=
   ∀ a ∈ fs, ∀ b ∈ fs, b ≤ a → b.val ∣ a.val
 

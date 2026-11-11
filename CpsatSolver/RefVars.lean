@@ -1,4 +1,8 @@
-import CpsatSolver.Defs
+module
+
+public import CpsatSolver.Defs
+
+public section
 
 namespace CpsatSolver
 

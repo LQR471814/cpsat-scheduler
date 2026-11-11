@@ -1,12 +1,16 @@
-import Mathlib.Order.Interval.Basic
-import Mathlib.Algebra.Group.Int.Defs
-import Mathlib.Logic.Encodable.Basic
-import Mathlib.Logic.Equiv.List
+module
+
+public import Mathlib.Logic.Equiv.List
+
+public section
 
 namespace CpsatSolver
 
 abbrev Int64.min : ℤ := -(2 : ℤ) ^ 63
+
 abbrev Int64.max : ℤ := (2 : ℤ) ^ 63 - 1
+
+@[expose]
 def Int64.Nonoverflow (b : ℤ) : Prop :=
   b ≥ min ∧ b ≤ max
 
@@ -18,9 +22,11 @@ abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
 
 instance : Encodable Int64 := Subtype.encodable
 
+@[expose]
 def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by native_decide) : Int64 :=
   ⟨n, h⟩
 
+@[expose]
 def Int64.ofFloat? (f : Float) : Option Int64 :=
   if h :
     f ≥ CpsatSolver.Int64.min.toFloat ∧
@@ -56,6 +62,7 @@ instance : Encodable Interval :=
         none)
     (fun i => by simp [i.left_le_right])
 
+@[expose]
 def Interval.of (l r : ℤ)
   (hl : Int64.Nonoverflow l := by native_decide)
   (hr : Int64.Nonoverflow r := by native_decide)
@@ -66,6 +73,7 @@ def Interval.of (l r : ℤ)
     left_le_right := hlr
   }
 
+@[expose]
 def Interval.mem (i : Interval) (x : ℤ) : Prop :=
   (i.left : ℤ) ≤ x ∧ x ≤ (i.right : ℤ)
 
@@ -79,13 +87,16 @@ instance {i : Interval} {x : ℤ} : Decidable (x ∈ i) := by
   simp only [Membership.mem, Interval.mem]
   infer_instance
 
+@[expose]
 def Interval.toSet (i : Interval) : Set ℤ :=
   Set.Icc (i.left : ℤ) i.right
 
+@[expose]
 def Interval.ofValue (v : Int64) : Interval :=
   { left := v, right := v, left_le_right := le_rfl }
 
 /-- Consecutive domain fragments must have a gap of at least one integer. -/
+@[expose]
 def Interval.separated (a b : Interval) : Prop :=
   (a.right : ℤ) + 1 < (b.left : ℤ)
 
@@ -107,14 +118,17 @@ instance : Encodable Domain :=
         none)
     (fun d => by simp [d.pairwise])
 
+@[expose]
 def Domain.singleton (v : Int64) : Domain :=
   ⟨[Interval.ofValue v], List.pairwise_singleton _ _⟩
 
 instance : Membership ℤ Domain where
   mem d x := ∃ i ∈ d.intervals, x ∈ i
 
+@[expose]
 def Domain.toSet (d : Domain) : Set ℤ := {x | x ∈ d}
 
+@[expose]
 def Domain.empty : Domain :=
   ⟨[], List.Pairwise.nil⟩
 
@@ -133,6 +147,7 @@ instance : Encodable NonemptyDomain :=
         none)
     (fun d => by simp [d.nonempty])
 
+@[expose]
 def NonemptyDomain.of (domain : Domain)
     (h : domain.intervals ≠ [] :=
       by simp [Domain.canonicalize, Domain.mergeOne]) :

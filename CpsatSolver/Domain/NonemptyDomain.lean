@@ -1,4 +1,8 @@
-import CpsatSolver.Domain.Domain
+module
+
+public import CpsatSolver.Domain.Domain
+
+public section
 
 namespace CpsatSolver
 
@@ -8,6 +12,7 @@ instance : Coe NonemptyDomain Domain where
 instance : Membership ℤ NonemptyDomain where
   mem d x := x ∈ d.domain
 
+@[expose]
 def NonemptyDomain.hull (d : NonemptyDomain) : Interval :=
   d.domain.hullOf d.nonempty
 
@@ -15,15 +20,19 @@ theorem NonemptyDomain.mem_hull (d : NonemptyDomain) {x : ℤ}
     (hx : x ∈ d) : x ∈ d.hull :=
   Domain.mem_hull d.domain d.nonempty hx
 
+@[expose]
 def NonemptyDomain.singleton (v : Int64) : NonemptyDomain :=
   ⟨Domain.singleton v, by simp [Domain.singleton]⟩
 
+@[expose]
 def NonemptyDomain.interval (i : Interval) : NonemptyDomain :=
   ⟨Domain.interval i, by simp [Domain.interval]⟩
 
+@[expose]
 def NonemptyDomain.min (d : NonemptyDomain) : Int64 :=
   (d.domain.intervals.head d.nonempty).left
 
+@[expose]
 def NonemptyDomain.max (d : NonemptyDomain) : Int64 :=
   (d.domain.intervals.getLast d.nonempty).right
 

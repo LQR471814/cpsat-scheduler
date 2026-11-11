@@ -18,18 +18,22 @@
 -- doesn't "feel" like definitional equality because now certain objects may
 -- refer to other objects it is completely unrelated to
 
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Char
-import Mathlib.Data.Nat.Pairing
-import Mathlib.Logic.Equiv.Nat
-import Mathlib.Logic.Equiv.List
-import Mathlib.Logic.Equiv.Array
-import Mathlib.Logic.Encodable.Basic
-import Mathlib.Tactic.DeriveEncodable
+module
 
-import CpsatSolver.Domain.NonemptyDomain
-import CpsatSolver.Unit.Set
-import CpsatSolver.DeriveEncodableWithProps
+public import Mathlib.Data.Finset.Basic
+public import Mathlib.Data.Char
+public import Mathlib.Data.Nat.Pairing
+public import Mathlib.Logic.Equiv.Nat
+public import Mathlib.Logic.Equiv.List
+public import Mathlib.Logic.Equiv.Array
+public import Mathlib.Logic.Encodable.Basic
+public import Mathlib.Tactic.DeriveEncodable
+
+public import CpsatSolver.Domain.NonemptyDomain
+public import CpsatSolver.Unit.Set
+public import CpsatSolver.DeriveEncodableWithProps
+
+public section
 
 instance : Encodable Char where
   encode := Char.toNat
@@ -444,4 +448,3 @@ deriving DecidableEq
 deriving instance Encodable for Objective
 
 end CpsatSolver
-

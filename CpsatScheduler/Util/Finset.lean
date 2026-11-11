@@ -1,5 +1,8 @@
-import Mathlib.Data.Finset.Sort
-import Mathlib.Data.String.Basic
+module
+
+public import Mathlib.Data.Finset.Sort
+
+public section
 
 def Finset.sortByKey
   {α β : Type} [DecidableEq α] [LinearOrder β]
