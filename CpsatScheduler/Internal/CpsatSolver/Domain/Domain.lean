@@ -1,6 +1,6 @@
 module
 
-public import CpsatSolver.Domain.Interval
+public import CpsatScheduler.Internal.CpsatSolver.Domain.Interval
 
 public section
 

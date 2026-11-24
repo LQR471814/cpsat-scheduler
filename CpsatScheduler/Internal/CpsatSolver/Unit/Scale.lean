@@ -1,19 +1,10 @@
 module
 
-import CpsatSolver.Domain.Defs
-public meta import CpsatSolver.Domain.Defs
-public import CpsatScheduler.Util.Finset
+public meta import CpsatScheduler.Internal.CpsatSolver.Domain.Defs
 
-import Mathlib.Order.Int.ConditionallyCompleteOrder
-import Mathlib.Order.ConditionallyCompleteLattice.Basic
-import Mathlib.Algebra.Order.Star.Int
-import Mathlib.Algebra.Order.Ring.Star
-import Mathlib.Data.Nat.Cast.Order.Ring
-import Mathlib.Data.Int.Order.Basic
-import Mathlib.Logic.Encodable.Basic
-import Mathlib.Tactic.DeriveEncodable
-
-public import Mathlib.Tactic
+import CpsatScheduler.Internal.CpsatSolver.Domain.Defs
+import CpsatScheduler.Internal.Util.Finset
+import Mathlib.Tactic.Basify
 
 public section
 
@@ -114,4 +105,3 @@ theorem Scale.mem_sort {us : Finset Scale}
   us.mem_sortByKey.mpr h
 
 end CpsatSolver.Unit
-

@@ -1,8 +1,13 @@
-import Mathlib.Data.Finset.Insert
+module
+
 import Mathlib.Algebra.Order.Group.Nat
+public import Mathlib.Data.Finset.Insert
+
+public section
 
 namespace Python
 
+@[expose]
 def ReservedKeywords : Finset String := {
   "False",
   "await",
@@ -41,6 +46,7 @@ def ReservedKeywords : Finset String := {
   "yield"
 }
 
+@[expose]
 def ValidIdent (str : String) : Prop :=
   ∀ i : Fin str.toList.length, let c := str.toList[i];
     (c ≥ 'A' ∧ c ≤ 'Z') ∨
@@ -52,6 +58,7 @@ instance (str : String) : Decidable (ValidIdent str) := by
   unfold ValidIdent
   infer_instance
 
+@[expose]
 def ValidName.Proof (name : String) : Prop :=
   ¬ (name ∈ ReservedKeywords) ∧ (ValidIdent name)
 
@@ -63,34 +70,39 @@ instance : Decidable (ValidName.Proof α) :=
 structure ValidName where
   val : String
   proof : ValidName.Proof val
-  deriving DecidableEq
+deriving DecidableEq
 
+@[expose]
 def ValidName.of (val : String)
-  (h : ValidName.Proof val := by native_decide) :
+  (h : ValidName.Proof val := by decide) :
     ValidName :=
   ValidName.mk val h
 
 namespace StdName
 
-def stdin := ValidName.of "stdin"
-def read := ValidName.of "read"
-def len := ValidName.of "len"
-def append := ValidName.of "append"
-def eval := ValidName.of "eval"
-def exec :=  ValidName.of "exec"
-def join := ValidName.of "join"
-def print := Python.ValidName.of "print"
-def float := Python.ValidName.of "float"
-def json := Python.ValidName.of "json"
-def dumps := Python.ValidName.of "dumps"
-def sys := ValidName.of "sys"
-def list := ValidName.of "list"
-def split := ValidName.of "split"
-def flush := ValidName.of "flush"
+@[expose] def stdin := ValidName.of "stdin"
+@[expose] def read := ValidName.of "read"
+@[expose] def len := ValidName.of "len"
+@[expose] def append := ValidName.of "append"
+@[expose] def eval := ValidName.of "eval"
+@[expose] def exec :=  ValidName.of "exec"
+@[expose] def join := ValidName.of "join"
+@[expose] def print := Python.ValidName.of "print"
+@[expose] def float := Python.ValidName.of "float"
+@[expose] def json := Python.ValidName.of "json"
+@[expose] def dumps := Python.ValidName.of "dumps"
+@[expose] def sys := ValidName.of "sys"
+@[expose] def list := ValidName.of "list"
+@[expose] def split := ValidName.of "split"
+@[expose] def flush := ValidName.of "flush"
 
 end StdName
 
 mutual
+
+structure Kwarg where
+  key : ValidName
+  value : Expr
 
 inductive Literal where
   | bool (val : Bool)
@@ -100,10 +112,6 @@ inductive Literal where
   | array (elems : Array Expr)
   | dict (pairs : Array (Expr × Expr))
   | none
-
-structure Kwarg where
-  key : ValidName
-  value : Expr
 
 inductive Expr where
   | id (name : ValidName)
@@ -128,6 +136,7 @@ end
 
 mutual
 
+@[expose]
 def Kwarg.repr (kw : Kwarg) : String :=
   s!"{kw.key.val}={kw.value.repr}"
 termination_by sizeOf kw
@@ -136,6 +145,7 @@ decreasing_by
   obtain ⟨key, value⟩ := kw
   simp_wf
 
+@[expose]
 def Literal.repr (lit : Literal) : String :=
   match lit with
   | .bool b => match b with
@@ -164,6 +174,7 @@ decreasing_by
       simp_all
       omega
 
+@[expose]
 def Expr.repr (expr : Expr) : String :=
   match expr with
   | .id name => name.val
@@ -202,12 +213,15 @@ structure NameAs where
   name : ValidName
   as : Option ValidName
 
+@[expose]
 def NameAs.unaliased (n : ValidName) : NameAs :=
   { name := n, as := Option.none }
 
+@[expose]
 def NameAs.aliased (n : ValidName) (as : ValidName) : NameAs :=
   { name := n, as := Option.some as }
 
+@[expose]
 def NameAs.repr (a : NameAs) : String :=
   match a.as with
   | Option.some as => s!"{a.name.val} as {as.val}"
@@ -259,9 +273,11 @@ end
 
 mutual
 
+@[expose]
 def indent (s : String) : String :=
   s.replace "\n" "\n\t"
 
+@[expose]
 def Block.repr (b : Array Statement) : String :=
   let lines := "\n".intercalate
     (b.map (fun x => x.repr)).toList
@@ -290,6 +306,7 @@ decreasing_by
        simp_wf
        omega)
 
+@[expose]
 def Statement.repr (s : Statement) : String := match s with
   | .importLine i => i.repr
   | .exprLine e => e.repr
@@ -313,6 +330,7 @@ instance : DecidableLE Python.Statement :=
   else
     Decidable.isFalse h
 
+@[expose]
 def print (expr : Expr) : Expr :=
   .call (.id StdName.print) #[ expr ]
     #[ ⟨StdName.flush, .lit (.bool true)⟩ ]
@@ -320,10 +338,12 @@ def print (expr : Expr) : Expr :=
 structure Script where
   statements : Array Statement
 
+@[expose]
 def Script.repr (s : Script) : String :=
   String.intercalate "\n"
     (s.statements.map (fun stmt => stmt.repr)).toList
 
+@[expose]
 def Script.serializeJson (expr : Expr) : Script :=
   ⟨#[
     -- import json

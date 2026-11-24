@@ -1,7 +1,17 @@
-import CpsatSolver.Python.Basic
-import CpsatSolver.Model
+module
+
+public import CpsatScheduler.Internal.CpsatSolver.Python.Basic
+public import CpsatScheduler.Internal.CpsatSolver.Model
+
+import CpsatScheduler.Internal.CpsatSolver.Encodability
+import CpsatScheduler.Internal.Util.Finset
 
 namespace CpsatSolver.Model.Python
+
+def Array.ofEncodableFinset [Encodable α] [DecidableEq α]
+  (set : Finset α) : Array α :=
+  set.sortByKey (Encodable.encode ·) Encodable.encode_injective
+  |> List.toArray
 
 namespace Name
 def cpModelLib := Python.ValidName.of "cp_model"
@@ -32,47 +42,45 @@ private def domainExpr (d : Domain) : Python.Expr :=
           .lit (.int i.right)])))]
     #[]
 
-private def boolVar (var : BoolVar) : Python.Statement :=
-  .assignLine (.id (EntityID.toPythonName var.id)) (
+private def initBoolVar (var : BoolVar) : Python.Statement :=
+  .assignLine (.id (Python.encodableName var)) (
     .call
       (.dot
         (.id Name.model)
         (Python.ValidName.of "new_bool_var"))
-      #[.lit (.str (var.label.getD (EntityID.toPythonName var.id).val))]
+      #[.lit (.str (var.label.getD (Python.encodableName var).val))]
       #[]
   )
 
-private def intVar (var : IntVar) : Python.Statement :=
-  .assignLine (.id (EntityID.toPythonName var.id)) (
+private def initIntVar (var : IntVar) : Python.Statement :=
+  .assignLine (.id (Python.encodableName var)) (
     .call
       (.dot
         (.id Name.model)
         (Python.ValidName.of "new_int_var_from_domain"))
       #[
         domainExpr var.domain.domain,
-        .lit (.str (var.label.getD (EntityID.toPythonName var.id).val))
+        .lit (.str (var.label.getD (Python.encodableName var).val))
       ]
       #[]
   )
 
-private def fixedSizeIntervalVar
+private def initFixedSizeIntervalVar
     (var : FixedSizeIntervalVar) : Python.Statement :=
-  .assignLine (.id (EntityID.toPythonName var.id)) (
+  .assignLine (.id (Python.encodableName var)) (
     .call
       (.dot
         (.id Name.model)
         (Python.ValidName.of "new_fixed_size_interval_var"))
       #[
-        (@LinearExpr.toPythonExpr var.startInterval var.start),
+        var.start.toPythonExpr,
         .lit (.int var.size),
-        .lit (.str (var.label.getD (EntityID.toPythonName var.id).val))
+        .lit (.str (var.label.getD (Python.encodableName var).val))
       ]
       #[]
   )
 
-private def constraint (cnst : Constraint) : Python.Statement :=
-  let sigmaExprToPython (e : LinearExpr.WithInterval) : Python.Expr :=
-    @LinearExpr.toPythonExpr e.fst e.snd
+private def initConstraint (cnst : Constraint) : Python.Statement :=
   let modelDot (attr : Python.ValidName) : Python.Expr :=
     .dot (.id Name.model) attr
   let constraint : Python.Expr := match cnst.variant with
@@ -94,12 +102,12 @@ private def constraint (cnst : Constraint) : Python.Statement :=
         #[]
     | .max_equality target exprs _ =>
       .call (modelDot (Python.ValidName.of "add_max_equality"))
-        (#[sigmaExprToPython target] ++ exprs.map sigmaExprToPython)
+        (#[target.toPythonExpr] ++ exprs.map (·.toPythonExpr))
         #[]
     | .div_eq target numerator divisor _ =>
       .call
         (modelDot (Python.ValidName.of "add_division_equality"))
-        #[ sigmaExprToPython target, sigmaExprToPython numerator,
+        #[ target.toPythonExpr, numerator.toPythonExpr,
           .lit (.int divisor) ]
         #[]
     | .allowed_assignments vars rows _ _ =>
@@ -120,8 +128,8 @@ private def constraint (cnst : Constraint) : Python.Statement :=
           .lit (.array
             (items.map fun it => it.interval.toPythonExpr)),
           .lit (.array
-            (items.map fun it => sigmaExprToPython it.demand)),
-          sigmaExprToPython capacity
+            (items.map fun it => it.demand.toPythonExpr)),
+          capacity.toPythonExpr
         ] #[]
   let labeled :=
     match cnst.label with
@@ -132,27 +140,27 @@ private def constraint (cnst : Constraint) : Python.Statement :=
     | none =>
       .call
         (.dot constraint (Python.ValidName.of "with_name"))
-        #[.lit (.str (EntityID.toPythonName cnst.id).val)] #[]
+        #[.lit (.str (Python.encodableName cnst).val)] #[]
   match cnst.enforcement with
   | Constraint.Enforcement.always => .exprLine labeled
-  | Constraint.Enforcement.onlyWhenAll literals =>
+  | Constraint.Enforcement.onlyWhenAll literals _ =>
     .exprLine (.call
       (.dot labeled (Python.ValidName.of "only_enforce_if"))
-      (literals.map (fun l : BoolLit => l.toPythonExpr)).toArray #[])
+      (literals.map (fun l : BoolLit => l.toPythonExpr)) #[])
 
-private def objective (obj : Objective) : Array Python.Statement :=
+private def initObjective (obj : Objective) : Array Python.Statement :=
   match obj with
   | .none => #[]
   | .minimize e =>
     #[.exprLine (.call
       (.dot (.id Name.model)
         (Python.ValidName.of "minimize"))
-      #[@LinearExpr.toPythonExpr e.fst e.snd] #[])]
+      #[e.toPythonExpr] #[])]
   | .maximize e =>
     #[.exprLine (.call
       (.dot (.id Name.model)
         (Python.ValidName.of "maximize"))
-      #[@LinearExpr.toPythonExpr e.fst e.snd] #[])]
+      #[e.toPythonExpr] #[])]
 
 private def imports : Array Python.Statement := #[
   .importLine
@@ -174,12 +182,16 @@ private def modelDef (model : Model) : Array Python.Statement :=
         (.dot (.id Name.cpModelLib)
           (Python.ValidName.of "CpModel")) #[] #[])
   ]
+  let initStatements {α : Type} [Encodable α] [DecidableEq α]
+    (v : Finset α) (init : α → Python.Statement) := v
+      |> Array.ofEncodableFinset
+      |> Array.map init
   frontmatter ++
-    (model.spec.ints.map intVar) ++
-    (model.spec.bools.map boolVar) ++
-    (model.spec.intervals.map fixedSizeIntervalVar) ++
-    (model.spec.constraints.map constraint) ++
-    objective model.spec.objective
+    (initStatements model.spec.ints initIntVar) ++
+    (initStatements model.spec.bools initBoolVar) ++
+    (initStatements model.spec.intervals initFixedSizeIntervalVar) ++
+    (initStatements model.spec.constraints initConstraint) ++
+    initObjective model.spec.objective
 
 private def reportSolution (model : Model) : Array Python.Statement :=
   #[
@@ -197,8 +209,8 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         (Prod.mk
           (.lit (.str Literals.ints))
           (.lit (.dict
-            (model.spec.ints.map fun v =>
-              (.lit (.str (EntityID.toPythonName v.id).val),
+            ((Array.ofEncodableFinset model.spec.ints).map fun v =>
+              (.lit (.str (Python.encodableName v).val),
                 .call
                   (.dot (.id Name.cpsatSolver)
                     (Python.ValidName.of "value"))
@@ -206,12 +218,12 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         (Prod.mk
           (.lit (.str Literals.bools))
           (.lit (.dict
-            (model.spec.bools.map fun v =>
-              (.lit (.str (EntityID.toPythonName v.id).val),
+            ((Array.ofEncodableFinset model.spec.bools).map fun v =>
+              (.lit (.str (Python.encodableName v).val),
                 .call
                   (.dot (.id Name.cpsatSolver)
                     (Python.ValidName.of "value"))
-                  #[.id (EntityID.toPythonName v.id)] #[]))))),
+                  #[.id (Python.encodableName v)] #[]))))),
         (Prod.mk
           (.lit (.str Literals.status))
           (.call (.id (Python.ValidName.of "str"))
@@ -227,7 +239,7 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         #[.id Name.output] #[]))
   ]
 
-def script (model : Model) : Python.Script := {
+public def script (model : Model) : Python.Script := {
   statements := imports ++ modelDef model ++
     reportSolution model
 }

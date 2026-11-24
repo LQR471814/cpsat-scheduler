@@ -1,7 +1,8 @@
 module
 
-public import CpsatSolver.Domain.Int64
-public import Mathlib.Tactic.Linarith
+public import CpsatScheduler.Internal.CpsatSolver.Domain.Int64
+public import Mathlib.Tactic.Linarith.Frontend
+public import Mathlib.Tactic.NormNum.Ineq
 
 public section
 

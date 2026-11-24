@@ -1,4 +1,4 @@
-import CpsatSolver.Model
+import CpsatScheduler.Internal.CpsatSolver.Model
 
 open CpsatSolver
 

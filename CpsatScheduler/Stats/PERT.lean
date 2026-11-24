@@ -1,5 +1,5 @@
-import CpsatScheduler.Python.Basic
-import CpsatScheduler.Python.Runtime
+import CpsatScheduler.Internal.Python.Basic
+import CpsatScheduler.Internal.Python.Runtime
 
 import Mathlib.Data.Rat.Defs
 import Mathlib.Algebra.Order.Star.Rat

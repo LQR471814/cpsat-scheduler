@@ -1,4 +1,4 @@
-import CpsatSolver
+import CpsatScheduler.Internal.CpsatSolver
 
 namespace CpsatScheduler
 

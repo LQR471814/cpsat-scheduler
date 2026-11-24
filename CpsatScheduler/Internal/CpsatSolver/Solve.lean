@@ -1,9 +1,10 @@
 module
 
-import CpsatSolver.Model
-import CpsatSolver.LinearExpr
-import CpsatSolver.Python.Model
-import CpsatScheduler.Python.Runtime
+import CpsatScheduler.Internal.CpsatSolver.Model
+import CpsatScheduler.Internal.CpsatSolver.LinearExpr
+import CpsatScheduler.Internal.CpsatSolver.Python.Model
+import CpsatScheduler.Internal.Python.Runtime
+import CpsatScheduler.Internal.CpsatSolver.Encodability
 
 namespace CpsatSolver
 
@@ -213,4 +214,3 @@ def Model.solve (model : Model) (py : Python.DaemonProcess) :
     Model.interpret model status asgn
 
 end CpsatSolver
-

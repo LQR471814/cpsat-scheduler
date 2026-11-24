@@ -19,8 +19,9 @@ therefore rides on the data fields only, exactly as in the manual instances.
 
 module
 
-public import Mathlib.Logic.Encodable.Basic
-public meta import Lean.Elab.Command
+public import Lean.Elab.Command
+
+import Mathlib.Logic.Encodable.Basic
 
 open Lean Elab Command Meta Term
 
@@ -63,15 +64,11 @@ private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command
   let fields ← liftTermElabM <| classifyFields structName
   let dataFields  := fields.filter (!·.isProof)
   let proofFields := fields.filter (·.isProof)
-
   if dataFields.isEmpty then
     throwError "`{structName}` has no data fields; nothing to encode"
-
   let structId := mkIdent structName
-
   -- Fresh binder `x` for the encode function.
   let x := mkIdent `x
-
   -- encode: `Encodable.encode (x.d₁, x.d₂, ..., x.dₙ)` built as right-nested
   -- pairs `(d₁, (d₂, ... dₙ))` to avoid tuple-splice pitfalls.
   let encodeProjs ← dataFields.mapM fun f => do
@@ -80,11 +77,9 @@ private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command
   for i in [1:encodeProjs.size] do
     let idx := encodeProjs.size - 1 - i
     encodeTuple ← `(term| ($(encodeProjs[idx]!), $encodeTuple))
-
   -- Build the decode body. Decoded local `t` is the data tuple; bind each
   -- data field by name from it, then nest `dite` over the proof fields.
   let tv := mkIdent `t
-
   -- record fields for the final `{ ... }`:
   --   data fields  := <local of same name>
   --   proof fields := <the dite-bound hypothesis of same name>
@@ -96,14 +91,12 @@ private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command
     pure (mkIdent (getStructureCtor env structName).name)
   let allFieldArgs ← fields.mapM fun f => `(term| $(mkIdent f.name):ident)
   let recordTerm ← `(term| $ctorId:ident $allFieldArgs*)
-
   -- innermost: `some { ... }`
   -- wrap in nested `if h : <Prop> then ... else none`, one per proof field.
   -- We let Lean INFER each proof-field type from the expected argument type
   -- of the structure constructor by writing the condition as the field's
   -- type.  To get that type as syntax we delaborate it under the data locals.
   let innermost ← `(term| some $recordTerm)
-
   -- Delaborate each proof field's type (as a `dite` condition) and each data
   -- field's type (to annotate the decode target tuple so `⟨..⟩` typechecks).
   -- Delaborate with `pp.explicit`/coercions on so the surface syntax
@@ -133,7 +126,6 @@ private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command
         let stx ← PrettyPrinter.delab ty
         dtys := dtys.push ⟨stx⟩
       return (conds, dtys)
-
   -- Build the nested dite.  Bind proof hyp names = proof field names.
   let mut body := innermost
   for i in [0:proofFields.size] do
@@ -142,7 +134,6 @@ private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command
     let cond := proofConds[idx]!
     body ← `(term|
       if $(mkIdent pf.name):ident : $cond then $body else none)
-
   -- Bind data locals from the tuple `t` via pattern match on the anonymous
   -- constructor `⟨d₁, d₂, ..., dₙ⟩`.
   let decodeFun ←
@@ -164,14 +155,12 @@ private meta def mkInstance (structName : Name) : CommandElabM (TSyntax `command
           ((Encodable.decode n : Option $tupleTy)).bind (fun $tv:ident =>
             match $tv:ident with
             | ⟨$dataBinders,*⟩ => $body))
-
   -- linv proof: simp with encodek + each proof projection + dite_true.
   let proofProjs ← proofFields.mapM fun f => `(term| $x.$(mkIdent f.name):ident)
   let linv ← `(term|
     fun $x:ident => by
       simp only [Encodable.encodek, $[$proofProjs:term],*,
         Option.bind_some, dite_true])
-
   `(command|
     instance : $(mkCIdent ``Encodable) $structId:ident :=
       $(mkCIdent ``Encodable.ofLeftInjection)

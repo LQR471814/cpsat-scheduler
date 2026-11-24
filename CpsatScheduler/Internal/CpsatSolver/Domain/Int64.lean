@@ -1,7 +1,10 @@
 module
 
-public import CpsatSolver.Domain.Defs
-public import Mathlib.Tactic.Linarith
+public import CpsatScheduler.Internal.CpsatSolver.Domain.Defs
+public import Mathlib.Algebra.Group.Int.Defs
+
+import Mathlib.Tactic.Linarith.Frontend
+import Mathlib.Tactic.NormNum.Ineq
 
 public section
 

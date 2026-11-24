@@ -1,4 +1,10 @@
-import CpsatScheduler.Python.Basic
+module
+
+public import CpsatScheduler.Internal.Python.Basic
+
+import Lean.Data.Json.Parser
+
+public section
 
 namespace Python
 

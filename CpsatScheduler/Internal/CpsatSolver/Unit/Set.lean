@@ -1,6 +1,7 @@
 module
 
-public import CpsatSolver.Unit.Scale
+public import CpsatScheduler.Internal.CpsatSolver.Unit.Scale
+public import Mathlib.Data.Finset.Defs
 
 public section
 

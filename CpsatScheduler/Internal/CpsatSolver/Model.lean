@@ -1,7 +1,6 @@
 module
 
-public import CpsatSolver.Defs
-public import CpsatSolver.RefVars
+public import CpsatScheduler.Internal.CpsatSolver.RefVars
 
 public section
 

@@ -1,6 +1,6 @@
 module
 
-public import CpsatSolver.Domain.Domain
+public import CpsatScheduler.Internal.CpsatSolver.Domain.Domain
 
 public section
 

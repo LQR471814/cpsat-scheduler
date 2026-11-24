@@ -1,12 +1,6 @@
 module
 
-public import CpsatSolver.Defs
-public import CpsatSolver.LinearExpr
-
-import Mathlib.Algebra.Order.Module.Defs
-import Mathlib.Algebra.Order.GroupWithZero.Defs
-import Mathlib.Tactic.LinearCombination.Lemmas
-import Mathlib.Algebra.Order.Group.Unbundled.Basic
+public import CpsatScheduler.Internal.CpsatSolver.LinearExpr
 
 public section
 
@@ -62,4 +56,3 @@ def convertTrunc (a : UnitAwareIntVar U)
   LinearExpr.mul (LinearExpr.var a.intVar) ratio
 
 end CpsatSolver.UnitAwareIntVar
-
