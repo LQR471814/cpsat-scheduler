@@ -43,7 +43,7 @@ model you have defined. This solver would also make it trivial to
 examine the effects of changing components, adding
 responsibilities, etc...
 
-This is what this project aims to do,
+This is what this project aims to do.
 
 ## Documentation
 

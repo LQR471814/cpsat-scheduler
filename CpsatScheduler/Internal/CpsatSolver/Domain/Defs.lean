@@ -148,11 +148,13 @@ instance : Encodable NonemptyDomain :=
     (fun d => by simp [d.nonempty])
 
 @[expose]
-def NonemptyDomain.of (domain : Domain)
-    (h : domain.intervals ≠ [] :=
-      by simp [Domain.canonicalize, Domain.mergeOne]) :
-      NonemptyDomain :=
-  { domain := domain, nonempty := h }
+def NonemptyDomain.of
+  (domain : Domain)
+  (h : domain.intervals ≠ [] :=
+    by
+      simp [Domain.canonicalize, Domain.mergeOne]
+      native_decide) : NonemptyDomain :=
+  ⟨domain, h⟩
 
 end CpsatSolver
 

@@ -9,34 +9,35 @@ namespace CpsatSolver.UnitAwareIntVar
 def add (a b : UnitAwareIntVar U)
   (_same_scale : a.scale = b.scale)
   (_nonoverflow : Interval.Nonoverflow.Add
-    a.intVar.domainHull b.intVar.domainHull) :=
+    a.intVar.domainHull b.intVar.domainHull) h :=
   LinearExpr.add
     (LinearExpr.var a.intVar)
     (LinearExpr.var b.intVar)
+    h
 
 def sub (a b : UnitAwareIntVar U)
   (_same_scale : a.scale = b.scale)
   (_nonoverflow : Interval.Nonoverflow.Add
-    a.intVar.domainHull b.intVar.domainHull) :=
+    a.intVar.domainHull b.intVar.domainHull) h :=
   LinearExpr.sub
     (LinearExpr.var a.intVar)
-    (LinearExpr.var b.intVar)
+    (LinearExpr.var b.intVar) h
 
-def neg (a : UnitAwareIntVar U) :=
-  LinearExpr.neg (LinearExpr.var a.intVar)
+def neg (a : UnitAwareIntVar U) h :=
+  LinearExpr.neg (LinearExpr.var a.intVar) h
 
-def mul (a : UnitAwareIntVar U) (v : Int64) :=
-  LinearExpr.mul (LinearExpr.var a.intVar) v
+def mul (a : UnitAwareIntVar U) (v : Int64) h :=
+  LinearExpr.mul (LinearExpr.var a.intVar) v h
 
 def convertExact (a : UnitAwareIntVar U)
   (newScale : Unit.Scale)
-  (h : newScale ∣ a.scale.val) :=
+  (h : newScale ∣ a.scale.val) nonoverflow :=
   let ratio := Unit.Scale.exactRatio a.scale.val newScale h;
-  LinearExpr.mul (LinearExpr.var a.intVar) ratio
+  LinearExpr.mul (LinearExpr.var a.intVar) ratio nonoverflow
 
 def convertTrunc (a : UnitAwareIntVar U)
   (newScale : Unit.Scale)
-  (h : a.scale.val ∣ newScale) :=
+  (h : a.scale.val ∣ newScale) nonoverflow :=
   let ratio := Unit.Scale.exactRatio newScale a.scale.val h;
   -- have hdiv : 0 < ratio.val := by
   --   unfold ratio
@@ -53,6 +54,6 @@ def convertTrunc (a : UnitAwareIntVar U)
   --     exact Nat.pos_of_mul_pos_left h_ns_pos
   --   let h2 := Nat.mul_div_cancel c a.scale.val.pos
   --   grind
-  LinearExpr.mul (LinearExpr.var a.intVar) ratio
+  LinearExpr.mul (LinearExpr.var a.intVar) ratio nonoverflow
 
 end CpsatSolver.UnitAwareIntVar

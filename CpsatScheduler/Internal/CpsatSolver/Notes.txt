@@ -1,0 +1,44 @@
+- IntVar, BoolVar, ... are all things that need to be enumerated
+- Constraint entities (including objective) can reference vars but not
+  other constraint entities
+- All require a unique id
+	- Here, value is identity
+- All must be able to be handled programmatically
+	- This means that one should be able to generate them trivially
+	  via algorithm
+	- One should also be able to trivially prove / ensure correctness
+	  of the generated things
+		- Where validity: All things referenced will be initialized
+	- Minimal coupling ideally
+	- Avoid footguns (misuse on the part of the end-user)
+
+# problem 1: collisions
+
+suppose I supply a nat that is equivalent to some encodable explicitly
+
+suppose I have encodable a, b.
+
+let c : nat := encode b
+
+(encode a, encode b) = (encode a, c)
+
+however the two are not equivalent semantically, notably the explicit value c
+should not be the same as the encodable b
+
+the other more serious problem is that structures of two different types may
+have the same encodable value, the type of the structure must be included in
+the encoded value
+
+so what I should do, is make encodable return a special value that cannot be
+constructed explicitly, that value must also encode the type of the value
+itself
+
+# problem 2: encodable types
+
+types cannot be readily encoded into nats, there simply does not exist this
+mechanism
+
+instead, we need a registrar of types and their corresponding nat values
+
+then, the encoding needs to take in this registrar
+

@@ -234,12 +234,17 @@ theorem Domain.canonicalize_cons_ne_nil (x : Interval) (xs : List Interval) :
   Domain.mergeOne_ne_nil x (Domain.canonicalize xs)
 
 @[expose]
-def Domain.ofArray (xs : Array Interval) : Domain :=
-  Domain.ofList xs.toList
-
-@[expose]
-def Domain.ofValues (xs : Array CpsatSolver.Int64) : Domain :=
-  Domain.ofList (xs.toList.map (Interval.ofValue ·))
+def Domain.ofInts (xs : Array ℤ)
+  (nonoverflow : ∀ e ∈ xs, CpsatSolver.Int64.Nonoverflow e :=
+    by native_decide) :
+      Domain :=
+  xs.attach
+  |> (·.map (fun ⟨x, x_mem⟩ =>
+      Interval.ofValue {
+        val := x
+        property := nonoverflow x x_mem
+      }))
+  |> (Domain.ofList ·.toList)
 
 @[expose]
 def Domain.insert (d : Domain) (i : Interval) : Domain :=

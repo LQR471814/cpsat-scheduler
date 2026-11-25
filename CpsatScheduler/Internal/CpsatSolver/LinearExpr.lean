@@ -21,7 +21,8 @@ def const (value : Int64) : LinearExpr :=
   }
 
 def neg (a : LinearExpr)
-  (h : Interval.Nonoverflow.Neg a.interval) :
+  (h : Interval.Nonoverflow.Neg a.interval :=
+    by native_decide) :
     LinearExpr :=
   {
     raw := .fromNeg a.raw
@@ -30,7 +31,8 @@ def neg (a : LinearExpr)
   }
 
 def mul (a : LinearExpr) (v : Int64)
-  (h : Interval.Nonoverflow.MulConst a.interval v) :
+  (h : Interval.Nonoverflow.MulConst a.interval v :=
+    by native_decide) :
     LinearExpr :=
   {
     raw := .fromMulConst a.raw v
@@ -39,7 +41,8 @@ def mul (a : LinearExpr) (v : Int64)
   }
 
 def add (l r : LinearExpr)
-  (h : Interval.Nonoverflow.Add l.interval r.interval) :
+  (h : Interval.Nonoverflow.Add l.interval r.interval :=
+    by native_decide) :
     LinearExpr :=
   {
     raw := .fromAdd l.raw r.raw
@@ -48,7 +51,8 @@ def add (l r : LinearExpr)
   }
 
 def sub (l r : LinearExpr)
-  (h : Interval.Nonoverflow.Sub l.interval r.interval) :
+  (h : Interval.Nonoverflow.Sub l.interval r.interval :=
+    by native_decide) :
     LinearExpr :=
   {
     raw := .fromSub l.raw r.raw

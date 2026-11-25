@@ -187,11 +187,11 @@ private def modelDef (model : Model) : Array Python.Statement :=
       |> Array.ofEncodableFinset
       |> Array.map init
   frontmatter ++
-    (initStatements model.spec.ints initIntVar) ++
-    (initStatements model.spec.bools initBoolVar) ++
-    (initStatements model.spec.intervals initFixedSizeIntervalVar) ++
-    (initStatements model.spec.constraints initConstraint) ++
-    initObjective model.spec.objective
+    (initStatements model.ints initIntVar) ++
+    (initStatements model.bools initBoolVar) ++
+    (initStatements model.intervals initFixedSizeIntervalVar) ++
+    (initStatements model.constraints initConstraint) ++
+    initObjective model.objective
 
 private def reportSolution (model : Model) : Array Python.Statement :=
   #[
@@ -209,7 +209,7 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         (Prod.mk
           (.lit (.str Literals.ints))
           (.lit (.dict
-            ((Array.ofEncodableFinset model.spec.ints).map fun v =>
+            ((Array.ofEncodableFinset model.ints).map fun v =>
               (.lit (.str (Python.encodableName v).val),
                 .call
                   (.dot (.id Name.cpsatSolver)
@@ -218,7 +218,7 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         (Prod.mk
           (.lit (.str Literals.bools))
           (.lit (.dict
-            ((Array.ofEncodableFinset model.spec.bools).map fun v =>
+            ((Array.ofEncodableFinset model.bools).map fun v =>
               (.lit (.str (Python.encodableName v).val),
                 .call
                   (.dot (.id Name.cpsatSolver)
