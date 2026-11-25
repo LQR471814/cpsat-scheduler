@@ -29,22 +29,36 @@ def z : Entity IntVar := .of
   }
   { y.id }
 
-def sum : LinearExpr :=
+def sum : Entity LinearExpr := .of
   (.add
     (.add (.var x) (.var y))
     (.var z))
+  {}
 
-def diff : LinearExpr :=
+def diff : Entity LinearExpr := .of
   (.sub
     (.add (.mul (.var x) (int 3)) (.var y))
     (.var z))
+  {}
+
+def diff_gt_2 : Entity Constraint := .of
+  {
+    label := .none
+    enforcement := .always
+    variant := .bounded_linear {
+      rel := .gt
+      left := diff.val
+      right := .const (int 2)
+    }
+  }
+  {}
 
 def model : Model := {
   spec := {
     ints := { x, y, z }
     bools := {}
     intervals := {}
-    constraints := {}
+    constraints := { diff_gt_2 }
     objective := .of (Objective.maximize sum) {}
   }
   refs_exist := by

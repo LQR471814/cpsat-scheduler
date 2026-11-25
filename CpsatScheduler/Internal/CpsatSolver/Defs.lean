@@ -103,8 +103,6 @@ deriving DecidableEq
 
 structure BoundedLinearExpr where
   rel : BoundedLinearExpr.Rel
-  leftInterval : Interval
-  rightInterval : Interval
   left : LinearExpr
   right : LinearExpr
 deriving DecidableEq
