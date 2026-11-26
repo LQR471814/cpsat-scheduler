@@ -3,7 +3,7 @@ module
 public meta import CpsatScheduler.Internal.CpsatSolver.Domain.Defs
 
 import CpsatScheduler.Internal.CpsatSolver.Domain.Defs
-import CpsatScheduler.Internal.Util.Finset
+public import CpsatScheduler.Internal.Util.Finset
 import Mathlib.Tactic.Basify
 
 public section
@@ -16,15 +16,6 @@ structure Scale where
   pos : 0 < val
   nonoverflow : CpsatSolver.Int64.Nonoverflow val
 deriving DecidableEq
-
-instance : Encodable Scale :=
-  Encodable.ofLeftInjection
-    (fun s => s.val)
-    (fun v => if h : 0 < v ∧ CpsatSolver.Int64.Nonoverflow v then
-      .some ⟨v, h.1, h.2⟩
-    else
-      .none)
-    (fun d => by simp [d.pos, d.nonoverflow])
 
 instance : Coe Scale ℕ where
   coe u := u.val.toNat

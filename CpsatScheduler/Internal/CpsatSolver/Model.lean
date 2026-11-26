@@ -7,7 +7,7 @@ public import CpsatScheduler.Internal.CpsatSolver.Encodability
 
 namespace CpsatSolver
 
-def FinsetDepElems [Encodable α] [CpsatType α]
+def FinsetDepElems [HasRepr α] [CpsatType α]
   [DecidableEq α] (s : Finset (Entity α)) :=
   s.image fun x => x.val
 

@@ -1,6 +1,9 @@
 module
 
-public import Mathlib.Logic.Equiv.List
+public import Mathlib.Algebra.Order.Ring.Int
+public import Mathlib.Order.Interval.Set.Defs
+public import Mathlib.Data.List.Pairwise
+public import Mathlib.Data.List.Basic
 
 public section
 
@@ -19,8 +22,6 @@ instance (b : ℤ) : Decidable (Int64.Nonoverflow b) := by
   infer_instance
 
 abbrev Int64 := { x : ℤ // Int64.Nonoverflow x }
-
-instance : Encodable Int64 := Subtype.encodable
 
 @[expose]
 def Int64.of (n : ℤ) (h : Int64.Nonoverflow n := by native_decide) : Int64 :=
@@ -51,16 +52,6 @@ structure Interval where
   right : Int64
   left_le_right : (left : ℤ) ≤ right
 deriving DecidableEq
-
-instance : Encodable Interval :=
-  Encodable.ofLeftInjection
-    (fun i => (i.left, i.right))
-    (fun (l, r) =>
-      if h : (l : ℤ) ≤ r then
-        some { left := l, right := r, left_le_right := h }
-      else
-        none)
-    (fun i => by simp [i.left_le_right])
 
 @[expose]
 def Interval.of (l r : ℤ)
@@ -108,16 +99,6 @@ structure Domain where
   pairwise : intervals.Pairwise Interval.separated
 deriving DecidableEq
 
-instance : Encodable Domain :=
-  Encodable.ofLeftInjection
-    (fun d => d.intervals)
-    (fun xs =>
-      if h : xs.Pairwise Interval.separated then
-        some ⟨xs, h⟩
-      else
-        none)
-    (fun d => by simp [d.pairwise])
-
 @[expose]
 def Domain.singleton (v : Int64) : Domain :=
   ⟨[Interval.ofValue v], List.pairwise_singleton _ _⟩
@@ -136,16 +117,6 @@ structure NonemptyDomain where
   domain : Domain
   nonempty : domain.intervals ≠ []
 deriving DecidableEq
-
-instance : Encodable NonemptyDomain :=
-  Encodable.ofLeftInjection
-    (fun d => d.domain)
-    (fun dom =>
-      if h : dom.intervals ≠ [] then
-        some ⟨dom, h⟩
-      else
-        none)
-    (fun d => by simp [d.nonempty])
 
 @[expose]
 def NonemptyDomain.of

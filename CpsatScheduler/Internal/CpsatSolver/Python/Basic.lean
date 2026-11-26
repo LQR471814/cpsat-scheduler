@@ -3,7 +3,7 @@ module
 public import CpsatScheduler.Internal.CpsatSolver.Defs
 public import CpsatScheduler.Internal.Python.Basic
 
-import CpsatScheduler.Internal.CpsatSolver.Encodability.EncodableDefs
+public import CpsatScheduler.Internal.CpsatSolver.Encodability
 
 public section
 
@@ -28,15 +28,18 @@ private theorem not_reserved_e_suffix (s : String) :
     simp [String.toList_append]
   exact (hkw _ hmem) this
 
-theorem Python.encodableName_proof (n : Nat) :
-    Python.ValidName.Proof ("e_" ++ toString n) :=
-  ⟨not_reserved_e_suffix (toString n),
-    validIdent_e_suffix (toString n)⟩
+theorem Python.encodableName_proof (s : String) :
+    Python.ValidName.Proof ("e_" ++ s) :=
+  ⟨not_reserved_e_suffix s, validIdent_e_suffix s⟩
 
-def Python.encodableName [Encodable α] (enc : α) :
+/-- Build a valid Python identifier from a value's `HasRepr` representation:
+    the `List ℕ` repr is rendered as underscore-joined decimal digits behind an
+    `"e_"` prefix. The suffix contains only digits and underscores, so the
+    `ValidName.Proof` lemmas apply unchanged. -/
+def Python.encodableName [HasRepr α] (enc : α) :
     Python.ValidName :=
-  let id := Encodable.encode enc
-  ⟨"e_" ++ toString id, Python.encodableName_proof id⟩
+  let s := String.intercalate "_" ((HasRepr.toRepr enc).map toString)
+  ⟨"e_" ++ s, Python.encodableName_proof s⟩
 
 class Python.ToExpr (α : Type) where
   toPythonExpr : α → Python.Expr

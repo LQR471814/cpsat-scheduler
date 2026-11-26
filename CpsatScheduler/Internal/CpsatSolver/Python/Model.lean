@@ -5,12 +5,13 @@ public import CpsatScheduler.Internal.CpsatSolver.Model
 
 import CpsatScheduler.Internal.CpsatSolver.Encodability
 import CpsatScheduler.Internal.Util.Finset
+import Mathlib.Data.List.Lex
 
 namespace CpsatSolver.Model.Python
 
-def Array.ofEncodableFinset [Encodable α] [DecidableEq α]
+def Array.ofHasReprFinset [HasRepr α] [DecidableEq α]
   (set : Finset α) : Array α :=
-  set.sortByKey (Encodable.encode ·) Encodable.encode_injective
+  set.sortByKey (HasRepr.toRepr ·) HasRepr.toRepr_inj
   |> List.toArray
 
 namespace Name
@@ -182,9 +183,9 @@ private def modelDef (model : Model) : Array Python.Statement :=
         (.dot (.id Name.cpModelLib)
           (Python.ValidName.of "CpModel")) #[] #[])
   ]
-  let initStatements {α : Type} [Encodable α] [DecidableEq α]
+  let initStatements {α : Type} [HasRepr α] [DecidableEq α]
     (v : Finset α) (init : α → Python.Statement) := v
-      |> Array.ofEncodableFinset
+      |> Array.ofHasReprFinset
       |> Array.map init
   frontmatter ++
     (initStatements model.ints initIntVar) ++
@@ -209,7 +210,7 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         (Prod.mk
           (.lit (.str Literals.ints))
           (.lit (.dict
-            ((Array.ofEncodableFinset model.ints).map fun v =>
+            ((Array.ofHasReprFinset model.ints).map fun v =>
               (.lit (.str (Python.encodableName v).val),
                 .call
                   (.dot (.id Name.cpsatSolver)
@@ -218,7 +219,7 @@ private def reportSolution (model : Model) : Array Python.Statement :=
         (Prod.mk
           (.lit (.str Literals.bools))
           (.lit (.dict
-            ((Array.ofEncodableFinset model.bools).map fun v =>
+            ((Array.ofHasReprFinset model.bools).map fun v =>
               (.lit (.str (Python.encodableName v).val),
                 .call
                   (.dot (.id Name.cpsatSolver)

@@ -150,3 +150,118 @@ def sub (l r : LinearExpr)
 --   simp [LinearExpr.eval]
 
 end CpsatSolver.LinearExpr
+
+namespace CpsatSolver
+
+/-- compute the bounding interval of a raw expression,
+    `none` on overflow. -/
+def LinearExpr.Raw.interval? : LinearExpr.Raw → Option Interval
+  | .fromVar v => some v.domainHull
+  | .fromConst v => some (Interval.ofValue v)
+  | .fromNeg a => do
+    let B ← interval? a
+    if h : Interval.Nonoverflow.Neg B then some (B.neg h) else none
+  | .fromMulConst a v => do
+    let B ← interval? a
+    if h : Interval.Nonoverflow.MulConst B v then
+      some (B.mul (Interval.ofValue v) h)
+    else none
+  | .fromAdd a b => do
+    let A ← interval? a
+    let B ← interval? b
+    if h : Interval.Nonoverflow.Add A B then some (A.add B h) else none
+  | .fromSub a b => do
+    let A ← interval? a
+    let B ← interval? b
+    if h : Interval.Nonoverflow.Sub A B then some (A.sub B h) else none
+
+/-- The checker and the relation agree: `interval? R = some I ↔ Proof R I`.
+    Keystone lemma — gives decidability and uniqueness below. -/
+theorem LinearExpr.Raw.interval?_eq_some_iff :
+    ∀ (R : LinearExpr.Raw) (I : Interval),
+      R.interval? = some I ↔ LinearExpr.Proof R I
+  | .fromVar v, I => by
+    simp only [interval?, Option.some.injEq]
+    constructor
+    · rintro rfl; exact .fromVar v
+    · rintro h; cases h; rfl
+  | .fromConst v, I => by
+    simp only [interval?, Option.some.injEq]
+    constructor
+    · rintro rfl; exact .fromConst v
+    · rintro h; cases h; rfl
+  | .fromNeg a, I => by
+    simp only [interval?, Option.bind_eq_bind]
+    constructor
+    · intro hR
+      obtain ⟨B, hB, hrest⟩ := Option.bind_eq_some_iff.mp hR
+      split_ifs at hrest with h
+      cases Option.some.inj hrest
+      exact .fromNeg ((interval?_eq_some_iff a B).mp hB) h
+    · rintro hP
+      cases hP with
+      | fromNeg ha h =>
+        rename_i B
+        rw [(interval?_eq_some_iff a B).mpr ha, Option.bind_some]
+        simp only [h, dite_true]
+  | .fromMulConst a v, I => by
+    simp only [interval?, Option.bind_eq_bind]
+    constructor
+    · intro hR
+      obtain ⟨B, hB, hrest⟩ := Option.bind_eq_some_iff.mp hR
+      split_ifs at hrest with h
+      cases Option.some.inj hrest
+      exact .fromMulConst v ((interval?_eq_some_iff a B).mp hB) h
+    · rintro hP
+      cases hP with
+      | fromMulConst v ha h =>
+        rename_i B
+        rw [(interval?_eq_some_iff a B).mpr ha, Option.bind_some]
+        simp only [h, dite_true]
+  | .fromAdd a b, I => by
+    simp only [interval?, Option.bind_eq_bind]
+    constructor
+    · intro hR
+      obtain ⟨A, hA, hR⟩ := Option.bind_eq_some_iff.mp hR
+      obtain ⟨B, hB, hrest⟩ := Option.bind_eq_some_iff.mp hR
+      split_ifs at hrest with h
+      cases Option.some.inj hrest
+      exact .fromAdd ((interval?_eq_some_iff a A).mp hA)
+        ((interval?_eq_some_iff b B).mp hB) h
+    · rintro hP
+      cases hP with
+      | fromAdd ha hb h =>
+        rename_i A B
+        rw [(interval?_eq_some_iff a A).mpr ha, Option.bind_some,
+          (interval?_eq_some_iff b B).mpr hb, Option.bind_some]
+        simp only [h, dite_true]
+  | .fromSub a b, I => by
+    simp only [interval?, Option.bind_eq_bind]
+    constructor
+    · intro hR
+      obtain ⟨A, hA, hR⟩ := Option.bind_eq_some_iff.mp hR
+      obtain ⟨B, hB, hrest⟩ := Option.bind_eq_some_iff.mp hR
+      split_ifs at hrest with h
+      cases Option.some.inj hrest
+      exact .fromSub ((interval?_eq_some_iff a A).mp hA)
+        ((interval?_eq_some_iff b B).mp hB) h
+    · rintro hP
+      cases hP with
+      | fromSub ha hb h =>
+        rename_i A B
+        rw [(interval?_eq_some_iff a A).mpr ha, Option.bind_some,
+          (interval?_eq_some_iff b B).mpr hb, Option.bind_some]
+        simp only [h, dite_true]
+
+/-- The bounding interval is unique: `I` is a function of `R`. -/
+theorem LinearExpr.Proof.unique {R : LinearExpr.Raw} {I₁ I₂ : Interval}
+    (h₁ : LinearExpr.Proof R I₁) (h₂ : LinearExpr.Proof R I₂) : I₁ = I₂ := by
+  rw [← LinearExpr.Raw.interval?_eq_some_iff] at h₁ h₂
+  exact Option.some.inj (h₁ ▸ h₂)
+
+/-- `LinearExpr.Proof` is decidable: run the checker and compare. -/
+instance (R : LinearExpr.Raw) (I : Interval) :
+    Decidable (LinearExpr.Proof R I) :=
+  decidable_of_iff (R.interval? = some I) (R.interval?_eq_some_iff I)
+
+end CpsatSolver

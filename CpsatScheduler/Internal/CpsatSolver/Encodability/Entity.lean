@@ -1,6 +1,6 @@
 module
 
-public import CpsatScheduler.Internal.CpsatSolver.Encodability.EncodableDefs
+public import CpsatScheduler.Internal.CpsatSolver.Encodability.Cpsat
 
 import Mathlib.Logic.Equiv.Finset
 
@@ -8,11 +8,13 @@ public section
 
 namespace CpsatSolver
 
-class CpsatType (α : Type) [Encodable α] where
+class CpsatType (α : Type) [HasRepr α] where
   type : ℕ
 
-def CpsatType.encode [Encodable α] [CpsatType α] (a : α) :=
-  Nat.pair (CpsatType.type α) (Encodable.encode a)
+/-- Encode a tagged value as a `List ℕ`: the type tag as a leading element,
+    followed by the value's `HasRepr` representation. -/
+def CpsatType.encode [HasRepr α] [CpsatType α] (a : α) : ReprType :=
+  CpsatType.type α :: HasRepr.toRepr a
 
 instance : CpsatType IntVar := { type := 0 }
 instance : CpsatType BoolVar := { type := 1 }
@@ -31,42 +33,46 @@ instance : CpsatType Objective := { type := 13 }
 
 structure CpsatID where
   private mk ::
-  vals : Finset ℕ
+  vals : Finset ReprType
 deriving DecidableEq
 
-def CpsatID.encode (e : CpsatID) : ℕ :=
-  Encodable.encode e.vals
+/-- Deterministic `List ℕ` encoding of an identity: sort the (finite) set of
+    per-component reprs into their canonical order (`List ℕ` has a
+    `LinearOrder`) and chunk-encode the result. Determinism follows from the
+    canonical sort; set-equality of `vals` yields identical encodings. -/
+def CpsatID.encode (e : CpsatID) : ReprType :=
+  encodeChunks (e.vals.sort (· ≤ ·))
 
 def CpsatID.nil : CpsatID :=
   ⟨{}⟩
 
-def CpsatID.singleton [Encodable α] [CpsatType α]
+def CpsatID.singleton [HasRepr α] [CpsatType α]
   (v : α) : CpsatID :=
   ⟨{ (CpsatType.encode v) }⟩
 
-def CpsatID.of [Encodable α] [CpsatType α]
+def CpsatID.of [HasRepr α] [CpsatType α]
   (self : α) (others : Finset CpsatID) :
     CpsatID :=
   let mergeWith := others.image (fun x => x.encode)
   ⟨mergeWith ∪ { (CpsatType.encode self) }⟩
 
-structure Entity (α : Type) [Encodable α] where
+structure Entity (α : Type) [HasRepr α] where
   id : CpsatID
   val : α
 deriving DecidableEq
 
-instance [Encodable α] : Coe (Entity α) α where
+instance [HasRepr α] : Coe (Entity α) α where
   coe a := a.val
 
-def Entity.of [Encodable α] [CpsatType α]
+def Entity.of [HasRepr α] [CpsatType α]
   (a : α) (others : Finset CpsatID) : Entity α :=
   {
     id := .of a others
     val := a
   }
 
-def Entity.encode [Encodable α] [CpsatType α]
-  (e : Entity α) : ℕ :=
+def Entity.encode [HasRepr α] [CpsatType α]
+  (e : Entity α) : ReprType :=
   (CpsatID.of e.val {e.id}).encode
 
 end CpsatSolver

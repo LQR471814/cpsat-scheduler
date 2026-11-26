@@ -15,9 +15,6 @@ import CpsatScheduler.Internal.CpsatSolver.Domain.Int64
 import CpsatScheduler.Internal.CpsatSolver.Domain.Interval
 import CpsatScheduler.Internal.CpsatSolver.Domain.NonemptyDomain
 import CpsatScheduler.Internal.CpsatSolver.Encodability
-import CpsatScheduler.Internal.CpsatSolver.Encodability.DeriveEncodablePlain
-import CpsatScheduler.Internal.CpsatSolver.Encodability.DeriveEncodableWithProps
-import CpsatScheduler.Internal.CpsatSolver.Encodability.EncodableDefs
 import CpsatScheduler.Internal.CpsatSolver.Encodability.Entity
 import CpsatScheduler.Internal.CpsatSolver.Examples.CubeProblem
 import CpsatScheduler.Internal.CpsatSolver.LinearExpr
